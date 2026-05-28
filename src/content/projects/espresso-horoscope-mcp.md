@@ -7,7 +7,7 @@ tech: ["Python", "Next.js 15", "LM Studio", "MCP"]
 repo: https://github.com/vnsavitri/espresso-horoscope-mcp
 demo: https://youtu.be/hHNMkw1NXDE
 stars: 3
-order: 3
+order: 4
 ---
 
 ## Portfolio snapshot

@@ -1,39 +1,42 @@
 ---
 title: dam-butler-mcp
 slug: dam-butler-mcp
-hook: MCP server giving ChatGPT Enterprise and Claude Desktop natural-language access to Breville's Vault DAM. Architecture adopted into production.
+hook: Breville's first MCP-based internal tool — custom GPT connected to 235K+ brand assets via Brandfolder API so GTM teams across APAC, NA, and EMEA can retrieve assets by natural language query. In daily production use.
 status: ["production", "enterprise"]
-tech: ["MCP", "Vercel", "ChatGPT Enterprise"]
+tech: ["MCP", "Vercel", "Brandfolder API", "ChatGPT Enterprise"]
 repo: https://github.com/vnsavitri/dam-butler-mcp
 demo: https://www.youtube.com/watch?v=UOeHNyh5A7Y
-order: 4
+order: 2
 ---
 
 ## The problem
 
-Breville's Vault DAM held thousands of product images, brand assets, and marketing materials across global markets.
+Breville's Brandfolder DAM holds 235,000+ digital assets — product imagery, brand materials, and marketing content across global markets. GTM teams in APAC, North America, and EMEA needed those assets daily.
 
-Finding the right asset required knowing the exact folder structure, taxonomy, or metadata tags. Non-technical users — regional brand managers, marketers, content producers — had to ask someone who knew the system.
+Getting to the right file meant knowing the exact folder structure, taxonomy, and metadata conventions. Brand managers, marketers, and content producers who didn't already know the system had one option: ask someone who did. That created a repeatable bottleneck at exactly the point where speed matters.
 
-That created a repeatable bottleneck. DAM Butler removes it.
+## What was built
 
-## What it does
+Breville's first MCP-based internal tool.
 
-Translates natural language into structured DAM API queries.
+A custom GPT connects to Brandfolder via an MCP server that runs two stages: an intent parser translates any natural-language query into a structured API request, and a clarification loop resolves ambiguous inputs before the call fires — so a request like *"the white Barista Express hero shot approved for EU markets, updated after January 2025"* returns the right asset with metadata, not a scroll-through list. The user never touches the DAM interface.
 
-Ask:
-> "Find the Barista Express hero shot in white, approved for EU markets, updated after January 2025"
+```
+User prompt (ChatGPT Enterprise · Claude Desktop)
+    ↓
+Intent parser — natural language → structured query
+    ↓
+Clarification loop — resolves ambiguity before API call
+    ↓
+Brandfolder API
+    ↓
+Asset + metadata returned in chat
+```
 
-Get back: the right asset, with metadata, directly in chat.
+## Result
 
-No taxonomy knowledge required. No folder navigation.
+Prototyped September 2025. Demoed to product leadership. Architecture adopted and shipped to production by Breville engineering.
 
-## Architecture
-
-The MCP server runs an intent parser that converts natural-language queries to structured form, then a clarification loop that resolves ambiguous queries before any API call. Surfaces the DAM directly to ChatGPT Enterprise and Claude Desktop without the user ever touching the underlying interface.
-
-## Outcomes
-
-Built as an MVP prototype. Demoed to Breville product leadership September 2025. Architecture adopted and taken to production by the Breville product engineering team.
+Now in daily workflows for GTM teams across APAC, North America, and EMEA.
 
 [Watch the demo →](https://www.youtube.com/watch?v=UOeHNyh5A7Y)
