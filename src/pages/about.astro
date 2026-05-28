@@ -114,15 +114,18 @@ import Layout from "../layouts/Layout.astro";
 <style>
   .about-header {
     display: grid;
-    grid-template-columns: 1fr 280px;
+    grid-template-columns: 1fr auto;
     gap: 5rem;
     align-items: start;
     margin-bottom: 2.5rem;
   }
 
   .about-portrait {
-    width: 100%;
-    border-radius: 6px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: 50% 15%;
     display: block;
   }
 
@@ -133,7 +136,8 @@ import Layout from "../layouts/Layout.astro";
     }
 
     .about-portrait {
-      max-width: 200px;
+      width: 140px;
+      height: 140px;
     }
   }
 </style>
