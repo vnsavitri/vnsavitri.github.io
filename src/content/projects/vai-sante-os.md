@@ -1,7 +1,7 @@
 ---
 title: vai_sante_os
 slug: vai-sante-os
-hook: I built this during cancer treatment. My own oncology records were the first test.
+hook: A privacy-first personal AI for managing fragmented medical information — local-first, provenance-aware, built during cancer treatment.
 status: ["active", "research"]
 tech: ["Python", "Mermaid", "evaluation harness"]
 repo: https://github.com/vnsavitri/vai_sante_os
@@ -9,7 +9,7 @@ order: 1
 accent: true
 ---
 
-## I built this during cancer treatment. My own oncology records were the first test.
+## I built a personal AI to manage my oncology records during treatment. My own files were the first test.
 
 When you're in treatment, navigating fragmented medical information takes energy you don't have. Finding a test result from three months ago takes twenty minutes. Two doctors have contradicting notes. A summary leaves out the thing that matters. You're sick, and the system makes it harder.
 
