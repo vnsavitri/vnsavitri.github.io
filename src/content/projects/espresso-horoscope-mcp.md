@@ -16,13 +16,13 @@ order: 4
 
 **User experience:** enter a birth date, use simulated or recorded espresso shot data, and receive a tarot-style horoscope card that combines brewing diagnostics with GPT-OSS-generated prose.
 
-**Why it exists:** I wanted to learn how to use local open-weight models under real pressure. The best way for me to do that was to enter a time-boxed hackathon, keep the scope realistic, and build something weird enough to stay interesting.
+**Why it exists:** I wanted to learn how to use local open-weight models under real pressure. The best way for me to do that was to enter a time-boxed hackathon, keep the scope realistic, and build something weird enough to stay interesting. Plus, I want to turn technical data like coffee brewing data (profile, pressure, flow rate, etc.) into something fun that everyday coffee drinkers can relate to and learn from.
 
 ## Why this exists
 
 Built for the **OpenAI Open Model Hackathon**, **Best Local Agent** category. The category asked for useful agentic applications of GPT-OSS that could run without internet access.
 
-The honest learning goal was simple: get my hands dirty with local model inference. A six-week hackathon with a real submission deadline gave me the right kind of constraint. It forced pragmatic choices, scope cuts, and a working demo instead of endless tutorials.
+The honest learning goal was simple: get my hands dirty with local model inference. A weekend hackathon with a real submission deadline gave me the right kind of constraint. It forced pragmatic choices, scope cuts, and a working demo instead of endless tutorials.
 
 The horoscope framing is deliberately playful. The architecture underneath it is the real point: a reproducible, offline-first local agent workflow that combines structured domain data with local LLM inference through an MCP-shaped interface.
 
