@@ -4,11 +4,22 @@ import Layout from "../layouts/Layout.astro";
 
 <Layout title="About | Vivid Savitri-Hampton" pathname="/about/">
   <article class="container-wide pt-16 pb-24" style="max-width: 1400px;">
-    <p class="small-caps mb-8">About</p>
 
-    <h1 class="mb-8">
-      Player-coach product builder, working at the intersection of frontier AI and human-centred design.
-    </h1>
+    <div class="about-header">
+      <div class="about-intro">
+        <p class="small-caps mb-8">About</p>
+        <h1 class="mb-8">
+          Player-coach product builder, working at the intersection of frontier AI and human-centred design.
+        </h1>
+      </div>
+      <div class="about-portrait-wrap">
+        <img
+          src="/vivid-portrait.webp"
+          alt="Vivid Savitri-Hampton"
+          class="about-portrait"
+        />
+      </div>
+    </div>
 
     <div class="prose-body">
       <p>
@@ -99,3 +110,30 @@ import Layout from "../layouts/Layout.astro";
     </div>
   </article>
 </Layout>
+
+<style>
+  .about-header {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 5rem;
+    align-items: start;
+    margin-bottom: 2.5rem;
+  }
+
+  .about-portrait {
+    width: 100%;
+    border-radius: 6px;
+    display: block;
+  }
+
+  @media (max-width: 768px) {
+    .about-header {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .about-portrait {
+      max-width: 200px;
+    }
+  }
+</style>

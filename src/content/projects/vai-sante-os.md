@@ -11,13 +11,13 @@ accent: true
 
 ## I built a personal AI to manage my oncology records during treatment. My own files were the first test.
 
-When you're in treatment, navigating fragmented medical information takes energy you don't have. Finding a test result is not the problem, but understanding those test reports are. Why do medical reports written cryptically and ambigiously? Two doctors have contradicting notes. A summary leaves out the thing that matters. You're sick, and the system makes it harder.
+When you're in treatment, navigating fragmented medical information takes energy you don't have. Finding a test result is not the problem, but understanding those test reports is. Why are medical reports written so cryptically and ambiguously? Two doctors have contradicting notes. A summary leaves out the thing that matters. You're sick, and the system makes it harder.
 
-It's one thing to easily get access to your imaging results like your brain MRI, PET scan or hematology report. But those images means nothing if you don't understand what you're seeing and where to look. I had to make my oncologist point me which imaging I need to see and how to read them. But this approach is cumbersome and often leave me with more questions. 
+It's one thing to easily get access to your imaging results like your brain MRI, PET scan or hematology report. But those images mean nothing if you don't understand what you're seeing and where to look. I had to ask my oncologist to point me to which imaging I needed to see and how to read them. But this approach is cumbersome and often leaves me with more questions.
 
 So I built something to fix that. For myself, first.
 
-VAI Santé turns scattered documents (scans, lab results, clinical notes, referral letters) into something you can actually query, trace back to the original source, and hand to a specialist in a coherent summary. It runs entirely on your own device for obvious privacy reason.
+VAI Santé turns scattered documents (scans, lab results, clinical notes, referral letters) into something you can actually query, trace back to the original source, and hand to a specialist in a coherent summary. It runs entirely on your own device for obvious privacy reasons.
 
 ## Why the technical choices are what they are
 
