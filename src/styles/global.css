@@ -1,0 +1,180 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #fdfaf5;
+  --color-cream-deep: #f5ede0;
+  --color-ink: #1a1816;
+  --color-ink-soft: #3d3833;
+  --color-ink-muted: #6b625a;
+  --color-rule: #e8e0d2;
+  --color-accent: #b5532a;
+  --color-accent-soft: #d97f4f;
+
+  --font-display: "Fraunces", "Iowan Old Style", "Apple Garamond", Georgia, serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Menlo", monospace;
+
+  --text-display-lg: 4.5rem;
+  --text-display: 3rem;
+  --text-h1: 2.25rem;
+  --text-h2: 1.5rem;
+  --text-h3: 1.25rem;
+
+  --leading-prose: 1.65;
+  --tracking-tight: -0.02em;
+}
+
+@layer base {
+  html {
+    background: var(--color-cream);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: var(--leading-prose);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--color-cream);
+    color: var(--color-ink);
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-cream);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: var(--tracking-tight);
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+    color: var(--color-ink);
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 6vw, var(--text-display));
+    line-height: 1.05;
+  }
+
+  h2 {
+    font-size: var(--text-h1);
+    line-height: 1.15;
+  }
+
+  h3 {
+    font-size: var(--text-h2);
+    line-height: 1.25;
+  }
+
+  a {
+    color: var(--color-ink);
+    text-decoration-color: var(--color-rule);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    transition: text-decoration-color 0.15s ease, color 0.15s ease;
+  }
+
+  a:hover {
+    text-decoration-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  code, pre {
+    font-family: var(--font-mono);
+  }
+}
+
+@layer components {
+  .container-prose {
+    max-width: 36rem;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+
+  .container-wide {
+    max-width: 48rem;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+
+  .pill {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    color: var(--color-ink-soft);
+    padding: 0.15rem 0.6rem;
+    border: 1px solid var(--color-rule);
+    border-radius: 9999px;
+    background: transparent;
+    white-space: nowrap;
+  }
+
+  .pill-accent {
+    color: var(--color-accent);
+    border-color: var(--color-accent-soft);
+  }
+
+  .tech-tag {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-ink-muted);
+    letter-spacing: 0.02em;
+  }
+
+  .rule {
+    border: 0;
+    border-top: 1px solid var(--color-rule);
+    margin: 4rem 0;
+  }
+
+  .rule-tight {
+    border: 0;
+    border-top: 1px solid var(--color-rule);
+    margin: 2.5rem 0;
+  }
+
+  .small-caps {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+  }
+
+  .prose-body p {
+    margin-block: 1rem;
+  }
+
+  .prose-body ul {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+  }
+
+  .prose-body ul li {
+    position: relative;
+    padding-left: 1.25rem;
+    margin-block: 0.4rem;
+  }
+
+  .prose-body ul li::before {
+    content: "·";
+    position: absolute;
+    left: 0.25rem;
+    color: var(--color-accent);
+    font-weight: 700;
+  }
+
+  .lede {
+    font-family: var(--font-display);
+    font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+    line-height: 1.45;
+    color: var(--color-ink-soft);
+    font-weight: 400;
+    font-style: italic;
+  }
+}

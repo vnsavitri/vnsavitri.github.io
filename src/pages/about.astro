@@ -1,0 +1,136 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="About — Vivid Savitri" pathname="/about/">
+  <article class="container-prose pt-8 pb-24">
+    <p class="small-caps mb-8">About</p>
+
+    <h1 class="mb-8" style="font-variation-settings: 'opsz' 144, 'SOFT' 50;">
+      Player-coach product builder, working at the intersection of frontier AI and human-centred design.
+    </h1>
+
+    <div class="prose-body" style="font-size: 1.1rem; line-height: 1.7;">
+      <p>
+        I'm Vivid. I build AI systems that are useful enough to ship and careful
+        enough to defend. Based in Sydney, working across product strategy, research
+        prototyping, and engineering.
+      </p>
+
+      <p>
+        Background spans HCI and design (Stanford), AI product management (Duke), an MBA
+        thesis on AI-driven experience design (Berlin), and twelve years across twelve
+        countries — most relevantly two successful exits in the video games space (Shanghai
+        and Berlin) where I learned how to ship products with small teams under deadline.
+      </p>
+
+      <h2>What I work on</h2>
+
+      <ul>
+        <li>
+          <strong>Agentic AI systems</strong> — multi-agent architectures with explicit
+          safety envelopes, LLM orchestration, evaluation harnesses
+        </li>
+        <li>
+          <strong>MCP servers</strong> — production and prototype, both consumer-facing
+          and inside the enterprise (Breville's DAM Butler is the most public example)
+        </li>
+        <li>
+          <strong>Privacy-first AI infrastructure</strong> — provenance-aware retrieval,
+          longitudinal reasoning scaffolds, human-in-the-loop review gates
+        </li>
+        <li>
+          <strong>Human-AI interaction</strong> — designing experiences where AI augments
+          decision-making instead of obscuring it
+        </li>
+      </ul>
+
+      <h2>Why I care about safety</h2>
+
+      <p>
+        Most AI demos look good on happy-path prompts and fall apart when you ask the
+        hard questions — provenance, override, longitudinal change, failure modes. My
+        bet is that the products that matter five years from now are the ones whose
+        builders took those questions seriously at the prototype stage, not after the
+        first incident.
+      </p>
+
+      <p>
+        That's what threads my work together: <a href="/projects/vai-sante-os/">multimodal
+        memory with chain-of-custody</a>, <a href="/projects/vivid-alpaca/">multi-agent
+        trading with execution guardrails</a>, <a href="/projects/espresso-horoscope-mcp/">local
+        agents with strict tool boundaries</a>. The use cases differ. The discipline doesn't.
+      </p>
+
+      <h2>Currently building</h2>
+
+      <ul>
+        <li>
+          AI-native gameplay with agentic workflows and isolated sub-agents for parallel
+          task execution
+        </li>
+        <li>
+          Hybrid model routing across local models (LM Studio) and OpenRouter-hosted
+          models, including Qwen 3.x variants
+        </li>
+        <li>
+          AI evaluation frameworks aimed at product decisions, not benchmark gaming
+        </li>
+      </ul>
+
+      <h2>Education</h2>
+
+      <ul>
+        <li>HCI & Design — Stanford University</li>
+        <li>AI Product Management — Duke University (Pratt School of Engineering)</li>
+        <li>MBA — Steinbeis Hochschule, Berlin (Thesis: AI-Driven Application for Experience Design)</li>
+      </ul>
+
+      <h2>Languages</h2>
+      <p>English · French · Mandarin</p>
+
+      <h2>Reach out</h2>
+      <p>
+        <a href="https://www.linkedin.com/in/vividsavitri/" target="_blank" rel="noopener">LinkedIn</a> ·
+        <a href="https://github.com/vnsavitri" target="_blank" rel="noopener">GitHub</a> ·
+        <a href="https://discord.com/users/VividSydney" target="_blank" rel="noopener">Discord</a>
+      </p>
+    </div>
+  </article>
+</Layout>
+
+<style is:global>
+  .prose-body h2 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 1.5rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+  }
+  .prose-body p {
+    margin-block: 1rem;
+  }
+  .prose-body ul {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+  }
+  .prose-body ul li {
+    position: relative;
+    padding-left: 1.25rem;
+    margin-block: 0.4rem;
+  }
+  .prose-body ul li::before {
+    content: "·";
+    position: absolute;
+    left: 0.3rem;
+    top: -0.15rem;
+    color: var(--color-accent);
+    font-weight: 700;
+    font-size: 1.2rem;
+  }
+  .prose-body strong {
+    font-weight: 600;
+  }
+</style>

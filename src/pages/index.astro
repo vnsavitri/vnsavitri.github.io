@@ -1,0 +1,97 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+
+const projects = (await getCollection("projects")).sort(
+  (a, b) => a.data.order - b.data.order
+);
+---
+
+<Layout
+  title="Vivid Savitri — AI product builder"
+  description="AI product builder and researcher. Building agentic systems, MCP servers, and tools for high-stakes AI workflows."
+>
+  <section class="container-wide pt-12 pb-24">
+    <p class="small-caps mb-6">AI / Product / Sydney</p>
+
+    <h1 class="mb-8" style="font-variation-settings: 'opsz' 144, 'SOFT' 50; font-weight: 400;">
+      I build AI systems that take<br />
+      <em style="color: var(--color-accent); font-style: italic;">safety</em> as seriously as
+      <em style="color: var(--color-accent); font-style: italic;">capability</em>.
+    </h1>
+
+    <p class="lede max-w-prose">
+      Product, research, and engineering across multi-agent systems, MCP servers, and
+      provenance-aware memory for high-stakes AI workflows. Two startup exits, twelve countries,
+      and a long-running suspicion that the best products are the ones you can't ship without
+      thinking about who they fail on.
+    </p>
+
+    <div class="mt-10 flex gap-6 text-sm">
+      <a href="/about" style="text-decoration: none;">
+        <span class="border-b border-[var(--color-rule)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] pb-1">
+          About →
+        </span>
+      </a>
+      <a href="https://github.com/vnsavitri" target="_blank" rel="noopener" style="text-decoration: none;">
+        <span class="border-b border-[var(--color-rule)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] pb-1">
+          GitHub →
+        </span>
+      </a>
+      <a href="https://www.linkedin.com/in/vividsavitri/" target="_blank" rel="noopener" style="text-decoration: none;">
+        <span class="border-b border-[var(--color-rule)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] pb-1">
+          LinkedIn →
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <hr class="rule container-wide" style="margin-top: 0;" />
+
+  <section class="container-wide pb-24">
+    <div class="flex items-baseline justify-between mb-12">
+      <h2 style="font-variation-settings: 'opsz' 144, 'SOFT' 50;">Featured Work</h2>
+      <span class="small-caps">Six projects</span>
+    </div>
+
+    <ol class="list-none p-0 m-0">
+      {projects.map((project, idx) => (
+        <li>
+          {idx > 0 && <hr class="rule-tight" />}
+          <a href={`/projects/${project.data.slug}/`} style="text-decoration: none; display: block;" class="group">
+            <article class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 py-2">
+              <div class="small-caps pt-2" style="min-width: 2.5rem;">0{idx + 1}</div>
+
+              <div>
+                <h3 class="group-hover:text-[var(--color-accent)] transition-colors" style="font-variation-settings: 'opsz' 144, 'SOFT' 50; font-weight: 500;">
+                  {project.data.title}
+                </h3>
+                <p class="mt-2 mb-4 text-[var(--color-ink-soft)] max-w-[55ch]" style="font-size: 1.05rem; line-height: 1.55;">
+                  {project.data.hook}
+                </p>
+
+                <div class="flex flex-wrap items-center gap-2 mb-3">
+                  {project.data.status.map((s, i) => (
+                    <span class={`pill ${i === 0 && project.data.accent ? "pill-accent" : ""}`}>{s}</span>
+                  ))}
+                  {project.data.stars && (
+                    <span class="pill">★ {project.data.stars}</span>
+                  )}
+                </div>
+
+                <div class="tech-tag">
+                  {project.data.tech.join(" · ")}
+                </div>
+              </div>
+            </article>
+          </a>
+        </li>
+      ))}
+    </ol>
+
+    <p class="mt-16 text-sm text-[var(--color-ink-muted)]">
+      More on
+      <a href="https://github.com/vnsavitri" target="_blank" rel="noopener">GitHub →</a>
+    </p>
+  </section>
+</Layout>

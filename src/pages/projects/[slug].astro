@@ -1,0 +1,157 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const projects = await getCollection("projects");
+  return projects.map((project) => ({
+    params: { slug: project.data.slug },
+    props: { project },
+  }));
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+---
+
+<Layout
+  title={`${project.data.title} — Vivid Savitri`}
+  description={project.data.hook}
+  pathname={`/projects/${project.data.slug}/`}
+>
+  <article class="container-prose pt-8 pb-24">
+    <p class="small-caps mb-8">
+      <a href="/" style="text-decoration: none; color: var(--color-ink-muted);">← Work</a>
+    </p>
+
+    <h1 class="mb-6" style="font-variation-settings: 'opsz' 144, 'SOFT' 50;">
+      {project.data.title}
+    </h1>
+
+    <p class="lede mb-8">{project.data.hook}</p>
+
+    <div class="flex flex-wrap items-center gap-2 mb-4">
+      {project.data.status.map((s, i) => (
+        <span class={`pill ${i === 0 && project.data.accent ? "pill-accent" : ""}`}>{s}</span>
+      ))}
+      {project.data.stars && <span class="pill">★ {project.data.stars}</span>}
+    </div>
+
+    <div class="tech-tag mb-12">{project.data.tech.join(" · ")}</div>
+
+    <hr class="rule-tight" />
+
+    <div class="prose-body" style="font-size: 1.05rem; line-height: 1.7;">
+      <Content />
+    </div>
+
+    <hr class="rule" />
+
+    <div class="flex flex-col gap-3">
+      <a href={project.data.repo} target="_blank" rel="noopener" class="font-display text-lg">
+        View repository →
+      </a>
+      {project.data.live && (
+        <a href={project.data.live} target="_blank" rel="noopener" class="font-display text-lg">
+          Live: {project.data.live.replace(/^https?:\/\//, "")} →
+        </a>
+      )}
+      {project.data.demo && (
+        <a href={project.data.demo} target="_blank" rel="noopener" class="font-display text-lg">
+          Watch demo →
+        </a>
+      )}
+    </div>
+  </article>
+</Layout>
+
+<style is:global>
+  .prose-body h2 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 1.5rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+  }
+  .prose-body h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 1.2rem;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .prose-body p {
+    margin-block: 1rem;
+  }
+  .prose-body ul {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+  }
+  .prose-body ul li {
+    position: relative;
+    padding-left: 1.25rem;
+    margin-block: 0.4rem;
+  }
+  .prose-body ul li::before {
+    content: "·";
+    position: absolute;
+    left: 0.3rem;
+    top: -0.15rem;
+    color: var(--color-accent);
+    font-weight: 700;
+    font-size: 1.2rem;
+  }
+  .prose-body ol {
+    list-style: decimal;
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+  }
+  .prose-body ol li {
+    margin-block: 0.4rem;
+  }
+  .prose-body blockquote {
+    border-left: 2px solid var(--color-accent);
+    padding-left: 1.5rem;
+    margin: 1.5rem 0;
+    font-family: var(--font-display);
+    font-style: italic;
+    color: var(--color-ink-soft);
+    font-size: 1.1rem;
+  }
+  .prose-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.95rem;
+  }
+  .prose-body th, .prose-body td {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--color-rule);
+    vertical-align: top;
+  }
+  .prose-body th {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-ink-muted);
+    font-weight: 500;
+  }
+  .prose-body code {
+    background: var(--color-cream-deep);
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+  .prose-body strong {
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+  .prose-body em {
+    font-family: var(--font-display);
+    font-style: italic;
+  }
+</style>

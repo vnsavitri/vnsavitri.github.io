@@ -1,0 +1,87 @@
+---
+import "../styles/global.css";
+
+export interface Props {
+  title?: string;
+  description?: string;
+  pathname?: string;
+}
+
+const {
+  title = "Vivid Savitri",
+  description = "AI product builder, researcher, and founder. Building agentic systems, MCP servers, and tools for high-stakes AI workflows.",
+  pathname = "",
+} = Astro.props;
+
+const canonicalURL = new URL(pathname, Astro.site).toString();
+const ogImage = new URL("/og.png", Astro.site).toString();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
+
+    <meta name="theme-color" content="#fdfaf5" />
+  </head>
+
+  <body>
+    <header class="container-wide py-10 flex items-center justify-between">
+      <a href="/" class="font-display text-lg no-underline" style="text-decoration: none;">
+        <span style="font-variation-settings: 'opsz' 144, 'SOFT' 50; font-weight: 500;">
+          Vivid Savitri
+        </span>
+      </a>
+      <nav class="flex gap-6 text-sm">
+        <a href="/" style="text-decoration: none;" class="hover:text-[var(--color-accent)]">Work</a>
+        <a href="/about" style="text-decoration: none;" class="hover:text-[var(--color-accent)]">About</a>
+        <a
+          href="https://github.com/vnsavitri"
+          target="_blank"
+          rel="noopener"
+          style="text-decoration: none;"
+          class="hover:text-[var(--color-accent)]"
+        >
+          GitHub
+        </a>
+      </nav>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="container-wide py-16 mt-24 border-t border-[var(--color-rule)]">
+      <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4">
+        <div class="small-caps">Sydney, Australia · {new Date().getFullYear()}</div>
+        <div class="flex gap-6 text-sm">
+          <a href="https://github.com/vnsavitri" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://www.linkedin.com/in/vividsavitri/" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://discord.com/users/VividSydney" target="_blank" rel="noopener">Discord</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
