@@ -88,7 +88,10 @@ const projects = (await getCollection("projects")).sort(
     padding-bottom: 6rem;
   }
 
+  /* Hero h1 overrides the global h1 — bigger, but still controlled */
   .hero-heading {
+    font-size: clamp(2.25rem, 3.5vw, 3.75rem);
+    line-height: 1.08;
     margin-bottom: 1.75rem;
   }
 

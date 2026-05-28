@@ -46,12 +46,14 @@
     font-optical-sizing: auto;
     letter-spacing: -0.025em;
     color: var(--color-ink);
-    line-height: 1.1;
+    line-height: 1.15;
   }
 
-  h1 { font-size: clamp(2.75rem, 5.5vw, 5.5rem); font-weight: 700; }
-  h2 { font-size: clamp(1.75rem, 3vw, 2.75rem); font-weight: 700; }
-  h3 { font-size: clamp(1.2rem, 1.5vw, 1.45rem); font-weight: 600; letter-spacing: -0.02em; }
+  /* These are default page h1/h2/h3 sizes (about, project pages).
+     The homepage hero overrides h1 via .hero-heading in index.astro. */
+  h1 { font-size: clamp(1.75rem, 2.5vw, 2.5rem); font-weight: 700; }
+  h2 { font-size: clamp(1.4rem, 1.8vw, 2rem); font-weight: 700; }
+  h3 { font-size: clamp(1.05rem, 1.2vw, 1.25rem); font-weight: 600; letter-spacing: -0.02em; }
 
   a {
     color: var(--color-ink);
@@ -72,16 +74,19 @@
 }
 
 @layer components {
+  /* Prose container: reading-width max, centered */
   .container-prose {
-    max-width: 44rem;
+    max-width: 680px;
     margin-inline: auto;
     padding-inline: clamp(1.25rem, 5vw, 3rem);
   }
 
+  /* Wide container: truly responsive — scales with viewport, no fixed px cap
+     until very wide screens. Padding grows with vw so content always fills ~85%. */
   .container-wide {
-    max-width: 1100px;
+    max-width: 1600px;
     margin-inline: auto;
-    padding-inline: clamp(1.25rem, 5vw, 3rem);
+    padding-inline: clamp(1.25rem, 8vw, 8rem);
   }
 
   /* Status pills */
