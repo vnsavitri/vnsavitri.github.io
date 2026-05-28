@@ -49,9 +49,9 @@
     line-height: 1.1;
   }
 
-  h1 { font-size: clamp(2.75rem, 6vw, 4rem); font-weight: 700; }
-  h2 { font-size: clamp(1.75rem, 3.5vw, 2.25rem); font-weight: 700; }
-  h3 { font-size: 1.35rem; font-weight: 600; letter-spacing: -0.02em; }
+  h1 { font-size: clamp(2.75rem, 5.5vw, 5.5rem); font-weight: 700; }
+  h2 { font-size: clamp(1.75rem, 3vw, 2.75rem); font-weight: 700; }
+  h3 { font-size: clamp(1.2rem, 1.5vw, 1.45rem); font-weight: 600; letter-spacing: -0.02em; }
 
   a {
     color: var(--color-ink);
@@ -73,15 +73,15 @@
 
 @layer components {
   .container-prose {
-    max-width: 36rem;
+    max-width: 44rem;
     margin-inline: auto;
-    padding-inline: clamp(1rem, 5vw, 1.5rem);
+    padding-inline: clamp(1.25rem, 5vw, 3rem);
   }
 
   .container-wide {
-    max-width: 52rem;
+    max-width: 1100px;
     margin-inline: auto;
-    padding-inline: clamp(1rem, 5vw, 1.5rem);
+    padding-inline: clamp(1.25rem, 5vw, 3rem);
   }
 
   /* Status pills */
@@ -145,11 +145,11 @@
   /* Lede / intro paragraph */
   .lede {
     font-family: var(--font-body);
-    font-size: clamp(1.05rem, 2vw, 1.2rem);
-    line-height: 1.6;
+    font-size: clamp(1.05rem, 2vw, 1.25rem);
+    line-height: 1.65;
     color: var(--color-ink-soft);
     font-weight: 300;
-    max-width: 58ch;
+    max-width: 72ch;
   }
 
   /* Prose body — used on project + about pages */
