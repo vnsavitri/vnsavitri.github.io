@@ -19,23 +19,13 @@ Getting to the right file meant knowing the exact folder structure, taxonomy, an
 
 Breville's first MCP-based internal tool.
 
-A custom GPT connects to Brandfolder via an MCP server that runs two stages: an intent parser translates any natural-language query into a structured API request, and a clarification loop resolves ambiguous inputs before the call fires — so a request like *"the white Barista Express hero shot approved for EU markets, updated after January 2025"* returns the right asset with metadata, not a scroll-through list. The user never touches the DAM interface.
+A custom GPT connects to Brandfolder through two sequential stages. First, an **intent parser** converts any natural-language query into a structured API request — mapping descriptions, markets, dates, and product names to the right filter parameters. Then a **clarification loop** runs for ambiguous inputs before the API call fires, asking one targeted follow-up rather than returning a wall of partial matches.
 
-```
-User prompt (ChatGPT Enterprise · Claude Desktop)
-    ↓
-Intent parser — natural language → structured query
-    ↓
-Clarification loop — resolves ambiguity before API call
-    ↓
-Brandfolder API
-    ↓
-Asset + metadata returned in chat
-```
+The result: ask *"the white Barista Express hero shot approved for EU markets, updated after January 2025"* and get back the right asset with metadata, directly in chat. The user never touches the DAM interface or learns the taxonomy.
 
 ## Result
 
-Prototyped September 2025. Demoed to product leadership. Architecture adopted and shipped to production by Breville engineering.
+Prototyped September 2025. Demoed to Breville product leadership. Architecture adopted and shipped to production by the Breville engineering team.
 
 Now in daily workflows for GTM teams across APAC, North America, and EMEA.
 

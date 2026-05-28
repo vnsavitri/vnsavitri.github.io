@@ -6,11 +6,11 @@ import Layout from "../layouts/Layout.astro";
   <article class="container-prose pt-8 pb-24">
     <p class="small-caps mb-8">About</p>
 
-    <h1 class="mb-8" style="font-variation-settings: 'opsz' 144, 'SOFT' 50;">
+    <h1 class="mb-8">
       Player-coach product builder, working at the intersection of frontier AI and human-centred design.
     </h1>
 
-    <div class="prose-body" style="font-size: 1.1rem; line-height: 1.7;">
+    <div class="prose-body">
       <p>
         I'm Vivid. I build AI systems that are useful enough to ship and careful
         enough to defend. Based in Sydney, working across product strategy, research
@@ -98,39 +98,3 @@ import Layout from "../layouts/Layout.astro";
     </div>
   </article>
 </Layout>
-
-<style is:global>
-  .prose-body h2 {
-    font-family: var(--font-display);
-    font-weight: 500;
-    font-size: 1.5rem;
-    margin-top: 2.5rem;
-    margin-bottom: 1rem;
-    font-variation-settings: "opsz" 144, "SOFT" 50;
-  }
-  .prose-body p {
-    margin-block: 1rem;
-  }
-  .prose-body ul {
-    list-style: none;
-    padding: 0;
-    margin: 1rem 0;
-  }
-  .prose-body ul li {
-    position: relative;
-    padding-left: 1.25rem;
-    margin-block: 0.4rem;
-  }
-  .prose-body ul li::before {
-    content: "·";
-    position: absolute;
-    left: 0.3rem;
-    top: -0.15rem;
-    color: var(--color-accent);
-    font-weight: 700;
-    font-size: 1.2rem;
-  }
-  .prose-body strong {
-    font-weight: 600;
-  }
-</style>

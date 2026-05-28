@@ -1,27 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-cream: #fdfaf5;
-  --color-cream-deep: #f5ede0;
-  --color-ink: #1a1816;
-  --color-ink-soft: #3d3833;
-  --color-ink-muted: #6b625a;
-  --color-rule: #e8e0d2;
+  /* Palette — warm but precise */
+  --color-cream: #f5f3ee;
+  --color-cream-deep: #ede9e0;
+  --color-ink: #111109;
+  --color-ink-soft: #4a4540;
+  --color-ink-muted: #928b83;
+  --color-rule: #dfd8cf;
   --color-accent: #b5532a;
-  --color-accent-soft: #d97f4f;
+  --color-accent-soft: #d4754a;
+  --color-code-bg: #f0ede6;
 
-  --font-display: "Fraunces", "Iowan Old Style", "Apple Garamond", Georgia, serif;
-  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Fonts — Bricolage Grotesque replaces Fraunces, Outfit replaces Inter */
+  --font-display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Outfit", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono", "SF Mono", "Menlo", monospace;
 
-  --text-display-lg: 4.5rem;
-  --text-display: 3rem;
-  --text-h1: 2.25rem;
-  --text-h2: 1.5rem;
-  --text-h3: 1.25rem;
-
   --leading-prose: 1.65;
-  --tracking-tight: -0.02em;
 }
 
 @layer base {
@@ -47,38 +43,27 @@
 
   h1, h2, h3, h4 {
     font-family: var(--font-display);
-    font-weight: 400;
-    letter-spacing: var(--tracking-tight);
-    font-variation-settings: "opsz" 144, "SOFT" 50;
+    font-optical-sizing: auto;
+    letter-spacing: -0.025em;
     color: var(--color-ink);
+    line-height: 1.1;
   }
 
-  h1 {
-    font-size: clamp(2.5rem, 6vw, var(--text-display));
-    line-height: 1.05;
-  }
-
-  h2 {
-    font-size: var(--text-h1);
-    line-height: 1.15;
-  }
-
-  h3 {
-    font-size: var(--text-h2);
-    line-height: 1.25;
-  }
+  h1 { font-size: clamp(2.75rem, 6vw, 4rem); font-weight: 700; }
+  h2 { font-size: clamp(1.75rem, 3.5vw, 2.25rem); font-weight: 700; }
+  h3 { font-size: 1.35rem; font-weight: 600; letter-spacing: -0.02em; }
 
   a {
     color: var(--color-ink);
     text-decoration-color: var(--color-rule);
     text-decoration-thickness: 1px;
     text-underline-offset: 4px;
-    transition: text-decoration-color 0.15s ease, color 0.15s ease;
+    transition: color 0.15s ease, text-decoration-color 0.15s ease;
   }
 
   a:hover {
-    text-decoration-color: var(--color-accent);
     color: var(--color-accent);
+    text-decoration-color: var(--color-accent);
   }
 
   code, pre {
@@ -94,59 +79,110 @@
   }
 
   .container-wide {
-    max-width: 48rem;
+    max-width: 50rem;
     margin-inline: auto;
     padding-inline: 1.5rem;
   }
 
+  /* Status pills */
   .pill {
     display: inline-block;
     font-family: var(--font-mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.04em;
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
     text-transform: lowercase;
     color: var(--color-ink-soft);
-    padding: 0.15rem 0.6rem;
+    padding: 0.2rem 0.65rem;
     border: 1px solid var(--color-rule);
     border-radius: 9999px;
     background: transparent;
     white-space: nowrap;
+    font-weight: 500;
   }
 
   .pill-accent {
     color: var(--color-accent);
-    border-color: var(--color-accent-soft);
+    border-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+    background: color-mix(in srgb, var(--color-accent) 6%, transparent);
   }
 
   .tech-tag {
     font-family: var(--font-mono);
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     color: var(--color-ink-muted);
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
   }
 
-  .rule {
-    border: 0;
-    border-top: 1px solid var(--color-rule);
-    margin: 4rem 0;
-  }
-
-  .rule-tight {
-    border: 0;
-    border-top: 1px solid var(--color-rule);
-    margin: 2.5rem 0;
-  }
+  .rule  { border: 0; border-top: 1px solid var(--color-rule); margin: 4rem 0; }
+  .rule-tight { border: 0; border-top: 1px solid var(--color-rule); margin: 2.5rem 0; }
 
   .small-caps {
     font-family: var(--font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.18em;
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--color-ink-muted);
+    font-weight: 500;
   }
 
-  .prose-body p {
-    margin-block: 1rem;
+  /* Large decorative project number */
+  .project-num {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--color-rule);
+    line-height: 1;
+    font-optical-sizing: auto;
+    transition: color 0.2s ease;
+    user-select: none;
+  }
+
+  .group:hover .project-num {
+    color: color-mix(in srgb, var(--color-accent) 25%, var(--color-rule));
+  }
+
+  /* Lede / intro paragraph */
+  .lede {
+    font-family: var(--font-body);
+    font-size: clamp(1.05rem, 2vw, 1.2rem);
+    line-height: 1.6;
+    color: var(--color-ink-soft);
+    font-weight: 300;
+    max-width: 58ch;
+  }
+
+  /* Prose body — used on project + about pages */
+  .prose-body {
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: var(--color-ink-soft);
+  }
+
+  .prose-body p      { margin-block: 1rem; }
+  .prose-body strong { font-weight: 600; color: var(--color-ink); }
+  .prose-body em     { font-style: italic; }
+
+  .prose-body h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.4rem;
+    margin-top: 2.75rem;
+    margin-bottom: 0.75rem;
+    color: var(--color-ink);
+    letter-spacing: -0.025em;
+    font-optical-sizing: auto;
+  }
+
+  .prose-body h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.15rem;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--color-ink);
+    letter-spacing: -0.02em;
+    font-optical-sizing: auto;
   }
 
   .prose-body ul {
@@ -158,23 +194,111 @@
   .prose-body ul li {
     position: relative;
     padding-left: 1.25rem;
-    margin-block: 0.4rem;
+    margin-block: 0.45rem;
   }
 
   .prose-body ul li::before {
-    content: "·";
+    content: "–";
     position: absolute;
-    left: 0.25rem;
+    left: 0;
     color: var(--color-accent);
-    font-weight: 700;
+    font-weight: 600;
   }
 
-  .lede {
-    font-family: var(--font-display);
-    font-size: clamp(1.15rem, 2.2vw, 1.4rem);
-    line-height: 1.45;
+  .prose-body ol {
+    list-style: none;
+    counter-reset: prose-counter;
+    padding: 0;
+    margin: 1.25rem 0;
+  }
+
+  .prose-body ol li {
+    counter-increment: prose-counter;
+    position: relative;
+    padding-left: 2rem;
+    margin-block: 0.6rem;
+  }
+
+  .prose-body ol li::before {
+    content: counter(prose-counter, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-accent);
+    font-weight: 600;
+    top: 0.2rem;
+    letter-spacing: 0.02em;
+  }
+
+  .prose-body blockquote {
+    border-left: 2px solid var(--color-accent);
+    padding: 0.5rem 1.5rem;
+    margin: 1.75rem 0;
     color: var(--color-ink-soft);
-    font-weight: 400;
+    font-size: 1.1rem;
     font-style: italic;
+  }
+
+  /* Code blocks — fenced (pre > code) */
+  .prose-body pre {
+    background: var(--color-code-bg);
+    border: 1px solid var(--color-rule);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.75rem 0;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.7;
+  }
+
+  /* Override Shiki inline styles on pre so our theme shows */
+  .prose-body pre.astro-code {
+    background: var(--color-code-bg) !important;
+    border: 1px solid var(--color-rule);
+  }
+
+  /* Reset inline code inside a code block */
+  .prose-body pre code {
+    background: none !important;
+    padding: 0;
+    font-size: inherit;
+    border-radius: 0;
+    color: var(--color-ink-soft);
+  }
+
+  /* Inline code (not in pre) */
+  .prose-body code {
+    background: var(--color-code-bg);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.88em;
+    color: var(--color-ink);
+    font-weight: 500;
+  }
+
+  .prose-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.75rem 0;
+    font-size: 0.92rem;
+  }
+
+  .prose-body th {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-ink-muted);
+    font-weight: 600;
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--color-rule);
+  }
+
+  .prose-body td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-rule) 60%, transparent);
+    vertical-align: top;
   }
 }
