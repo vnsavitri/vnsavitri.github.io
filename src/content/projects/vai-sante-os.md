@@ -1,7 +1,7 @@
 ---
 title: vai_sante_os
 slug: vai-sante-os
-hook: A privacy-first framework for provenance-aware multimodal memory and orchestration in high-stakes AI workflows.
+hook: I built this during cancer treatment. My own oncology records were the first test.
 status: ["active", "research"]
 tech: ["Python", "Mermaid", "evaluation harness"]
 repo: https://github.com/vnsavitri/vai_sante_os
@@ -9,39 +9,32 @@ order: 1
 accent: true
 ---
 
-## Why this exists
+## I built this during cancer treatment. My own oncology records were the first test.
 
-Most AI demos look good on happy-path prompts and fall apart when you ask the hard questions:
+When you're in treatment, navigating fragmented medical information takes energy you don't have. Finding a test result from three months ago takes twenty minutes. Two doctors have contradicting notes. A summary leaves out the thing that matters. You're sick, and the system makes it harder.
 
-- *Where did this claim come from?*
-- *Can I inspect the original evidence?*
-- *What changed over time?*
-- *How do I review or override this safely?*
+So I built something to fix that — for myself, first.
 
-`vai_sante_os` is exploratory research infrastructure for AI systems that need to reason over mixed evidence safely, with traceability and human oversight. It is **not** a clinical product, not a medical device, and not a decision-maker.
+VAI Santé turns months of scattered documents — scans, lab results, clinical notes, referral letters — into something you can actually query, trace back to the original source, and hand to a specialist in a coherent summary. It runs entirely on your own machine. Nothing leaves.
 
-## Problem space
+## Why the technical choices are what they are
 
-High-stakes workflows (health, legal, policy, safety, operations) often involve:
+Every design decision came from the stakes being real.
 
-- multimodal evidence (text, scans, audio, forms, structured records)
-- longitudinal context (state changes over weeks or years)
-- strict provenance expectations
-- privacy constraints and local-first data handling
-- human review at critical decisions
+**Local-first** because your oncology records don't belong in a cloud pipeline. All storage, retrieval, and reasoning happens on-device.
 
-`vai_sante_os` explores a generalisable architecture for that setting.
+**Provenance-aware retrieval** because when an AI tells you something about your health, you need to see exactly where that answer came from — which document, which page, which date — not just a confident summary. Every response carries its chain of custody.
 
-## Core ideas
+**Longitudinal memory** because medical reality unfolds over time. A result from six months ago changes the meaning of a result from last week. The system treats time as first-class context, not stray metadata.
 
-- **Privacy-first multimodal memory** — keep storage boundaries explicit and minimise data movement
-- **Provenance-aware retrieval** — retrieval returns both content and its chain of custody
-- **Longitudinal reasoning scaffolds** — treat time as first-class, not as stray metadata
-- **Human-in-the-loop orchestration** — route sensitive steps through review gates
-- **Evaluation and governance by default** — assess uncertainty, evidence quality, and failure modes early
+**Human-in-the-loop review gates** because model output is advisory. The system is designed to surface information and flag uncertainty — not to decide.
 
-## Architecture
+## So what
 
-The layered architecture moves evidence through ingestion, normalisation, an evidence store with explicit access policy, indexing, retrieval with provenance constraints, agent orchestration, a human review interface, and an audit + evaluation layer with trace logs and replay.
+On the personal level: this worked. It made a genuinely hard situation more navigable, and that's worth saying plainly.
 
-Read the full architecture and design notes in the [repository](https://github.com/vnsavitri/vai_sante_os).
+On the broader level: health was the forcing function for getting the constraints right. High-stakes, longitudinal, privacy-sensitive, multimodal — oncology records are an extreme case of a pattern that shows up in legal, policy, safety, and operations contexts too. The architecture generalises. The health use case just made it impossible to cut corners on trust design.
+
+If you're building in a domain where a hallucination has real consequences, this is the kind of infrastructure that matters before capability.
+
+[Repository →](https://github.com/vnsavitri/vai_sante_os)
