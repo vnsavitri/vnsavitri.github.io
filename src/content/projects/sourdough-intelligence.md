@@ -1,7 +1,7 @@
 ---
-title: sourdough-intelligence
+title: Sourdough Intelligence
 slug: sourdough-intelligence
-hook: ML-powered sourdough framework. 207-recipe regression and IBM Watson sentiment analysis, started in 2018 — before LLMs.
+hook: ML-powered sourdough framework. 207-recipe regression and IBM Watson sentiment analysis, started in 2018, before LLMs.
 status: ["live"]
 tech: ["R", "IBM Watson NLP", "regression"]
 repo: https://github.com/vnsavitri/sourdough-intelligence
@@ -40,7 +40,7 @@ The app then generates a practical formula, ingredient list, and timestamped sch
 - Seven bread archetypes: sandwich loaf, toast loaf, country loaf, rolls, pizza dough, focaccia, baguette
 - Recipe formula generation using baker's percentages
 - Schedule engine that works backwards from the target finish time
-- Active-step planning with quiet-hours support — folds and shaping don't land during sleep or work blocks
+- Active-step planning with quiet-hours support: folds and shaping don't land during sleep or work blocks
 - Temperature-aware bulk fermentation estimate
 - Warnings for unrealistic timelines, risky hydration, hot kitchens
 - Printable plan and PNG export, light and dark themes, dependency-light static deployment

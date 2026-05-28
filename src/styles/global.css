@@ -76,7 +76,7 @@
 @layer components {
   /* Prose container: reading-width max, centered */
   .container-prose {
-    max-width: 680px;
+    max-width: 780px;
     margin-inline: auto;
     padding-inline: clamp(1.25rem, 5vw, 3rem);
   }

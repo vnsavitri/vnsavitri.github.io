@@ -1,5 +1,5 @@
 ---
-title: vivid-alpaca
+title: Vivid Alpaca
 slug: vivid-alpaca
 hook: Paper-first multi-agent AI trading lab with execution guardrails between agent recommendations and broker order submission.
 status: ["active", "safety"]
@@ -19,7 +19,7 @@ order: 3
 
 ## Why paper-first
 
-`vivid-alpaca` is currently paper-first. Live trading is not the current operating goal.
+Vivid Alpaca is currently paper-first. Live trading is not the current operating goal.
 
 Before real-money use, the private system still needs mandatory manual approval, a live-mode confirmation wall, structured stop-loss/take-profit handling, journaling, replay and backtesting of guardrails, and cooldown rules.
 

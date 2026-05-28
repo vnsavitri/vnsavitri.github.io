@@ -1,5 +1,5 @@
 ---
-title: espresso-horoscope-mcp
+title: Espresso Horoscope MCP
 slug: espresso-horoscope-mcp
 hook: Local-first MCP project that turns espresso shot metrics into a personalized cosmic reading, generated offline with GPT-OSS through LM Studio.
 status: ["shipped", "hackathon"]
