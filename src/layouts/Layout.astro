@@ -39,7 +39,6 @@ const ogImage = new URL("/og.png", Astro.site).toString();
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Bricolage Grotesque (display) + Outfit (body) + JetBrains Mono (code) -->
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
@@ -49,14 +48,13 @@ const ogImage = new URL("/og.png", Astro.site).toString();
   </head>
 
   <body>
-    <header class="container-wide py-9 flex items-center justify-between">
-      <a href="/" style="text-decoration: none; font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; letter-spacing: -0.02em; font-optical-sizing: auto;">
-        Vivid Savitri
-      </a>
-      <nav class="flex gap-7" style="font-size: 0.875rem; font-family: var(--font-body);">
-        <a href="/" style="text-decoration: none;">Work</a>
-        <a href="/about" style="text-decoration: none;">About</a>
-        <a href="https://github.com/vnsavitri" target="_blank" rel="noopener" style="text-decoration: none;">GitHub</a>
+    <header class="site-header container-wide">
+      <a href="/" class="site-logo">Vivid Savitri</a>
+      <nav class="site-nav">
+        <a href="/">Work</a>
+        <a href="/about">About</a>
+        <a href="https://www.vnsavitri.com/" target="_blank" rel="noopener">Site</a>
+        <a href="https://github.com/vnsavitri" target="_blank" rel="noopener">GitHub</a>
       </nav>
     </header>
 
@@ -64,15 +62,115 @@ const ogImage = new URL("/og.png", Astro.site).toString();
       <slot />
     </main>
 
-    <footer class="container-wide py-14 mt-20" style="border-top: 1px solid var(--color-rule);">
-      <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4">
+    <footer class="site-footer container-wide">
+      <div class="footer-inner">
         <div class="small-caps">Sydney, Australia · {new Date().getFullYear()}</div>
-        <div class="flex gap-6 text-sm">
+        <nav class="footer-links">
+          <a href="https://www.vnsavitri.com/" target="_blank" rel="noopener">vnsavitri.com</a>
           <a href="https://github.com/vnsavitri" target="_blank" rel="noopener">GitHub</a>
-          <a href="https://www.linkedin.com/in/vividsavitri/" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://www.linkedin.com/in/vnsavitri/" target="_blank" rel="noopener">LinkedIn</a>
           <a href="https://discord.com/users/VividSydney" target="_blank" rel="noopener">Discord</a>
-        </div>
+        </nav>
       </div>
     </footer>
   </body>
 </html>
+
+<style>
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 2.25rem;
+    padding-bottom: 2.25rem;
+  }
+
+  .site-logo {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+    font-optical-sizing: auto;
+    text-decoration: none;
+    color: var(--color-ink);
+    flex-shrink: 0;
+  }
+
+  .site-nav {
+    display: flex;
+    gap: 1.75rem;
+    font-size: 0.875rem;
+    font-family: var(--font-body);
+  }
+
+  .site-nav a {
+    text-decoration: none;
+    color: var(--color-ink-soft);
+    transition: color 0.15s ease;
+  }
+
+  .site-nav a:hover {
+    color: var(--color-accent);
+  }
+
+  /* Footer */
+  .site-footer {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+    margin-top: 5rem;
+    border-top: 1px solid var(--color-rule);
+  }
+
+  .footer-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  .footer-links a {
+    text-decoration: none;
+    color: var(--color-ink-soft);
+  }
+
+  /* ─── Responsive ─── */
+
+  /* Tablet and up: footer goes side-by-side */
+  @media (min-width: 640px) {
+    .footer-inner {
+      flex-direction: row;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+  }
+
+  /* Small mobile: tighten nav gaps, shrink logo a touch */
+  @media (max-width: 480px) {
+    .site-header {
+      padding-top: 1.5rem;
+      padding-bottom: 1.5rem;
+    }
+
+    .site-logo {
+      font-size: 0.95rem;
+    }
+
+    .site-nav {
+      gap: 1.1rem;
+      font-size: 0.8rem;
+    }
+  }
+
+  /* Very small: hide "Site" nav item to prevent overflow */
+  @media (max-width: 360px) {
+    .site-nav a:nth-child(3) {
+      display: none;
+    }
+  }
+</style>

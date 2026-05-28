@@ -12,73 +12,53 @@ const projects = (await getCollection("projects")).sort(
   description="AI product builder and researcher. Building agentic systems, MCP servers, and tools for high-stakes AI workflows."
 >
   <!-- Hero -->
-  <section class="container-wide pt-16 pb-28">
-    <p class="small-caps mb-8">AI / Product / Sydney</p>
+  <section class="container-wide hero-section">
+    <p class="small-caps" style="margin-bottom: 1.75rem;">AI / Product / Sydney</p>
 
-    <h1 class="mb-7">
-      I build AI systems that take<br />
+    <h1 class="hero-heading">
+      I build AI systems that take<br class="hero-br" />
       <span style="color: var(--color-accent);">safety</span> as seriously as
       <span style="color: var(--color-accent);">capability.</span>
     </h1>
 
-    <p class="lede mb-10">
+    <p class="lede" style="margin-bottom: 2.5rem;">
       Product, research, and engineering across multi-agent systems, MCP servers, and
       provenance-aware memory for high-stakes AI workflows. Two startup exits, twelve countries,
       and a long-running suspicion that the best products are the ones you can't ship without
       thinking about who they fail on.
     </p>
 
-    <div class="flex gap-8" style="font-size: 0.875rem;">
-      <a href="/about" style="text-decoration: none; border-bottom: 1px solid var(--color-rule); padding-bottom: 2px;">
-        About →
-      </a>
-      <a href="https://github.com/vnsavitri" target="_blank" rel="noopener" style="text-decoration: none; border-bottom: 1px solid var(--color-rule); padding-bottom: 2px;">
-        GitHub →
-      </a>
-      <a href="https://www.linkedin.com/in/vividsavitri/" target="_blank" rel="noopener" style="text-decoration: none; border-bottom: 1px solid var(--color-rule); padding-bottom: 2px;">
-        LinkedIn →
-      </a>
-    </div>
+    <nav class="hero-links">
+      <a href="/about">About →</a>
+      <a href="https://www.vnsavitri.com/" target="_blank" rel="noopener">vnsavitri.com →</a>
+      <a href="https://github.com/vnsavitri" target="_blank" rel="noopener">GitHub →</a>
+      <a href="https://www.linkedin.com/in/vnsavitri/" target="_blank" rel="noopener">LinkedIn →</a>
+    </nav>
   </section>
 
-  <!-- Divider -->
   <div class="container-wide" style="border-top: 1px solid var(--color-rule);"></div>
 
   <!-- Projects -->
-  <section class="container-wide pt-16 pb-28">
-    <div class="flex items-baseline justify-between mb-14">
+  <section class="container-wide projects-section">
+    <div class="projects-header">
       <h2>Featured Work</h2>
       <span class="small-caps">Six projects</span>
     </div>
 
-    <ol class="list-none p-0 m-0">
+    <ol class="projects-list">
       {projects.map((project, idx) => (
-        <li>
-          {idx > 0 && <div style="border-top: 1px solid var(--color-rule); margin: 2.75rem 0;"></div>}
-          <a
-            href={`/projects/${project.data.slug}/`}
-            style="text-decoration: none; display: block;"
-            class="group"
-          >
-            <article style="display: grid; grid-template-columns: 5rem 1fr; gap: 0 2rem; align-items: start;">
-              <!-- Large decorative number -->
-              <div class="project-num" aria-hidden="true">
-                0{idx + 1}
-              </div>
+        <li class="project-item">
+          {idx > 0 && <div class="project-divider"></div>}
+          <a href={`/projects/${project.data.slug}/`} class="project-link">
+            <article class="project-card">
+              <div class="project-num" aria-hidden="true">0{idx + 1}</div>
 
-              <div style="padding-top: 0.25rem;">
-                <h3
-                  class="group-hover:text-[var(--color-accent)]"
-                  style="transition: color 0.15s ease; margin-bottom: 0.6rem;"
-                >
-                  {project.data.title}
-                </h3>
+              <div class="project-body">
+                <h3 class="project-title">{project.data.title}</h3>
 
-                <p style="font-size: 1rem; line-height: 1.6; color: var(--color-ink-soft); max-width: 56ch; margin-bottom: 1rem;">
-                  {project.data.hook}
-                </p>
+                <p class="project-hook">{project.data.hook}</p>
 
-                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; align-items: center;">
+                <div class="project-pills">
                   {project.data.status.map((s: string, i: number) => (
                     <span class={`pill ${i === 0 && project.data.accent ? "pill-accent" : ""}`}>{s}</span>
                   ))}
@@ -87,9 +67,7 @@ const projects = (await getCollection("projects")).sort(
                   )}
                 </div>
 
-                <div class="tech-tag">
-                  {project.data.tech.join(" · ")}
-                </div>
+                <div class="tech-tag">{project.data.tech.join(" · ")}</div>
               </div>
             </article>
           </a>
@@ -97,14 +75,179 @@ const projects = (await getCollection("projects")).sort(
       ))}
     </ol>
 
-    <p style="margin-top: 4rem; font-size: 0.875rem; color: var(--color-ink-muted);">
+    <p class="more-link">
       More on <a href="https://github.com/vnsavitri" target="_blank" rel="noopener">GitHub →</a>
     </p>
   </section>
 </Layout>
 
 <style>
-  .group:hover .project-num {
-    color: color-mix(in srgb, var(--color-accent) 30%, var(--color-rule)) !important;
+  /* Hero */
+  .hero-section {
+    padding-top: 4rem;
+    padding-bottom: 6rem;
+  }
+
+  .hero-heading {
+    margin-bottom: 1.75rem;
+  }
+
+  .hero-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    font-size: 0.875rem;
+  }
+
+  .hero-links a {
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-rule);
+    padding-bottom: 2px;
+    color: var(--color-ink-soft);
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .hero-links a:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  /* Projects list */
+  .projects-section {
+    padding-top: 4rem;
+    padding-bottom: 6rem;
+  }
+
+  .projects-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 3.5rem;
+  }
+
+  .projects-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .project-divider {
+    border-top: 1px solid var(--color-rule);
+    margin: 2.5rem 0;
+  }
+
+  .project-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  /* Desktop: number on left, content on right */
+  .project-card {
+    display: grid;
+    grid-template-columns: 5rem 1fr;
+    gap: 0 2rem;
+    align-items: start;
+  }
+
+  .project-num {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--color-rule);
+    line-height: 1;
+    font-optical-sizing: auto;
+    transition: color 0.2s ease;
+    user-select: none;
+    padding-top: 0.2rem;
+  }
+
+  .project-link:hover .project-num {
+    color: color-mix(in srgb, var(--color-accent) 30%, var(--color-rule));
+  }
+
+  .project-body {
+    padding-top: 0.2rem;
+  }
+
+  .project-title {
+    margin-bottom: 0.6rem;
+    transition: color 0.15s ease;
+  }
+
+  .project-link:hover .project-title {
+    color: var(--color-accent);
+  }
+
+  .project-hook {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--color-ink-soft);
+    max-width: 56ch;
+    margin-bottom: 1rem;
+  }
+
+  .project-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.65rem;
+    align-items: center;
+  }
+
+  .more-link {
+    margin-top: 4rem;
+    font-size: 0.875rem;
+    color: var(--color-ink-muted);
+  }
+
+  /* ─── Mobile ─── */
+  @media (max-width: 600px) {
+    .hero-section {
+      padding-top: 2.5rem;
+      padding-bottom: 4rem;
+    }
+
+    .hero-br {
+      display: none; /* let heading reflow naturally on small screens */
+    }
+
+    .hero-links {
+      gap: 1rem;
+      font-size: 0.8rem;
+    }
+
+    .projects-section {
+      padding-top: 2.5rem;
+      padding-bottom: 4rem;
+    }
+
+    .projects-header {
+      margin-bottom: 2rem;
+    }
+
+    /* Stack: number above title on mobile */
+    .project-card {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+    }
+
+    .project-num {
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      color: var(--color-ink-muted);
+      font-weight: 600;
+      font-optical-sizing: auto;
+      /* Reset to small-caps style on mobile — decorative number becomes tiny label */
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      padding-top: 0;
+    }
+
+    .project-divider {
+      margin: 2rem 0;
+    }
   }
 </style>
