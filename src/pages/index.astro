@@ -72,6 +72,8 @@ const techStack: StackTier[] = [
       { name: "Claude Design", abbr: "CD", icon: "https://cdn.simpleicons.org/anthropic" },
       { name: "Gemini", abbr: "Gm", icon: "https://cdn.simpleicons.org/googlegemini" },
       { name: "DeepSeek", abbr: "DS", icon: "https://cdn.simpleicons.org/deepseek" },
+      { name: "Runway ML", abbr: "Rw", icon: "https://cdn.simpleicons.org/runwayml" },
+      { name: "Google Veo", abbr: "Veo" },
     ]
   },
   {
@@ -208,6 +210,14 @@ const techStack: StackTier[] = [
           </div>
         </div>
       ))}
+    </div>
+
+    <div class="stack-legend">
+      <span><span class="legend-dot" style="background:#b5179e"></span>daily drivers — every day</span>
+      <span><span class="legend-dot" style="background:#084b83"></span>constant mates — weekly regulars</span>
+      <span><span class="legend-dot" style="background:#2d6a9f"></span>specialists — task-specific</span>
+      <span><span class="legend-dot" style="background:#42bfdd"></span>experimenting — rarely, still forming an opinion</span>
+      <span><span class="legend-dot" style="background:#8ab8c8"></span>moved on — replaced by something better</span>
     </div>
   </section>
 </Layout>
@@ -512,5 +522,30 @@ const techStack: StackTier[] = [
     .stack-header {
       margin-bottom: 1.5rem;
     }
+  }
+
+  .stack-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.75rem;
+    margin-top: 1.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    color: var(--color-ink-muted);
+  }
+
+  .stack-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .legend-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
   }
 </style>
