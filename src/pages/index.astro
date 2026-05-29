@@ -5,6 +5,83 @@ import { getCollection } from "astro:content";
 const projects = (await getCollection("projects")).sort(
   (a, b) => a.data.order - b.data.order
 );
+
+interface StackTool {
+  name: string;
+  abbr: string;
+  icon?: string;
+}
+
+interface StackTier {
+  tier: string;
+  color: string;
+  muted?: boolean;
+  tools: StackTool[];
+}
+
+const techStack: StackTier[] = [
+  {
+    tier: "Daily Drivers",
+    color: "#b5532a",
+    tools: [
+      { name: "Perplexity", abbr: "Px", icon: "https://cdn.simpleicons.org/perplexity" },
+      { name: "Claude Code", abbr: "CC", icon: "https://cdn.simpleicons.org/anthropic" },
+      { name: "Codex", abbr: "Cx", icon: "https://cdn.simpleicons.org/openai" },
+    ]
+  },
+  {
+    tier: "Constant Mates",
+    color: "#c9956b",
+    tools: [
+      { name: "Claude Cowork", abbr: "CW", icon: "https://cdn.simpleicons.org/anthropic" },
+      { name: "Hermes Agent", abbr: "HM" },
+      { name: "Kimi", abbr: "Ki" },
+      { name: "Nemotron3", abbr: "N3" },
+      { name: "OpenRouter", abbr: "OR", icon: "https://cdn.simpleicons.org/openrouter" },
+      { name: "ChatGPT", abbr: "CG", icon: "https://cdn.simpleicons.org/openai" },
+    ]
+  },
+  {
+    tier: "Specialists",
+    color: "#8b7355",
+    tools: [
+      { name: "Paperclip", abbr: "Pc" },
+      { name: "GPT-2 Img", abbr: "G2", icon: "https://cdn.simpleicons.org/openai" },
+      { name: "Nano Banana2", abbr: "NB" },
+      { name: "CapCut", abbr: "Cap", icon: "https://cdn.simpleicons.org/capcut" },
+      { name: "NotebookLM", abbr: "NL" },
+      { name: "Open Notebook", abbr: "ON" },
+      { name: "Vercel", abbr: "Vc", icon: "https://cdn.simpleicons.org/vercel" },
+      { name: "LangChain", abbr: "LC", icon: "https://cdn.simpleicons.org/langchain" },
+      { name: "HuggingFace", abbr: "HF", icon: "https://cdn.simpleicons.org/huggingface" },
+      { name: "LM Studio", abbr: "LM" },
+      { name: "Ollama", abbr: "Ol", icon: "https://cdn.simpleicons.org/ollama" },
+      { name: "Higgsfield AI", abbr: "Hi" },
+      { name: "Qwen Studio", abbr: "QW" },
+    ]
+  },
+  {
+    tier: "Experimenting",
+    color: "#7a9480",
+    tools: [
+      { name: "Claude Design", abbr: "CD", icon: "https://cdn.simpleicons.org/anthropic" },
+      { name: "Gemini", abbr: "Gm", icon: "https://cdn.simpleicons.org/googlegemini" },
+      { name: "DeepSeek", abbr: "DS", icon: "https://cdn.simpleicons.org/deepseek" },
+    ]
+  },
+  {
+    tier: "Moved On",
+    color: "#a8a099",
+    muted: true,
+    tools: [
+      { name: "ChatGPT", abbr: "CG", icon: "https://cdn.simpleicons.org/openai" },
+      { name: "N8N", abbr: "N8", icon: "https://cdn.simpleicons.org/n8n" },
+      { name: "OpenClaw", abbr: "OC" },
+      { name: "Cursor", abbr: "Cu", icon: "https://cdn.simpleicons.org/cursor" },
+      { name: "Beautiful AI", abbr: "BA" },
+    ]
+  }
+];
 ---
 
 <Layout
@@ -78,6 +155,52 @@ const projects = (await getCollection("projects")).sort(
     <p class="more-link">
       More on <a href="https://github.com/vnsavitri" target="_blank" rel="noopener">GitHub →</a>
     </p>
+  </section>
+
+  <div class="container-wide" style="border-top: 1px solid var(--color-rule);"></div>
+
+  <section class="container-wide stack-section">
+    <div class="stack-header">
+      <h2>Current Tech Stack</h2>
+      <span class="small-caps">AI tools</span>
+    </div>
+
+    <div class="stack-table">
+      {techStack.map((row) => (
+        <div
+          class={`stack-row${row.muted ? ' stack-row-muted' : ''}`}
+          style={`--tier-color: ${row.color}`}
+        >
+          <div class="stack-label">
+            {row.tier}
+          </div>
+          <div class="stack-tools">
+            {row.tools.map((tool) => (
+              <div class="stack-chip">
+                {tool.icon && (
+                  <img
+                    src={tool.icon}
+                    alt=""
+                    class="stack-chip-icon"
+                    width="16"
+                    height="16"
+                    loading="lazy"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
+                  />
+                )}
+                <span
+                  class="stack-chip-abbr"
+                  style={tool.icon ? "display:none" : "display:inline-flex"}
+                >
+                  {tool.abbr}
+                </span>
+                <span class="stack-chip-name">{tool.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   </section>
 </Layout>
 
@@ -251,6 +374,135 @@ const projects = (await getCollection("projects")).sort(
 
     .project-divider {
       margin: 2rem 0;
+    }
+  }
+
+  /* Tech Stack */
+  .stack-section {
+    padding-top: 4rem;
+    padding-bottom: 6rem;
+  }
+
+  .stack-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+  }
+
+  .stack-row {
+    display: grid;
+    grid-template-columns: 10rem 1fr;
+    gap: 0 2rem;
+    align-items: start;
+    padding: 1.25rem 0;
+    border-top: 1px solid var(--color-rule);
+  }
+
+  .stack-row:last-child {
+    border-bottom: 1px solid var(--color-rule);
+  }
+
+  .stack-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+    font-weight: 600;
+    padding-top: 0.3rem;
+  }
+
+  .stack-label::before {
+    content: "";
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--tier-color);
+  }
+
+  .stack-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+  .stack-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    color: var(--color-ink-soft);
+    padding: 0.25rem 0.6rem 0.25rem 0.45rem;
+    border: 1px solid var(--color-rule);
+    border-radius: 9999px;
+    background: transparent;
+    white-space: nowrap;
+    transition: border-color 0.15s ease, color 0.15s ease;
+    cursor: default;
+  }
+
+  .stack-chip:hover {
+    border-color: color-mix(in srgb, var(--tier-color) 50%, var(--color-rule));
+    color: var(--color-ink);
+  }
+
+  .stack-chip-icon {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .stack-chip-abbr {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    font-family: var(--font-mono);
+    font-size: 0.5rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--tier-color) 12%, transparent);
+    color: var(--tier-color);
+    flex-shrink: 0;
+  }
+
+  .stack-row-muted {
+    opacity: 0.55;
+  }
+
+  .stack-row-muted .stack-chip-name {
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, var(--color-ink-soft) 40%, transparent);
+  }
+
+  @media (max-width: 640px) {
+    .stack-section {
+      padding-top: 2.5rem;
+      padding-bottom: 4rem;
+    }
+
+    .stack-row {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      padding: 1rem 0;
+    }
+
+    .stack-label {
+      padding-top: 0;
+    }
+
+    .stack-header {
+      margin-bottom: 1.5rem;
     }
   }
 </style>
