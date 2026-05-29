@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  /* Palette — warm but precise */
-  --color-cream: #f5f3ee;
-  --color-cream-deep: #ede9e0;
-  --color-ink: #111109;
-  --color-ink-soft: #4a4540;
-  --color-ink-muted: #928b83;
-  --color-rule: #dfd8cf;
-  --color-accent: #b5532a;
-  --color-accent-soft: #d4754a;
-  --color-code-bg: #f0ede6;
+  /* Palette — deep navy and teal */
+  --color-cream: #f8f9fb;
+  --color-cream-deep: #edf0f7;
+  --color-ink: #022b3a;
+  --color-ink-soft: #1e4d61;
+  --color-ink-muted: #6b8f9a;
+  --color-rule: #e1e5f2;
+  --color-accent: #1f7a8c;
+  --color-accent-soft: #3a9ab0;
+  --color-code-bg: #eef3fb;
 
   /* Fonts — Bricolage Grotesque replaces Fraunces, Outfit replaces Inter */
   --font-display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
