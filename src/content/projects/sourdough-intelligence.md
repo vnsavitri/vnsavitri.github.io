@@ -7,6 +7,7 @@ tech: ["R", "IBM Watson NLP", "regression"]
 repo: https://github.com/vnsavitri/sourdough-intelligence
 live: https://vividcrumb.netlify.app
 order: 5
+accent: true
 ---
 
 ## Background

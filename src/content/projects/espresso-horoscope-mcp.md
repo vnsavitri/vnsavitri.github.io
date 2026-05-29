@@ -8,6 +8,7 @@ repo: https://github.com/vnsavitri/espresso-horoscope-mcp
 demo: https://youtu.be/hHNMkw1NXDE
 stars: 3
 order: 4
+accent: true
 ---
 
 ## Portfolio snapshot

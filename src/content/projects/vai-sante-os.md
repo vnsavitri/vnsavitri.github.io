@@ -2,7 +2,7 @@
 title: VAI Santé
 slug: vai-sante-os
 hook: "A privacy-first personal AI for managing fragmented medical information: local-first, provenance-aware, built during cancer treatment."
-status: ["active", "research"]
+status: ["research", "active"]
 tech: ["Python", "Mermaid", "evaluation harness"]
 repo: https://github.com/vnsavitri/vai_sante_os
 order: 1
