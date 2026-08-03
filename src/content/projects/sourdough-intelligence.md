@@ -45,5 +45,3 @@ The app then generates a practical formula, ingredient list, and timestamped sch
 - Temperature-aware bulk fermentation estimate
 - Warnings for unrealistic timelines, risky hydration, hot kitchens
 - Printable plan and PNG export, light and dark themes, dependency-light static deployment
-
-[Try it live →](https://vividcrumb.netlify.app)

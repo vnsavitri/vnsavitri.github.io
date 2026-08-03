@@ -28,5 +28,3 @@ The result: ask *"the white Barista Express hero shot approved for EU markets, u
 Prototyped September 2025, demoed to Breville product leadership, and the architecture was then adopted and shipped to production by the BRG engineering team.
 
 Now in daily workflows for GTM teams across APAC, North America, and EMEA.
-
-[Watch the demo →](https://www.youtube.com/watch?v=UOeHNyh5A7Y)

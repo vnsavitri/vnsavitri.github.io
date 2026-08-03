@@ -38,5 +38,3 @@ On the personal level: this worked. It made a genuinely hard situation more navi
 On the broader level: health was the forcing function for getting the constraints right. High-stakes, longitudinal, privacy-sensitive, multimodal. Oncology records are an extreme case of a pattern that shows up in legal, policy, safety, and operations contexts too. The architecture generalises. The health use case just made it impossible to cut corners on trust design.
 
 If you're building in a domain where a hallucination has real consequences, this is the kind of infrastructure that matters before capability.
-
-[Repository →](https://github.com/vnsavitri/vai_sante_os)

@@ -37,5 +37,3 @@ Connects espresso shot data to a local LLM and generates a short personalised re
 - Birth date for the cosmic framing layer
 
 The architecture enforces a strict tool/prompt boundary between deterministic sensor parsing and the local generative model.
-
-[Watch the 3-minute demo →](https://youtu.be/hHNMkw1NXDE)
