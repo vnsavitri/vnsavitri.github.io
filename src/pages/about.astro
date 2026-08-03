@@ -2,7 +2,11 @@
 import Layout from "../layouts/Layout.astro";
 ---
 
-<Layout title="About | Vivid Savitri-Hampton" pathname="/about/">
+<Layout
+  title="About | Vivid Savitri-Hampton"
+  description="How I got here: HCI and industrial design, two startup exits, then agent systems and local AI operating systems deployed at Breville. Sydney, Australia."
+  pathname="/about/"
+>
   <article class="container-wide pt-16 pb-24" style="max-width: 1400px;">
 
     <div class="about-header">
@@ -17,23 +21,30 @@ import Layout from "../layouts/Layout.astro";
           src="/vivid-portrait.webp"
           alt="Vivid Savitri-Hampton"
           class="about-portrait"
+          width="200"
+          height="200"
+          decoding="async"
         />
       </div>
     </div>
 
     <div class="prose-body">
       <p>
-        I'm Vivid. I build AI systems that are useful enough to ship and careful
-        enough to defend. Based in Sydney, working across product strategy, research
-        prototyping, and engineering.
+        I'm Vivid, based in Sydney. I build agent systems, local AI operating systems,
+        and the governance scaffolding that lets other people run them.
       </p>
 
       <p>
-        HCI and design background, AI product management (Duke), MBA thesis on AI-driven
-        Experience Design (Steinbeis Hochschule, Berlin). I've lived and worked in 12 countries
-        across 4 continents, which shapes how I think about who a product serves and who it
-        doesn't. I had two startup exits in the video game space (Shanghai and Berlin),
-        both built under real constraints with small teams.
+        Most recently that meant Breville's first MCP-based internal tool, a custom GPT
+        sitting over more than 235,000 brand assets, which I prototyped in September 2025
+        and the BRG engineering team then took to production. I came to this from HCI and
+        industrial design, where you cannot patch a product after it ships, so you learn
+        early to ask who it fails on, and I have been asking that same question ever since
+        even as the substrate keeps changing underneath it. Before any of that there were
+        two startup exits in video games, one out of Shanghai and another while in Berlin, and a
+        long stretch of living and working across twelve countries on four continents.
+        Somewhere in the middle of all of it I did AI Product Management at Duke and an MBA
+        at Steinbeis Hochschule Berlin, where my thesis was on AI-driven experience design.
       </p>
 
       <h2>What I work on</h2>
@@ -63,11 +74,8 @@ import Layout from "../layouts/Layout.astro";
       <h2>Why I care about safety</h2>
 
       <p>
-        Most AI demos look good on happy-path prompts and fall apart when you ask the
-        hard questions: provenance, override, longitudinal change, failure modes. My
-        bet is that the products that matter five years from now are the ones whose
-        builders took those questions seriously at the prototype stage, not after the
-        first incident.
+        Most AI demos look good on happy-path prompts and fall apart the moment you ask
+        the hard questions: provenance, override, longitudinal change, failure modes.
       </p>
 
       <p>
@@ -81,8 +89,12 @@ import Layout from "../layouts/Layout.astro";
 
       <ul>
         <li>
-          AI-native gameplay with agentic workflows and isolated sub-agents for parallel
-          task execution
+          An AI-enabled video game, still in stealth
+        </li>
+        <li>
+          <a href="https://koinaku.com" target="_blank" rel="noopener">Koinaku</a>, a
+          financial literacy app for the next generation of Indonesians, currently in
+          early beta
         </li>
         <li>
           Hybrid model routing across local models (LM Studio) and OpenRouter-hosted
@@ -95,6 +107,14 @@ import Layout from "../layouts/Layout.astro";
 
       <h2>Accolades</h2>
 
+      <p>
+        The AI work is the project list further up this page, so what follows is the decade
+        before it: physical products that shipped and sold in real volume, plus a few
+        hackathon results from back when AI still mostly meant a chatbot.
+      </p>
+
+      <h3>Product design</h3>
+
       <ul>
         <li>Red Dot Award 2022, Best of the Best: Breville Barista Express Impress BES876</li>
         <li>SCA Award 2022: Breville Barista Express Impress BES876</li>
@@ -102,6 +122,11 @@ import Layout from "../layouts/Layout.astro";
         <li>Red Dot Award 2020: Breville Polyscience HydroPro SousVide</li>
         <li>Red Dot Award 2020: Breville Nespresso Creatista Pro</li>
         <li>IDSA 2019, Bronze: Breville Smart Oven AirFry</li>
+      </ul>
+
+      <h3>Software and data</h3>
+
+      <ul>
         <li>NASA SpaceApps 2017, 1st Place Australia / Top 25 Global</li>
         <li>NASA SpaceApps 2016, 1st Place Australia / Top 5 Global</li>
         <li>Chatfuel Chatbot 2017, Top 10 Global Finalist: Stake Chatbot</li>

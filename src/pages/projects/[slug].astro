@@ -12,6 +12,24 @@ export async function getStaticPaths() {
 
 const { project } = Astro.props;
 const { Content } = await render(project);
+
+// Per-project structured data, built from frontmatter that already exists.
+// Gives AI search engines something to cite beyond the prose.
+const projectSchema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  name: project.data.title,
+  description: project.data.hook,
+  codeRepository: project.data.repo,
+  programmingLanguage: project.data.tech,
+  url: new URL(`/projects/${project.data.slug}/`, Astro.site).toString(),
+  author: {
+    "@type": "Person",
+    name: "Vivid Savitri-Hampton",
+    url: "https://vnsavitri.github.io/",
+  },
+  ...(project.data.live ? { sameAs: [project.data.live] } : {}),
+};
 ---
 
 <Layout
@@ -19,6 +37,7 @@ const { Content } = await render(project);
   description={project.data.hook}
   pathname={`/projects/${project.data.slug}/`}
 >
+  <script type="application/ld+json" set:html={JSON.stringify(projectSchema)} />
   <article class="container-prose pt-8 pb-24" style="max-width: 1200px;">
     <p class="small-caps mb-8">
       <a href="/" style="text-decoration: none; color: var(--color-ink-muted);">← Work</a>

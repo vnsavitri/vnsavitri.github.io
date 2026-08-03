@@ -1,7 +1,7 @@
 ---
 title: Espresso Horoscope MCP
 slug: espresso-horoscope-mcp
-hook: Local-first MCP project that turns espresso shot metrics into a personalized cosmic reading, generated offline with GPT-OSS through LM Studio.
+hook: Local-first MCP project that turns espresso shot metrics into a personalised cosmic reading, generated offline with GPT-OSS through LM Studio.
 status: ["shipped", "hackathon"]
 tech: ["Python", "Next.js 15", "LM Studio", "MCP"]
 repo: https://github.com/vnsavitri/espresso-horoscope-mcp
@@ -27,11 +27,11 @@ The honest learning goal was simple: get my hands dirty with local model inferen
 
 The horoscope framing is deliberately playful. The architecture underneath it is the real point: a reproducible, offline-first local agent workflow that combines structured domain data with local LLM inference through an MCP-shaped interface.
 
-This is not fortune-telling. It's a compact demo of how a local agent can take real-world machine data, preserve deterministic behavior where needed, and still produce an expressive user-facing result.
+Underneath the fortune-telling it's a compact demo of how a local agent can take real-world machine data, preserve deterministic behaviour where needed, and still produce an expressive user-facing result.
 
 ## What it does
 
-Connects espresso shot data to a local LLM and generates a short personalized reading from:
+Connects espresso shot data to a local LLM and generates a short personalised reading from:
 
 - Brew ratio, pressure, temperature, flow rate, extraction time, channeling signals
 - Birth date for the cosmic framing layer

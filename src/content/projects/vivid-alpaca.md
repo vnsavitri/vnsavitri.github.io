@@ -24,20 +24,20 @@ Vivid Alpaca is currently paper-first. Live trading is not the current operating
 
 Before real-money use, the private system still needs mandatory manual approval, a live-mode confirmation wall, structured stop-loss/take-profit handling, journaling, replay and backtesting of guardrails, and cooldown rules.
 
-This isn't about whether multi-agent systems can place trades. It's about whether they can do it inside a safety envelope that holds up under adversarial market behaviour and operator pressure.
+The open question is whether a multi-agent system can place trades inside a safety envelope that holds up under adversarial market behaviour and operator pressure.
 
 ## Original vs vivid-alpaca
 
-The public repo is a showcase of concept, architecture, safety posture, and learning outcomes. The full runnable implementation, private session notes, trading playbooks, and build process are intentionally kept private.
+The public repo covers the concept, the architecture, the safety posture, and what I learned. The full runnable implementation, private session notes, trading playbooks, and build process are intentionally kept private.
 
 | Area | Upstream baseline | Vivid Alpaca direction |
 |---|---|---|
-| Purpose | Multi-agent trading framework | Personalized paper-trading learning lab |
+| Purpose | Multi-agent trading framework | Personalised paper-trading learning lab |
 | Safety posture | Agent/risk reasoning around trades | Paper-first with explicit execution guardrails |
-| Agent behavior | Can lean conservative or produce frequent neutral outputs | Configurable mindset so `NEUTRAL` means genuinely weak setup |
+| Agent behaviour | Can lean conservative or produce frequent neutral outputs | Configurable mindset so `NEUTRAL` means genuinely weak setup |
 | User goals | Mostly implicit through prompts | UI-driven goal overlay: target return, time horizon, max drawdown |
 | Learning loop | Run and review | Run, paper-trade, compare to guardrails, document, improve |
-| Monetization | Open framework | Public showcase only; implementation and training workflow private |
+| Monetisation | Open framework | Public write-up only; implementation and training workflow private |
 
 This project is not financial, investment, or trading advice.
 

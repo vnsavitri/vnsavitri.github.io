@@ -1,0 +1,74 @@
+# vnsavitri.github.io
+#
+# This is a personal portfolio. Being read, indexed, and cited is the whole
+# point of it, so AI crawlers are welcome. The allow rules below are explicit
+# rather than implicit, so that nothing here gets blocked by accident later.
+
+User-agent: *
+Allow: /
+
+# OpenAI: training, search index, and live retrieval
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+# Anthropic
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# Google Gemini grounding, separate from Googlebot
+User-agent: Google-Extended
+Allow: /
+
+# Apple Intelligence
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Common Crawl, which feeds a lot of downstream training sets
+User-agent: CCBot
+Allow: /
+
+# Others
+User-agent: cohere-ai
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Diffbot
+Allow: /
+
+Sitemap: https://vnsavitri.github.io/sitemap-index.xml

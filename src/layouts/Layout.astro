@@ -9,12 +9,63 @@ export interface Props {
 
 const {
   title = "Vivid Savitri-Hampton",
-  description = "AI product builder, researcher, and founder. Building agentic systems, MCP servers, and tools for high-stakes AI workflows.",
+  description = "Vivid Savitri-Hampton, Sydney. Applied AI engineer building multi-agent systems, local AI operating systems, and agent safety envelopes that run in production.",
   pathname = "",
 } = Astro.props;
 
 const canonicalURL = new URL(pathname, Astro.site).toString();
 const ogImage = new URL("/og.png", Astro.site).toString();
+
+// Person schema. Lets AI search engines answer "who is this / where are they
+// based" from structured data instead of inferring it from the prose.
+const personSchema = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Vivid Savitri-Hampton",
+  jobTitle: "Applied AI engineer",
+  url: "https://vnsavitri.github.io/",
+  image: new URL("/vivid-portrait.webp", Astro.site).toString(),
+  description:
+    "Applied AI engineer in Sydney. Builds multi-agent systems, local AI operating systems, and agent safety envelopes.",
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Sydney",
+    addressRegion: "NSW",
+    addressCountry: "AU",
+  },
+  worksFor: { "@type": "Organization", name: "Breville Group" },
+  knowsAbout: [
+    "Agentic AI systems",
+    "Multi-agent architectures",
+    "Model Context Protocol",
+    "Local AI operating systems",
+    "Local model inference",
+    "AI safety envelopes",
+    "Provenance-aware retrieval",
+    "Human-AI interaction",
+    "AI product management",
+  ],
+  knowsLanguage: ["English", "French", "Mandarin"],
+  alumniOf: [
+    { "@type": "CollegeOrUniversity", name: "Duke University, Pratt School of Engineering" },
+    { "@type": "CollegeOrUniversity", name: "Steinbeis Hochschule Berlin" },
+  ],
+  award: [
+    "Red Dot Award 2022, Best of the Best: Breville Barista Express Impress BES876",
+    "SCA Award 2022: Breville Barista Express Impress BES876",
+    "Good Design Award 2022: Breville Joule Oven Air Pro",
+    "Red Dot Award 2020: Breville Polyscience HydroPro SousVide",
+    "Red Dot Award 2020: Breville Nespresso Creatista Pro",
+    "IDSA 2019, Bronze: Breville Smart Oven AirFry",
+    "NASA SpaceApps 2017, 1st Place Australia",
+    "NASA SpaceApps 2016, 1st Place Australia",
+  ],
+  sameAs: [
+    "https://www.linkedin.com/in/vnsavitri/",
+    "https://github.com/vnsavitri",
+    "https://www.vnsavitri.com/",
+  ],
+};
 ---
 
 <!doctype html>
@@ -32,10 +83,24 @@ const ogImage = new URL("/og.png", Astro.site).toString();
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonicalURL} />
+    <meta property="og:site_name" content="Vivid Savitri-Hampton" />
+    <meta property="og:locale" content="en_AU" />
     <meta property="og:image" content={ogImage} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Vivid Savitri-Hampton. I build AI systems that take safety as seriously as capability."
+    />
+
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="sitemap" type="application/xml" href="/sitemap-index.xml" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -45,6 +110,8 @@ const ogImage = new URL("/og.png", Astro.site).toString();
     />
 
     <meta name="theme-color" content="#f0f6f6" />
+
+    <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
   </head>
 
   <body>
@@ -178,7 +245,7 @@ const ogImage = new URL("/og.png", Astro.site).toString();
     color: var(--color-ink-soft);
   }
 
-  /* Hamburger button — hidden on desktop */
+  /* Hamburger button: hidden on desktop */
   .nav-toggle {
     display: none;
     flex-direction: column;

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* Palette — navy, cyan, magenta */
+  /* Palette: navy, cyan, magenta */
   --color-cream: #f0f6f6;
   --color-cream-deep: #dbeaea;
   --color-ink: #084b83;
@@ -12,7 +12,7 @@
   --color-accent-soft: #f59589;
   --color-code-bg: #e4f2f2;
 
-  /* Fonts — Bricolage Grotesque replaces Fraunces, Outfit replaces Inter */
+  /* Fonts: Bricolage Grotesque replaces Fraunces, Outfit replaces Inter */
   --font-display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
   --font-body: "Outfit", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono", "SF Mono", "Menlo", monospace;
@@ -81,7 +81,7 @@
     padding-inline: clamp(1.25rem, 5vw, 3rem);
   }
 
-  /* Wide container: truly responsive — scales with viewport, no fixed px cap
+  /* Wide container: truly responsive, scales with viewport, no fixed px cap
      until very wide screens. Padding grows with vw so content always fills ~85%. */
   .container-wide {
     max-width: 1600px;
@@ -157,7 +157,7 @@
     max-width: 72ch;
   }
 
-  /* Prose body — used on project + about pages */
+  /* Prose body: used on project + about pages */
   .prose-body {
     font-size: 1.05rem;
     line-height: 1.75;
@@ -245,7 +245,7 @@
     font-style: italic;
   }
 
-  /* Code blocks — fenced (pre > code) */
+  /* Code blocks: fenced (pre > code) */
   .prose-body pre {
     background: var(--color-code-bg);
     border: 1px solid var(--color-rule);

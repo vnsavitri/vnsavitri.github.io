@@ -1,0 +1,30 @@
+# Vivid Savitri-Hampton
+
+> Applied AI engineer in Sydney, Australia. Builds multi-agent systems, local AI operating systems, and agent safety envelopes, including Breville's first MCP-based internal tool, which is now in daily production use across three regions.
+
+I work across product, research, and engineering, mostly on agentic systems: multi-agent architectures, goal-driven agent loops, local model inference, and memory that can tell you where it came from. Some of that work ships inside Breville, a global consumer hardware company where I currently work, and some of it started as a problem I had myself. I came to this from HCI and industrial design, which is where I picked up the habit of asking who a product fails on before asking how well it demos.
+
+Before that there were two startup exits in video games, one out of Shanghai and another while in Berlin, and a long stretch of living and working across twelve countries on four continents. I studied AI Product Management at Duke and did an MBA at Steinbeis Hochschule Berlin, with a thesis on AI-driven experience design. I speak English, French, and Mandarin.
+
+## Projects
+
+- [VAI Santé](https://vnsavitri.github.io/projects/vai-sante-os/): a privacy-first personal AI for managing fragmented medical information, built during my own cancer treatment. Local-first, provenance-aware retrieval with chain of custody on every answer, longitudinal memory, and human-in-the-loop review gates. Python. [Repository](https://github.com/vnsavitri/vai_sante_os)
+- [DAM Butler MCP](https://vnsavitri.github.io/projects/dam-butler-mcp/): Breville's first MCP-based internal tool. A custom GPT connected to more than 235,000 brand assets through the Brandfolder API, so go-to-market teams across APAC, North America, and EMEA can retrieve assets by natural language instead of learning the taxonomy. Prototyped September 2025, then adopted and shipped to production by the BRG engineering team. In daily use. [Repository](https://github.com/vnsavitri/dam-butler-mcp), [demo](https://www.youtube.com/watch?v=UOeHNyh5A7Y)
+- [Vivid Alpaca](https://vnsavitri.github.io/projects/vivid-alpaca/): a paper-first multi-agent trading lab with execution guardrails sitting between agent recommendations and broker order submission. Python, Dash, Alpaca API. Deliberately not live-trading. [Repository](https://github.com/vnsavitri/vivid-alpaca)
+- [Espresso Horoscope MCP](https://vnsavitri.github.io/projects/espresso-horoscope-mcp/): a local-first MCP project that turns espresso shot metrics into a personalised reading, generated entirely offline with GPT-OSS through LM Studio. Built for the OpenAI Open Model Hackathon in the Best Local Agent category. Python, Next.js 15. [Repository](https://github.com/vnsavitri/espresso-horoscope-mcp), [demo](https://youtu.be/hHNMkw1NXDE)
+- [Sourdough Intelligence](https://vnsavitri.github.io/projects/sourdough-intelligence/): an ML-powered sourdough framework started in 2018, before LLMs. A 207-recipe multiple linear regression plus IBM Watson sentiment analysis on YouTube comments, to work out which recipe gives a first-time baker the best odds. R. [Repository](https://github.com/vnsavitri/sourdough-intelligence), [live app](https://vividcrumb.netlify.app)
+- [Almost](https://vnsavitri.github.io/projects/almost/): a shipped consumer app that reads your LinkedIn PDF, finds the real fork points in your career, and renders the alternate version of you in one of four formats. Next.js 14, Anthropic API, RevenueCat. [Repository](https://github.com/vnsavitri/Almost)
+
+## Also worth knowing
+
+- Local AI operating systems: CoworkOS (Claude Cowork) and WorkspaceOS (Codex) deployed at Breville, plus KimiOS (Kimi Work) for personal use with a Karpathy-style second brain for longitudinal reasoning.
+- Design awards for physical products at Breville: Red Dot 2022 Best of the Best and an SCA award for the Barista Express Impress BES876, Good Design 2022 for the Joule Oven Air Pro, two Red Dot awards in 2020, and an IDSA Bronze in 2019.
+- First place in Australia at NASA SpaceApps in both 2016 and 2017, placing top 5 and top 25 globally.
+
+## Links
+
+- [About](https://vnsavitri.github.io/about/)
+- [Main site](https://www.vnsavitri.com/)
+- [GitHub](https://github.com/vnsavitri)
+- [LinkedIn](https://www.linkedin.com/in/vnsavitri/)
+- Email: vnsavitri@protonmail.ch

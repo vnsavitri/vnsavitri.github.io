@@ -23,3 +23,12 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 .gstack/
+
+# Private working notes. This repo is public and serves vnsavitri.github.io,
+# so session logs, audits, drafts and agent memory must not be published.
+MEMORY.md
+memory/
+sessions/
+task-outputs/
+references/
+skills/

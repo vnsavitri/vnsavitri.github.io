@@ -15,7 +15,6 @@ interface StackTool {
 interface StackTier {
   tier: string;
   color: string;
-  muted?: boolean;
   tools: StackTool[];
 }
 
@@ -46,20 +45,13 @@ const techStack: StackTier[] = [
     tier: "Specialists",
     color: "#2d6a9f",
     tools: [
-      { name: "Paperclip", abbr: "Pc" },
-      { name: "GPT-2 Img", abbr: "G2", icon: "https://cdn.simpleicons.org/openai" },
-      { name: "Nano Banana2", abbr: "NB" },
-      { name: "CapCut", abbr: "Cap", icon: "https://cdn.simpleicons.org/capcut" },
-      { name: "NotebookLM", abbr: "NL" },
-      { name: "Vercel", abbr: "Vc", icon: "https://cdn.simpleicons.org/vercel" },
-      { name: "LangChain", abbr: "LC", icon: "https://cdn.simpleicons.org/langchain" },
-      { name: "HuggingFace", abbr: "HF", icon: "https://cdn.simpleicons.org/huggingface" },
       { name: "LM Studio", abbr: "LM" },
       { name: "Ollama", abbr: "Ol", icon: "https://cdn.simpleicons.org/ollama" },
-      { name: "Higgsfield AI", abbr: "Hi" },
+      { name: "HuggingFace", abbr: "HF", icon: "https://cdn.simpleicons.org/huggingface" },
+      { name: "LangChain", abbr: "LC", icon: "https://cdn.simpleicons.org/langchain" },
       { name: "Qwen Studio", abbr: "QW" },
-      { name: "Seedance", abbr: "Sd" },
-      { name: "Synthesia", abbr: "Sy" },
+      { name: "Vercel", abbr: "Vc", icon: "https://cdn.simpleicons.org/vercel" },
+      { name: "NotebookLM", abbr: "NL" },
     ]
   },
   {
@@ -73,31 +65,11 @@ const techStack: StackTier[] = [
       { name: "Open Notebook", abbr: "ON" },
       { name: "ElevenLabs", abbr: "EL", icon: "https://cdn.simpleicons.org/elevenlabs" },
     ]
-  },
-  {
-    tier: "Moved On",
-    color: "#8ab8c8",
-    muted: true,
-    tools: [
-      { name: "Midjourney", abbr: "MJ", icon: "https://cdn.simpleicons.org/midjourney" },
-      { name: "Runway ML", abbr: "Rw", icon: "https://cdn.simpleicons.org/runwayml" },
-      { name: "Flux", abbr: "Fx" },
-      { name: "v0", abbr: "v0" },
-      { name: "Bolt", abbr: "Bt" },
-      { name: "Lovable", abbr: "Lv" },
-      { name: "N8N", abbr: "N8", icon: "https://cdn.simpleicons.org/n8n" },
-      { name: "OpenClaw", abbr: "OC" },
-      { name: "Beautiful AI", abbr: "BA" },
-      { name: "Google Antigravity", abbr: "AG", icon: "https://cdn.simpleicons.org/google" },
-    ]
   }
 ];
 ---
 
-<Layout
-  title="Vivid Savitri-Hampton | AI product builder"
-  description="AI product builder and researcher. Building agentic systems, MCP servers, and tools for high-stakes AI workflows."
->
+<Layout title="Vivid Savitri-Hampton | Applied AI engineer">
   <!-- Hero -->
   <section class="container-wide hero-section">
     <p class="small-caps" style="margin-bottom: 1.75rem;">AI / Product / Sydney</p>
@@ -108,8 +80,12 @@ const techStack: StackTier[] = [
       <span style="color: var(--color-accent);">capability.</span>
     </h1>
 
-    <p class="lede" style="margin-bottom: 2.5rem;">
-      I work across product, research, and engineering, mostly at the hard end of AI: multi-agent systems, goal-driven agent loops, memory that knows where it came from. I had two startup exits, lived in 12 countries across 4 continents, and a long-running conviction that the products worth building are the ones you can't design without asking who they fail on.
+    <p class="lede">
+      I work across product, research, and engineering: multi-agent systems, goal-driven agent loops, local AI operating systems, memory that knows where it came from. Some of that work ships inside a global hardware company, and some of it started as a problem I had myself and could not find a decent tool for.
+    </p>
+
+    <p class="lede-bio">
+      Before any of that there were two startup exits in video games, one out of Shanghai and another while in Berlin, and a long stretch of living and working across twelve countries on four continents that eventually landed me in Sydney.
     </p>
 
     <nav class="hero-links">
@@ -125,7 +101,7 @@ const techStack: StackTier[] = [
   <!-- Projects -->
   <section class="container-wide projects-section">
     <div class="projects-header">
-      <h2>Featured Work</h2>
+      <h2>Featured work</h2>
       <span class="small-caps">Six projects</span>
     </div>
 
@@ -168,16 +144,13 @@ const techStack: StackTier[] = [
 
   <section class="container-wide stack-section">
     <div class="stack-header">
-      <h2>Current Tech Stack</h2>
+      <h2>Current tech stack</h2>
       <span class="small-caps">AI tools</span>
     </div>
 
     <div class="stack-table">
       {techStack.map((row) => (
-        <div
-          class={`stack-row${row.muted ? ' stack-row-muted' : ''}`}
-          style={`--tier-color: ${row.color}`}
-        >
+        <div class="stack-row" style={`--tier-color: ${row.color}`}>
           <div class="stack-label">
             {row.tier}
           </div>
@@ -210,11 +183,10 @@ const techStack: StackTier[] = [
     </div>
 
     <div class="stack-legend">
-      <span><span class="legend-dot" style="background:#f07167"></span>daily drivers — every day</span>
-      <span><span class="legend-dot" style="background:#084b83"></span>constant mates — weekly regulars</span>
-      <span><span class="legend-dot" style="background:#2d6a9f"></span>specialists — task-specific</span>
-      <span><span class="legend-dot" style="background:#42bfdd"></span>experimenting — rarely, still forming an opinion</span>
-      <span><span class="legend-dot" style="background:#8ab8c8"></span>moved on — replaced by something better</span>
+      <span><span class="legend-dot" style="background:#f07167"></span>daily drivers: every day</span>
+      <span><span class="legend-dot" style="background:#084b83"></span>constant buddies: weekly regulars</span>
+      <span><span class="legend-dot" style="background:#2d6a9f"></span>specialists: task-specific</span>
+      <span><span class="legend-dot" style="background:#42bfdd"></span>experimenting: rarely, still forming an opinion</span>
     </div>
   </section>
 </Layout>
@@ -226,11 +198,23 @@ const techStack: StackTier[] = [
     padding-bottom: 6rem;
   }
 
-  /* Hero h1 overrides the global h1 — bigger, but still controlled */
+  /* Hero h1 overrides the global h1: bigger, but still controlled */
   .hero-heading {
     font-size: clamp(2.25rem, 3.5vw, 3.75rem);
     line-height: 1.08;
     margin-bottom: 1.75rem;
+  }
+
+  /* Biographical line under the lede. Smaller and quieter so the technical
+     sentences above it stay the thing you read first. */
+  .lede-bio {
+    font-size: 0.95rem;
+    line-height: 1.65;
+    font-weight: 300;
+    color: var(--color-ink-muted);
+    max-width: 72ch;
+    margin-top: 1rem;
+    margin-bottom: 2.5rem;
   }
 
   .hero-links {
@@ -380,7 +364,7 @@ const techStack: StackTier[] = [
       color: var(--color-ink-muted);
       font-weight: 600;
       font-optical-sizing: auto;
-      /* Reset to small-caps style on mobile — decorative number becomes tiny label */
+      /* Reset to small-caps style on mobile: decorative number becomes tiny label */
       font-family: var(--font-mono);
       font-size: 0.7rem;
       letter-spacing: 0.2em;
@@ -489,15 +473,6 @@ const techStack: StackTier[] = [
     background: color-mix(in srgb, var(--tier-color) 12%, transparent);
     color: var(--tier-color);
     flex-shrink: 0;
-  }
-
-  .stack-row-muted {
-    opacity: 0.55;
-  }
-
-  .stack-row-muted .stack-chip-name {
-    text-decoration: line-through;
-    text-decoration-color: color-mix(in srgb, var(--color-ink-soft) 40%, transparent);
   }
 
   @media (max-width: 640px) {

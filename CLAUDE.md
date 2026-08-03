@@ -65,6 +65,10 @@ public/                            # Static assets (must be git-committed to app
 - Location: Sydney, Australia
 - Main site: https://www.vnsavitri.com/
 
+## Professional Optics
+
+This site is used for job applications, including at major AI companies (OpenAI, Google, Anthropic, etc.). Before placing any tool in a negative or deprioritised tier ("Moved On", etc.), flag the employer optics to Vivid rather than deciding silently.
+
 ## Skill Routing
 
 When the user's request matches an available skill, invoke it via the Skill tool.

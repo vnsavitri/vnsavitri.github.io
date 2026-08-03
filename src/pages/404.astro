@@ -1,0 +1,69 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout
+  title="Page not found | Vivid Savitri-Hampton"
+  description="That page does not exist. Head back to the work."
+  pathname="/404/"
+>
+  <section class="container-wide notfound">
+    <p class="small-caps" style="margin-bottom: 1.75rem;">404</p>
+
+    <h1 class="notfound-heading">
+      That page isn't here.
+    </h1>
+
+    <p class="lede">
+      Either it moved or it never existed in the first place. The work is all on the
+      homepage, so start there.
+    </p>
+
+    <nav class="notfound-links">
+      <a href="/">Work →</a>
+      <a href="/about">About →</a>
+      <a href="https://github.com/vnsavitri" target="_blank" rel="noopener">GitHub →</a>
+    </nav>
+  </section>
+</Layout>
+
+<style>
+  .notfound {
+    padding-top: 6rem;
+    padding-bottom: 10rem;
+  }
+
+  .notfound-heading {
+    font-size: clamp(2rem, 3vw, 3rem);
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+  }
+
+  .notfound-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    font-size: 0.875rem;
+    margin-top: 2.5rem;
+  }
+
+  .notfound-links a {
+    text-decoration: none;
+    border-bottom: 1px solid var(--color-rule);
+    padding-bottom: 2px;
+    color: var(--color-ink-soft);
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .notfound-links a:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  @media (max-width: 600px) {
+    .notfound {
+      padding-top: 3rem;
+      padding-bottom: 6rem;
+    }
+  }
+</style>
