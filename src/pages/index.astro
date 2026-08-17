@@ -140,6 +140,68 @@ const techStack: StackTier[] = [
 
   <div class="container-wide" style="border-top: 1px solid var(--color-rule);"></div>
 
+  <section class="container-wide speaking-section">
+    <div class="speaking-header">
+      <h2>Speaking</h2>
+      <span class="small-caps">Two engagements</span>
+    </div>
+
+    <ol class="speaking-list">
+      <li class="speaking-item">
+        <a href="https://vercel.com/blog/vercel-ship-2026-recap" target="_blank" rel="noopener" class="speaking-link">
+          <article class="speaking-card">
+            <img
+              src="/vercel-ship-syd-2026.webp"
+              alt="Panel on stage at Vercel Ship Sydney 2026: The AI org, people, structure, and the decisions that matter"
+              class="speaking-thumb"
+              width="1200"
+              height="673"
+              loading="lazy"
+              decoding="async"
+            />
+            <div class="speaking-body">
+              <div class="speaking-meta small-caps">Vercel Ship Sydney · 2026</div>
+              <h3 class="speaking-title">The AI org: people, structure, and the decisions that matter</h3>
+              <p class="speaking-hook">
+                Panel with Tom Glover (MYOB) and Kristina Ryan (Go1), moderated by JJ Lecocq (Vercel).
+                The interesting part was the cross-industry contrast: legacy cleanup, shadow-AI sprawl,
+                and a modern stack running inside a 94-year-old hardware company, all wrestling with the
+                same tension between moving fast and building foundations that hold.
+              </p>
+              <span class="speaking-cta">Read the recap →</span>
+            </div>
+          </article>
+        </a>
+      </li>
+      <li class="speaking-item">
+        <div class="speaking-divider"></div>
+        <a href="https://www.clutchevents.co/events/sydney-enterprise-ai-and-automation-summit-2026" target="_blank" rel="noopener" class="speaking-link">
+          <article class="speaking-card">
+            <img
+              src="/clutch-enterprise-ai-summit-2026.webp"
+              alt="Speaker card for Vivid Savitri at the Sydney Enterprise AI and Automation Summit 2026"
+              class="speaking-thumb"
+              width="1200"
+              height="667"
+              loading="lazy"
+              decoding="async"
+            />
+            <div class="speaking-body">
+              <div class="speaking-meta small-caps">Sydney Enterprise AI and Automation Summit · 2026</div>
+              <h3 class="speaking-title">Is your AI program hitting the mark?</h3>
+              <p class="speaking-hook">
+                Panel discussion on enterprise AI program evaluation, hosted by Clutch Events in Sydney.
+              </p>
+              <span class="speaking-cta">Event details →</span>
+            </div>
+          </article>
+        </a>
+      </li>
+    </ol>
+  </section>
+
+  <div class="container-wide" style="border-top: 1px solid var(--color-rule);"></div>
+
   <section class="container-wide stack-section">
     <div class="stack-header">
       <h2>Current tech stack</h2>
@@ -370,6 +432,110 @@ const techStack: StackTier[] = [
     }
 
     .project-divider {
+      margin: 2rem 0;
+    }
+  }
+
+  /* Speaking */
+  .speaking-section {
+    padding-top: 4rem;
+    padding-bottom: 6rem;
+  }
+
+  .speaking-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 3.5rem;
+  }
+
+  .speaking-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .speaking-divider {
+    border-top: 1px solid var(--color-rule);
+    margin: 2.5rem 0;
+  }
+
+  .speaking-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .speaking-card {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    gap: 0 2rem;
+    align-items: start;
+  }
+
+  .speaking-thumb {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: 4px;
+    display: block;
+  }
+
+  .speaking-body {
+    padding-top: 0.2rem;
+  }
+
+  .speaking-meta {
+    margin-bottom: 0.6rem;
+    color: var(--color-ink-muted);
+  }
+
+  .speaking-title {
+    margin-bottom: 0.6rem;
+    transition: color 0.15s ease;
+  }
+
+  .speaking-link:hover .speaking-title {
+    color: var(--color-accent);
+  }
+
+  .speaking-hook {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--color-ink-soft);
+    max-width: 65ch;
+    margin-bottom: 0.75rem;
+  }
+
+  .speaking-cta {
+    font-size: 0.875rem;
+    color: var(--color-ink-soft);
+    border-bottom: 1px solid var(--color-rule);
+    padding-bottom: 2px;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .speaking-link:hover .speaking-cta {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  @media (max-width: 600px) {
+    .speaking-section {
+      padding-top: 2.5rem;
+      padding-bottom: 4rem;
+    }
+
+    .speaking-header {
+      margin-bottom: 2rem;
+    }
+
+    .speaking-card {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .speaking-divider {
       margin: 2rem 0;
     }
   }
