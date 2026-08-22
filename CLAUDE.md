@@ -45,6 +45,7 @@ public/                            # Static assets (must be git-committed to app
 | sourdough-intelligence.md | Sourdough Intelligence |
 | vivid-alpaca.md | Vivid Alpaca |
 | almost.md | Almost |
+| vivid-clean.md | Vivid Clean |
 
 ## Contact Links
 

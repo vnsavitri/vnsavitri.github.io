@@ -5,7 +5,7 @@ hook: Upload a LinkedIn PDF. Almost finds 3–5 real fork points in your career.
 status: ["shipped", "product"]
 tech: ["Next.js 14", "Anthropic API", "Fraunces"]
 repo: https://github.com/vnsavitri/Almost
-order: 6
+order: 7
 ---
 
 ## What it does

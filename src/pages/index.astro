@@ -41,7 +41,7 @@ const projects = (await getCollection("projects")).sort(
   <section class="container-wide projects-section">
     <div class="projects-header">
       <h2>Featured work</h2>
-      <span class="small-caps">Six projects</span>
+      <span class="small-caps">Seven projects</span>
     </div>
 
     <ol class="projects-list">
@@ -135,6 +135,34 @@ const projects = (await getCollection("projects")).sort(
               </p>
               <span class="speaking-cta">Event details →</span>
             </div>
+          </article>
+        </a>
+      </li>
+    </ol>
+  </section>
+
+  <div class="container-wide" style="border-top: 1px solid var(--color-rule);"></div>
+
+  <section class="container-wide writing-section">
+    <div class="writing-header">
+      <h2>Writing</h2>
+      <span class="small-caps">One piece</span>
+    </div>
+
+    <ol class="writing-list">
+      <li class="writing-item">
+        <a href="https://www.linkedin.com/pulse/ai-watermarking-new-scarlet-letter-vivid-n-savitri-npzpc" target="_blank" rel="noopener" class="writing-link">
+          <article class="writing-card">
+            <div class="writing-meta small-caps">LinkedIn · 21 August 2026</div>
+            <h3 class="writing-title">AI watermarking is the new scarlet letter</h3>
+            <p class="writing-hook">
+              Every major lab is shipping watermarks as a transparency win. What actually
+              happens: a mark that reads as cheating no matter why the AI was used,
+              landing hardest on disabled and neurodivergent writers who rely on it to
+              write at all. Spell-check and academic fraud getting flattened into the
+              same signal is the actual problem.
+            </p>
+            <span class="writing-cta">Read the article →</span>
           </article>
         </a>
       </li>
@@ -476,6 +504,77 @@ const projects = (await getCollection("projects")).sort(
 
     .speaking-divider {
       margin: 2rem 0;
+    }
+  }
+
+  /* Writing */
+  .writing-section {
+    padding-top: 4rem;
+    padding-bottom: 6rem;
+  }
+
+  .writing-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 3.5rem;
+  }
+
+  .writing-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .writing-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .writing-title {
+    margin-bottom: 0.6rem;
+    transition: color 0.15s ease;
+  }
+
+  .writing-link:hover .writing-title {
+    color: var(--color-accent);
+  }
+
+  .writing-meta {
+    margin-bottom: 0.6rem;
+    color: var(--color-ink-muted);
+  }
+
+  .writing-hook {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--color-ink-soft);
+    max-width: 70ch;
+    margin-bottom: 0.75rem;
+  }
+
+  .writing-cta {
+    font-size: 0.875rem;
+    color: var(--color-ink-soft);
+    border-bottom: 1px solid var(--color-rule);
+    padding-bottom: 2px;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+
+  .writing-link:hover .writing-cta {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  @media (max-width: 600px) {
+    .writing-section {
+      padding-top: 2.5rem;
+      padding-bottom: 4rem;
+    }
+
+    .writing-header {
+      margin-bottom: 2rem;
     }
   }
 

@@ -6,7 +6,7 @@ status: ["production", "enterprise"]
 tech: ["MCP", "Vercel", "Brandfolder API", "ChatGPT Enterprise"]
 repo: https://github.com/vnsavitri/dam-butler-mcp
 demo: https://www.youtube.com/watch?v=UOeHNyh5A7Y
-order: 2
+order: 3
 ---
 
 ## The problem

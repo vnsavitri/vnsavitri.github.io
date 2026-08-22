@@ -5,7 +5,7 @@ hook: "A privacy-first personal AI for managing fragmented medical information: 
 status: ["research", "active"]
 tech: ["Python", "Mermaid", "evaluation harness"]
 repo: https://github.com/vnsavitri/vai_sante_os
-order: 1
+order: 2
 accent: true
 ---
 
