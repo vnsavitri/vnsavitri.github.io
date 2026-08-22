@@ -6,65 +6,6 @@ const projects = (await getCollection("projects")).sort(
   (a, b) => a.data.order - b.data.order
 );
 
-interface StackTool {
-  name: string;
-  abbr: string;
-  icon?: string;
-}
-
-interface StackTier {
-  tier: string;
-  color: string;
-  tools: StackTool[];
-}
-
-const techStack: StackTier[] = [
-  {
-    tier: "Daily Drivers",
-    color: "#f07167",
-    tools: [
-      { name: "Perplexity", abbr: "Px", icon: "https://cdn.simpleicons.org/perplexity" },
-      { name: "Claude Code", abbr: "CC", icon: "https://cdn.simpleicons.org/anthropic" },
-      { name: "Codex", abbr: "Cx", icon: "https://cdn.simpleicons.org/openai" },
-      { name: "Kimi Code", abbr: "KC", icon: "https://cdn.simpleicons.org/kimi" },
-      { name: "Qwen Code", abbr: "QC" },
-    ]
-  },
-  {
-    tier: "Constant Buddies",
-    color: "#084b83",
-    tools: [
-      { name: "Kimi Work", abbr: "KW" },
-      { name: "Claude Cowork", abbr: "CW", icon: "https://cdn.simpleicons.org/anthropic" },
-      { name: "Hermes Agent", abbr: "HM" },
-      { name: "JCode", abbr: "JC" },
-      { name: "Goose", abbr: "Gs" },
-      { name: "Deepseek Harness", abbr: "DH" },
-    ]
-  },
-  {
-    tier: "Specialists",
-    color: "#2d6a9f",
-    tools: [
-      { name: "LM Studio", abbr: "LM" },
-      { name: "Ollama", abbr: "Ol", icon: "https://cdn.simpleicons.org/ollama" },
-      { name: "HuggingFace", abbr: "HF", icon: "https://cdn.simpleicons.org/huggingface" },
-      { name: "LangChain", abbr: "LC", icon: "https://cdn.simpleicons.org/langchain" },
-      { name: "Vercel", abbr: "Vc", icon: "https://cdn.simpleicons.org/vercel" },
-      { name: "NotebookLM", abbr: "NL" },
-    ]
-  },
-  {
-    tier: "Experimenting",
-    color: "#42bfdd",
-    tools: [
-      { name: "Claude Design", abbr: "CD", icon: "https://cdn.simpleicons.org/anthropic" },
-      { name: "Open Notebook", abbr: "ON" },
-      { name: "Google Disco AI", abbr: "GD" },
-      { name: "Buzz.xyz", abbr: "Bz" },
-    ]
-  }
-];
 ---
 
 <Layout title="Vivid Savitri-Hampton | Applied AI engineer">
@@ -202,51 +143,49 @@ const techStack: StackTier[] = [
 
   <div class="container-wide" style="border-top: 1px solid var(--color-rule);"></div>
 
-  <section class="container-wide stack-section">
-    <div class="stack-header">
-      <h2>Current tech stack</h2>
-      <span class="small-caps">AI tools</span>
+  <section class="container-wide build-section">
+    <div class="build-header">
+      <h2>How I build</h2>
+      <span class="small-caps">Five principles</span>
     </div>
 
-    <div class="stack-table">
-      {techStack.map((row) => (
-        <div class="stack-row" style={`--tier-color: ${row.color}`}>
-          <div class="stack-label">
-            {row.tier}
-          </div>
-          <div class="stack-tools">
-            {row.tools.map((tool) => (
-              <div class="stack-chip">
-                {tool.icon && (
-                  <img
-                    src={tool.icon}
-                    alt=""
-                    class="stack-chip-icon"
-                    width="16"
-                    height="16"
-                    loading="lazy"
-                    onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"
-                  />
-                )}
-                <span
-                  class="stack-chip-abbr"
-                  style={tool.icon ? "display:none" : "display:inline-flex"}
-                >
-                  {tool.abbr}
-                </span>
-                <span class="stack-chip-name">{tool.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
+    <div class="prose-body">
+      <p>
+        I use AI where it earns its place. Half the fun is figuring out whether it's
+        actually helping or just slowing me down, especially the moment it starts
+        producing slop. Ain't nobody got time to babysit a dumb agent.
+      </p>
 
-    <div class="stack-legend">
-      <span><span class="legend-dot" style="background:#f07167"></span>daily drivers: every day</span>
-      <span><span class="legend-dot" style="background:#084b83"></span>constant buddies: weekly regulars</span>
-      <span><span class="legend-dot" style="background:#2d6a9f"></span>specialists: task-specific</span>
-      <span><span class="legend-dot" style="background:#42bfdd"></span>experimenting: rarely, still forming an opinion</span>
+      <ul>
+        <li>
+          <strong>Open-source and local AI</strong>: I default to open and local models
+          first, weighing privacy, cost, capability and the job in front of me. Day to
+          day that's LM Studio and Ollama running open weights, Qwen included. At work
+          the stack is closed, mostly OpenAI and Anthropic, which comes with its own
+          tradeoffs.
+        </li>
+        <li>
+          <strong>Agent loops and graph engineering</strong>: I build the harness around
+          agent workflows, explicit state, scoped delegation, handoffs that actually
+          carry context, and memory that doesn't turn into a junk drawer. This is the
+          actual work behind CoworkOS and WorkspaceOS.
+        </li>
+        <li>
+          <strong>Human-AI product design</strong>: I turn messy real-world work into AI
+          products people can understand, trust, and use.
+        </li>
+        <li>
+          <strong>Evaluation, evidence and safety</strong>: I test what a system actually
+          does, keep provenance where it matters, and put review gates around decisions
+          that have real consequences. Same discipline behind <a href="/projects/vai-sante-os/">chain-of-custody
+          memory</a> and <a href="/projects/vivid-alpaca/">execution guardrails on live trading</a>.
+        </li>
+        <li>
+          <strong>Product direction and delivery</strong>: I move from problem framing
+          and prototype to a working product, with enough technical depth to make good
+          calls along the way.
+        </li>
+      </ul>
     </div>
   </section>
 </Layout>
@@ -540,148 +479,27 @@ const techStack: StackTier[] = [
     }
   }
 
-  /* Tech Stack */
-  .stack-section {
+  /* How I build */
+  .build-section {
     padding-top: 4rem;
     padding-bottom: 6rem;
   }
 
-  .stack-header {
+  .build-header {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     margin-bottom: 2.5rem;
   }
 
-  .stack-row {
-    display: grid;
-    grid-template-columns: 10rem 1fr;
-    gap: 0 2rem;
-    align-items: start;
-    padding: 1.25rem 0;
-    border-top: 1px solid var(--color-rule);
-  }
-
-  .stack-row:last-child {
-    border-bottom: 1px solid var(--color-rule);
-  }
-
-  .stack-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--color-ink-soft);
-    font-weight: 600;
-    padding-top: 0.3rem;
-  }
-
-  .stack-label::before {
-    content: "";
-    flex-shrink: 0;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--tier-color);
-  }
-
-  .stack-tools {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    align-items: center;
-  }
-
-  .stack-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-family: var(--font-body);
-    font-size: 0.72rem;
-    color: var(--color-ink-soft);
-    padding: 0.25rem 0.6rem 0.25rem 0.45rem;
-    border: 1px solid var(--color-rule);
-    border-radius: 9999px;
-    background: transparent;
-    white-space: nowrap;
-    transition: border-color 0.15s ease, color 0.15s ease;
-    cursor: default;
-  }
-
-  .stack-chip:hover {
-    border-color: color-mix(in srgb, var(--tier-color) 50%, var(--color-rule));
-    color: var(--color-ink);
-  }
-
-  .stack-chip-icon {
-    width: 14px;
-    height: 14px;
-    object-fit: contain;
-    flex-shrink: 0;
-  }
-
-  .stack-chip-abbr {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 14px;
-    height: 14px;
-    font-family: var(--font-mono);
-    font-size: 0.5rem;
-    font-weight: 700;
-    letter-spacing: 0;
-    border-radius: 2px;
-    background: color-mix(in srgb, var(--tier-color) 12%, transparent);
-    color: var(--tier-color);
-    flex-shrink: 0;
-  }
-
   @media (max-width: 640px) {
-    .stack-section {
+    .build-section {
       padding-top: 2.5rem;
       padding-bottom: 4rem;
     }
 
-    .stack-row {
-      grid-template-columns: 1fr;
-      gap: 0.75rem;
-      padding: 1rem 0;
-    }
-
-    .stack-label {
-      padding-top: 0;
-    }
-
-    .stack-header {
+    .build-header {
       margin-bottom: 1.5rem;
     }
-  }
-
-  .stack-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.75rem;
-    margin-top: 1.75rem;
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.08em;
-    color: var(--color-ink-muted);
-  }
-
-  .stack-legend span {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-
-  .legend-dot {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
   }
 </style>
