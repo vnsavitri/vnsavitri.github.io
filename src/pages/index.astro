@@ -6,6 +6,33 @@ const projects = (await getCollection("projects")).sort(
   (a, b) => a.data.order - b.data.order
 );
 
+const archives = [
+  {
+    title: "Designr.link",
+    period: "2014—2018",
+    kind: "Selected work",
+    description: "Product, public-service, interactive and game design across teams, continents and formats.",
+    href: "/archive/designr/index.html",
+    variant: "designr",
+  },
+  {
+    title: "Design Sans Frontières",
+    period: "2009—2014",
+    kind: "Personal archive",
+    description: "Design, games, photography, wanderlust and beautifully geeky things from an earlier internet.",
+    href: "/archive/design-sans-frontieres/index.html",
+    variant: "sans-frontieres",
+  },
+  {
+    title: "Berlin 3.0",
+    period: "2012—2013",
+    kind: "Field dispatches",
+    description: "Thirty-two dispatches from Berlin School, travelling Berlin → Shanghai → Tokyo → New York.",
+    href: "/archive/berlin-3/index.html",
+    variant: "berlin",
+  },
+];
+
 ---
 
 <Layout title="Vivid Savitri-Hampton | Applied AI engineer">
@@ -216,6 +243,50 @@ const projects = (await getCollection("projects")).sort(
       </ul>
     </div>
   </section>
+
+  <div class="container-wide" style="border-top: 1px solid var(--color-rule);"></div>
+
+  <!-- Past lives / archive -->
+  <section class="container-wide archive-section" id="archives">
+    <div class="archive-header">
+      <div>
+        <p class="small-caps archive-kicker">Past lives / preserved work</p>
+        <h2>Archive</h2>
+      </div>
+      <span class="small-caps">Three snapshots</span>
+    </div>
+
+    <div class="archive-grid">
+      {archives.map((archive) => (
+        <a
+          href={archive.href}
+          class={`archive-card archive-card-${archive.variant}`}
+          target="_blank"
+          rel="noopener"
+        >
+          <div class="archive-preview" aria-hidden="true">
+            <span class="archive-preview-index">{archive.period}</span>
+            <span class="archive-preview-title">{archive.title}</span>
+            <span class="archive-preview-rule"></span>
+            <span class="archive-preview-label">ARCHIVED / OPEN</span>
+          </div>
+          <div class="archive-card-body">
+            <div class="archive-meta small-caps">
+              <span>{archive.period}</span>
+              <span>{archive.kind}</span>
+            </div>
+            <h3>{archive.title}</h3>
+            <p>{archive.description}</p>
+            <span class="archive-cta">Open archive →</span>
+          </div>
+        </a>
+      ))}
+    </div>
+
+    <p class="archive-note">
+      Earlier work, preserved as standalone sites. The archives open in a new tab so this portfolio remains your wayfinding layer.
+    </p>
+  </section>
 </Layout>
 
 <style>
@@ -400,6 +471,240 @@ const projects = (await getCollection("projects")).sort(
 
     .project-divider {
       margin: 2rem 0;
+    }
+  }
+
+  /* Archive cards: the small preview borrows each site's visual language without
+     pulling its large media libraries into the main portfolio. */
+  .archive-section {
+    padding-top: 4rem;
+    padding-bottom: 6rem;
+  }
+
+  .archive-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+  }
+
+  .archive-kicker {
+    margin-bottom: 0.75rem;
+  }
+
+  .archive-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .archive-card {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    border: 1px solid var(--color-rule);
+    background: color-mix(in srgb, var(--color-cream) 74%, white);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+  }
+
+  .archive-card:hover,
+  .archive-card:focus-visible {
+    border-color: var(--color-accent);
+    background: var(--color-cream);
+    transform: translateY(-3px);
+  }
+
+  .archive-preview {
+    position: relative;
+    display: flex;
+    min-height: 11rem;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    padding: 1rem;
+    border-bottom: 1px solid var(--color-rule);
+    background: var(--archive-ink);
+    color: var(--archive-paper);
+  }
+
+  .archive-preview::before,
+  .archive-preview::after {
+    position: absolute;
+    content: "";
+  }
+
+  .archive-preview::before {
+    width: 5.5rem;
+    height: 5.5rem;
+    right: -1.25rem;
+    top: -1.25rem;
+    background: var(--archive-accent);
+  }
+
+  .archive-preview::after {
+    width: 3.5rem;
+    height: 3.5rem;
+    right: 2rem;
+    bottom: -1.25rem;
+    background: var(--archive-secondary);
+  }
+
+  .archive-preview-index,
+  .archive-preview-label {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .archive-preview-title {
+    position: relative;
+    z-index: 1;
+    max-width: 9ch;
+    font-family: var(--font-display);
+    font-size: clamp(1.65rem, 2.8vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.06em;
+    line-height: 0.9;
+  }
+
+  .archive-preview-rule {
+    position: absolute;
+    z-index: 1;
+    right: 1rem;
+    bottom: 1rem;
+    left: 1rem;
+    border-top: 1px solid color-mix(in srgb, var(--archive-paper) 35%, transparent);
+  }
+
+  .archive-card-designr {
+    --archive-ink: #1a1a1a;
+    --archive-paper: #f5f3ee;
+    --archive-accent: #c23a2c;
+    --archive-secondary: #f0c808;
+  }
+
+  .archive-card-sans-frontieres {
+    --archive-ink: #0057b8;
+    --archive-paper: #fafafa;
+    --archive-accent: #e63227;
+    --archive-secondary: #1a1a1a;
+  }
+
+  .archive-card-berlin {
+    --archive-ink: #1b1a17;
+    --archive-paper: #e4e1d9;
+    --archive-accent: #a8371e;
+    --archive-secondary: #d6d2c7;
+  }
+
+  .archive-card-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 1.25rem;
+  }
+
+  .archive-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .archive-meta span:last-child {
+    text-align: right;
+  }
+
+  .archive-card h3 {
+    margin-bottom: 0.6rem;
+    transition: color 0.15s ease;
+  }
+
+  .archive-card:hover h3,
+  .archive-card:focus-visible h3 {
+    color: var(--color-accent);
+  }
+
+  .archive-card p {
+    flex: 1;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--color-ink-soft);
+  }
+
+  .archive-cta {
+    align-self: flex-start;
+    margin-top: 1.5rem;
+    border-bottom: 1px solid var(--color-rule);
+    padding-bottom: 2px;
+    color: var(--color-ink-soft);
+    font-size: 0.875rem;
+  }
+
+  .archive-card:hover .archive-cta,
+  .archive-card:focus-visible .archive-cta {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  .archive-note {
+    max-width: 65ch;
+    margin-top: 2rem;
+    color: var(--color-ink-muted);
+    font-size: 0.875rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .archive-card {
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .archive-card:hover,
+    .archive-card:focus-visible {
+      transform: none;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .archive-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .archive-card {
+      display: grid;
+      grid-template-columns: minmax(12rem, 0.8fr) 1fr;
+    }
+
+    .archive-preview {
+      min-height: 100%;
+      border-right: 1px solid var(--color-rule);
+      border-bottom: 0;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .archive-section {
+      padding-top: 2.5rem;
+      padding-bottom: 4rem;
+    }
+
+    .archive-header {
+      margin-bottom: 2rem;
+    }
+
+    .archive-card {
+      display: flex;
+    }
+
+    .archive-preview {
+      min-height: 10rem;
+      border-right: 0;
+      border-bottom: 1px solid var(--color-rule);
     }
   }
 

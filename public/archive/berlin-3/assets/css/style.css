@@ -1,0 +1,170 @@
+/* vividberlin-archive: implements DESIGN.md. No AI-cream, no radius, no shadows. */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;700&family=Newsreader:ital,wght@0,400;0,600;1,400&display=swap');
+
+:root {
+  --paper: #E4E1D9;
+  --surface: #D6D2C7;
+  --ink: #1B1A17;
+  --muted: #635E54;
+  --rust: #A8371E;
+
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-body: 'Newsreader', serif;
+
+  --measure: 68ch;
+  --border: 2px solid var(--ink);
+  --rule: 1px solid var(--ink);
+
+  --dur: 150ms;
+  --ease: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+* { box-sizing: border-box; }
+html { background: var(--paper); }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  line-height: 1.7;
+}
+
+img { max-width: 100%; display: block; }
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-wrap: balance;
+  margin: 0;
+}
+h1 { font-size: clamp(2.5rem, 6vw, 4.25rem); line-height: 0.95; }
+h2 { font-size: clamp(1.75rem, 4vw, 2.5rem); line-height: 1; margin-top: 2.5rem; }
+
+p, li { text-wrap: pretty; margin: 1.2em 0; }
+
+a {
+  color: var(--rust);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--dur) var(--ease);
+}
+a:hover, a:focus-visible { border-color: var(--rust); }
+
+.wrap {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: clamp(1.5rem, 5vw, 3rem) 1.25rem clamp(3rem, 8vw, 6rem);
+}
+.wrap-wide { max-width: 78ch; }
+
+/* site header */
+.site-head { text-align: left; padding-top: clamp(2rem, 6vw, 4rem); margin-bottom: 1rem; }
+.site-head .kicker {
+  font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em;
+  color: var(--muted); text-transform: uppercase;
+}
+.site-head h1 { margin-top: 0.25rem; }
+.site-head .sub { font-family: var(--font-mono); color: var(--muted); font-size: 0.875rem; margin-top: 0.5rem; }
+
+/* dateline stamp */
+.dateline {
+  display: inline-flex; gap: 0.75rem; align-items: baseline;
+  background: var(--surface); border: var(--border);
+  font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em;
+  font-size: 0.8125rem; padding: 0.5rem 0.85rem; margin-bottom: 1.5rem;
+}
+.dateline .loc { color: var(--rust); font-weight: 700; }
+
+/* tags */
+.tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0; padding: 0; list-style: none; }
+.tags li { margin: 0; }
+.tag {
+  font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+  border: var(--rule); padding: 0.2rem 0.6rem; color: var(--muted); display: inline-block;
+}
+
+/* photo frames + galleries */
+.photo-frame { border: var(--border); margin: 0; }
+.photo-frame figcaption {
+  font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted);
+  border-top: var(--rule); padding: 0.5rem 0.6rem; background: var(--surface);
+}
+.gallery {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  align-items: start; gap: 1.25rem; margin: 2rem 0;
+}
+.post-body img { border: var(--border); margin: 1.5rem 0; }
+
+/* quote type */
+.quote-block {
+  font-family: var(--font-body); font-style: italic;
+  font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.3; margin: 2rem 0;
+}
+.quote-source {
+  font-family: var(--font-mono); font-size: 0.8125rem; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.05em; margin-top: 1rem;
+}
+
+/* external media note */
+.media-note {
+  font-family: var(--font-mono); font-size: 0.8rem; border: var(--rule); display: inline-block;
+  padding: 0.4rem 0.7rem; color: var(--muted); margin: 1.5rem 0;
+}
+
+/* index ledger */
+.ledger { border-top: var(--rule); }
+.ledger-row {
+  display: grid; grid-template-columns: 9.5em 1fr; gap: 1.25rem;
+  padding: 1.1rem 0; border-bottom: var(--rule);
+  text-decoration: none; color: inherit;
+  opacity: 0; transform: translateY(4px);
+  animation: reveal 260ms var(--ease) forwards;
+  animation-delay: calc(var(--row-i, 0) * 40ms);
+}
+.ledger-row .meta {
+  font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.04em; padding-top: 0.15rem;
+}
+.ledger-row .meta .loc { color: var(--rust); display: block; font-weight: 700; margin-bottom: 0.15rem; }
+.ledger-row .title { font-family: var(--font-display); font-size: 1.35rem; letter-spacing: 0.01em; text-transform: uppercase; }
+.ledger-row .excerpt { font-family: var(--font-body); color: var(--ink); font-size: 0.95rem; margin-top: 0.35rem; }
+.ledger-row:hover, .ledger-row:focus-visible { background: var(--surface); }
+
+@keyframes reveal { to { opacity: 1; transform: none; } }
+
+/* prev/next nav */
+.dispatch-nav {
+  display: flex; justify-content: space-between; gap: 1rem;
+  margin-top: 3rem; padding-top: 1.5rem; border-top: var(--rule);
+}
+.dispatch-nav a {
+  font-family: var(--font-mono); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.06em;
+  border: var(--border); padding: 0.6rem 1rem; color: var(--ink);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.dispatch-nav a:hover, .dispatch-nav a:focus-visible { background: var(--rust); color: var(--paper); border-color: var(--rust); }
+.dispatch-nav .placeholder { visibility: hidden; border-color: transparent; }
+
+.back-link {
+  display: inline-block; margin-bottom: 2rem;
+  font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+footer.site-foot {
+  text-align: center; font-family: var(--font-mono); font-size: 0.7rem;
+  color: var(--muted); padding: 3rem 0 2rem; letter-spacing: 0.04em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ledger-row { animation: none; opacity: 1; transform: none; }
+  a, .dispatch-nav a, .ledger-row { transition: none; }
+}
+
+@media (max-width: 640px) {
+  .ledger-row { grid-template-columns: 1fr; gap: 0.35rem; }
+  .dispatch-nav { flex-direction: column; }
+}
