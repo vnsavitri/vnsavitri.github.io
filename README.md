@@ -1,6 +1,6 @@
-# vnsavitri.github.io
+# veryvivid.xyz
 
-Personal site at [vnsavitri.github.io](https://vnsavitri.github.io). Built with [Astro](https://astro.build) and [Tailwind](https://tailwindcss.com). Deployed to GitHub Pages via Actions.
+Personal site at [veryvivid.xyz](https://veryvivid.xyz). Built with [Astro](https://astro.build) and [Tailwind](https://tailwindcss.com). Deployed to GitHub Pages via Actions.
 
 ## Local development
 

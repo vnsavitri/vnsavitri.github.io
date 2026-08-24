@@ -43,7 +43,7 @@ const svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http
   <text x="${PAD}" y="556" font-family="Outfit" font-size="19" font-weight="500"
         letter-spacing="3.6" fill="${INK_MUTED}">AI / PRODUCT / SYDNEY</text>
   <text x="${W - PAD}" y="556" text-anchor="end" font-family="Outfit" font-size="19"
-        font-weight="500" letter-spacing="0.6" fill="${INK_MUTED}">vnsavitri.github.io</text>
+        font-weight="500" letter-spacing="0.6" fill="${INK_MUTED}">veryvivid.xyz</text>
 </svg>`;
 
 const out = join(root, "public", "og.png");
