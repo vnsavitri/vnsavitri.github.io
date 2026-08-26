@@ -8,12 +8,12 @@ Before that there were two startup exits in video games, one out of Shanghai and
 
 ## Projects
 
-- [VAI Santé](https://veryvivid.xyz/projects/vai-sante-os/): a privacy-first personal AI for managing fragmented medical information, built during my own cancer treatment. Local-first, provenance-aware retrieval with chain of custody on every answer, longitudinal memory, and human-in-the-loop review gates. Python. [Repository](https://github.com/vnsavitri/vai_sante_os)
-- [DAM Butler MCP](https://veryvivid.xyz/projects/dam-butler-mcp/): Breville's first MCP-based internal tool. A custom GPT connected to more than 235,000 brand assets through the Brandfolder API, so go-to-market teams across APAC, North America, and EMEA can retrieve assets by natural language instead of learning the taxonomy. Prototyped September 2025, then adopted and shipped to production by the BRG engineering team. In daily use. [Repository](https://github.com/vnsavitri/dam-butler-mcp), [demo](https://www.youtube.com/watch?v=UOeHNyh5A7Y)
-- [Vivid Alpaca](https://veryvivid.xyz/projects/vivid-alpaca/): a paper-first multi-agent trading lab with execution guardrails sitting between agent recommendations and broker order submission. Python, Dash, Alpaca API. Deliberately not live-trading. [Repository](https://github.com/vnsavitri/vivid-alpaca)
-- [Espresso Horoscope MCP](https://veryvivid.xyz/projects/espresso-horoscope-mcp/): a local-first MCP project that turns espresso shot metrics into a personalised reading, generated entirely offline with GPT-OSS through LM Studio. Built for the OpenAI Open Model Hackathon in the Best Local Agent category. Python, Next.js 15. [Repository](https://github.com/vnsavitri/espresso-horoscope-mcp), [demo](https://youtu.be/hHNMkw1NXDE)
-- [Sourdough Intelligence](https://veryvivid.xyz/projects/sourdough-intelligence/): an ML-powered sourdough framework started in 2018, before LLMs. A 207-recipe multiple linear regression plus IBM Watson sentiment analysis on YouTube comments, to work out which recipe gives a first-time baker the best odds. R. [Repository](https://github.com/vnsavitri/sourdough-intelligence), [live app](https://vividcrumb.netlify.app)
-- [Almost](https://veryvivid.xyz/projects/almost/): a shipped consumer app that reads your LinkedIn PDF, finds the real fork points in your career, and renders the alternate version of you in one of four formats. Next.js 14, Anthropic API, RevenueCat. [Repository](https://github.com/vnsavitri/Almost)
+- [VAI Santé](https://vnsavitri.github.io/projects/vai-sante-os/): a privacy-first personal AI for managing fragmented medical information, built during my own cancer treatment. Local-first, provenance-aware retrieval with chain of custody on every answer, longitudinal memory, and human-in-the-loop review gates. Python. [Repository](https://github.com/vnsavitri/vai_sante_os)
+- [DAM Butler MCP](https://vnsavitri.github.io/projects/dam-butler-mcp/): Breville's first MCP-based internal tool. A custom GPT connected to more than 235,000 brand assets through the Brandfolder API, so go-to-market teams across APAC, North America, and EMEA can retrieve assets by natural language instead of learning the taxonomy. Prototyped September 2025, then adopted and shipped to production by the BRG engineering team. In daily use. [Repository](https://github.com/vnsavitri/dam-butler-mcp), [demo](https://www.youtube.com/watch?v=UOeHNyh5A7Y)
+- [Vivid Alpaca](https://vnsavitri.github.io/projects/vivid-alpaca/): a paper-first multi-agent trading lab with execution guardrails sitting between agent recommendations and broker order submission. Python, Dash, Alpaca API. Deliberately not live-trading. [Repository](https://github.com/vnsavitri/vivid-alpaca)
+- [Espresso Horoscope MCP](https://vnsavitri.github.io/projects/espresso-horoscope-mcp/): a local-first MCP project that turns espresso shot metrics into a personalised reading, generated entirely offline with GPT-OSS through LM Studio. Built for the OpenAI Open Model Hackathon in the Best Local Agent category. Python, Next.js 15. [Repository](https://github.com/vnsavitri/espresso-horoscope-mcp), [demo](https://youtu.be/hHNMkw1NXDE)
+- [Sourdough Intelligence](https://vnsavitri.github.io/projects/sourdough-intelligence/): an ML-powered sourdough framework started in 2018, before LLMs. A 207-recipe multiple linear regression plus IBM Watson sentiment analysis on YouTube comments, to work out which recipe gives a first-time baker the best odds. R. [Repository](https://github.com/vnsavitri/sourdough-intelligence), [live app](https://vividcrumb.netlify.app)
+- [Almost](https://vnsavitri.github.io/projects/almost/): a shipped consumer app that reads your LinkedIn PDF, finds the real fork points in your career, and renders the alternate version of you in one of four formats. Next.js 14, Anthropic API, RevenueCat. [Repository](https://github.com/vnsavitri/Almost)
 
 ## Also worth knowing
 
@@ -23,7 +23,7 @@ Before that there were two startup exits in video games, one out of Shanghai and
 
 ## Links
 
-- [About](https://veryvivid.xyz/about/)
+- [About](https://vnsavitri.github.io/about/)
 - [Main site](https://www.vnsavitri.com/)
 - [GitHub](https://github.com/vnsavitri)
 - [LinkedIn](https://www.linkedin.com/in/vnsavitri/)

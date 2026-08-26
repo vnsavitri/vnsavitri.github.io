@@ -1,4 +1,4 @@
-# veryvivid.xyz
+# vnsavitri.github.io
 #
 # This is a personal portfolio. Being read, indexed, and cited is the whole
 # point of it, so AI crawlers are welcome. The allow rules below are explicit
@@ -71,4 +71,4 @@ Allow: /
 User-agent: Diffbot
 Allow: /
 
-Sitemap: https://veryvivid.xyz/sitemap-index.xml
+Sitemap: https://vnsavitri.github.io/sitemap-index.xml

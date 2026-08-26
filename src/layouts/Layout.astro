@@ -23,7 +23,7 @@ const personSchema = {
   "@type": "Person",
   name: "Vivid Savitri-Hampton",
   jobTitle: "Applied AI engineer",
-  url: "https://veryvivid.xyz/",
+  url: "https://vnsavitri.github.io/",
   image: new URL("/vivid-portrait.webp", Astro.site).toString(),
   description:
     "Applied AI engineer in Sydney. Builds multi-agent systems, local AI operating systems, and agent safety envelopes.",
@@ -113,13 +113,6 @@ const personSchema = {
 
     <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
 
-    <script is:inline>
-      if (window.location.hostname === "vnsavitri.github.io") {
-        window.location.replace(
-          `https://veryvivid.xyz${window.location.pathname}${window.location.search}${window.location.hash}`,
-        );
-      }
-    </script>
   </head>
 
   <body>

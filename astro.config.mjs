@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://veryvivid.xyz',
+  site: 'https://vnsavitri.github.io',
   integrations: [sitemap()],
   vite: {
     plugins: [tailwindcss()],

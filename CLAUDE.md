@@ -1,6 +1,6 @@
-# veryvivid.xyz
+# vnsavitri.github.io
 
-Personal portfolio for Vivid Savitri-Hampton. Astro static site, deployed to GitHub Pages at veryvivid.xyz.
+Personal portfolio for Vivid Savitri-Hampton. Astro static site, deployed to GitHub Pages at vnsavitri.github.io.
 
 ## Build & Deploy
 
