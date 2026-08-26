@@ -4,7 +4,6 @@ slug: dam-butler-mcp
 hook: "Breville's first MCP-based internal tool: a custom GPT connected to 235K+ brand assets via Brandfolder API so GTM teams across APAC, NA, and EMEA can retrieve assets by natural language query. In daily production use."
 status: ["production", "enterprise"]
 tech: ["MCP", "Vercel", "Brandfolder API", "ChatGPT Enterprise"]
-repo: https://github.com/vnsavitri/dam-butler-mcp
 demo: https://www.youtube.com/watch?v=UOeHNyh5A7Y
 order: 3
 ---
