@@ -1,6 +1,6 @@
 # Vivid Savitri-Hampton
 
-> Applied AI engineer in Sydney, Australia. Builds multi-agent systems, local AI operating systems, and agent safety envelopes, including Breville's first MCP-based internal tool, which is now in daily production use across three regions.
+> Applied AI Product Engineer in Sydney, Australia. Builds multi-agent systems, local AI operating systems, and agent safety envelopes, including Breville's first MCP-based internal tool, which is now in daily production use across three regions.
 
 I work across product, research, and engineering, mostly on agentic systems: multi-agent architectures, goal-driven agent loops, local model inference, and memory that can tell you where it came from. Some of that work ships inside Breville, a global consumer hardware company where I currently work, and some of it started as a problem I had myself. I came to this from HCI and industrial design, which is where I picked up the habit of asking who a product fails on before asking how well it demos.
 
