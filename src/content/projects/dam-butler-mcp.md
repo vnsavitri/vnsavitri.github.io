@@ -1,7 +1,7 @@
 ---
 title: DAM Butler MCP
 slug: dam-butler-mcp
-hook: "Breville's first MCP-based internal tool: a custom GPT connected to 235K+ brand assets via Brandfolder API so GTM teams across APAC, NA, and EMEA can retrieve assets by natural language query. In daily production use."
+hook: "Breville's first Model Context Protocol (MCP) tool: a custom GPT connected to 235K+ brand assets via Brandfolder API so GTM teams across APAC, NA, and EMEA can retrieve assets by natural language query. In daily production use."
 status: ["production", "enterprise"]
 tech: ["MCP", "Vercel", "Brandfolder API", "ChatGPT Enterprise"]
 demo: https://www.youtube.com/watch?v=UOeHNyh5A7Y
@@ -16,7 +16,7 @@ Getting to the right file meant knowing the exact folder structure, taxonomy, an
 
 ## What was built
 
-Breville's first MCP-based internal tool.
+Breville's first Model Context Protocol (MCP) tool.
 
 A custom GPT connects to Brandfolder through two sequential stages. First, an **intent parser** converts any natural-language query into a structured API request, mapping descriptions, markets, dates, and product names to the right filter parameters. Then a **clarification loop** runs for ambiguous inputs before the API call fires, asking one targeted follow-up rather than returning a wall of partial matches.
 

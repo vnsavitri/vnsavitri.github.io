@@ -13,7 +13,7 @@ accent: true
 
 ## Portfolio snapshot
 
-**What it demonstrates:** local model inference, MCP-style tool boundaries, structured sensor data prompting, deterministic generation, and a lightweight longitudinal memory pattern.
+**What it demonstrates:** local model inference, Model Context Protocol (MCP) tool boundaries, structured sensor data prompting, deterministic generation, and a lightweight longitudinal memory pattern.
 
 **User experience:** enter a birth date, use simulated or recorded espresso shot data, and receive a tarot-style horoscope card that combines brewing diagnostics with GPT-OSS-generated prose.
 

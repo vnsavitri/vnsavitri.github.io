@@ -25,7 +25,7 @@ Every design decision came from the stakes being real.
 
 **Local-first** because your oncology records don't belong in a cloud pipeline. All storage, retrieval, and reasoning happens on-device.
 
-**Provenance-aware retrieval** because when an AI tells you something about your health, you need to see exactly where that answer came from: which document, which page, which date. Not just a confident summary. Every response carries its chain of custody.
+**Provenance-aware retrieval** because when an AI tells you something about your health, you need to see exactly where that answer came from: which document, which page, which date. Not just a confident summary. Retrieval-augmented generation, except the provenance is the point rather than a footnote. Every response carries its chain of custody.
 
 **Longitudinal memory** because medical reality unfolds over time. A result from six months ago changes the meaning of a result from last week. The system treats time as first-class context, not stray metadata.
 
