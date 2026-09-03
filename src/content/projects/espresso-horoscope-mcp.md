@@ -21,9 +21,7 @@ accent: true
 
 ## Why this exists
 
-Built for the **OpenAI Open Model Hackathon**, **Best Local Agent** category. The category asked for useful agentic applications of GPT-OSS that could run without internet access.
-
-The honest learning goal was simple: get my hands dirty with local model inference. A weekend hackathon with a real submission deadline gave me the right kind of constraint. It forced pragmatic choices, scope cuts, and a working demo instead of endless tutorials.
+Built for the **OpenAI Open Model Hackathon**, **Best Local Agent** category, which asked for useful agentic applications of GPT-OSS that could run without internet access.
 
 The horoscope framing is deliberately playful. The architecture underneath it is the real point: a reproducible, offline-first local agent workflow that combines structured domain data with local LLM inference through an MCP-shaped interface.
 
