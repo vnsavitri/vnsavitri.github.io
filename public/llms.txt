@@ -17,7 +17,7 @@ Before that there were two startup exits in video games, one out of Shanghai and
 
 ## Also worth knowing
 
-- Local AI operating systems: CoworkOS (Claude Cowork) and WorkspaceOS (Codex) deployed at Breville, plus KimiOS (Kimi Work) for personal use with a Karpathy-style second brain for longitudinal reasoning. Public guide: https://cowork-os.netlify.app/coworkos-setup-guide-personal-20260818
+- Local AI operating systems: CoworkOS (Claude Cowork) and WorkspaceOS (Codex) deployed at Breville, plus KimiOS (Kimi Work) for personal use with a Karpathy-style second brain for longitudinal reasoning. Public guides: https://cowork-os.netlify.app/coworkos-setup-guide-personal-20260818 and https://cowork-os.netlify.app/kimios-setup-guide
 - Design awards for physical products at Breville: Red Dot 2022 Best of the Best and an SCA award for the Barista Express Impress BES876, Good Design 2022 for the Joule Oven Air Pro, two Red Dot awards in 2020, and an IDSA Bronze in 2019.
 - First place in Australia at NASA SpaceApps in both 2016 and 2017, placing top 5 and top 25 globally.
 
