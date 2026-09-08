@@ -38,7 +38,7 @@ const archives = [
 <Layout title="Vivid Savitri-Hampton | Applied AI Product Engineer">
   <!-- Hero -->
   <section class="container-wide hero-section">
-    <p class="small-caps" style="margin-bottom: 1.75rem;">AI / Product / Sydney</p>
+    <p class="small-caps" style="margin-bottom: 1.75rem;">AI / Product / Engineering / Sydney</p>
 
     <h1 class="hero-heading">
       I build AI systems that take<br class="hero-br" />
@@ -47,19 +47,31 @@ const archives = [
     </h1>
 
     <p class="lede">
-      A few months ago I was asking my oncologist to point at my own brain MRI and
-      tell me where to look, because the report might as well have been written in
-      Klingon. So I built the tool I needed. That's pretty much how lots of things here
-      get built: a problem I actually have, and no decent tool for it. Some of that work
-      ships inside a 94-year-old hardware company, and others never leave my own machine.
+      Most AI demos look impressive until they meet a real workplace: messy data,
+      unclear ownership, and people who have better things to do than babysit an agent.
+      That's the bit I like.
+    </p>
+
+    <p class="lede">
+      I work between product leadership and applied engineering, turning ambiguous
+      problems into AI systems people can actually use. That includes agent workflows,
+      MCP tools, evaluation harnesses and local-first products. One end of that range
+      is a production system helping global GTM teams search 235,000+ brand assets in
+      natural language. The other end is smaller experiments that never leave my own machine.
     </p>
 
     <p class="lede-bio">
-      Before any of that there were two startup exits in video games, one out of Shanghai and another while in Berlin, and a long stretch of living and working across twelve countries on four continents that eventually landed me in Sydney.
+      Before AI became the job, I built products across games, software and hardware,
+      including two startups that were acquired. Different industries, same instinct:
+      find the part of the system that doesn't work for humans, then make it less stupid.
+    </p>
+
+    <p class="proof-strip">
+      235K+ assets in production · Two startup exits · Agent systems · MCP · Evals · Enterprise AI
     </p>
 
     <nav class="hero-links">
-      <a href="/about">About →</a>
+      <a href="#work">View flagship systems ↓</a>
       <a href="https://www.vnsavitri.com/" target="_blank" rel="noopener">vnsavitri.com →</a>
       <a href="https://github.com/vnsavitri" target="_blank" rel="noopener">GitHub →</a>
       <a href="https://www.linkedin.com/in/vnsavitri/" target="_blank" rel="noopener">LinkedIn →</a>
@@ -69,7 +81,7 @@ const archives = [
   <div class="container-wide" style="border-top: 1px solid var(--color-rule);"></div>
 
   <!-- Projects -->
-  <section class="container-wide projects-section">
+  <section class="container-wide projects-section" id="work">
     <div class="projects-header">
       <h2>Featured work</h2>
       <span class="small-caps">Seven projects</span>
@@ -320,6 +332,22 @@ const archives = [
     max-width: 72ch;
     margin-top: 1rem;
     margin-bottom: 2.5rem;
+  }
+
+  .lede + .lede {
+    margin-top: 1rem;
+  }
+
+  /* Proof strip: verified metrics only, kept quiet so the copy stays the hero */
+  .proof-strip {
+    max-width: 72ch;
+    margin-bottom: 2.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-rule);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
   }
 
   .hero-links {

@@ -5,7 +5,7 @@ hook: "Breville's first Model Context Protocol (MCP) tool: a custom GPT connecte
 status: ["production", "enterprise"]
 tech: ["MCP", "Vercel", "Brandfolder API", "ChatGPT Enterprise"]
 demo: https://www.youtube.com/watch?v=UOeHNyh5A7Y
-order: 3
+order: 1
 ---
 
 ## The problem

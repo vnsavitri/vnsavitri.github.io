@@ -5,7 +5,7 @@ hook: Local-first tool that strips AI watermarks and writing tells from document
 status: ["shipped", "accessibility"]
 tech: ["Bash", "Python", "pandoc"]
 repo: https://github.com/vnsavitri/vivid-clean
-order: 1
+order: 3
 accent: true
 ---
 

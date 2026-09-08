@@ -5,7 +5,7 @@ hook: Paper-first multi-agent AI trading lab with execution guardrails between a
 status: ["active", "safety"]
 tech: ["Python", "Dash", "Alpaca API", "multi-agent"]
 repo: https://github.com/vnsavitri/vivid-alpaca
-order: 4
+order: 5
 accent: true
 ---
 
