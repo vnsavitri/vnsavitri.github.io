@@ -96,7 +96,9 @@ Place GitHub, LinkedIn, the older personal site and Archive in the footer or an 
 
 ### Proof strip
 
-> **235K+ assets in production · Two startup exits · Agent systems · MCP · Evals · Enterprise AI**
+Removed from the homepage (decision, 2026-09-08): it duplicated the copy without earning its place. The metrics still live in the hero paragraph, the DAM Butler MCP case study and llms.txt.
+
+> ~~235K+ assets in production · Two startup exits · Agent systems · MCP · Evals · Enterprise AI~~
 
 Only use metrics that can be publicly supported. Do not introduce confidential adoption, revenue or efficiency figures.
 

@@ -40,10 +40,6 @@ const projects = (await getCollection("projects")).sort(
       work for humans, then make it less stupid.
     </p>
 
-    <p class="proof-strip">
-      235K+ assets in production · Two startup exits · Agent systems · MCP · Evals · Enterprise AI
-    </p>
-
     <nav class="hero-links">
       <a href="#work">View flagship systems ↓</a>
       <a href="https://www.vnsavitri.com/" target="_blank" rel="noopener">vnsavitri.com →</a>
@@ -289,18 +285,6 @@ const projects = (await getCollection("projects")).sort(
 
   .lede + .lede {
     margin-top: 1rem;
-  }
-
-  /* Proof strip: verified metrics only, kept quiet so the copy stays the hero */
-  .proof-strip {
-    max-width: 72ch;
-    margin-bottom: 2.5rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--color-rule);
-    font-size: 0.8rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--color-ink-muted);
   }
 
   .hero-links {
