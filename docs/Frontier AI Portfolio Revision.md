@@ -80,7 +80,7 @@ Place GitHub, LinkedIn, the older personal site and Archive in the footer or an 
 
 ### Eyebrow
 
-> AI / PRODUCT / ENGINEERING / SYDNEY
+> APPLIED AI / PRODUCT / ENGINEERING / SYDNEY
 
 ### Headline
 
@@ -88,11 +88,11 @@ Place GitHub, LinkedIn, the older personal site and Archive in the footer or an 
 
 ### Supporting copy
 
-> Most AI demos look impressive but rarely survive contact with a real workplace: messy data, unclear ownership, and people who have better things to do than babysit an agent. This is my sweet spot: scaling demos into product that survives the messiness of enterprise environments.
->
+> Most AI demos look impressive but rarely survives contact with real workplace: messy data, unclear ownership, and people who have better things to do than babysit an agent. This is my sweet spot, scaling demos into product that survives the messiness of enterprise environments.
+> 
 > I work between product leadership and applied AI engineering, turning ambiguous problems into AI systems people can actually use. That includes agent workflows, harness engineering, evaluation harnesses and local-first products. One end of that range is a production system helping global GTM teams search 235,000+ brand assets in natural language. The other end is smaller experiments that never leave my own machine.
 >
-> Before building AI-native products became my full-time job, I built products across games, SaaS and hardware, including two startups that were acquired. Different industries, same instinct: find the part of the system that doesn’t work for humans, then make it less stupid.
+> Before building AI-native products became my full-time  job, I built products across games, SaaS and hardware, including two startups that were acquired. Different industries, same instinct: find the part of the system that doesn't work for humans, then make it less stupid.
 
 ### Proof strip
 
@@ -449,9 +449,9 @@ The current muted blue and coral text should be reviewed carefully against the p
 
 ## 12. Contact section
 
-Replace the generic **Get In Touch** with a specific invitation.
+Implemented on the homepage footer area (2026-09-08), using the specific invitation below. Contact email: hello (at) veryvivid.xyz, displayed obfuscated with a working `mailto:hello@veryvivid.xyz` link.
 
-### Suggested copy
+### Copy
 
 > **I’m interested in frontier and applied AI roles where product judgement and hands-on building belong in the same job.**
 >
