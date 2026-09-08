@@ -1,7 +1,7 @@
 ---
 title: Vivid Clean
 slug: vivid-clean
-hook: Local-first tool that strips AI watermarks and writing tells from documents, built for people who use AI as an accessibility aid rather than a way to cheat.
+hook: A local-first document-cleaning tool for neuro-spicy folks, built around privacy, accessibility and user control.
 status: ["shipped", "accessibility"]
 tech: ["Bash", "Python", "pandoc"]
 repo: https://github.com/vnsavitri/vivid-clean

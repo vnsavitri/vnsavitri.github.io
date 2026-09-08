@@ -105,7 +105,7 @@ Only use metrics that can be publicly supported. Do not introduce confidential a
 ### Calls to action
 
 - **View flagship systems**
-- **Download CV**
+- **~~Download CV~~**
 - **GitHub**
 
 ## 5. Project hierarchy
@@ -118,7 +118,7 @@ These projects should carry the main hiring narrative.
 
 **Homepage framing:**
 
-> Natural-language retrieval across 235,000+ global brand assets, with an architecture adopted and shipped into daily enterprise workflows.
+> Natural-language retrieval across 235,000+ global brand assets, with an architecture adopted and shipped into daily enterprise workflows in Breville Group global GTM teams.
 
 **What it should prove:**
 
@@ -172,7 +172,7 @@ Existing public evidence: <https://veryvivid.xyz/projects/vai-sante-os/>
 
 **Homepage framing:**
 
-> A local-first document-cleaning tool built around privacy, accessibility and user control.
+> A local-first document-cleaning tool for neuro-spicy folks, built around privacy, accessibility and user control.
 
 **What it should prove:**
 

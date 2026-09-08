@@ -1,7 +1,7 @@
 ---
 title: DAM Butler MCP
 slug: dam-butler-mcp
-hook: "Breville's first Model Context Protocol (MCP) tool: a custom GPT connected to 235K+ brand assets via Brandfolder API so GTM teams across APAC, NA, and EMEA can retrieve assets by natural language query. In daily production use."
+hook: "Natural-language retrieval across 235,000+ global brand assets, with an architecture adopted and shipped into daily enterprise workflows in Breville Group global GTM teams."
 status: ["production", "enterprise"]
 tech: ["MCP", "Vercel", "Brandfolder API", "ChatGPT Enterprise"]
 demo: https://www.youtube.com/watch?v=UOeHNyh5A7Y
