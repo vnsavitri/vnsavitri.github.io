@@ -373,9 +373,9 @@ Replace the current manifesto-like sequence with a compact operating model.
 
 ### Suggested structure
 
-#### Find the workflow, not the chatbot
+#### Start with the problems and the workflow, not the tech stack
 
-> I start with the work people are already trying to do: the decisions, handoffs, bottlenecks and failures. The model comes later.
+> I always start with the why when bringing AI into a problem, because the how changes over time and should stay modular and flexible. Then the what: the work people are already trying to do, the decisions, handoffs, bottlenecks and failures. The models come last, and they depend on what we're trying to achieve and what success looks like.
 
 #### Build the smallest system that can answer the real question
 
