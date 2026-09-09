@@ -7,6 +7,7 @@ tech: ["MCP", "Vercel", "Brandfolder API", "ChatGPT Enterprise"]
 demo: https://www.youtube.com/watch?v=UOeHNyh5A7Y
 order: 1
 tier: flagship
+variant: dam
 ---
 
 ## The problem

@@ -15,6 +15,7 @@ const projects = defineCollection({
     order: z.number(),
     tier: z.enum(["flagship", "experiment"]),
     why: z.string().optional(),
+    variant: z.string().optional(),
     stars: z.number().optional(),
     accent: z.boolean().optional(),
   }),

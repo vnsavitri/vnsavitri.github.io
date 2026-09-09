@@ -7,6 +7,7 @@ tech: ["Python", "Mermaid", "evaluation harness"]
 repo: https://github.com/vnsavitri/vai_sante_os
 order: 2
 tier: flagship
+variant: sante
 accent: true
 ---
 

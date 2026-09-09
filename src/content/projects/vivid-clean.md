@@ -7,6 +7,7 @@ tech: ["Bash", "Python", "pandoc"]
 repo: https://github.com/vnsavitri/vivid-clean
 order: 4
 tier: flagship
+variant: clean
 accent: true
 ---
 

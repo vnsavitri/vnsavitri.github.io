@@ -7,6 +7,7 @@ tech: ["Next.js 16", "TypeScript", "Supabase", "Capacitor"]
 live: https://web.koinaku.com
 order: 3
 tier: flagship
+variant: koinaku
 accent: true
 ---
 

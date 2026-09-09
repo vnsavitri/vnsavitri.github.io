@@ -65,7 +65,12 @@ const experiments = projects.filter((p) => p.data.tier === "experiment");
           {idx > 0 && <div class="project-divider"></div>}
           <a href={`/projects/${project.data.slug}/`} class="project-link">
             <article class="project-card">
-              <div class="project-num" aria-hidden="true">0{idx + 1}</div>
+              <div class={`project-preview project-preview-${project.data.variant}`} aria-hidden="true">
+                <span class="project-preview-index">0{idx + 1}</span>
+                <span class="project-preview-title">{project.data.title}</span>
+                <span class="project-preview-rule"></span>
+                <span class="project-preview-label">Flagship</span>
+              </div>
 
               <div class="project-body">
                 <h3 class="project-title">{project.data.title}</h3>
@@ -359,29 +364,111 @@ const experiments = projects.filter((p) => p.data.tier === "experiment");
     color: inherit;
   }
 
-  /* Desktop: number on left, content on right */
+  /* Desktop: abstract preview pane on left, content on right.
+     The pane borrows the archive cards' visual language. */
   .project-card {
     display: grid;
-    grid-template-columns: 5rem 1fr;
+    grid-template-columns: minmax(11rem, 15rem) 1fr;
     gap: 0 2rem;
-    align-items: start;
+    align-items: stretch;
   }
 
-  .project-num {
+  .project-preview {
+    position: relative;
+    display: flex;
+    min-height: 12rem;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    padding: 1rem;
+    border: 1px solid var(--color-rule);
+    background: var(--art-ink);
+    color: var(--art-paper);
+    transition: border-color 0.2s ease;
+  }
+
+  .project-link:hover .project-preview {
+    border-color: var(--color-accent);
+  }
+
+  .project-preview::before,
+  .project-preview::after {
+    position: absolute;
+    content: "";
+  }
+
+  .project-preview::before {
+    width: 5rem;
+    height: 5rem;
+    right: -1rem;
+    top: -1rem;
+    background: var(--art-accent);
+  }
+
+  .project-preview::after {
+    width: 3rem;
+    height: 3rem;
+    right: 1.75rem;
+    bottom: -1rem;
+    background: var(--art-secondary);
+  }
+
+  .project-preview-index,
+  .project-preview-label {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .project-preview-title {
+    position: relative;
+    z-index: 1;
+    max-width: 9ch;
     font-family: var(--font-display);
-    font-size: clamp(2rem, 5vw, 3.5rem);
-    font-weight: 800;
-    letter-spacing: -0.04em;
-    color: var(--color-rule);
-    line-height: 1;
-    font-optical-sizing: auto;
-    transition: color 0.2s ease;
-    user-select: none;
-    padding-top: 0.2rem;
+    font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    line-height: 0.95;
   }
 
-  .project-link:hover .project-num {
-    color: color-mix(in srgb, var(--color-accent) 30%, var(--color-rule));
+  .project-preview-rule {
+    position: absolute;
+    z-index: 1;
+    right: 1rem;
+    bottom: 1rem;
+    left: 1rem;
+    border-top: 1px solid color-mix(in srgb, var(--art-paper) 35%, transparent);
+  }
+
+  .project-preview-dam {
+    --art-ink: #14213d;
+    --art-paper: #eef1f6;
+    --art-accent: #e05d44;
+    --art-secondary: #8ea3c8;
+  }
+
+  .project-preview-sante {
+    --art-ink: #10312e;
+    --art-paper: #e9f2ef;
+    --art-accent: #3d8f7a;
+    --art-secondary: #d98e73;
+  }
+
+  .project-preview-koinaku {
+    --art-ink: #26150f;
+    --art-paper: #f6efe4;
+    --art-accent: #e63227;
+    --art-secondary: #f0c808;
+  }
+
+  .project-preview-clean {
+    --art-ink: #1c2b3a;
+    --art-paper: #f2f5f7;
+    --art-accent: #5b87b7;
+    --art-secondary: #d96c47;
   }
 
   .project-body {
@@ -501,23 +588,14 @@ const experiments = projects.filter((p) => p.data.tier === "experiment");
       margin-bottom: 2rem;
     }
 
-    /* Stack: number above title on mobile */
+    /* Stack: preview above body on mobile */
     .project-card {
       grid-template-columns: 1fr;
-      gap: 0.25rem;
+      gap: 1rem;
     }
 
-    .project-num {
-      font-size: 1rem;
-      letter-spacing: 0.1em;
-      color: var(--color-ink-muted);
-      font-weight: 600;
-      font-optical-sizing: auto;
-      /* Reset to small-caps style on mobile: decorative number becomes tiny label */
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      letter-spacing: 0.2em;
-      padding-top: 0;
+    .project-preview {
+      min-height: 8rem;
     }
 
     .project-divider {
