@@ -13,7 +13,7 @@ accent: true
 
 ## The problem
 
-Indonesia has one of the youngest populations on earth and almost no formal financial education. Gen Z there is starting to earn, save and invest earlier than any generation before it, mostly through apps, mostly without anyone teaching them what a mutual fund is or why leverage kills. The stakes are real money, and the tools that exist are either brokerage apps that want you trading or courses nobody finishes.
+Indonesia is one of the world's youngest large countries: a median age around 30, with more than half the population under it. And almost nobody there gets formal financial education. Gen Z is starting to earn, save and invest earlier than any generation before it, mostly through apps, mostly without anyone teaching them what a mutual fund is or why leverage kills. The stakes are real money, and the tools that exist are either brokerage apps that want you trading or courses nobody finishes.
 
 ## What it is
 
