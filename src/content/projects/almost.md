@@ -5,7 +5,9 @@ hook: Upload a LinkedIn PDF. Almost finds 3–5 real fork points in your career.
 status: ["shipped", "product"]
 tech: ["Next.js 14", "Anthropic API", "Fraunces"]
 repo: https://github.com/vnsavitri/Almost
-order: 6
+order: 7
+tier: experiment
+why: "End-to-end product shipping with real users and real payments: proof the product judgement in the flagship work is not theoretical."
 ---
 
 ## What it does

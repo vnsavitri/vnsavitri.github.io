@@ -5,7 +5,8 @@ hook: A local-first document-cleaning tool for neuro-spicy folks, built around p
 status: ["shipped", "accessibility"]
 tech: ["Bash", "Python", "pandoc"]
 repo: https://github.com/vnsavitri/vivid-clean
-order: 3
+order: 4
+tier: flagship
 accent: true
 ---
 

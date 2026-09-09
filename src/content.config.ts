@@ -13,6 +13,8 @@ const projects = defineCollection({
     live: z.string().url().optional(),
     demo: z.string().url().optional(),
     order: z.number(),
+    tier: z.enum(["flagship", "experiment"]),
+    why: z.string().optional(),
     stars: z.number().optional(),
     accent: z.boolean().optional(),
   }),

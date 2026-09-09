@@ -6,7 +6,9 @@ status: ["live"]
 tech: ["R", "IBM Watson NLP", "regression"]
 repo: https://github.com/vnsavitri/sourdough-intelligence
 live: https://vividcrumb.netlify.app
-order: 7
+order: 8
+tier: experiment
+why: "Data rigour from before LLMs existed: regression, sentiment analysis and a live app, still running."
 accent: true
 ---
 

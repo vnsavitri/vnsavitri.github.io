@@ -10,6 +10,7 @@
 - veryvivid.xyz is the primary domain; vnsavitri.com is kept live and cross-linked.
 - Hero headline "I build AI systems that take safety as seriously as capability" stays as-is.
 - The health/cancer narrative stays inside the VAI Santé case study only. It is not the homepage hero, proof strip or any front-and-centre positioning.
+- Koinaku added as flagship #3 (2026-09-09): the strongest evidence of the loop-and-graph build method producing a real product in beta, not a demo. Homepage work list is now tiered: four flagships, four experiments, with each experiment carrying a "why it matters" line tying it back to the flagship skills. "How I build" uses the section 8 operating model.
 
 ## 1. Strategic objective
 

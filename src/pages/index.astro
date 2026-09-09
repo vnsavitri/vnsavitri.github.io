@@ -5,6 +5,8 @@ import { getCollection } from "astro:content";
 const projects = (await getCollection("projects")).sort(
   (a, b) => a.data.order - b.data.order
 );
+const flagships = projects.filter((p) => p.data.tier === "flagship");
+const experiments = projects.filter((p) => p.data.tier === "experiment");
 
 ---
 
@@ -50,15 +52,15 @@ const projects = (await getCollection("projects")).sort(
 
   <div class="container-wide" style="border-top: 1px solid var(--color-rule);"></div>
 
-  <!-- Projects -->
+  <!-- Flagship systems -->
   <section class="container-wide projects-section" id="work">
     <div class="projects-header">
-      <h2>Featured work</h2>
-      <span class="small-caps">Seven projects</span>
+      <h2>Flagship systems</h2>
+      <span class="small-caps">Four systems</span>
     </div>
 
     <ol class="projects-list">
-      {projects.map((project, idx) => (
+      {flagships.map((project, idx) => (
         <li class="project-item">
           {idx > 0 && <div class="project-divider"></div>}
           <a href={`/projects/${project.data.slug}/`} class="project-link">
@@ -83,6 +85,33 @@ const projects = (await getCollection("projects")).sort(
               </div>
             </article>
           </a>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <div class="container-wide" style="border-top: 1px solid var(--color-rule);"></div>
+
+  <!-- Experiments -->
+  <section class="container-wide experiments-section">
+    <div class="projects-header">
+      <div>
+        <h2>Experiments</h2>
+        <p class="experiments-intro">
+          Smaller builds that fed the flagship work. Same disciplines, lower stakes.
+        </p>
+      </div>
+      <span class="small-caps">Four experiments</span>
+    </div>
+
+    <ol class="experiments-list">
+      {experiments.map((project) => (
+        <li class="experiment-item">
+          <a href={`/projects/${project.data.slug}/`} class="experiment-link">
+            <h3 class="experiment-title">{project.data.title}</h3>
+          </a>
+          <p class="experiment-why">{project.data.why}</p>
+          <div class="tech-tag">{project.data.tech.join(" · ")}</div>
         </li>
       ))}
     </ol>
@@ -190,45 +219,38 @@ const projects = (await getCollection("projects")).sort(
       <span class="small-caps">Five principles</span>
     </div>
 
-    <div class="prose-body">
+    <div class="prose-body build-principles">
+      <h3>Find the workflow, not the chatbot</h3>
       <p>
-        I use AI where it earns its place. Half the fun is figuring out whether it's
-        actually helping or just slowing me down, especially the moment it starts
-        producing slop. Ain't nobody got time to babysit a dumb agent.
+        I start with the work people are already trying to do: the decisions, handoffs,
+        bottlenecks and failures. The model comes later.
       </p>
 
+      <h3>Build the smallest system that can answer the real question</h3>
       <p>
-        <strong>Open-source and local model</strong>: I default to open weights and local
-        models first. For personal works that's LM Studio, Unsloth or DeepSeek Harness
-        running Kimi, Qwen and friends; at work the stack is closed, mostly OpenAI and
-        Anthropic, and that comes with its own tradeoffs. The call depends on privacy,
-        cost, capability and the job in front of me.
+        I use prototypes to test value and architecture together. A convincing demo is
+        useful, but it isn't evidence that the system will survive contact with real users.
       </p>
 
+      <h3>Define what "good" means</h3>
       <p>
-        <strong>Harness engineering</strong>: Most of my time goes into the harness around
-        agent workflows: explicit state, scoped delegation, handoffs that actually carry
-        context, and memory that doesn't turn into a junk drawer. This is the actual work
-        behind <a href="https://cowork-os.netlify.app/coworkos-setup-guide-personal-20260818" target="_blank" rel="noopener">CoworkOS (Anthropic)</a> and WorkspaceOS (OpenAI) that I created for people to
-        use at work (customised and deployed for Finance, Legal, IP, NPD, Test Kitchens
-        and GTM teams).
-      </p>
-
-      <p>
-        I turn messy real-world work into AI products people can understand, trust,
-        and use.
-      </p>
-
-      <p>
-        <strong>Evaluation, evidence and safety</strong>: I test what a system actually
-        does, keep provenance where it matters, and put review gates around decisions that
-        have real consequences. Same discipline behind <a href="/projects/vai-sante-os/">chain-of-custody
+        Before scaling, I turn expectations into representative tasks, evaluation rubrics,
+        failure modes and review gates. Same discipline behind <a href="/projects/vai-sante-os/">chain-of-custody
         memory</a> and <a href="/projects/vivid-alpaca/">execution guardrails on live trading</a>.
       </p>
 
+      <h3>Engineer the harness</h3>
       <p>
-        On the product side, I move from problem framing and prototype to a working
-        product, with enough technical depth to make good calls along the way.
+        Model capability matters. So do state, context, tools, permissions, memory,
+        observability and recovery. Most of the product lives in that surrounding system.
+        This is the actual work behind <a href="https://cowork-os.netlify.app/coworkos-setup-guide-personal-20260818" target="_blank" rel="noopener">CoworkOS (Anthropic)</a> and WorkspaceOS (OpenAI),
+        deployed for Finance, Legal, IP, NPD, Test Kitchens and GTM teams.
+      </p>
+
+      <h3>Ship, observe and revise</h3>
+      <p>
+        Production behaviour is the final argument. I look for adoption, failure patterns
+        and the moments where people stop trusting the system.
       </p>
     </div>
   </section>
@@ -397,6 +419,58 @@ const projects = (await getCollection("projects")).sort(
     color: var(--color-ink-muted);
   }
 
+  /* Experiments: compact tier below the flagships, deliberately quieter */
+  .experiments-section {
+    padding-top: 4rem;
+    padding-bottom: 6rem;
+  }
+
+  .experiments-intro {
+    margin-top: 0.5rem;
+    font-size: 0.95rem;
+    color: var(--color-ink-muted);
+    max-width: 60ch;
+  }
+
+  .experiments-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .experiment-item {
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--color-rule);
+  }
+
+  .experiment-item:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .experiment-link {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .experiment-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.35rem;
+    transition: color 0.15s ease;
+  }
+
+  .experiment-link:hover .experiment-title {
+    color: var(--color-accent);
+  }
+
+  .experiment-why {
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--color-ink-muted);
+    max-width: 70ch;
+    margin-bottom: 0.5rem;
+  }
+
   /* ─── Mobile ─── */
   @media (max-width: 600px) {
     .hero-section {
@@ -414,6 +488,11 @@ const projects = (await getCollection("projects")).sort(
     }
 
     .projects-section {
+      padding-top: 2.5rem;
+      padding-bottom: 4rem;
+    }
+
+    .experiments-section {
       padding-top: 2.5rem;
       padding-bottom: 4rem;
     }
@@ -690,6 +769,15 @@ const projects = (await getCollection("projects")).sort(
   .build-section {
     padding-top: 4rem;
     padding-bottom: 6rem;
+  }
+
+  .build-principles h3 {
+    margin-top: 2.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .build-principles h3:first-child {
+    margin-top: 0;
   }
 
   .build-header {
