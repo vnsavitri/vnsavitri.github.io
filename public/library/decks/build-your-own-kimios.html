@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Own KimiOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg:           #FFFFFF;
+  --surface:      #F7F6F4;
+  --surface-2:    #EEECEA;
+  --text:         #1A1917;
+  --text-mid:     #4B4845;
+  --text-muted:   #928E8A;
+  --text-faint:   #D1CEC9;
+  --border:       #E4E1DD;
+  --border-mid:   #C9C5C0;
+  --accent:       #2ABFBF;
+  --accent-light: rgba(42, 191, 191, 0.12);
+  --accent-mid:   rgba(42, 191, 191, 0.3);
+  --accent-dark:  #1a5c5c;
+  --green:        #166534;
+  --green-bg:     #F0FDF4;
+  --green-border: #BBF7D0;
+  --font: 'Outfit', sans-serif;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --out:  cubic-bezier(0, 0, 0.2, 1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #F0EFED; font-family: var(--font); -webkit-font-smoothing: antialiased; color: var(--text); zoom: 1.2; }
+.deck { position: fixed; inset: 0; }
+#progress-bar { position: fixed; top: 0; left: 0; height: 2px; background: var(--accent); transition: width 0.45s var(--ease); z-index: 300; }
+#counter { position: fixed; bottom: 1.8rem; right: 2.2vw; font-size: 0.6rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); z-index: 300; }
+#kbd-hint { position: fixed; bottom: 1.8rem; left: 50%; transform: translateX(-50%); font-size: 0.58rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); z-index: 300; pointer-events: none; }
+.nav-wrap { position: fixed; top: 50%; transform: translateY(-50%); z-index: 300; }
+.nav-wrap.is-prev { left: 1.2vw; }
+.nav-wrap.is-next { right: 1.2vw; }
+.nav-btn { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color 0.18s, color 0.18s; }
+.nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.nav-btn:disabled { opacity: 0.2; pointer-events: none; }
+.slide { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 6.5vh 9vw; background: var(--bg); opacity: 0; pointer-events: none; transition: opacity 0.4s var(--ease), transform 0.4s var(--ease); transform: translateX(28px); }
+.slide.is-active  { opacity: 1; pointer-events: all; transform: none; }
+.slide.is-exit    { opacity: 0; transform: translateX(-28px); }
+.slide.is-active .r  { animation: up 0.45s var(--out) both; }
+.slide.is-active .r:nth-child(1) { animation-delay: 0.05s; }
+.slide.is-active .r:nth-child(2) { animation-delay: 0.11s; }
+.slide.is-active .r:nth-child(3) { animation-delay: 0.17s; }
+.slide.is-active .r:nth-child(4) { animation-delay: 0.24s; }
+.slide.is-active .r:nth-child(5) { animation-delay: 0.30s; }
+.slide.is-active .r:nth-child(6) { animation-delay: 0.36s; }
+@keyframes up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.lbl { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1.2rem; }
+.lbl--phase { color: var(--accent); }
+.slide h2 { font-size: clamp(1.5rem, 2.8vw, 2.4rem); font-weight: 700; line-height: 1.15; color: var(--text); letter-spacing: -0.02em; }
+.s-title { background: var(--bg); }
+.title-eyebrow { font-size: 0.68rem; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2rem; }
+.title-name { font-size: clamp(3rem, 7vw, 6rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1; color: var(--text); margin-bottom: 1.5rem; padding-left: 1.4rem; border-left: 4px solid var(--accent); }
+.title-sub { font-size: 1.05rem; font-weight: 400; color: var(--text-mid); line-height: 1.5; max-width: 520px; margin-bottom: 2.5rem; padding-left: 1.4rem; }
+.title-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.9rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.68rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-left: 1.4rem; }
+.title-agenda { font-size: 0.75rem; font-weight: 400; color: rgba(107, 114, 128, 0.65); line-height: 1.45; margin-top: 1.8rem; padding-left: 1.4rem; letter-spacing: 0.01em; display: flex; flex-direction: column; gap: 0; }
+.s-two-col { background: var(--bg); }
+.two-components { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin-top: 1.8rem; margin-bottom: 1.8rem; }
+.component { padding: 2.4rem 2.2rem 2.8rem; background: var(--bg); }
+.component-featured { background: var(--surface); }
+.component-tag { display: inline-block; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent-mid); background: var(--accent-light); padding: 0.2rem 0.6rem; border-radius: 3px; margin-bottom: 1.1rem; }
+.component h3 { font-size: 1.25rem; font-weight: 700; color: var(--text); margin-bottom: 0.7rem; letter-spacing: -0.01em; }
+.component p { font-size: 0.88rem; font-weight: 400; color: var(--text-mid); line-height: 1.68; }
+.tools-note { font-size: 0.8rem; font-weight: 500; color: var(--text-mid); text-align: center; }
+.s-build { background: var(--bg); }
+.build-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; margin-top: 1.8rem; align-items: stretch; }
+.build-card { padding: 1.8rem 1.6rem 2rem; border: 1.5px solid var(--border); border-top: 3px solid var(--accent); border-radius: 6px; background: var(--bg); display: flex; flex-direction: column; gap: 0.75rem; }
+.build-card-num { font-size: 0.58rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+.build-card-heading { font-size: 1rem; font-weight: 700; color: var(--text); line-height: 1.25; letter-spacing: -0.01em; }
+.build-card p { font-size: 0.84rem; font-weight: 400; color: var(--text-mid); line-height: 1.68; }
+.build-card--featured { background: rgba(42, 191, 191, 0.05); border: 1.5px solid var(--accent-mid); border-top: 4px solid var(--accent); }
+.build-card-badge { display: inline-block; font-size: 0.48rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #fff; background: var(--accent); padding: 0.15rem 0.6rem; border-radius: 3px; margin-bottom: 0.1rem; }
+.s-arch { background: var(--bg); }
+.arch-diagram { display: flex; flex-direction: column; margin-top: 1.4rem; margin-bottom: 1.2rem; width: 100%; }
+.arch-layer { display: flex; align-items: center; gap: 2rem; padding: 0.85rem 1.5rem; border: 1.5px solid var(--border-mid); border-radius: 6px; }
+.arch-layer--top { background: var(--surface); justify-content: center; }
+.arch-layer--mid { background: var(--accent); border-color: var(--accent); }
+.arch-layer--bottom { background: var(--bg); }
+.arch-name { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; color: var(--text-muted); }
+.arch-layer--top .arch-name { color: var(--text); font-size: 0.72rem; }
+.arch-layer--mid .arch-name { color: rgba(255,255,255,0.65); }
+.arch-split { display: flex; align-items: stretch; flex: 1; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,0.1); }
+.arch-split-item { flex: 1; padding: 0.45rem 1.1rem; }
+.arch-split-div { width: 1px; background: rgba(255,255,255,0.18); flex-shrink: 0; }
+.arch-split-title { font-size: 0.8rem; font-weight: 700; color: #fff; margin-bottom: 0.1rem; }
+.arch-split-sub { font-size: 0.65rem; font-weight: 400; color: rgba(255,255,255,0.55); }
+.arch-pills { display: flex; align-items: center; gap: 0.45rem; flex: 1; flex-wrap: wrap; }
+.arch-pill { padding: 0.32rem 0.8rem; border: 1.5px solid var(--border-mid); border-radius: 4px; background: var(--surface); font-size: 0.67rem; font-weight: 600; letter-spacing: 0.03em; color: var(--text-mid); white-space: nowrap; }
+.arch-conn { height: 16px; position: relative; }
+.arch-conn::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--border-mid); }
+.arch-note { font-size: 0.78rem; font-weight: 400; color: var(--text-muted); line-height: 1.6; padding-top: 1rem; border-top: 1px solid var(--border); }
+.s-tmpl { background: var(--bg); padding-top: 5vh; padding-bottom: 4vh; }
+.tmpl-layout { display: grid; grid-template-columns: 1fr 1.75fr; gap: 2.5vw; margin-top: 1.4rem; align-items: start; }
+.tmpl-desc { display: flex; flex-direction: column; gap: 1rem; }
+.tmpl-desc-tag { display: inline-block; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent-mid); background: var(--accent-light); padding: 0.2rem 0.6rem; border-radius: 3px; margin-bottom: 0.2rem; align-self: flex-start; }
+.tmpl-desc h3 { font-size: 1.15rem; font-weight: 700; color: var(--text); line-height: 1.2; letter-spacing: -0.01em; }
+.tmpl-desc p { font-size: 0.83rem; font-weight: 400; color: var(--text-mid); line-height: 1.68; }
+.tmpl-hint { font-size: 0.74rem; font-weight: 500; color: var(--text-muted); padding: 0.65rem 1rem; background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0; line-height: 1.55; }
+.tmpl-code-wrap { position: relative; }
+.tmpl-pre { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.1rem 1.3rem 1.1rem 1.3rem; font-family: 'Courier New', 'Lucida Console', monospace; font-size: 0.62rem; line-height: 1.65; color: var(--text-mid); white-space: pre; overflow: auto; max-height: 56vh; }
+.copy-btn { position: absolute; top: 0.55rem; right: 0.55rem; padding: 0.28rem 0.75rem; background: var(--bg); border: 1px solid var(--border-mid); border-radius: 4px; font-size: 0.58rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); cursor: pointer; transition: all 0.15s; font-family: var(--font); z-index: 10; }
+.copy-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.copy-btn.copied { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+.s-tools { background: var(--bg); padding-top: 4.5vh; padding-bottom: 3.5vh; }
+.tools-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; }
+.tools-eyebrow { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); }
+.tools-badge { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.2em; color: var(--accent); border: 1px solid var(--accent-mid); background: var(--accent-light); padding: 0.25rem 0.7rem; border-radius: 3px; flex-shrink: 0; white-space: nowrap; }
+.tools-subtitle-line { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.2rem; margin-bottom: 0.9rem; }
+.tools-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.85rem; }
+.tool-col { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+.tool-col::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 6px 6px 0 0; }
+.tool-col--chat::before   { background: #2ABFBF; }
+.tool-col--work::before   { background: #1a5c5c; }
+.tool-col--python::before { background: #E8762C; }
+.tool-col-header { padding: 0.8rem 0.95rem 0.6rem; border-bottom: 1px solid var(--border); background: var(--bg); }
+.tool-col-label { font-size: 0.52rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.15rem; }
+.tool-col--chat .tool-col-label  { color: #2ABFBF; }
+.tool-col--work .tool-col-label  { color: #1a5c5c; }
+.tool-col--python .tool-col-label  { color: #E8762C; }
+.tool-col-name { font-size: 0.95rem; font-weight: 700; color: var(--text); line-height: 1.1; }
+.tool-col-access { font-size: 0.56rem; color: var(--text-muted); margin-top: 0.15rem; }
+.tool-trigger { margin: 0.45rem 0.95rem 0.3rem; border-radius: 4px; padding: 0.38rem 0.6rem; }
+.tool-col--chat .tool-trigger { background: rgba(42,191,191,0.08); border-left: 3px solid #2ABFBF; }
+.tool-col--work .tool-trigger { background: rgba(26,92,92,0.08); border-left: 3px solid #1a5c5c; }
+.tool-col--python .tool-trigger { background: rgba(232,118,44,0.08); border-left: 3px solid #E8762C; }
+.tool-trigger-label { font-size: 0.52rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.12rem; }
+.tool-col--chat .tool-trigger-label  { color: #2ABFBF; }
+.tool-col--work .tool-trigger-label  { color: #1a5c5c; }
+.tool-col--python .tool-trigger-label  { color: #E8762C; }
+.tool-trigger-text { font-size: 0.68rem; color: var(--text-mid); font-weight: 500; line-height: 1.4; }
+.tool-use-cases { padding: 0.38rem 0.95rem 0; flex: 1; }
+.tool-use-label { font-size: 0.52rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem; }
+.tool-uc { display: flex; align-items: flex-start; gap: 0.38rem; margin-bottom: 0.38rem; }
+.tool-uc-dot { width: 4px; height: 4px; border-radius: 50%; margin-top: 0.33em; flex-shrink: 0; }
+.tool-col--chat .tool-uc-dot  { background: #2ABFBF; }
+.tool-col--work .tool-uc-dot { background: #1a5c5c; }
+.tool-col--python .tool-uc-dot  { background: #E8762C; }
+.tool-uc-main { font-size: 0.68rem; color: var(--text); font-weight: 600; line-height: 1.35; }
+.tool-uc-sub { font-size: 0.58rem; color: var(--text-muted); line-height: 1.3; margin-top: 0.04rem; }
+.tool-not-for { margin: 0.45rem 0.95rem 0.8rem; padding: 0.38rem 0.55rem; background: var(--bg); border-radius: 4px; border: 1px solid var(--border); }
+.tool-not-for-label { font-size: 0.52rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.12rem; }
+.tool-not-for-text { font-size: 0.58rem; color: var(--text-muted); line-height: 1.4; }
+.tools-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 0.6rem; margin-top: 0.7rem; border-top: 1px solid var(--border); gap: 1rem; flex-wrap: wrap; }
+.tools-footer-note { font-size: 0.6rem; color: var(--text-muted); line-height: 1.5; }
+.tools-footer-note strong { color: var(--accent); }
+.tools-legend { display: flex; gap: 1rem; flex-shrink: 0; }
+.tools-legend-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.58rem; color: var(--text-muted); }
+.tools-legend-dot { width: 6px; height: 6px; border-radius: 50%; }
+.s-phase { background: linear-gradient(145deg, #e8f5f5 0%, #d6ecec 100%); align-items: center; justify-content: center; }
+.s-phase h2 { font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 700; color: #0f4c4c; letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 0.5rem; text-align: center; }
+.phase-eyebrow { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: #2a7a7a; margin-bottom: 1.1rem; text-align: center; }
+.phase-sub { font-size: 0.9rem; font-weight: 400; color: #1a5c5c; line-height: 1.65; text-align: center; margin-bottom: 2.4rem; max-width: 540px; }
+.phase-flow { display: flex; align-items: stretch; gap: 0; max-width: 840px; width: 100%; }
+.phase-step { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.55rem; padding: 1.6rem 1.1rem 1.8rem; background: rgba(255,255,255,0.78); border: 1.5px solid rgba(42,191,191,0.4); border-radius: 8px; }
+.phase-step-ico { font-size: 2.4rem; line-height: 1; }
+.phase-step-num { font-size: 0.5rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: #2a7a7a; }
+.phase-step-title { font-size: 0.88rem; font-weight: 700; color: #0f4c4c; line-height: 1.25; }
+.phase-step-sub { font-size: 0.68rem; color: #1a5c5c; line-height: 1.5; }
+.phase-arr { color: #7db8b8; font-size: 1.3rem; align-self: center; padding: 0 1rem; flex-shrink: 0; }
+.s-folder-reveal { background: linear-gradient(145deg, #e8f5f5 0%, #d6ecec 100%); }
+.s-folder-reveal .phase-eyebrow { text-align: left; margin-bottom: 1.2rem; }
+.s-folder-reveal h2 { font-size: clamp(1.7rem, 3.2vw, 2.6rem); font-weight: 700; color: #0f4c4c; letter-spacing: -0.025em; line-height: 1.1; text-align: left; }
+.folder-reveal-layout { display: grid; grid-template-columns: 1fr 1.05fr; gap: 4.5vw; align-items: start; margin-top: 1.6rem; }
+.folder-reveal-desc { display: flex; flex-direction: column; gap: 1.1rem; }
+.folder-reveal-desc p { font-size: 0.88rem; color: #1a5c5c; line-height: 1.7; }
+.folder-reveal-hint { font-size: 0.76rem; color: #2a7a7a; font-weight: 500; padding: 0.65rem 0.95rem; background: rgba(255,255,255,0.65); border-left: 3px solid #2a7a7a; border-radius: 0 4px 4px 0; line-height: 1.55; }
+.folder-card { background: rgba(255,255,255,0.92); border: 1.5px solid rgba(42,191,191,0.4); border-radius: 10px; padding: 1.4rem 1.6rem; font-family: 'Courier New', 'Lucida Console', monospace; font-size: 0.7rem; line-height: 1.85; color: #0f4c4c; box-shadow: 0 6px 24px rgba(42,191,191,0.1); }
+.folder-card .folder-root { font-weight: 700; color: #0f4c4c; font-size: 0.78rem; margin-bottom: 0.15rem; font-family: 'Courier New', monospace; }
+.folder-dir { color: #1a5c5c; font-weight: 600; }
+.folder-file { color: #2a7a7a; }
+.folder-muted { color: #7db8b8; font-style: italic; font-size: 0.62rem; }
+.folder-ws-block { margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed rgba(42,191,191,0.5); }
+.s-glossary { background: linear-gradient(165deg, #f5fafa 0%, #e6f2f2 100%); padding-top: 4.5vh; padding-bottom: 3.5vh; }
+.s-glossary h2 { font-size: clamp(1.5rem, 2.8vw, 2.4rem); font-weight: 700; color: #0f4c4c; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 0; }
+.glossary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; margin-top: 1.3rem; background: rgba(42,191,191,0.3); border: 1.5px solid rgba(42,191,191,0.35); border-radius: 8px; overflow: hidden; }
+.glossary-item { display: grid; grid-template-columns: 9rem 1fr; gap: 0.75rem; align-items: baseline; padding: 0.72rem 1.1rem; background: rgba(255,255,255,0.62); transition: background 0.15s; }
+.glossary-item:hover { background: rgba(255,255,255,0.82); }
+.g-term { font-size: 0.68rem; font-weight: 700; color: var(--accent); letter-spacing: 0.01em; white-space: nowrap; }
+.g-def { font-size: 0.67rem; color: var(--text-mid); line-height: 1.55; }
+.glossary-item--full { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 0.45rem; background: rgba(42, 191, 191, 0.05); border-bottom: 1.5px solid rgba(42,191,191,0.35) !important; }
+.g-note { font-size: 0.62rem; font-weight: 600; color: var(--accent); background: var(--accent-light); border-left: 3px solid var(--accent); padding: 0.28rem 0.65rem; border-radius: 0 3px 3px 0; display: inline-block; align-self: flex-start; line-height: 1.45; }
+.s-closing { background: #0f4c4c; justify-content: center; align-items: center; }
+.closing-wrap { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1.2rem; }
+.closing-eyebrow { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.45); }
+.closing-h { font-size: clamp(2.6rem, 5vw, 4.2rem); font-weight: 700; color: #fff; line-height: 1.1; letter-spacing: -0.02em; }
+.closing-contact { font-size: 0.95rem; font-weight: 400; color: rgba(255,255,255,0.65); line-height: 1.6; }
+.closing-contact strong { color: #fff; font-weight: 600; }
+.closing-channel { display: inline-flex; padding: 0.5rem 1.5rem; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); border-radius: 6px; font-size: 1.15rem; font-weight: 700; color: #fff; letter-spacing: 0.02em; font-family: var(--font); }
+.closing-note { font-size: 0.9rem; color: rgba(255,255,255,0.55); max-width: 380px; line-height: 1.65; }
+.s-skills { background: var(--bg); }
+.skills-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; margin-top: 1.8rem; background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.skill-item { padding: 1.4rem 1.2rem; background: var(--bg); transition: background 0.15s; }
+.skill-item:hover { background: var(--surface); }
+.skill-name { font-size: 0.72rem; font-weight: 700; color: var(--accent); letter-spacing: 0.04em; margin-bottom: 0.4rem; }
+.skill-desc { font-size: 0.68rem; color: var(--text-mid); line-height: 1.55; }
+.s-trust { background: var(--bg); }
+.s-trust .sub { font-size: 0.95rem; font-weight: 400; color: var(--text-mid); line-height: 1.6; max-width: 520px; margin: 0.4rem 0 2.2rem; }
+.trust-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.trust { padding: 1.6rem 2rem; background: var(--bg); transition: background 0.15s; }
+.trust:hover { background: var(--surface); }
+.trust h3 { font-size: 0.88rem; font-weight: 700; color: var(--text); margin-bottom: 0.5rem; line-height: 1.3; }
+.trust p { font-size: 0.8rem; font-weight: 400; color: var(--text-mid); line-height: 1.65; }
+.trust--featured { background: rgba(42, 191, 191, 0.05); border-left: 3px solid var(--accent); padding-left: calc(2rem - 3px); }
+.trust--featured:hover { background: rgba(42, 191, 191, 0.09); }
+.trust-heading--featured { font-size: 0.92rem; font-weight: 700; color: var(--accent); margin-bottom: 0.5rem; line-height: 1.3; }
+.mem-cycle { display: flex; align-items: center; gap: 0.5rem; padding: 0.9rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 0.75rem; }
+.mem-step { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 0.6rem 0.3rem; background: var(--bg); border: 1.5px solid var(--border); border-radius: 5px; transition: background 0.15s; }
+.mem-step--hi { border-color: var(--accent); background: var(--accent-light); }
+.mem-step-ico { font-size: 1.1rem; line-height: 1; }
+.mem-step-lbl { font-size: 0.55rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.04em; line-height: 1.3; }
+.mem-step--hi .mem-step-lbl { color: var(--accent); }
+.mem-arr { color: var(--border-mid); font-size: 0.85rem; flex-shrink: 0; }
+.s-steps { background: var(--bg); }
+.s-steps .sub { font-size: 0.95rem; font-weight: 400; color: var(--text-mid); line-height: 1.6; max-width: 500px; margin: 0.5rem 0 2.8rem; }
+.steps { display: flex; align-items: flex-start; position: relative; margin-bottom: 2.5rem; }
+.steps::before { content: ''; position: absolute; top: 18px; left: 18px; right: 18px; height: 1px; background: var(--border); z-index: 0; }
+.stp { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.65rem; position: relative; z-index: 1; }
+.stp-n { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--border-mid); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 700; color: var(--text-mid); }
+.stp.hl .stp-n { background: var(--accent); border-color: var(--accent); color: #fff; }
+.stp-lbl { font-size: 0.74rem; font-weight: 600; color: var(--text); line-height: 1.3; max-width: 86px; }
+.stp-sub { font-size: 0.68rem; font-weight: 400; color: var(--text-muted); line-height: 1.4; max-width: 92px; }
+.exp-note { display: inline-flex; align-items: center; padding: 0.9rem 1.4rem; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0; font-size: 0.88rem; font-weight: 400; color: var(--text-mid); font-style: italic; }
+.s-cta { background: var(--bg); }
+.cta-layout { display: grid; grid-template-columns: 1fr 1.1fr; gap: 6vw; align-items: start; margin-top: 1.4rem; }
+.cta-q { font-size: clamp(1.4rem, 2.6vw, 2.2rem); font-weight: 700; letter-spacing: -0.02em; color: var(--text); line-height: 1.2; margin-bottom: 1rem; }
+.cta-sub { font-size: 0.9rem; font-weight: 400; color: var(--text-mid); line-height: 1.65; max-width: 340px; }
+.inv-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.inv { display: flex; align-items: flex-start; gap: 1.2rem; padding: 1.2rem 1.4rem; background: var(--bg); transition: background 0.15s; }
+.inv:hover { background: var(--surface); }
+.inv-n { font-size: 0.58rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-faint); flex-shrink: 0; margin-top: 3px; }
+.inv-title { font-size: 0.88rem; font-weight: 600; color: var(--text); margin-bottom: 0.2rem; }
+.inv-desc { font-size: 0.78rem; font-weight: 400; color: var(--text-mid); line-height: 1.55; }
+.s-cards { background: var(--bg); }
+.who-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; margin-top: 1.8rem; margin-bottom: 1.6rem; align-items: stretch; }
+.who-card { padding: 1.8rem 1.6rem 2rem; border: 1.5px solid var(--border); border-radius: 6px; background: var(--bg); }
+.who-card--featured { border-color: var(--accent); background: rgba(42, 191, 191, 0.06); }
+.who-card-heading { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 0.75rem; line-height: 1.25; letter-spacing: -0.01em; }
+.who-card-heading--featured { color: var(--accent); }
+.who-card p { font-size: 0.84rem; font-weight: 400; color: var(--text-mid); line-height: 1.68; }
+.who-footer { font-size: 0.78rem; font-weight: 400; color: var(--text-muted); text-align: center; font-style: italic; }
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- SLIDE 1 — TITLE -->
+  <section class="slide s-title">
+    <div class="r title-eyebrow">AI System Setup &nbsp;·&nbsp; June 2026</div>
+    <h1 class="r title-name">Build Your Own<br>KimiOS</h1>
+    <p class="r title-sub">Give Kimi persistent memory, your voice, and custom workflows — in one afternoon. KimiOS turns Kimi Work from a blank slate into a system that knows who you are.</p>
+    <div class="r title-badge">Kimi Work &nbsp;·&nbsp; Desktop App ·&nbsp; Brought to you by Vivid</div>
+    <div class="r title-agenda">
+      <span>What KimiOS is and why it matters</span>
+      <span>The three core files that power everything</span>
+      <span>Starter templates — copy and paste to get going</span>
+      <span>Prompts to bootstrap your setup and workstations</span>
+    </div>
+  </section>
+
+  <!-- SLIDE 2 — KIMI TOOLS OVERVIEW -->
+  <section class="slide s-tools">
+    <div class="r tools-meta">
+      <span class="tools-eyebrow">AI System Setup</span>
+      <div class="tools-badge">KimiOS</div>
+    </div>
+    <h2 class="r">Kimi Tools — When to Use What</h2>
+    <p class="r tools-subtitle-line">A quick reference for beginners getting started with Kimi</p>
+    <div class="r tools-columns">
+
+      <div class="tool-col tool-col--chat">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Browser &nbsp;/&nbsp; Mobile</div>
+          <div class="tool-col-name">Kimi Chat</div>
+          <div class="tool-col-access">kimi.moonshot.cn &nbsp;·&nbsp; No setup required</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Reach for it when</div>
+          <div class="tool-trigger-text">You need a smart thinking partner — right now, from anywhere.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">Good for</div>
+          <div class="tool-uc">
+            <div class="tool-uc-dot"></div>
+            <div>
+              <div class="tool-uc-main">Quick research &amp; summarisation</div>
+              <div class="tool-uc-sub">Paste a doc, ask a question, get a clear answer fast</div>
+            </div>
+          </div>
+          <div class="tool-uc">
+            <div class="tool-uc-dot"></div>
+            <div>
+              <div class="tool-uc-main">Drafting &amp; editing on the fly</div>
+              <div class="tool-uc-sub">Emails, messages, short reports, meeting summaries</div>
+            </div>
+          </div>
+          <div class="tool-uc">
+            <div class="tool-uc-dot"></div>
+            <div>
+              <div class="tool-uc-main">Brainstorming &amp; thinking out loud</div>
+              <div class="tool-uc-sub">Workshop prep, idea generation, problem framing</div>
+            </div>
+          </div>
+          <div class="tool-uc">
+            <div class="tool-uc-dot"></div>
+            <div>
+              <div class="tool-uc-main">One-off file analysis</div>
+              <div class="tool-uc-sub">Upload a PDF, image, or CSV and ask questions about it</div>
+            </div>
+          </div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">Not ideal for</div>
+          <div class="tool-not-for-text">Accessing files on your computer, automating recurring tasks, or work that needs memory across sessions</div>
+        </div>
+      </div>
+
+      <div class="tool-col tool-col--work">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Desktop App (Mac &nbsp;/&nbsp; Windows)</div>
+          <div class="tool-col-name">Kimi Work</div>
+          <div class="tool-col-access">Installed locally &nbsp;·&nbsp; Connects your tools</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Reach for it when</div>
+          <div class="tool-trigger-text">You want AI to actually do work inside your tools and files — not just talk about it.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">Good for</div>
+          <div class="tool-uc">
+            <div class="tool-uc-dot"></div>
+            <div>
+              <div class="tool-uc-main">Multi-step workflows across tools</div>
+              <div class="tool-uc-sub">Read files, draft a reply, build a deck, send an email — in one go</div>
+            </div>
+          </div>
+          <div class="tool-uc">
+            <div class="tool-uc-dot"></div>
+            <div>
+              <div class="tool-uc-main">Working directly with local files</div>
+              <div class="tool-uc-sub">Build spreadsheets, Word docs, charts from your own folders</div>
+            </div>
+          </div>
+          <div class="tool-uc">
+            <div class="tool-uc-dot"></div>
+            <div>
+              <div class="tool-uc-main">Scheduled &amp; repeating tasks</div>
+              <div class="tool-uc-sub">Morning digest, weekly reports — set once and forget</div>
+            </div>
+          </div>
+          <div class="tool-uc">
+            <div class="tool-uc-dot"></div>
+            <div>
+              <div class="tool-uc-main">Persistent memory &amp; workstations</div>
+              <div class="tool-uc-sub">Kimi remembers your context, tone, and rules across sessions</div>
+            </div>
+          </div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">Not ideal for</div>
+          <div class="tool-not-for-text">Writing or modifying code in a codebase, running tests, or engineering workflows needing terminal access</div>
+        </div>
+      </div>
+
+      <div class="tool-col tool-col--python">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Immediate Execution</div>
+          <div class="tool-col-name">PythonRun</div>
+          <div class="tool-col-access">Built-in runtime &nbsp;·&nbsp; No setup required</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Reach for it when</div>
+          <div class="tool-trigger-text">You need charts, data analysis, or file generation right now — not later.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">Good for</div>
+          <div class="tool-uc">
+            <div class="tool-uc-dot"></div>
+            <div>
+              <div class="tool-uc-main">Charts &amp; data visualisation</div>
+              <div class="tool-uc-sub">Seaborn, matplotlib, pandas — render and save immediately</div>
+            </div>
+          </div>
+          <div class="tool-uc">
+            <div class="tool-uc-dot"></div>
+            <div>
+              <div class="tool-uc-main">One-shot data analysis</div>
+              <div class="tool-uc-sub">Clean CSVs, run regressions, extract insights from datasets</div>
+            </div>
+          </div>
+          <div class="tool-uc">
+            <div class="tool-uc-dot"></div>
+            <div>
+              <div class="tool-uc-main">File generation</div>
+              <div class="tool-uc-sub">Generate PDFs, Excel, images, or custom documents on demand</div>
+            </div>
+          </div>
+          <div class="tool-uc">
+            <div class="tool-uc-dot"></div>
+            <div>
+              <div class="tool-uc-main">Quick prototyping</div>
+              <div class="tool-uc-sub">Test scripts, validate data, debug logic without leaving the chat</div>
+            </div>
+          </div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">Not ideal for</div>
+          <div class="tool-not-for-text">Complex multi-step projects, long-running background jobs, or anything that needs persistent state across sessions</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="r tools-footer">
+      <div class="tools-footer-note">
+        <strong>All three run on Kimi.</strong> &nbsp;Start with Chat if you're unsure. KimiOS layers on top of Kimi Work to give it memory, routing, and your voice.
+      </div>
+      <div class="tools-legend">
+        <div class="tools-legend-item">
+          <div class="tools-legend-dot" style="background: #2ABFBF;"></div>
+          Kimi Chat
+        </div>
+        <div class="tools-legend-item">
+          <div class="tools-legend-dot" style="background: #1a5c5c;"></div>
+          Kimi Work
+        </div>
+        <div class="tools-legend-item">
+          <div class="tools-legend-dot" style="background: #E8762C;"></div>
+          PythonRun
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3 — BEFORE / AFTER -->
+  <section class="slide s-two-col">
+    <div class="r lbl">The Problem</div>
+    <h2 class="r">Without a system, Kimi forgets you. KimiOS fixes that.</h2>
+    <div class="r two-components">
+
+      <div class="component">
+        <div class="component-tag">Without Kimi OS</div>
+        <h3>A fresh start every time</h3>
+        <p>Every session begins from zero. Kimi doesn't know your name, your role, your preferences, or what you were working on yesterday. You spend the first few minutes re-explaining context before any real work happens.</p>
+        <p style="margin-top: 0.8rem; font-size: 0.8rem; color: var(--text-muted);">Generic tone. No memory. No shortcuts. Repeat yourself constantly.</p>
+      </div>
+
+      <div class="component component-featured">
+        <div class="component-tag">With Kimi OS</div>
+        <h3>Kimi already knows you</h3>
+        <p>Kimi reads your constitution and memory files at the start of every session. It knows your role, your active projects, your preferences, and how you like to write. You jump straight into the work.</p>
+        <p style="margin-top: 0.8rem; font-size: 0.8rem; color: var(--text-mid);">Your voice. Your context. Routes the right tasks to the right workstation automatically.</p>
+      </div>
+
+    </div>
+    <p class="r tools-note">KimiOS is just a folder on your computer. No external services, no lock-in.</p>
+  </section>
+
+  <!-- SLIDE 4 — ARCHITECTURE -->
+  <section class="slide s-arch">
+    <div class="r lbl">How It Works</div>
+    <h2 class="r">Three layers that power KimiOS. One folder to rule them all.</h2>
+    <div class="r arch-diagram">
+
+      <div class="arch-layer arch-layer--top">
+        <span class="arch-name">You &nbsp;—&nbsp; prompts, questions, and tasks</span>
+      </div>
+
+      <div class="arch-conn"></div>
+
+      <div class="arch-layer arch-layer--mid">
+        <span class="arch-name">Kimi OS</span>
+        <div class="arch-split">
+          <div class="arch-split-item">
+            <div class="arch-split-title">KimiOS.md + PROJECT_MEMORY.md</div>
+            <div class="arch-split-sub">Global rules, preferences, routing map, and accumulated facts</div>
+          </div>
+          <div class="arch-split-div"></div>
+          <div class="arch-split-item">
+            <div class="arch-split-title">voice-principles.md + Skills</div>
+            <div class="arch-split-sub">Your writing voice and installed capabilities</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-conn"></div>
+
+      <div class="arch-layer arch-layer--bottom">
+        <span class="arch-name">Workstations</span>
+        <div class="arch-pills">
+          <span class="arch-pill">Presentation Studio</span>
+          <span class="arch-pill">Data Analyst</span>
+          <span class="arch-pill">Prototype Builder</span>
+          <span class="arch-pill">Email Helper</span>
+          <span class="arch-pill">Social Media Agent </span>
+          <span class="arch-pill">+ yours</span>
+        </div>
+      </div>
+
+    </div>
+    <p class="r arch-note">Think of each workstation as a sub-agent dedicated to a specific task. It has its own folder with a local KIMIOS.md, MEMORY.md, and Resources subfolder. The global files apply everywhere; the workstation files layer on top.</p>
+  </section>
+
+  <!-- SLIDE 5 — THREE CORE FILES -->
+  <section class="slide s-build">
+    <div class="r lbl">The Core Files</div>
+    <h2 class="r">Three files power the whole system</h2>
+    <div class="r build-cards">
+
+      <div class="build-card">
+        <div class="build-card-num">File 01</div>
+        <div class="build-card-heading">IDENTITY.md</div>
+        <p>The agent's personality and values. Who Kimi is, how it behaves, its boundaries, and enduring identity notes. Every session starts by reading this.</p>
+      </div>
+
+      <div class="build-card">
+        <div class="build-card-num">File 02</div>
+        <div class="build-card-heading">KIMIOS.md</div>
+        <p>The global constitution. Tells Kimi your preferences, rules, folder structure, and routing map. Governs tone, behaviour, and which workstation to use.</p>
+      </div>
+
+      <div class="build-card">
+        <div class="build-card-num">File 03</div>
+        <div class="build-card-heading">voice-principles.md</div>
+        <p>Your writing voice. Tone, sentence style, words to avoid, signature phrases. Kimi reads this before writing any content on your behalf.</p>
+      </div>
+
+    </div>
+    <div class="r" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem;">
+      These four files live in your KimiOS root folder alongside a <code style="font-family: monospace; background: var(--surface); padding: 0.1em 0.4em; border-radius: 3px;">00_Resources/</code> folder. That's the whole system.
+    </div>
+  </section>
+
+  <!-- SLIDE 6 — SECTION BREAK: LET'S GET STARTED -->
+  <section class="slide s-phase">
+    <div class="r phase-eyebrow">Setup Guide &nbsp;·&nbsp; Three Phases</div>
+    <h2 class="r">Let's get started.</h2>
+    <p class="r phase-sub">You're one afternoon away from a Kimi that knows who you are, how you work, and what you're trying to get done.</p>
+    <div class="r phase-flow">
+
+      <div class="phase-step">
+        <div class="phase-step-ico">📁</div>
+        <div class="phase-step-num">Phase 01</div>
+        <div class="phase-step-title">Create your home base</div>
+        <div class="phase-step-sub">Make an empty KimiOS folder on your computer and run the setup prompt — Kimi builds the whole structure for you.</div>
+      </div>
+
+      <div class="phase-arr">→</div>
+
+      <div class="phase-step">
+        <div class="phase-step-ico">🏗️</div>
+        <div class="phase-step-num">Phase 02</div>
+        <div class="phase-step-title">Build your workstations</div>
+        <div class="phase-step-sub">Add a workstation for each recurring task type — reports, decks, data analysis, trading. Each one gets its own rules and memory.</div>
+      </div>
+
+      <div class="phase-arr">→</div>
+
+      <div class="phase-step">
+        <div class="phase-step-ico">🔄</div>
+        <div class="phase-step-num">Phase 03</div>
+        <div class="phase-step-title">Keep it compounding</div>
+        <div class="phase-step-sub">Save insights at the end of every session. Kimi gets sharper over time — not because it learned, but because you built the system.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SLIDE 7 — FIRST-TIME SETUP PROMPT -->
+  <section class="slide s-tmpl">
+    <div class="r lbl lbl--phase">Phase 1 | Getting Started &nbsp;·&nbsp; Prompt Template</div>
+    <h2 class="r">Paste this to build your KimiOS from scratch</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">First-time setup</div>
+        <h3>One prompt. Five minutes. First part done.</h3>
+        <p>Open Kimi Work with your KimiOS folder selected, paste this prompt, and let it run. Kimi will create all four core files, the folder structure, and then ask you a few questions to personalise everything.</p>
+        <div class="tmpl-hint">
+          <strong>Before you paste:</strong> create an empty folder called KimiOS somewhere on your computer (Documents is fine), then select it in the Kimi Work file picker.
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-setup">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-setup">I'm setting up KimiOS for the first time. Please
+create the following in my KimiOS root folder:
+
+1. IDENTITY.md — with these sections:
+   Name, Personality, Values, Boundaries, Notes
+
+2. KIMIOS.md — with these sections:
+   Memory System, Preferences, Rules,
+   Folder Structure, Routing Map, Plugin Registry
+
+3. 00_Resources/voice-principles.md — with these
+   sections: Tone, Sentence Style, Words to Avoid,
+   Words I Use, Formatting
+
+4. PROJECT_MEMORY.md — with these sections:
+   About Me, Active Projects, Key Contacts,
+   Key Decisions, Useful Context
+
+5. 00_Skills/        (skills & plugins inventory)
+6. 00_Scheduled/     (scheduled task outputs)
+7. 00_Outputs/        (global outputs — use when
+                       explicitly requested)
+
+Use starter templates with [bracketed placeholders]
+where I need to customise. After creating the files,
+ask me 3 questions to personalise my KIMIOS.md for
+my role and working style.</pre>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SLIDE 8 — SECTION BREAK: WHAT YOU JUST CREATED -->
+  <section class="slide s-phase s-folder-reveal">
+    <div class="r phase-eyebrow">After Running the Setup Prompt</div>
+    <h2 class="r">Let's see what you just created.</h2>
+    <div class="r folder-reveal-layout">
+
+      <div class="folder-reveal-desc">
+        <p>That one prompt created your entire KimiOS skeleton — four files, three folders, and a structure Kimi will use on every future session.</p>
+        <p>The next three slides walk through each file with a copy-ready template. Customise the bits in <strong style="color: #1a5c5f;">[brackets]</strong> and you're good to go.</p>
+        <div class="folder-reveal-hint">
+          Once you've filled in the templates, add your first workstation. That's when things start to feel like a real operating system.
+        </div>
+      </div>
+
+      <div class="folder-card">
+        <div class="folder-root">📁 KimiOS/</div>
+        <div>├── 📄 <span class="folder-file">IDENTITY.md</span> &nbsp;<span class="folder-muted">— agent identity</span></div>
+        <div>├── 📄 <span class="folder-file">KIMIOS.md</span> &nbsp;<span class="folder-muted">— global rules &amp; routing</span></div>
+        <div>├── 📄 <span class="folder-file">PROJECT_MEMORY.md</span> &nbsp;<span class="folder-muted">— persistent brain</span></div>
+        <div>├── 📁 <span class="folder-dir">00_Resources/</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;└── 📄 <span class="folder-file">voice-principles.md</span></div>
+        <div>├── 📁 <span class="folder-dir">00_Skills/</span> &nbsp;<span class="folder-muted">— skills &amp; plugins inventory</span></div>
+        <div>├── 📁 <span class="folder-dir">00_Scheduled/</span> &nbsp;<span class="folder-muted">— scheduled task outputs</span></div>
+        <div>└── 📁 <span class="folder-dir">00_Outputs/</span> &nbsp;<span class="folder-muted">— global outputs</span></div>
+        <div class="folder-ws-block">
+          <div style="color: #7db8b8; font-size: 0.62rem; font-style: italic; margin-bottom: 0.3rem;">After adding a workstation:</div>
+          <div>└── 📁 <span class="folder-dir">Report Writer/</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;├── 📄 <span class="folder-file">KIMIOS.md</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;├── 📄 <span class="folder-file">MEMORY.md</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;├── 📁 <span class="folder-dir">Report Writer Resources/</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;└── 📁 <span class="folder-dir">Outputs/</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- SLIDE 9 — IDENTITY.md TEMPLATE -->
+  <section class="slide s-tmpl">
+    <div class="r lbl">File 01 &nbsp;·&nbsp; Starter Template</div>
+    <h2 class="r">IDENTITY.md — the agent's personality</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">Copy &amp; customise</div>
+        <h3>Who Kimi is in every session</h3>
+        <p>This file defines the agent's enduring identity. It loads automatically and governs personality, boundaries, and how Kimi should behave when interacting with you.</p>
+        <div class="tmpl-hint">
+          Replace anything in <strong>[brackets]</strong> with your own preferences. This is the foundation — everything else builds on top of it.
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-identity">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-identity"># Agent Identity
+
+## Name
+[Your agent's name — e.g., "Kimi", "Ava"]
+
+## Personality
+- [Describe how the agent should come across]
+- [e.g., "Direct and sharp — get to the point"]
+- [e.g., "Warm like a smart friend, not a support bot"]
+- [e.g., "Critical thinking partner — pushes back with evidence"]
+
+## Values
+- [e.g., "Honesty over sycophancy — push back when something looks off"]
+- [e.g., "Safety over speed — ask who does this fail on before shipping"]
+- [e.g., "Agency over automation — never act without permission on destructive operations"]
+
+## Boundaries
+- Never invent facts, file paths, or data I haven't verified
+- Never guess stock prices, dates, or current events
+- Never write or modify files outside the workspace
+- Always ask before merging PRs or sending messages
+- Don't over-explain — get to the point
+
+## Notes
+- [Enduring identity notes — e.g., "Owner is based in Sydney"]
+- [Timezone or scheduling preferences]
+- [How you like to receive corrections]</pre>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SLIDE 10 — KIMIOS.md TEMPLATE -->
+  <section class="slide s-tmpl">
+    <div class="r lbl">File 02 &nbsp;·&nbsp; Starter Template</div>
+    <h2 class="r">KIMIOS.md — the global constitution</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">Copy &amp; customise</div>
+        <h3>Sets the rules for every session</h3>
+        <p>This file is Kimi's operating instructions. It loads automatically and governs tone, behaviour, folder structure, and which workstation to use for which task.</p>
+        <div class="tmpl-hint">
+          Replace anything in <strong>[brackets]</strong> with your own preferences. The routing map grows as you add workstations.
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-kimios">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-kimios"># KIMIOS.md — Global Constitution
+
+## Memory System
+- Read vault memory (about_user.md) at start
+- Read PROJECT_MEMORY.md at start
+- Read workstation MEMORY.md when working in that workstation
+- Write to PROJECT_MEMORY.md for global/personal context
+- Write to workstation MEMORY.md for domain-specific context
+- Read voice-principles.md before writing content
+
+## Preferences
+- Tone: [conversational / professional / casual]
+- Language: [Australian / British / American English]
+- Length: concise by default; expand only when asked
+- Format: prose first, bullets only when genuinely list-like
+- Timezone: [Your timezone]
+
+## Rules
+- Ask clarifying questions before complex tasks
+- Never guess — if unsure, say so
+- Read voice-principles.md before writing content
+- Prefer parallel tool calls when independent
+- Keep root KIMIOS.md under 300 lines
+
+## Folder Structure
+| Folder | What lives here |
+| 00_Resources/ | Reference files (voice, templates, shared assets) |
+| 00_Skills/ | Skills & plugins inventory — canonical registry |
+| 00_Scheduled/ | Scheduled task outputs and cron logs |
+| 00_Outputs/ | Global outputs — only when explicitly requested |
+| [Workstation]/ | Workstation + Resources/ + Outputs/ |
+
+## Routing Map
+| Workstation | Route here when I... |
+| [Name] | [Brief trigger description] |</pre>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SLIDE 11 — VOICE-PRINCIPLES.md TEMPLATE -->
+  <section class="slide s-tmpl">
+    <div class="r lbl">File 03 &nbsp;·&nbsp; Starter Template</div>
+    <h2 class="r">voice-principles.md — your writing voice</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">Copy &amp; customise</div>
+        <h3>Makes Kimi sound like you, not a press release</h3>
+        <p>Paste 5–8 of your own emails or messages and ask Kimi to extract patterns from them. It'll fill in the signature phrases and tone sections automatically.</p>
+        <div class="tmpl-hint">
+          The more specific you are about what to <em>avoid</em>, the better. "No em dashes" and "never say leverage" are more useful than "be casual."
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-voice">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-voice"># Voice Principles
+
+## Tone
+- Sound like: [smart peer / trusted advisor / warm colleague]
+- More formal with: [senior leaders / new contacts]
+- Avoid sounding: [corporate / over-hedged / AI-flavoured]
+
+## Sentence Style
+- Vary length — mix short punchy beats with longer ones
+- Use contractions: [yes / no]
+- Front-load context, then the ask
+
+## Words to Avoid
+- Never: "leverage," "synergise," "deep dive"
+- No em dashes (use commas or parentheses instead)
+- No "I hope this email finds you well" openers
+- No stacked adjectives ("incredibly valuable")
+
+## Words I Use
+- [Your signature phrases — add them here]
+- e.g. "heaps", "nerd out", "level up", "if helpful"
+
+## Formatting
+- Short paragraphs (1–2 sentences max)
+- Bold sparingly — key terms and names only
+- [Other formatting preferences]</pre>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SLIDE 12 — SECTION BREAK: PHASE 2 -->
+  <section class="slide s-phase">
+    <div class="r phase-eyebrow">Phase 02 &nbsp;·&nbsp; Workstations</div>
+    <h2 class="r">Time to build your first workstation.</h2>
+    <p class="r phase-sub">A workstation is Kimi with a specific job — its own rules, its own memory, its own lane. Pick the one recurring task that eats most of your week. That's where you start.</p>
+  </section>
+
+  <!-- SLIDE 13 — WORKSTATION ANATOMY -->
+  <section class="slide s-trust">
+    <div class="r lbl lbl--phase">Phase 2 | Workstations</div>
+    <h2 class="r">Every workstation has the same four parts</h2>
+    <p class="r sub">A workstation is just a folder with three files. The four sections inside its KIMIOS.md define how Kimi behaves when it's routing work there.</p>
+    <div class="r trust-grid">
+
+      <div class="trust trust--featured">
+        <h3 class="trust-heading--featured">Identity</h3>
+        <p>One paragraph. Who Kimi is in this workstation, what kinds of tasks route here, and — just as importantly — what doesn't belong here and should go elsewhere.</p>
+      </div>
+
+      <div class="trust">
+        <h3>Resources</h3>
+        <p>A table mapping reference files to "read when" conditions. Kimi only loads these files when the trigger is met, keeping context efficient.</p>
+      </div>
+
+      <div class="trust">
+        <h3>Workflow</h3>
+        <p>Numbered steps for the primary task in this workstation. Keep it simple — 5–7 steps. You'll refine it over time as you see what Kimi gets right and wrong.</p>
+      </div>
+
+      <div class="trust">
+        <h3>Editorial Rules</h3>
+        <p>Always opens with "Follow voice-principles.md in 00_Resources." Then adds domain-specific rules on top — tone calibration, vocabulary, output formats for this specific domain.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SLIDE 14 — WORKSTATION CREATION PROMPT -->
+  <section class="slide s-tmpl">
+    <div class="r lbl lbl--phase">Phase 2 | Workstations &nbsp;·&nbsp; Prompt Template</div>
+    <h2 class="r">Paste this to create a new workstation</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">New workstation</div>
+        <h3>30 seconds to a new capability</h3>
+        <p>Pick one recurring task type — reports, data analysis, trading memos, whatever takes up your time. Fill in the two brackets, paste, and Kimi scaffolds the whole workstation.</p>
+        <div class="tmpl-hint">
+          Good workstation triggers are specific: "draft, edit, or review any data analysis report" rather than "data stuff." The routing map entry is what Kimi matches against your request.
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-workstation">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-workstation">Create a new workstation called "[Workstation Name]".
+
+Route here when I: [describe the task type — e.g.
+"draft, edit, or review any data analysis report"]
+
+Create these items inside the workstation folder:
+
+1. [Name]/KIMIOS.md with sections:
+   - Identity (one paragraph: what routes here,
+     what doesn't)
+   - Resources (empty table: Resource | Read when...)
+   - Workflow (numbered steps for the main task)
+   - Editorial Rules (start with voice-principles.md
+     reference, then add domain-specific rules)
+
+2. [Name]/MEMORY.md with:
+   - Contacts section
+   - Key Decisions section
+
+3. [Name]/[Name] Resources/  (empty folder)
+
+4. [Name]/Outputs/  (workstation-specific outputs)
+
+After creating the files, add a new row to the
+Routing Map in root KIMIOS.md.</pre>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SLIDE 15 — ARCHITECTURE RECAP -->
+  <section class="slide s-arch">
+    <div class="r lbl">A Quick Recap</div>
+    <h2 class="r">One folder to rule them all. Three layers that power KimiOS.</h2>
+    <div class="r arch-diagram">
+
+      <div class="arch-layer arch-layer--top">
+        <span class="arch-name">You &nbsp;—&nbsp; prompts, questions, and tasks</span>
+      </div>
+
+      <div class="arch-conn"></div>
+
+      <div class="arch-layer arch-layer--mid">
+        <span class="arch-name">KimiOS</span>
+        <div class="arch-split">
+          <div class="arch-split-item">
+            <div class="arch-split-title">KIMIOS.md + PROJECT_MEMORY.md</div>
+            <div class="arch-split-sub">Global rules, preferences, routing map, and accumulated facts</div>
+          </div>
+          <div class="arch-split-div"></div>
+          <div class="arch-split-item">
+            <div class="arch-split-title">voice-principles.md + Skills</div>
+            <div class="arch-split-sub">Your writing voice and installed capabilities</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-conn"></div>
+
+      <div class="arch-layer arch-layer--bottom">
+        <span class="arch-name">Workstations</span>
+        <div class="arch-pills">
+          <span class="arch-pill">Presso Studio</span>
+          <span class="arch-pill">Data Analyst</span>
+          <span class="arch-pill">Proto Builder</span>
+          <span class="arch-pill">Email Helper</span>
+          <span class="arch-pill">Social Media Agent</span>
+          <span class="arch-pill">+ yours</span>
+        </div>
+      </div>
+
+    </div>
+    <p class="r arch-note">Think of each workstation as a sub-agent dedicated to a specific task. It has its own folder with a local KIMIOS.md, MEMORY.md, and Resources subfolder. The global files apply everywhere; the workstation files layer on top.</p>
+  </section>
+
+  <!-- SLIDE 16 — SECTION BREAK: PHASE 3 -->
+  <section class="slide s-phase">
+    <div class="r phase-eyebrow">Phase 03 &nbsp;·&nbsp; System Maintenance</div>
+    <h2 class="r">Last bit. Make it compound.</h2>
+    <p class="r phase-sub">The system only gets smarter if you save what you learn. One 30-second prompt at the end of each session — that's all it takes to turn KimiOS from a config file into something that actually grows with you.</p>
+  </section>
+
+
+  <!-- SLIDE 17 — SYSTEM MAINTENANCE -->
+  <section class="slide s-tmpl">
+    <div class="r lbl lbl--phase">Phase 3 | System Maintenance</div>
+    <h2 class="r">KimiOS only gets smarter if you save what you learn</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">End of every task</div>
+        <h3>Insights vanish when the session closes</h3>
+        <p>Preferences you mentioned, decisions you made, context Kimi picked up on — none of it survives unless it's written to the right memory file. Kimi resets completely when the session ends.</p>
+        <p style="margin-top: 0.6rem; font-size: 0.83rem; color: var(--text-mid); line-height: 1.68;">Workstation-specific context goes to the workstation's MEMORY.md. Global or personal context goes to root PROJECT_MEMORY.md. One prompt at the end of every task fixes this permanently.</p>
+        <div class="tmpl-hint">
+          Done consistently, this is what turns KimiOS into a system that <strong>compounds</strong> — every session makes the next one sharper, in every workstation.
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <div class="mem-cycle">
+          <div class="mem-step">
+            <span class="mem-step-ico">💬</span>
+            <span class="mem-step-lbl">Work<br>session</span>
+          </div>
+          <span class="mem-arr">→</span>
+          <div class="mem-step">
+            <span class="mem-step-ico">🔍</span>
+            <span class="mem-step-lbl">Scan<br>convo</span>
+          </div>
+          <span class="mem-arr">→</span>
+          <div class="mem-step mem-step--hi">
+            <span class="mem-step-ico">📝</span>
+            <span class="mem-step-lbl">Write to<br>PROJECT_MEMORY.md</span>
+          </div>
+          <span class="mem-arr">→</span>
+          <div class="mem-step">
+            <span class="mem-step-ico">✨</span>
+            <span class="mem-step-lbl">Smarter<br>next time</span>
+          </div>
+        </div>
+
+        <div class="tmpl-code-wrap">
+          <button class="copy-btn" data-target="tmpl-scan">Copy</button>
+          <pre class="tmpl-pre" id="tmpl-scan">Scan this conversation for any unsaved preferences,
+decisions, or useful context. Route each finding to the
+right memory file:
+
+- Workstation-specific context (design choices, stack
+  preferences, domain contacts, build patterns) →
+  write to this workstation's MEMORY.md
+
+- Global/personal context (cross-workstation preferences,
+  active projects, key contacts, global rule changes) →
+  write to root PROJECT_MEMORY.md
+
+When in doubt, write to both with a short cross-reference.
+Don't duplicate what's already in either file. Focus only
+on what's genuinely new from this session.</pre>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SLIDE 18 — EFFICIENCY -->
+  <section class="slide s-build">
+    <div class="r lbl">Efficiency</div>
+    <h2 class="r">Keep your KimiOS fast and cheap</h2>
+    <div class="r build-cards">
+
+      <div class="build-card">
+        <div class="build-card-num">Rule 1</div>
+        <div class="build-card-heading">Constrain the Root</div>
+        <p>Keep your master KIMIOS.md under 300 lines. Point to external resource files rather than stuffing everything in one place — this keeps baseline token costs low every single session.</p>
+      </div>
+
+      <div class="build-card">
+        <div class="build-card-num">Rule 2</div>
+        <div class="build-card-heading">Avoid Duplicated Rules</div>
+        <p>Never repeat global rules inside local workstations. If the root already says "no corporate jargon," your Report Writer workstation shouldn't waste tokens restating it. Inheritance is free.</p>
+      </div>
+
+      <div class="build-card build-card--featured">
+        <div class="build-card-badge">Recommended Default</div>
+        <div class="build-card-num">Rule 3</div>
+        <div class="build-card-heading">Prefer Subagents for Complex Work</div>
+        <p>Kimi Work has a <strong>Subagent</strong> tool for non-trivial tasks. Delegate to coder, explore, or plan subagents instead of doing everything inline. They're faster and keep your context window clean.</p>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">Use <strong>PythonRun</strong> for immediate charts and analysis. Use <strong>Cron</strong> for recurring tasks, not one-offs.</p>
+      </div>
+
+    </div>
+    <div class="r" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem;">
+      Token efficiency means KimiOS stays fast. A bloated root file taxes every session — trim it like you'd trim a good document.
+    </div>
+  </section>
+
+  <!-- SLIDE 19 — CTA -->
+  <section class="slide s-cta">
+    <div class="r lbl">Scale your workstation</div>
+    <div class="r cta-layout">
+
+      <div>
+        <p class="cta-q">Pick one task you repeat every week. That's your first workstation.</p>
+        <p class="cta-sub">KimiOS compounds. The more you use it, the more Kimi knows you. Start small — one folder, three files — and add workstations as you go.</p>
+      </div>
+
+      <div class="inv-list">
+
+        <div class="inv">
+          <span class="inv-n">01</span>
+          <div>
+            <div class="inv-title">Create your KimiOS folder</div>
+            <div class="inv-desc">Make an empty folder in Documents (or wherever). Select it in the Kimi Work file picker. That's your workspace.</div>
+          </div>
+        </div>
+
+        <div class="inv">
+          <span class="inv-n">02</span>
+          <div>
+            <div class="inv-title">Paste the first-time setup prompt</div>
+            <div class="inv-desc">Slide 7 has the prompt — hit Copy, open Kimi Work, paste, let it run. Four files and a folder structure in under a minute.</div>
+          </div>
+        </div>
+
+        <div class="inv">
+          <span class="inv-n">03</span>
+          <div>
+            <div class="inv-title">Customise and add your first workstation</div>
+            <div class="inv-desc">Fill in the brackets in your core files, then use the workstation prompt (Slide 14) to scaffold your first domain.</div>
+          </div>
+        </div>
+
+        <div class="inv">
+          <span class="inv-n">04</span>
+          <div>
+            <div class="inv-title">Save insights after every session</div>
+            <div class="inv-desc">Use the scan prompt (Slide 17) at the end of each task. That's the compounding loop — the secret sauce.</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SLIDE 20 — KIMI SKILLS HIGHLIGHTS -->
+  <section class="slide s-skills">
+    <div class="r lbl">Built-In Capabilities</div>
+    <h2 class="r">Kimi comes with powerful skills out of the box</h2>
+    <p class="r" style="font-size:0.88rem;color:var(--text-mid);line-height:1.6;max-width:600px;margin-top:0.4rem;margin-bottom:1.8rem;">These are pre-installed reusable workflows. You don't need to build them — just invoke them by name or let KimiOS route tasks to them automatically.</p>
+    <div class="r skills-grid">
+
+      <div class="skill-item">
+        <div class="skill-name">cron</div>
+        <div class="skill-desc">Schedule recurring or one-time local-conversation jobs. Morning digests, weekly reports, data pulls.</div>
+      </div>
+
+      <div class="skill-item">
+        <div class="skill-name">seaborn-visualization</div>
+        <div class="skill-desc">Charts, plots, and data visualisation using Python's seaborn and matplotlib in Daimon's managed runtime.</div>
+      </div>
+
+      <div class="skill-item">
+        <div class="skill-name">kimi-data-tools-v2</div>
+        <div class="skill-desc">Web search, URL fetching, real-time stock data (finance), and structured online data APIs.</div>
+      </div>
+
+      <div class="skill-item">
+        <div class="skill-name">webbridge</div>
+        <div class="skill-desc">Control your real browser — navigate, click, type, screenshot, and interact with any website using your actual sessions.</div>
+      </div>
+
+      <div class="skill-item">
+        <div class="skill-name">report-writing</div>
+        <div class="skill-desc">End-to-end long-form reports — industry research, market analysis, policy briefs, consulting deliverables.</div>
+      </div>
+
+      <div class="skill-item">
+        <div class="skill-name">paper-writing</div>
+        <div class="skill-desc">Academic paper creation — outline design, structured content, literature reviews, methodology sections.</div>
+      </div>
+
+      <div class="skill-item">
+        <div class="skill-name">copy-editing</div>
+        <div class="skill-desc">Edit, review, and improve existing marketing copy. Tighten messaging, fix tone, sharpen headlines.</div>
+      </div>
+
+      <div class="skill-item">
+        <div class="skill-name">stock-assistant</div>
+        <div class="skill-desc">Structured stock data — watchlists, quotes, daily K, technical indicators, batch analysis via Kimi Finance.</div>
+      </div>
+
+    </div>
+    <div class="r" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.8rem;">
+      <strong>Pro tip:</strong> Install additional skills as you go. The full inventory is tracked in <code style="font-family: monospace; background: var(--surface); padding: 0.1em 0.4em; border-radius: 3px;">00_Skills/</code> — one canonical registry for auditing everything KimiOS has access to.
+    </div>
+  </section>
+
+  <!-- SLIDE 21 — GLOSSARY -->
+  <section class="slide s-glossary">
+    <div class="r lbl">Reference</div>
+    <h2 class="r">Glossary of Terms</h2>
+    <div class="r glossary-grid">
+
+      <div class="glossary-item glossary-item--full">
+        <span class="g-term">Model</span>
+        <span class="g-def">The underlying AI engine. Kimi 1.5 covers 80% of daily work; escalate to larger models only for complex multi-step tasks with many interdependent decisions.</span>
+        <span class="g-note">⚡ Default to the standard model. Reaching for the largest model reflexively just burns tokens — and slows you down. Don't be a #TokkenMaxxer.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Agent</span>
+        <span class="g-def">An AI model that can take actions — read files, send messages, run tasks — rather than just answer questions. Kimi in Work mode is an agent.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Workstation</span>
+        <span class="g-def">A KimiOS folder dedicated to a specific task type. Has its own rules, memory, and resources. Kimi auto-routes tasks to the right one based on your routing map.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Skill</span>
+        <span class="g-def">A packaged workflow that gives Kimi a specialised capability — creating decks, writing Word docs, pulling data. Install once, trigger by name.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Session</span>
+        <span class="g-def">A single conversation with Kimi. Context resets when it ends — which is exactly the problem PROJECT_MEMORY.md solves.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Plugin</span>
+        <span class="g-def">A bundle of tools and skills packaged together for easy installation. How capabilities are distributed and added to Kimi Work.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Context Window</span>
+        <span class="g-def">The total amount of information Kimi can hold in a single session — your instructions, files, and conversation history. Bigger context = more Kimi knows, but also slower.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Subagent</span>
+        <span class="g-def">A delegated task run via the Agent tool. Three types: coder (general engineering), explore (fast read-only exploration), plan (architecture design). Keeps context clean.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Vault Memory</span>
+        <span class="g-def">Kimi's built-in persistent user profile assembled at every session start. KimiOS supplements this with PROJECT_MEMORY.md for active project context.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Token</span>
+        <span class="g-def">The unit any LLM uses to measure text in and out. Longer prompts cost more tokens. The reason concise root files and subagents matter for speed.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Cron</span>
+        <span class="g-def">A scheduled job in Kimi Work. Runs local-conversation tasks automatically on a recurring, one-time, or manual trigger. Set once, forget.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">PythonRun</span>
+        <span class="g-def">Immediate execution in Daimon's managed Python runtime. Charts, data analysis, file generation — one-shot, right now, no setup needed.</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SLIDE 22 — CLOSING -->
+  <section class="slide s-closing">
+    <div class="r closing-wrap">
+      <div class="closing-eyebrow">Build Your Own Kimi OS</div>
+      <div class="closing-h">Thank you</div>
+      <div class="closing-contact">Built by <strong>Vivid</strong> — AI product builder in Sydney</div>
+      <div class="closing-channel">vnsavitri.github.io</div>
+      <div class="closing-note">Start small. One folder. Three files. Pick one task that eats your time. That's your first workstation.</div>
+    </div>
+  </section>
+
+</div><!-- /deck -->
+
+<!-- Chrome -->
+<div id="progress-bar"></div>
+<div id="counter">1 / 22</div>
+<div id="kbd-hint">← → to navigate</div>
+
+<div class="nav-wrap is-prev">
+  <button class="nav-btn" id="prevBtn" disabled aria-label="Previous">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <path d="M7.5 2L3.5 6l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+<div class="nav-wrap is-next">
+  <button class="nav-btn" id="nextBtn" aria-label="Next">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <path d="M4.5 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+<script>
+const slides  = document.querySelectorAll('.slide');
+const pb      = document.getElementById('progress-bar');
+const counter = document.getElementById('counter');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+let cur = 0;
+const total = slides.length;
+
+function goTo(n) {
+  if (n < 0 || n >= total) return;
+
+  slides[cur].classList.remove('is-active');
+  slides[cur].classList.add('is-exit');
+  const leaving = slides[cur];
+  setTimeout(() => leaving.classList.remove('is-exit'), 520);
+
+  cur = n;
+  slides[cur].classList.add('is-active');
+
+  pb.style.width = ((cur + 1) / total * 100) + '%';
+  counter.textContent = (cur + 1) + ' / ' + total;
+  prevBtn.disabled = (cur === 0);
+  nextBtn.disabled = (cur === total - 1);
+}
+
+prevBtn.addEventListener('click', () => goTo(cur - 1));
+nextBtn.addEventListener('click', () => goTo(cur + 1));
+
+document.addEventListener('keydown', e => {
+  if (['ArrowRight', ' ', 'ArrowDown'].includes(e.key)) { e.preventDefault(); goTo(cur + 1); }
+  if (['ArrowLeft', 'ArrowUp'].includes(e.key))         { e.preventDefault(); goTo(cur - 1); }
+  if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+  if (e.key === 'End')  { e.preventDefault(); goTo(total - 1); }
+});
+
+document.querySelector('.deck').addEventListener('click', e => {
+  if (e.target.closest('button')) return;
+  if (e.target.closest('.tmpl-pre')) return;
+  goTo(e.clientX > window.innerWidth * 0.6 ? cur + 1 : cur - 1);
+});
+
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text);
+  }
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  return Promise.resolve();
+}
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.copy-btn');
+  if (!btn) return;
+  e.stopPropagation();
+
+  const targetId = btn.getAttribute('data-target');
+  const pre = document.getElementById(targetId);
+  if (!pre) return;
+
+  copyText(pre.textContent.trim()).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+});
+
+slides[0].classList.add('is-active');
+pb.style.width = (1 / total * 100) + '%';
+counter.textContent = '1 / ' + total;
+</script>
+</body>
+</html>
