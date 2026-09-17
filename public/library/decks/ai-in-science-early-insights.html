@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f5f4ef" />
+  <meta name="description" content="AI in Science: Early Insights - an interactive plain-English deep dive and implementation guide." />
+  <title>AI in Science: Early Insights</title>
+  <style>
+    :root {
+      --paper: #f5f4ef;
+      --paper-2: #ebe9e1;
+      --ink: #17211f;
+      --muted: #5d6965;
+      --line: #c9cec7;
+      --teal: #0c746d;
+      --teal-2: #d6ece8;
+      --blue: #2f74d0;
+      --blue-2: #dfeafa;
+      --coral: #d96d56;
+      --coral-2: #f5ddd5;
+      --sun: #e9b83f;
+      --sun-2: #faefc7;
+      --white: #fffef9;
+      --shadow: 0 16px 38px rgba(25, 38, 34, .09);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--paper); color: var(--ink); }
+    body { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; overflow: hidden; }
+    body::selection { background: var(--sun); color: var(--ink); }
+    button { font: inherit; }
+    button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--sun); outline-offset: 4px; }
+    .deck { position: relative; height: 100vh; height: 100svh; width: 100%; overflow: hidden; }
+    .deck::before { content: ""; position: fixed; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent 0 49.8%, rgba(23,33,31,.045) 49.8% 50.2%, transparent 50.2%); opacity: .4; }
+    .topbar { position: fixed; z-index: 20; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 18px 28px; color: var(--muted); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+    .topbar .topic { padding-right: 98px; }
+    .topbar .mark { display: flex; align-items: center; gap: 9px; font-weight: 700; color: var(--ink); }
+    .mark-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--teal); box-shadow: 12px 0 0 var(--coral), 24px 0 0 var(--sun); margin-right: 24px; }
+    .progress { position: fixed; z-index: 21; top: 0; left: 0; height: 3px; width: 0; background: var(--teal); transition: width .4s ease; }
+    .slides { height: 100%; width: 100%; }
+    .slide { position: absolute; inset: 0; display: grid; place-items: center; padding: 74px 7vw 72px; opacity: 0; visibility: hidden; transform: translateX(24px); transition: opacity .38s ease, transform .38s ease, visibility .38s; overflow: auto; }
+    .slide.active { opacity: 1; visibility: visible; transform: translateX(0); z-index: 2; }
+    .slide.prev { transform: translateX(-24px); }
+    .inner { width: min(1180px, 100%); max-height: 100%; }
+    h1, h2, h3, p { margin: 0; }
+    h1, h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; letter-spacing: -.035em; }
+    h1 { font-size: clamp(48px, 8vw, 112px); line-height: .94; max-width: 950px; }
+    h2 { font-size: clamp(34px, 5.3vw, 76px); line-height: .98; max-width: 920px; }
+    h3 { font-size: clamp(20px, 2.1vw, 30px); line-height: 1.1; letter-spacing: -.025em; }
+    p { line-height: 1.48; }
+    .lede { max-width: 650px; margin-top: 24px; color: var(--muted); font-size: clamp(17px, 1.8vw, 23px); }
+    .source { color: var(--muted); font-size: 11px; line-height: 1.35; max-width: 760px; }
+    .source strong { color: var(--ink); }
+    .title-rule { width: 88px; height: 5px; background: var(--teal); margin: 30px 0 22px; }
+    .cover { align-content: center; }
+    .cover-grid { display: grid; grid-template-columns: 1.1fr .9fr; align-items: center; gap: 7vw; }
+    .cover-art { position: relative; min-height: 410px; padding-top: 76px; display: grid; place-items: center; }
+    .orbit { position: absolute; width: min(420px, 42vw); aspect-ratio: 1; border: 1px solid var(--line); border-radius: 50%; }
+    .orbit::before, .orbit::after { content: ""; position: absolute; inset: 12%; border: 1px solid var(--line); border-radius: 50%; transform: rotate(38deg) scaleX(.48); }
+    .orbit::after { transform: rotate(-38deg) scaleX(.48); }
+    .node { position: absolute; width: 72px; height: 72px; display: grid; place-items: center; border-radius: 50%; font-weight: 800; font-size: 12px; text-align: center; box-shadow: var(--shadow); }
+    .node.llm { top: 14%; left: 13%; background: var(--blue); color: white; }
+    .node.special { top: 25%; right: 7%; background: var(--coral); color: white; }
+    .node.lab { bottom: 12%; left: 22%; background: var(--sun); }
+    .node.verify { bottom: 12%; right: 12%; background: var(--teal); color: white; }
+    .cover-note { position: absolute; top: 0; right: 0; width: 250px; padding: 0 0 15px; border-bottom: 1px solid var(--ink); color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .meta-row { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 28px; color: var(--muted); font-size: 12px; }
+    .meta-row span { padding-bottom: 7px; border-bottom: 1px solid var(--line); }
+    .split { display: grid; grid-template-columns: .85fr 1.15fr; gap: 5vw; align-items: start; }
+    .split-wide { display: grid; grid-template-columns: 1.2fr .8fr; gap: 5vw; align-items: start; }
+    .body-copy { max-width: 62ch; color: var(--muted); font-size: 17px; }
+    .body-copy p + p { margin-top: 15px; }
+    .stack { display: grid; gap: 14px; }
+    .line-list { display: grid; gap: 0; border-top: 1px solid var(--ink); }
+    .line-item { display: grid; grid-template-columns: 55px 1fr; gap: 18px; padding: 20px 0; border-bottom: 1px solid var(--line); }
+    .line-item .num { font-size: 13px; font-weight: 800; color: var(--teal); }
+    .line-item p { color: var(--muted); margin-top: 5px; }
+    .quote { font-family: Georgia, serif; font-size: clamp(27px, 3.2vw, 48px); line-height: 1.07; letter-spacing: -.03em; }
+    .quote em { color: var(--teal); font-style: normal; }
+    .tag { display: inline-flex; align-items: center; gap: 7px; width: fit-content; padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+    .tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--teal); }
+    .tag.inference::before { background: var(--coral); }
+    .tag.practice::before { background: var(--sun); }
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .stat { min-height: 148px; padding: 20px; background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 8px 20px rgba(25,38,34,.045); }
+    .stat .value { font-family: Georgia, serif; font-size: clamp(37px, 4.4vw, 62px); letter-spacing: -.05em; line-height: 1; }
+    .stat .label { margin-top: 12px; color: var(--muted); font-size: 13px; line-height: 1.3; }
+    .stat.teal { background: var(--teal-2); }
+    .stat.blue { background: var(--blue-2); }
+    .stat.coral { background: var(--coral-2); }
+    .stat.sun { background: var(--sun-2); }
+    .section-break { background: var(--ink); color: var(--paper); }
+    .section-break .inner { display: grid; grid-template-columns: 1fr 1fr; gap: 5vw; align-items: end; }
+    .section-break h2 { color: var(--paper); }
+    .section-break .section-mark { justify-self: end; width: min(360px, 35vw); aspect-ratio: 1; border: 1px solid #73807c; border-radius: 50%; position: relative; }
+    .section-mark::before, .section-mark::after { content: ""; position: absolute; inset: 18%; border: 1px solid #73807c; border-radius: 50%; transform: rotate(45deg) scaleX(.35); }
+    .section-mark::after { transform: rotate(-45deg) scaleX(.35); }
+    .section-break .section-mark span { position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; transform: translate(-50%,-50%); background: var(--sun); border-radius: 50%; }
+    .method { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px; }
+    .method-step { padding: 18px 0 0; border-top: 3px solid var(--ink); }
+    .method-step:nth-child(1) { border-color: var(--blue); }
+    .method-step:nth-child(2) { border-color: var(--coral); }
+    .method-step:nth-child(3) { border-color: var(--teal); }
+    .method-step strong { display: block; font-size: 13px; margin-bottom: 8px; }
+    .method-step p { color: var(--muted); font-size: 14px; }
+    .bar-chart { display: grid; gap: 14px; margin-top: 18px; }
+    .bar-row { display: grid; grid-template-columns: minmax(170px, 1.2fr) 3fr 58px; align-items: center; gap: 12px; font-size: 13px; }
+    .bar-track { height: 18px; background: var(--paper-2); overflow: hidden; }
+    .bar-fill { height: 100%; background: var(--blue); transform-origin: left; animation: grow .9s cubic-bezier(.2,.8,.2,1) both; }
+    .bar-row:nth-child(2) .bar-fill { background: var(--teal); }
+    .bar-row:nth-child(3) .bar-fill { background: var(--coral); }
+    .bar-row:nth-child(4) .bar-fill { background: var(--sun); }
+    .bar-row:nth-child(5) .bar-fill { background: #879b94; }
+    .bar-row:nth-child(6) .bar-fill { background: #b0b8b1; }
+    .bar-value { font-variant-numeric: tabular-nums; color: var(--muted); text-align: right; }
+    @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    .workflow { margin-top: 26px; display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); }
+    .workflow div { min-height: 135px; padding: 15px 12px; border-right: 1px solid var(--line); }
+    .workflow div:last-child { border-right: 0; }
+    .workflow .hot { background: var(--blue-2); }
+    .workflow .cool { background: var(--coral-2); }
+    .workflow b { display: block; font-size: 13px; line-height: 1.2; }
+    .workflow small { display: block; margin-top: 12px; color: var(--muted); line-height: 1.35; }
+    .complement { display: grid; grid-template-columns: 1fr 70px 1fr; gap: 18px; align-items: center; margin-top: 34px; }
+    .model-box { min-height: 230px; padding: 26px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--white); }
+    .model-box.blue { background: var(--blue-2); border-color: #9db9e4; }
+    .model-box.coral { background: var(--coral-2); border-color: #e5b0a1; }
+    .model-box h3 { margin-bottom: 14px; }
+    .model-box ul { padding-left: 19px; margin: 0; color: var(--muted); line-height: 1.65; font-size: 14px; }
+    .plus { display: grid; place-items: center; font-family: Georgia, serif; font-size: 46px; color: var(--teal); }
+    .callout { padding: 21px 24px; margin-top: 20px; background: var(--sun-2); border: 1px solid #e4cf81; border-radius: var(--radius); color: var(--ink); }
+    .callout p { font-size: 15px; }
+    .bottleneck { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 5vw; margin-top: 34px; }
+    .funnel { position: relative; min-height: 265px; display: grid; place-items: center; }
+    .funnel::before, .funnel::after { content: ""; position: absolute; border: 1px solid var(--line); transform: skewX(-23deg); }
+    .funnel::before { width: 82%; height: 58%; top: 0; background: var(--blue-2); }
+    .funnel::after { width: 28%; height: 26%; bottom: 8%; background: var(--coral-2); }
+    .funnel-label { position: relative; z-index: 1; text-align: center; }
+    .funnel-label strong { display: block; font-family: Georgia, serif; font-size: 43px; }
+    .funnel-label span { display: block; color: var(--muted); font-size: 13px; }
+    .arrow-down { position: absolute; top: 50%; left: 50%; z-index: 2; width: 1px; height: 110px; background: var(--ink); transform: translate(-50%,-50%); }
+    .arrow-down::after { content: ""; position: absolute; bottom: 0; left: -4px; width: 8px; height: 8px; border-right: 1px solid var(--ink); border-bottom: 1px solid var(--ink); transform: rotate(45deg); }
+    .risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 28px; }
+    .risk { padding: 20px; border-top: 3px solid var(--coral); background: var(--white); }
+    .risk.good { border-color: var(--teal); }
+    .risk h3 { font-size: 21px; margin-bottom: 9px; }
+    .risk p { color: var(--muted); font-size: 14px; }
+    .architecture { display: grid; grid-template-columns: 1.1fr .9fr; gap: 5vw; align-items: center; margin-top: 24px; }
+    .arch-flow { display: grid; gap: 0; }
+    .arch-node { position: relative; padding: 18px 20px; border: 1px solid var(--line); background: var(--white); }
+    .arch-node:not(:last-child)::after { content: ""; position: absolute; width: 1px; height: 18px; left: 28px; bottom: -19px; background: var(--ink); }
+    .arch-node:not(:last-child)::before { content: ""; position: absolute; left: 25px; bottom: -19px; width: 7px; height: 7px; border-right: 1px solid var(--ink); border-bottom: 1px solid var(--ink); transform: rotate(45deg); }
+    .arch-node b { display: block; font-size: 15px; }
+    .arch-node span { color: var(--muted); font-size: 13px; }
+    .arch-node.orchestrator { background: var(--teal-2); border-color: #8bc8c0; }
+    .arch-node.verify-node { background: var(--sun-2); border-color: #e4cf81; }
+    .principles { display: grid; gap: 15px; }
+    .principle { display: grid; grid-template-columns: 32px 1fr; gap: 12px; padding-bottom: 15px; border-bottom: 1px solid var(--line); }
+    .principle .icon { width: 27px; height: 27px; display: grid; place-items: center; background: var(--ink); color: var(--paper); font-size: 12px; border-radius: 50%; }
+    .principle p { color: var(--muted); font-size: 14px; margin-top: 3px; }
+    .steps { display: grid; gap: 12px; margin-top: 24px; }
+    .step { display: grid; grid-template-columns: 44px 1fr auto; gap: 16px; align-items: start; padding: 16px 0; border-top: 1px solid var(--line); }
+    .step:last-child { border-bottom: 1px solid var(--line); }
+    .step-num { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: var(--teal); color: white; font-weight: 800; font-size: 13px; }
+    .step p { color: var(--muted); font-size: 14px; margin-top: 4px; max-width: 64ch; }
+    .done { color: var(--teal); font-size: 12px; white-space: nowrap; padding-top: 7px; }
+    .accordion { margin-top: 25px; display: grid; gap: 9px; }
+    details { border-top: 1px solid var(--line); padding: 15px 0; }
+    details:last-child { border-bottom: 1px solid var(--line); }
+    summary { cursor: pointer; font-weight: 750; list-style: none; display: flex; justify-content: space-between; gap: 15px; }
+    summary::after { content: "+"; color: var(--teal); font-size: 20px; line-height: .7; }
+    details[open] summary::after { content: "-"; }
+    details p { color: var(--muted); margin-top: 10px; font-size: 14px; max-width: 72ch; }
+    .project-map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px; }
+    .project { padding: 20px; min-height: 180px; border: 1px solid var(--line); background: var(--white); }
+    .project:nth-child(1) { background: var(--teal-2); }
+    .project:nth-child(2) { background: var(--blue-2); }
+    .project:nth-child(3) { background: var(--coral-2); }
+    .project h3 { font-size: 21px; margin-bottom: 8px; }
+    .project p { color: var(--muted); font-size: 14px; }
+    .project small { display: block; margin-top: 18px; color: var(--ink); font-weight: 750; }
+    .takeaways { display: grid; grid-template-columns: 1fr 1fr; gap: 5vw; }
+    .takeaway-list { display: grid; gap: 0; border-top: 1px solid var(--ink); }
+    .takeaway { padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .takeaway strong { display: block; font-size: 17px; }
+    .takeaway p { margin-top: 5px; color: var(--muted); font-size: 14px; }
+    .footnotes { margin-top: 24px; padding-top: 15px; border-top: 1px solid var(--line); display: grid; gap: 7px; }
+    .footnotes p { color: var(--muted); font-size: 11px; line-height: 1.35; }
+    .nav { position: fixed; z-index: 22; bottom: 18px; left: 28px; right: 28px; display: flex; align-items: center; justify-content: space-between; pointer-events: none; }
+    .nav button, .menu-toggle { pointer-events: auto; width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid var(--line); background: rgba(255,254,249,.88); color: var(--ink); border-radius: 50%; cursor: pointer; transition: transform .2s ease, background .2s ease; }
+    .nav svg { width: 20px; height: 20px; }
+    .nav button:hover, .menu-toggle:hover { transform: translateY(-2px); background: var(--sun-2); }
+    .counter { color: var(--muted); font-size: 12px; letter-spacing: .08em; }
+    .top-actions { position: fixed; z-index: 23; top: 10px; right: 18px; display: flex; align-items: center; gap: 7px; }
+    .action-button { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line); background: rgba(255,254,249,.9); color: var(--ink); border-radius: 50%; cursor: pointer; transition: transform .2s ease, background .2s ease; }
+    .action-button:hover { transform: translateY(-2px); background: var(--sun-2); }
+    .action-button svg { width: 17px; height: 17px; }
+    .menu { position: fixed; z-index: 19; inset: 0 0 0 auto; width: min(390px, 92vw); padding: 80px 30px 35px; background: var(--white); border-left: 1px solid var(--line); transform: translateX(100%); transition: transform .32s ease; overflow: auto; box-shadow: -18px 0 40px rgba(23,33,31,.08); }
+    .menu.open { transform: translateX(0); }
+    .menu h3 { margin-bottom: 18px; }
+    .menu button { display: block; width: 100%; padding: 12px 0; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; color: var(--muted); cursor: pointer; }
+    .menu button:hover { color: var(--ink); }
+    @media (max-width: 800px) {
+      body { overflow: hidden; }
+      .topbar { padding: 14px 18px; }
+      .topbar .topic { display: none; }
+      .slide { padding: 66px 22px 70px; align-items: start; }
+      .inner { max-height: none; padding: 20px 0; }
+      .cover-grid, .split, .split-wide, .section-break .inner, .bottleneck, .architecture, .takeaways { grid-template-columns: 1fr; gap: 28px; }
+      .cover-art { min-height: 310px; padding-top: 64px; order: -1; }
+      .orbit { width: 250px; }
+      .node { width: 53px; height: 53px; font-size: 9px; }
+      .cover-note { width: 155px; font-size: 10px; padding-bottom: 10px; }
+      .stat-grid, .project-map { grid-template-columns: 1fr; }
+      .stat { min-height: 112px; }
+      .stat .label { margin-top: 7px; }
+      .method { grid-template-columns: 1fr; }
+      .workflow { grid-template-columns: 1fr 1fr; }
+      .workflow div:nth-child(2n) { border-right: 0; }
+      .workflow div { min-height: 120px; border-bottom: 1px solid var(--line); }
+      .workflow div:last-child { grid-column: span 2; }
+      .complement { grid-template-columns: 1fr; gap: 10px; }
+      .plus { height: 26px; font-size: 34px; }
+      .risk-grid { grid-template-columns: 1fr; }
+      .bar-row { grid-template-columns: 1.5fr 2fr 45px; gap: 7px; font-size: 11px; }
+      .section-break .section-mark { justify-self: start; width: 180px; }
+      .step { grid-template-columns: 38px 1fr; }
+      .done { grid-column: 2; padding-top: 0; }
+      .nav { left: 18px; right: 18px; }
+      .top-actions { right: 12px; }
+      .topbar .topic { padding-right: 0; }
+      .source { font-size: 10px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-label="AI in Science: Early Insights interactive slide deck">
+    <div class="progress" id="progress"></div>
+    <header class="topbar"><div class="mark"><span class="mark-dot"></span> AI in Science</div><div class="topic">Early insights / September 2026</div></header>
+    <div class="top-actions" aria-label="Presentation controls">
+      <button class="action-button menu-toggle" id="menuToggle" aria-label="Open slide overview" aria-expanded="false" title="Slide overview"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1" fill="currentColor"/><rect x="14" y="4" width="6" height="6" rx="1" fill="currentColor"/><rect x="4" y="14" width="6" height="6" rx="1" fill="currentColor"/><rect x="14" y="14" width="6" height="6" rx="1" fill="currentColor"/></svg></button>
+      <button class="action-button" id="fullscreenToggle" aria-label="Enter fullscreen presentation" title="Fullscreen presentation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M4 16v4h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <aside class="menu" id="menu" aria-label="Slide index"><h3>Slide index</h3><div id="menuItems"></div></aside>
+    <section class="slides">
+      <article class="slide active cover" data-title="Cover">
+        <div class="inner cover-grid">
+          <div>
+            <div class="title-rule"></div>
+            <h1>AI in Science:<br><span style="color:var(--teal)">Early Insights</span></h1>
+            <p class="lede">What changes when general-purpose AI and specialised scientific models enter the research workflow?</p>
+            <div class="meta-row"><span>Plain-English deep dive</span><span>Evidence-led</span><span>Implementation guide</span></div>
+            <p class="source" style="margin-top:34px"><strong>Based on:</strong> Codreanu, Imas, Mateos-Garcia et al., <em>AI in Science: Early Insights</em>, September 2026. Supplied research paper, 42 pages.</p>
+          </div>
+          <div class="cover-art" aria-label="A diagram showing general AI, specialised models, lab work and verification as a connected system">
+            <div class="orbit"></div><div class="node llm">GENERAL<br>LLM</div><div class="node special">SPECIALISED<br>MODEL</div><div class="node lab">LAB /<br>FIELD</div><div class="node verify">VERIFY</div>
+            <div class="cover-note">The paper’s central idea: faster thinking creates pressure on everything that comes after thinking.</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="TL;DR">
+        <div class="inner split">
+          <div><h2>AI is already useful in science. The hard part is absorbing the speed.</h2><p class="lede">The paper is an early measurement of adoption, not a claim that AI has solved discovery.</p></div>
+          <div class="stack"><div class="quote">“AI may make the front half of research cheaper, while making the <em>back half</em> more crowded.”</div><p class="body-copy">Researchers report saving almost seven hours a week. Much of that time returns to research, but scientists also report more untested hypotheses and a large verification burden.</p><div class="tag">Paper claim</div></div>
+          <div class="stat-grid" style="grid-column:1 / -1"><div class="stat teal"><div class="value">47%</div><div class="label">of surveyed researchers use some form of AI daily</div></div><div class="stat blue"><div class="value">6.9h</div><div class="label">average self-reported time saved per week</div></div><div class="stat coral"><div class="value">44%</div><div class="label">say their primary bottleneck moved downstream</div></div></div>
+          <p class="source" style="grid-column:1 / -1">Source: supplied paper, pp. 1, 23-26. Survey results are self-reported and the sample is not representative of all scientists.</p>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Why it matters">
+        <div class="inner">
+          <h2>Why this matters beyond faster drafting</h2>
+          <p class="lede">The benefit is not simply “more AI”. It is a better division of labour across the research system.</p>
+          <div class="line-list" style="margin-top:30px">
+            <div class="line-item"><div class="num">01</div><div><h3>More research capacity</h3><p>Time saved on analysis, code, literature work and communication can be reinvested into output, experiments or harder questions.</p></div></div>
+            <div class="line-item"><div class="num">02</div><div><h3>More cross-disciplinary reach</h3><p>AI can lower the cost of searching, translating and recombining ideas across fields.</p></div></div>
+            <div class="line-item"><div class="num">03</div><div><h3>New infrastructure demand</h3><p>Verification, physical experiments, clinical validation, data quality and provenance become more valuable as generation speeds up.</p></div></div>
+          </div>
+          <div class="callout"><p><strong>Beginner translation:</strong> if AI helps you create ten plausible hypotheses instead of two, the next question is not “can the model generate more?” It is “which ones can we test, and how do we know the result is sound?”</p></div>
+          <p class="source" style="margin-top:20px">Source: supplied paper, pp. 25-31. The beginner translation is an interpretation of the paper’s bottleneck and verification findings.</p>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Use cases">
+        <div class="inner split-wide">
+          <div><h2>Where it shows up in a real research workflow</h2><p class="lede">The paper’s data spans general LLM interactions and specialised model capabilities. Together they cover more of the workflow than either category alone.</p></div>
+          <div class="workflow" style="grid-column:1 / -1"><div class="hot"><b>Quantitative analysis</b><small>code, modelling, statistics</small></div><div class="hot"><b>Communication</b><small>manuscripts, findings, stakeholders</small></div><div class="cool"><b>Models & simulation</b><small>prediction, generation, classification</small></div><div class="cool"><b>Experimentation</b><small>sample processing, lab execution</small></div><div><b>Operations</b><small>projects, teaching, clinical coordination</small></div></div>
+          <div class="body-copy"><span class="tag">Use-case examples</span><p style="margin-top:14px"><strong>Life sciences:</strong> use a general model to troubleshoot analysis code, then call a specialised model to predict a molecular structure or outcome.</p><p><strong>Health research:</strong> use an LLM to organise a protocol or compliance documentation, then keep clinical validation and evidence review under explicit human control.</p></div>
+          <div class="body-copy"><span class="tag inference">Design implication</span><p style="margin-top:14px">The useful product is likely a connected workflow, not one model pretending to do every job.</p></div>
+          <p class="source" style="grid-column:1 / -1">Source: supplied paper, pp. 12-18, 29-31. Examples are grounded in the paper’s task categories and named model types; they are not reported case studies from the paper.</p>
+        </div>
+      </article>
+
+      <article class="slide section-break" data-title="Section 1 / The early signal">
+        <div class="inner"><h2>The early signal:<br>adoption is broad,<br>but uneven.</h2><div class="section-mark"><span></span></div></div>
+      </article>
+
+      <article class="slide" data-title="What the paper measured">
+        <div class="inner">
+          <h2>Three lenses on one question</h2><p class="lede">How is AI entering science, what tasks does it touch, and what changes do researchers perceive?</p>
+          <div class="method">
+            <div class="method-step"><strong>01 / Behaviour</strong><p>15 million anonymised Gemini interactions. A classifier isolated about 360,000 likely science interactions.</p></div>
+            <div class="method-step"><strong>02 / Capability</strong><p>An inventory of 2,690 specialised AI models linked to publications and code repositories, with 460,000 unique citations since 2020.</p></div>
+            <div class="method-step"><strong>03 / Perception</strong><p>A survey of 637 active researchers in the US and UK about adoption, time, bottlenecks and research choices.</p></div>
+          </div>
+          <div class="callout"><p><strong>Why combine them?</strong> Logs show observed interactions, models show available capability, and the survey asks about time and bottlenecks. No single source can answer all three.</p></div>
+          <p class="source" style="margin-top:20px">Source: supplied paper, pp. 3-8, 22-23. The paper calls the model inventory a work in progress, not an exhaustive registry.</p>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Adoption and coverage">
+        <div class="inner split-wide">
+          <div><h2>Science is an early adopter</h2><p class="lede">In the paper’s Gemini sample, scientific occupations appear more often than their share of US employment would predict.</p><div class="stat blue" style="margin-top:24px"><div class="value">2.7×</div><div class="label">LLM usage for core life, physical and social science occupations relative to their employment baseline</div></div></div>
+          <div><h3>Share of scientific Gemini interactions by domain</h3><div class="bar-chart"><div class="bar-row"><span>Physical sciences</span><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span><span class="bar-value">55.3%</span></div><div class="bar-row"><span>Social sciences</span><span class="bar-track"><span class="bar-fill" style="width:39%"></span></span><span class="bar-value">21.4%</span></div><div class="bar-row"><span>Health sciences</span><span class="bar-track"><span class="bar-fill" style="width:25.5%"></span></span><span class="bar-value">14.1%</span></div><div class="bar-row"><span>Life sciences</span><span class="bar-track"><span class="bar-fill" style="width:16.6%"></span></span><span class="bar-value">9.2%</span></div></div><p class="source" style="margin-top:18px">The paper also observes LLM usage in 195 of 217 granular scientific subfields above its privacy threshold. Shares are interaction volume, not researcher counts or hours.</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Complements, not substitutes">
+        <div class="inner"><h2>General LLMs and specialised models look more like teammates than substitutes</h2><p class="lede">At a broad level, both help with quantitative analysis. At a granular task level, their roles diverge.</p><div class="complement"><div class="model-box blue"><h3>General-purpose LLM</h3><ul><li>Literature synthesis</li><li>Code writing and troubleshooting</li><li>Statistical analysis</li><li>Drafting and communication</li><li>Multimodal workflow support</li></ul></div><div class="plus">+</div><div class="model-box coral"><h3>Specialised scientific model</h3><ul><li>Domain-specific prediction</li><li>Molecular or material generation</li><li>Simulation</li><li>Imaging classification or segmentation</li><li>Structured data generation</li></ul></div></div><div class="callout"><p><strong>The product insight:</strong> orchestration becomes more valuable when the system can route a task to the right model, carry context across steps, and preserve evidence about what happened.</p></div><p class="source" style="margin-top:18px">Source: supplied paper, pp. 17-19, 29-30. The complementarity conclusion is an association from task distributions, not a causal test.</p></div>
+      </article>
+
+      <article class="slide section-break" data-title="Section 2 / The friction moves">
+        <div class="inner"><h2>The friction moves:<br>from generating ideas<br>to proving them.</h2><div class="section-mark"><span></span></div></div>
+      </article>
+
+      <article class="slide" data-title="The productivity dividend">
+        <div class="inner split">
+          <div><h2>A reported productivity dividend</h2><p class="lede">Researchers say AI frees time. The paper’s more interesting question is where that time goes.</p><div class="stat-grid" style="grid-template-columns:1fr 1fr; margin-top:25px"><div class="stat teal"><div class="value">~¾</div><div class="label">report net time savings in their working week</div></div><div class="stat sun"><div class="value">84%</div><div class="label">report increased lab or professional output over the past three years</div></div></div></div>
+          <div class="line-list"><div class="line-item"><div class="num">30%</div><div><h3>More research volume</h3><p>Just under 30% say saved time goes into more overall research output.</p></div></div><div class="line-item"><div class="num">21%</div><div><h3>Physical execution</h3><p>About 21% reinvest it in lab execution and data collection.</p></div></div><div class="line-item"><div class="num">19%</div><div><h3>Harder questions</h3><p>About 19% use the dividend to tackle more ambitious scientific problems.</p></div></div></div>
+          <p class="source" style="grid-column:1 / -1">Source: supplied paper, pp. 23-24. These are self-reported survey responses, not measured causal productivity effects.</p>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Bottleneck shift">
+        <div class="inner"><h2>Speed upstream can create a queue downstream</h2><p class="lede">When analysis, drafting and hypothesis generation get cheaper, physical experimentation, clinical validation and field data collection can become the rate limiter.</p><div class="bottleneck"><div class="funnel"><div class="arrow-down"></div><div class="funnel-label"><strong>More viable ideas</strong><span>generated and analysed</span></div><div class="funnel-label" style="transform:translateY(100px)"><strong style="font-size:30px">Fewer tests</strong><span>ready to validate</span></div></div><div><div class="stat coral"><div class="value">44%</div><div class="label">say their primary bottleneck moved downstream over the past two years</div></div><div class="stat sun" style="margin-top:14px"><div class="value">41%</div><div class="label">say their backlog of untested hypotheses increased</div></div></div></div><p class="source" style="margin-top:20px">Source: supplied paper, pp. 25-26. The funnel is an explanatory visualisation of the paper’s bottleneck-shift finding, not a measured funnel ratio.</p></div>
+      </article>
+
+      <article class="slide" data-title="Verification tax">
+        <div class="inner split-wide"><div><h2>The hidden tax is verification</h2><p class="lede">AI output is not turn-key scientific evidence. Researchers still need to audit, debug, fact-check and reproduce it.</p><div class="stat coral" style="margin-top:25px"><div class="value">46%</div><div class="label">of scientists who save time say more than a quarter of that saved time goes to auditing and verifying AI outputs</div></div></div><div><h3>What a responsible workflow must add</h3><div class="risk-grid"><div class="risk good"><h3>Traceability</h3><p>Record source documents, model versions, prompts, tools, parameters and intermediate outputs.</p></div><div class="risk good"><h3>Reproducibility</h3><p>Make it possible to rerun the step or inspect why a result was accepted.</p></div><div class="risk"><h3>Failure handling</h3><p>Assume wrong documents, unsupported claims, missing provenance and confident errors.</p></div><div class="risk"><h3>Human judgement</h3><p>Keep the scientist responsible for standards of evidence and the cost of physical testing.</p></div></div></div><p class="source" style="grid-column:1 / -1">Source: supplied paper, pp. 25-31. The workflow controls are recommendations derived from the verification findings.</p></div>
+      </article>
+
+      <article class="slide" data-title="Safer or riskier questions">
+        <div class="inner"><h2>AI may broaden science and narrow its risk appetite at the same time</h2><p class="lede">The survey contains a tension worth taking seriously: more interdisciplinary access, but a tilt towards tractable, benchmarked problems.</p><div class="stat-grid" style="margin-top:28px"><div class="stat teal"><div class="value">68%</div><div class="label">say AI increased access to insights from other disciplines</div></div><div class="stat blue"><div class="value">65%</div><div class="label">say AI increased the breadth of their research agendas</div></div><div class="stat coral"><div class="value">49%</div><div class="label">say AI encouraged safer, more incremental questions</div></div></div><div class="callout"><p><strong>Interpretation:</strong> the same tools that help recombine ideas can also make data-rich, well-benchmarked work disproportionately easy. That “streetlight effect” is a hypothesis to test, not a settled conclusion.</p></div><p class="source" style="margin-top:20px">Source: supplied paper, pp. 26-31. The paper reports 28% saying AI encouraged higher-risk questions; it also flags the streetlight effect as a possible interpretation.</p></div>
+      </article>
+
+      <article class="slide section-break" data-title="Section 3 / Build responsibly">
+        <div class="inner"><h2>Build responsibly:<br>orchestration plus<br>evidence.</h2><div class="section-mark"><span></span></div></div>
+      </article>
+
+      <article class="slide" data-title="Target architecture">
+        <div class="inner"><h2>The near-term architecture is a research conductor</h2><p class="lede">An LLM plans and coordinates. Specialist models do domain work. Evidence and verification remain first-class outputs.</p><div class="architecture"><div class="arch-flow"><div class="arch-node"><b>1. Research question</b><span>Goal, constraints, expected evidence</span></div><div class="arch-node orchestrator"><b>2. Orchestrator</b><span>Decompose, route, plan, ask for missing context</span></div><div class="arch-node"><b>3. Specialist tools</b><span>Prediction, simulation, generation, classification</span></div><div class="arch-node verify-node"><b>4. Verification layer</b><span>Provenance, cross-checks, tests, human review</span></div><div class="arch-node"><b>5. Decision record</b><span>What was accepted, rejected, deferred and why</span></div></div><div class="principles"><div class="principle"><div class="icon">Q</div><div><b>Question first</b><p>Define what would count as a useful answer before selecting a model.</p></div></div><div class="principle"><div class="icon">R</div><div><b>Route by capability</b><p>Use the general model for coordination and the specialised model for domain-specific work.</p></div></div><div class="principle"><div class="icon">E</div><div><b>Evidence travels with output</b><p>A result without provenance is a lead, not a conclusion.</p></div></div><div class="principle"><div class="icon">H</div><div><b>Human owns the threshold</b><p>The scientist decides what is strong enough to act on or test.</p></div></div></div></div><p class="source" style="margin-top:20px">Source: supplied paper, pp. 30-31. Architecture is a recommended implementation pattern inferred from the paper’s proposed LLM orchestrator.</p></div>
+      </article>
+
+      <article class="slide" data-title="How to implement it">
+        <div class="inner"><h2>A practical five-step implementation path</h2><p class="lede">Start with one bounded workflow where verification matters and the hand-offs are observable.</p><div class="steps"><div class="step"><div class="step-num">1</div><div><h3>Choose one research task</h3><p>Pick a narrow task such as literature-to-hypothesis synthesis, assay-data triage or protocol comparison. Define the user, inputs and decision it supports.</p></div><div class="done">Done: one-page task brief</div></div><div class="step"><div class="step-num">2</div><div><h3>Map the task chain</h3><p>Separate what the general LLM does, what a specialised model does, what needs a human, and what depends on a physical or external test.</p></div><div class="done">Done: workflow map</div></div><div class="step"><div class="step-num">3</div><div><h3>Make provenance automatic</h3><p>Log source IDs, model/version, prompt or parameters, tool calls, timestamps, outputs and reviewer decisions.</p></div><div class="done">Done: inspectable run record</div></div><div class="step"><div class="step-num">4</div><div><h3>Build the verification gate</h3><p>Require citations, schema checks, unit checks, domain tests, uncertainty flags and human sign-off before an output becomes a research artefact.</p></div><div class="done">Done: pass/fail rubric</div></div><div class="step"><div class="step-num">5</div><div><h3>Measure the queue, not only the speed</h3><p>Track time saved, rework, error types, verification time, untested-hypothesis backlog and how many outputs reach validation.</p></div><div class="done">Done: baseline dashboard</div></div></div></div>
+      </article>
+
+      <article class="slide" data-title="Evaluation checklist">
+        <div class="inner split-wide"><div><h2>Evaluate the workflow, not just the model</h2><p class="lede">A strong benchmark asks whether the whole system helps researchers make better, safer progress.</p><div class="tag practice">Implementation checklist</div><div class="accordion"><details open><summary>Golden set</summary><p>Assemble representative historical cases with known-good answers, accepted sources and expert annotations. Include hard negatives and ambiguous cases.</p></details><details><summary>Failure modes</summary><p>Test wrong-document retrieval, missing provenance, hallucinated dosage or units, unsupported extrapolation, tool failure and overconfident summaries.</p></details><details><summary>Workflow metrics</summary><p>Measure factuality, citation correctness, retrieval recall, time-to-decision, verification burden, escalation rate and downstream validation success.</p></details><details><summary>Generalisation</summary><p>Map the same architecture to an adjacent domain, such as regulated finance or engineering, and identify which controls transfer and which need redesign.</p></details></div></div><div><div class="stat teal"><div class="value">1</div><div class="label">golden set per workflow before you automate at scale</div></div><div class="stat blue" style="margin-top:14px"><div class="value">0</div><div class="label">untraceable high-stakes outputs allowed past the verification gate</div></div><div class="callout"><p><strong>Rule of thumb:</strong> if the system cannot show where a claim came from and how it was checked, it has produced a draft, not a result.</p></div></div><p class="source" style="grid-column:1 / -1">Source: the paper’s limitations and discussion, pp. 27-31. The golden-set and failure-mode checklist is a practical recommendation for implementing the paper’s verification agenda.</p></div>
+      </article>
+
+      <article class="slide" data-title="Apply it to your projects">
+        <div class="inner"><h2>How this translates to an AI research product</h2><p class="lede">The paper’s lesson is useful for any high-stakes agent that turns messy evidence into a decision or next action.</p><div class="project-map"><div class="project"><h3>FlavourMind</h3><p>Use the general model to coordinate literature, sensory data and experimental design. Keep evidence lineage and assay or sensory validation visible.</p><small>First slice: provenance-aware hypothesis brief</small></div><div class="project"><h3>VAI Santé</h3><p>Use retrieval and orchestration to structure multimodal records. Treat provenance, uncertainty and clinical review as part of the output.</p><small>First slice: depersonalised timeline synthesis</small></div><div class="project"><h3>Koinaku / Historian</h3><p>Use the agent to gather and summarise project memory, but preserve source links, time boundaries and a clear distinction between record and interpretation.</p><small>First slice: evidence-linked weekly digest</small></div></div><div class="callout"><p><strong>Product principle:</strong> the durable advantage is not “an AI that knows science”. It is a workflow that makes scientific reasoning easier to inspect, challenge and continue.</p></div><p class="source" style="margin-top:20px">Source: paper findings on orchestration, provenance, verification and bottlenecks, pp. 25-31. Project examples are tailored recommendations, not claims from the paper.</p></div>
+      </article>
+
+      <article class="slide" data-title="Takeaways and limits">
+        <div class="inner takeaways"><div><h2>The short version</h2><div class="takeaway-list" style="margin-top:25px"><div class="takeaway"><strong>1. Adoption is here.</strong><p>Scientists are using general and specialised AI across a wide range of research tasks.</p></div><div class="takeaway"><strong>2. The tools divide the labour.</strong><p>General LLMs coordinate and support broad work; specialist models handle domain-specific prediction and generation.</p></div><div class="takeaway"><strong>3. Time savings are real to users.</strong><p>But the dividend is partly consumed by verification and downstream execution.</p></div><div class="takeaway"><strong>4. The next bottleneck is institutional.</strong><p>Research systems need better validation capacity, provenance, benchmarks and decisions about risk.</p></div></div></div><div><h2>Read it with caution</h2><div class="takeaway-list" style="margin-top:25px"><div class="takeaway"><strong>Early snapshot.</strong><p>Gemini logs, a curated model inventory and a US/UK survey only show part of the global landscape.</p></div><div class="takeaway"><strong>Classification uncertainty.</strong><p>LLM classifiers map messy interactions and model abstracts into a taxonomy, with known errors.</p></div><div class="takeaway"><strong>Associations, not causality.</strong><p>The paper does not establish that AI caused the reported productivity or workflow changes.</p></div><div class="takeaway"><strong>Open question.</strong><p>Will AI help science take bigger bets, or mostly make tractable work cheaper?</p></div></div></div><div class="footnotes" style="grid-column:1 / -1"><p><strong>Primary source:</strong> Mihai Codreanu, Alex Imas, Juan Mateos-Garcia et al., <em>AI in Science: Early Insights</em>, September 2026, supplied PDF, 42 pages.</p><p><strong>Deck note:</strong> Percentages and sample sizes are reproduced from the supplied paper and labelled where they are self-reported, inferred or descriptive. This deck is an educational explainer, not professional, medical or legal advice.</p></div></div>
+      </article>
+    </section>
+    <nav class="nav" aria-label="Slide navigation"><button id="prev" aria-label="Previous slide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="counter" id="counter">01 / 19</div><button id="next" aria-label="Next slide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></nav>
+  </main>
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const menu = document.getElementById('menu');
+      const menuToggle = document.getElementById('menuToggle');
+      const fullscreenToggle = document.getElementById('fullscreenToggle');
+      const menuItems = document.getElementById('menuItems');
+      const counter = document.getElementById('counter');
+      const progress = document.getElementById('progress');
+      let current = 0;
+      slides.forEach((slide, i) => {
+        const b = document.createElement('button');
+        b.textContent = `${String(i + 1).padStart(2, '0')}  ${slide.dataset.title}`;
+        b.addEventListener('click', () => { go(i); menu.classList.remove('open'); menuToggle.setAttribute('aria-expanded', 'false'); });
+        menuItems.appendChild(b);
+      });
+      function go(index) {
+        const next = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((s, i) => { s.classList.toggle('active', i === next); s.classList.toggle('prev', i < next); });
+        current = next;
+        counter.textContent = `${String(current + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        document.title = `${slides[current].dataset.title} - AI in Science`;
+      }
+      function step(delta) { go(current + delta); }
+      document.getElementById('prev').addEventListener('click', () => step(-1));
+      document.getElementById('next').addEventListener('click', () => step(1));
+      menuToggle.addEventListener('click', () => { const open = menu.classList.toggle('open'); menuToggle.setAttribute('aria-expanded', String(open)); });
+      function syncFullscreenControl() {
+        const active = Boolean(document.fullscreenElement);
+        fullscreenToggle.setAttribute('aria-label', active ? 'Exit fullscreen presentation' : 'Enter fullscreen presentation');
+        fullscreenToggle.setAttribute('title', active ? 'Exit fullscreen presentation' : 'Fullscreen presentation');
+      }
+      fullscreenToggle.addEventListener('click', async () => {
+        try {
+          if (document.fullscreenElement) await document.exitFullscreen();
+          else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+        } catch (error) {
+          fullscreenToggle.setAttribute('title', 'Fullscreen is unavailable in this browser');
+        }
+      });
+      document.addEventListener('fullscreenchange', syncFullscreenControl);
+      document.addEventListener('keydown', e => { if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); step(1); } if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); step(-1); } if (e.key.toLowerCase() === 'm') menuToggle.click(); if (e.key === 'Home') go(0); if (e.key === 'End') go(slides.length - 1); });
+      let startX = null;
+      document.addEventListener('touchstart', e => { startX = e.changedTouches[0].clientX; }, {passive:true});
+      document.addEventListener('touchend', e => { if (startX === null) return; const dx = e.changedTouches[0].clientX - startX; if (Math.abs(dx) > 45) step(dx < 0 ? 1 : -1); startX = null; }, {passive:true});
+      go(0);
+    })();
+  </script>
+</body>
+</html>

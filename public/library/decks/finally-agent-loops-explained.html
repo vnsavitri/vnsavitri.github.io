@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Loops — Finally Explained</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0B0B12;
+      --surface: #13131E;
+      --surface2: #1A1A28;
+      --border: #252535;
+      --border-mid: #33334A;
+      --text: #EAEAF4;
+      --text-mid: #A0A0C0;
+      --text-muted: #606080;
+      --accent: #7C3AED;
+      --accent-bright: #9F5FFF;
+      --accent-dim: #6D28D9;
+      --accent-light: #180D35;
+      --accent-mid: #4C1D95;
+      --accent-text: #C4B5FD;
+      --green: #10B981;
+      --green-bg: rgba(16,185,129,0.07);
+      --green-border: rgba(16,185,129,0.22);
+      --red-bg: rgba(239,68,68,0.06);
+      --red-border: rgba(239,68,68,0.22);
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    html, body { height: 100%; overflow: hidden; background: var(--bg); font-family: var(--font); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+    /* ─── Chrome ─── */
+    #pb {
+      position: fixed; top: 0; left: 0; height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+      transition: width 0.45s cubic-bezier(0.4,0,0.2,1);
+      z-index: 200;
+    }
+    #counter {
+      position: fixed; bottom: 1.4rem; right: 2rem;
+      font-size: 0.68rem; font-weight: 500; letter-spacing: 0.1em;
+      color: var(--text-muted); z-index: 200; font-feature-settings: 'tnum';
+    }
+    .nav-btn {
+      position: fixed; top: 50%; transform: translateY(-50%);
+      width: 2.4rem; height: 2.4rem; border-radius: 50%;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 200; transition: all 0.2s; color: var(--text-muted);
+    }
+    .nav-btn:hover { background: rgba(255,255,255,0.07); color: var(--text); border-color: var(--border-mid); }
+    .nav-btn.prev { left: 1.25rem; }
+    .nav-btn.next { right: 1.25rem; }
+    .nav-btn svg { width: 0.9rem; height: 0.9rem; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ─── Deck & Slides ─── */
+    #deck { position: relative; width: 100vw; height: 100vh; }
+
+    .slide {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+      padding: clamp(2rem, 5vw, 4.5rem) clamp(2.5rem, 10vw, 9rem);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.5s cubic-bezier(0.4,0,0.2,1);
+      overflow: hidden;
+    }
+    .slide.is-active { opacity: 1; pointer-events: auto; }
+
+    .r { width: 100%; max-width: 920px; }
+
+    /* ─── Shared Typography ─── */
+    .eyebrow {
+      display: inline-block; font-size: 0.58rem; font-weight: 700;
+      letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--accent-text); background: var(--accent-light);
+      border: 1px solid rgba(124,58,237,0.35); padding: 0.22rem 0.65rem;
+      border-radius: 3px; margin-bottom: 1.3rem;
+    }
+    h1 { font-size: clamp(2.8rem, 5.5vw, 5rem); font-weight: 800; line-height: 1.04; letter-spacing: -0.03em; }
+    h2 { font-size: clamp(2rem, 3.8vw, 3.2rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.025em; }
+    .lead { font-size: clamp(0.85rem, 1.4vw, 1rem); line-height: 1.72; color: var(--text-mid); margin-top: 0.9rem; max-width: 540px; }
+
+    /* ─── Cover ─── */
+    .s-cover { background: var(--bg); }
+    .orb {
+      position: absolute; border-radius: 50%; pointer-events: none;
+      background: radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 70%);
+    }
+    .orb-a { width: 65vw; height: 65vw; max-width: 680px; max-height: 680px; top: -20%; right: -18%; }
+    .orb-b { width: 40vw; height: 40vw; max-width: 480px; max-height: 480px; bottom: -10%; left: -12%; background: radial-gradient(circle, rgba(99,102,241,0.09) 0%, transparent 70%); }
+    .cover-title { position: relative; z-index: 1; }
+    .cover-title h1 span { color: var(--accent-bright); }
+    .cover-source { margin-top: 1.5rem; font-size: clamp(0.75rem, 1.2vw, 0.88rem); color: var(--text-muted); font-weight: 400; }
+    .cover-source a { color: var(--accent-text); text-decoration: none; border-bottom: 1px solid rgba(196,181,253,0.3); transition: border-color 0.15s; }
+    .cover-source a:hover { border-color: var(--accent-text); }
+    .cover-pill {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: var(--surface); border: 1px solid var(--border-mid);
+      border-radius: 99px; padding: 0.35rem 0.9rem 0.35rem 0.5rem;
+      font-size: 0.7rem; font-weight: 500; color: var(--text-mid);
+      margin-bottom: 1.6rem;
+    }
+    .cover-dot { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(16,185,129,0.2); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{box-shadow:0 0 0 3px rgba(16,185,129,0.2)} 50%{box-shadow:0 0 0 5px rgba(16,185,129,0.1)} }
+
+    /* ─── Three Cards ─── */
+    .cards {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1.1rem; margin-top: 1.8rem;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.4rem 1.3rem; transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--border-mid); }
+    .card.hi { background: var(--accent-light); border-color: rgba(124,58,237,0.35); }
+    .card-tag { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.55rem; }
+    .card.hi .card-tag { color: rgba(196,181,253,0.55); }
+    .card-icon { font-size: 1.75rem; display: block; margin-bottom: 0.65rem; line-height: 1; }
+    .card-title { font-size: clamp(0.95rem, 1.6vw, 1.12rem); font-weight: 700; color: var(--text); margin-bottom: 0.45rem; letter-spacing: -0.01em; }
+    .card.hi .card-title { color: var(--accent-text); }
+    .card-body { font-size: clamp(0.76rem, 1.15vw, 0.86rem); color: var(--text-mid); line-height: 1.65; }
+    .card.hi .card-body { color: rgba(196,181,253,0.6); }
+
+    /* ─── Big Quote ─── */
+    .s-quote { background: var(--surface); justify-content: center; align-items: center; text-align: center; }
+    .quote-mark { font-size: 7rem; line-height: 0.4; color: var(--accent-bright); opacity: 0.25; font-family: Georgia, serif; margin-bottom: 1.5rem; display: block; }
+    .quote-text { font-size: clamp(1.4rem, 2.8vw, 2.3rem); font-weight: 600; color: var(--text); line-height: 1.35; letter-spacing: -0.02em; max-width: 700px; margin: 0 auto; }
+    .quote-text em { color: var(--accent-bright); font-style: normal; }
+    .quote-src { margin-top: 1.4rem; font-size: 0.78rem; color: var(--text-muted); }
+
+    /* ─── Cycle ─── */
+    .cycle { display: flex; align-items: center; gap: 0; margin-top: 2.2rem; flex-wrap: wrap; justify-content: flex-start; }
+    .cycle-step {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.3rem 1.6rem; text-align: center; min-width: 150px;
+    }
+    .cycle-step.hi { background: var(--accent-light); border-color: rgba(124,58,237,0.4); }
+    .cycle-icon { font-size: 1.9rem; display: block; margin-bottom: 0.45rem; line-height: 1; }
+    .cycle-label { font-size: 0.95rem; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+    .cycle-step.hi .cycle-label { color: var(--accent-text); }
+    .cycle-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.3rem; line-height: 1.45; }
+    .cycle-step.hi .cycle-sub { color: rgba(196,181,253,0.5); }
+    .arrow { font-size: 1.3rem; color: var(--accent-bright); margin: 0 0.55rem; opacity: 0.5; line-height: 1; }
+
+    /* ─── Two Pillars ─── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.8rem; }
+    .pillar { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.75rem; }
+    .pillar-label { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.6rem; }
+    .pillar-icon { font-size: 2.2rem; display: block; margin-bottom: 0.65rem; line-height: 1; }
+    .pillar-title { font-size: clamp(1.1rem, 1.8vw, 1.35rem); font-weight: 700; color: var(--text); line-height: 1.2; letter-spacing: -0.01em; margin-bottom: 0.7rem; }
+    .pillar-body { font-size: clamp(0.78rem, 1.2vw, 0.88rem); color: var(--text-mid); line-height: 1.7; }
+
+    /* ─── Intern Layout ─── */
+    .intern-grid { display: grid; grid-template-columns: 1fr 1.05fr; gap: 2.5rem; margin-top: 1.8rem; align-items: start; }
+    .intern-steps { display: flex; flex-direction: column; gap: 0.85rem; }
+    .intern-step { display: flex; align-items: flex-start; gap: 0.9rem; padding: 0.9rem 1.1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+    .step-num {
+      min-width: 1.5rem; height: 1.5rem; border-radius: 50%;
+      background: var(--accent-light); border: 1px solid rgba(124,58,237,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.62rem; font-weight: 700; color: var(--accent-text);
+    }
+    .step-text { font-size: 0.85rem; color: var(--text-mid); line-height: 1.58; padding-top: 0.08rem; }
+    .step-text strong { color: var(--text); }
+    .callout {
+      background: var(--surface); border: 1px solid rgba(124,58,237,0.3);
+      border-left: 3px solid var(--accent-bright); border-radius: 8px;
+      padding: 1.5rem 1.65rem;
+    }
+    .callout-text { font-size: clamp(1rem, 1.7vw, 1.25rem); font-weight: 600; color: var(--text); line-height: 1.38; letter-spacing: -0.01em; }
+    .callout-sub { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.75rem; line-height: 1.6; }
+
+    /* ─── Quality Chart ─── */
+    .quality-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 2.5rem; margin-top: 1.8rem; align-items: center; }
+    .chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem; }
+    .chart-wrap svg { width: 100%; height: auto; display: block; }
+    .quality-points { display: flex; flex-direction: column; gap: 1rem; }
+    .quality-pt { font-size: 0.88rem; color: var(--text-mid); line-height: 1.62; }
+    .quality-pt strong { color: var(--text); }
+
+    /* ─── Examples ─── */
+    .examples { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.1rem; margin-top: 1.8rem; }
+    .ex-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.6rem 1.4rem; }
+    .ex-emoji { font-size: 2.3rem; display: block; margin-bottom: 0.65rem; line-height: 1; }
+    .ex-title { font-size: 0.98rem; font-weight: 700; color: var(--text); margin-bottom: 0.45rem; letter-spacing: -0.01em; }
+    .ex-body { font-size: 0.79rem; color: var(--text-mid); line-height: 1.65; }
+    .ex-badge {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      margin-top: 0.85rem; font-size: 0.68rem; font-weight: 600;
+      color: var(--green); background: var(--green-bg); border: 1px solid var(--green-border);
+      padding: 0.22rem 0.6rem; border-radius: 4px;
+    }
+
+    /* ─── Reality Check ─── */
+    .reality-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.8rem; }
+    .rbox { border-radius: 10px; padding: 1.5rem; border: 1px solid; }
+    .rbox.myth { background: var(--red-bg); border-color: var(--red-border); }
+    .rbox.truth { background: var(--green-bg); border-color: var(--green-border); }
+    .rbox-label { font-size: 0.56rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.55rem; }
+    .rbox.myth .rbox-label { color: #F87171; }
+    .rbox.truth .rbox-label { color: #34D399; }
+    .rbox-head { font-size: clamp(0.95rem, 1.6vw, 1.15rem); font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; margin-bottom: 0.55rem; }
+    .rbox.myth .rbox-head { color: #FCA5A5; }
+    .rbox.truth .rbox-head { color: #6EE7B7; }
+    .rbox-body { font-size: 0.81rem; color: var(--text-mid); line-height: 1.65; }
+
+    /* ─── Checklist ─── */
+    .checklist { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-top: 1.8rem; }
+    .chk {
+      display: flex; align-items: center; gap: 0.8rem;
+      padding: 0.85rem 1rem; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 8px;
+    }
+    .chk-icon {
+      min-width: 1.45rem; height: 1.45rem; border-radius: 50%;
+      background: var(--green-bg); border: 1px solid var(--green-border);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .chk-icon svg { width: 0.7rem; height: 0.7rem; fill: none; stroke: var(--green); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .chk-text { font-size: 0.85rem; font-weight: 500; color: var(--text); line-height: 1.4; }
+
+    /* ─── Closing ─── */
+    .s-closing { background: var(--accent-dim); justify-content: center; align-items: center; text-align: center; }
+    .closing-wrap { display: flex; flex-direction: column; align-items: center; gap: 1.15rem; }
+    .closing-h { font-size: clamp(2.6rem, 5vw, 4.2rem); font-weight: 700; color: #fff; line-height: 1.1; letter-spacing: -0.02em; }
+    .closing-contact { font-size: 0.93rem; color: rgba(255,255,255,0.6); line-height: 1.6; }
+    .closing-contact strong { color: #fff; font-weight: 600; }
+    .closing-link {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 1.4rem; background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.22); border-radius: 6px;
+      font-size: 0.88rem; font-weight: 600; color: #fff; text-decoration: none;
+      transition: background 0.2s;
+    }
+    .closing-link:hover { background: rgba(255,255,255,0.18); }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 780px) {
+      .slide { padding: 1.5rem; padding-top: 3rem; justify-content: flex-start; }
+      .cards, .examples { grid-template-columns: 1fr; }
+      .two-col, .quality-grid, .intern-grid, .reality-grid, .checklist { grid-template-columns: 1fr; gap: 1rem; }
+      .cycle { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+      .arrow { transform: rotate(90deg); align-self: center; }
+      .nav-btn { display: none; }
+      h1 { font-size: 2.4rem; }
+      h2 { font-size: 1.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="pb"></div>
+<div id="counter"></div>
+<button class="nav-btn prev" onclick="go(-1)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+<button class="nav-btn next" onclick="go(1)"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+
+<div id="deck">
+
+  <!-- 1 · Cover -->
+  <section class="slide s-cover">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="r cover-title">
+      <div class="cover-pill"><span class="cover-dot"></span> Based on a YouTube video</div>
+      <div class="eyebrow">Agent Loops</div>
+      <h1>Finally,<br><span>clearly</span><br>explained.</h1>
+      <p class="cover-source">
+        Watch the original: <a href="https://youtu.be/EuzYhzB0vbI" target="_blank">youtu.be/EuzYhzB0vbI</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- 2 · The Human Loop -->
+  <section class="slide">
+    <div class="r">
+      <div class="eyebrow">The Starting Point</div>
+      <h2>You're already in a loop.<br>You just run it by hand.</h2>
+      <p class="lead">Every time you prompt an AI, read the output, tweak your approach, and try again — that's a loop. It's working, it's just slow. Because you're doing the iteration.</p>
+      <div class="cards" style="margin-top:1.8rem;">
+        <div class="card">
+          <span class="card-icon">💬</span>
+          <div class="card-title">You prompt</div>
+          <div class="card-body">Give the AI a task. Wait for a response.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">👀</span>
+          <div class="card-title">You review</div>
+          <div class="card-body">Read the result. Spot what's off. Figure out how to improve it.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">🔁</span>
+          <div class="card-title">You iterate</div>
+          <div class="card-body">Refine the prompt. Try again. Repeat until it's good enough.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · The Big Idea (Quote) -->
+  <section class="slide s-quote">
+    <div class="r" style="text-align:center;">
+      <span class="quote-mark">&ldquo;</span>
+      <div class="quote-text">Loop engineering is <em>replacing yourself</em> as the person who prompts the agent.</div>
+      <div class="quote-src">— The core idea behind agent loops</div>
+    </div>
+  </section>
+
+  <!-- 4 · What Is an Agent Loop -->
+  <section class="slide">
+    <div class="r">
+      <div class="eyebrow">The Core Concept</div>
+      <h2>An agent that iterates<br>without you.</h2>
+      <p class="lead">An agent loop reasons, acts, checks its own work, and repeats — until it hits a defined goal. No human in the middle.</p>
+      <div class="cycle">
+        <div class="cycle-step">
+          <span class="cycle-icon">🧠</span>
+          <div class="cycle-label">Reason</div>
+          <div class="cycle-sub">Plan the next move</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="cycle-step">
+          <span class="cycle-icon">⚡</span>
+          <div class="cycle-label">Act</div>
+          <div class="cycle-sub">Execute the action</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="cycle-step">
+          <span class="cycle-icon">🔍</span>
+          <div class="cycle-label">Observe</div>
+          <div class="cycle-sub">Check the result</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="cycle-step hi">
+          <span class="cycle-icon">🔁</span>
+          <div class="cycle-label">Repeat</div>
+          <div class="cycle-sub">Until goal is met</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · Three Parts -->
+  <section class="slide">
+    <div class="r">
+      <div class="eyebrow">Anatomy</div>
+      <h2>Every loop has<br>three parts.</h2>
+      <div class="cards">
+        <div class="card">
+          <div class="card-tag">01 — Trigger</div>
+          <span class="card-icon">🎯</span>
+          <div class="card-title">What starts it?</div>
+          <div class="card-body">A command, a schedule, an event. The signal that kicks things off.</div>
+        </div>
+        <div class="card">
+          <div class="card-tag">02 — Action</div>
+          <span class="card-icon">🛠</span>
+          <div class="card-title">What does it do?</div>
+          <div class="card-body">Generate, evaluate, edit, build, compare, test. Whatever moves toward the goal.</div>
+        </div>
+        <div class="card hi">
+          <div class="card-tag">03 — Stop Condition</div>
+          <span class="card-icon">✅</span>
+          <div class="card-title">When does it end?</div>
+          <div class="card-body">The most critical part. Without a clear stop condition, your loop runs forever — burning time and money.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · Two Pillars -->
+  <section class="slide">
+    <div class="r">
+      <div class="eyebrow">Foundations</div>
+      <h2>Two things every<br>good loop needs.</h2>
+      <div class="two-col">
+        <div class="pillar">
+          <div class="pillar-label">Pillar 01</div>
+          <span class="pillar-icon">🎯</span>
+          <div class="pillar-title">A clear,<br>objective goal</div>
+          <div class="pillar-body">Vague goals produce vague loops. "Make it better" doesn't work. "Score above 8/10 on these criteria" does. The more specific and measurable, the better the agent can self-direct.</div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-label">Pillar 02</div>
+          <span class="pillar-icon">🔬</span>
+          <div class="pillar-title">A verification<br>mechanism</div>
+          <div class="pillar-body">The agent needs a way to check its own work. Scoring rubrics, tests, screenshots, linters — these are all verification. Without it, the agent can't know if it's improving, or when to stop.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · The Smart Intern -->
+  <section class="slide">
+    <div class="r">
+      <div class="eyebrow">The Analogy</div>
+      <h2>Think of it like<br>a smart intern.</h2>
+      <div class="intern-grid">
+        <div class="intern-steps">
+          <div class="intern-step">
+            <div class="step-num">1</div>
+            <div class="step-text"><strong>Plans the next move</strong> — figures out what to do without waiting to be told each step.</div>
+          </div>
+          <div class="intern-step">
+            <div class="step-num">2</div>
+            <div class="step-text"><strong>Does the work</strong> — executes using whatever tools are available.</div>
+          </div>
+          <div class="intern-step">
+            <div class="step-num">3</div>
+            <div class="step-text"><strong>Reviews their own output</strong> — checks the result against the goal before moving on.</div>
+          </div>
+          <div class="intern-step">
+            <div class="step-num">4</div>
+            <div class="step-text"><strong>Repeats until done</strong> — keeps iterating until the standard is met.</div>
+          </div>
+        </div>
+        <div class="callout">
+          <div class="callout-text">"A smart intern you don't micromanage."</div>
+          <div class="callout-sub">You set the brief. You define what "good" looks like. The agent figures out how to get there — and keeps going until it does.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 · Quality Through Iteration -->
+  <section class="slide">
+    <div class="r">
+      <div class="eyebrow">Why It Works</div>
+      <h2>First attempt ≠<br>final answer.</h2>
+      <div class="quality-grid">
+        <div class="chart-wrap">
+          <svg viewBox="0 0 340 210" xmlns="http://www.w3.org/2000/svg">
+            <line x1="45" y1="25" x2="45" y2="175" stroke="#252535" stroke-width="1"/>
+            <line x1="45" y1="175" x2="320" y2="175" stroke="#252535" stroke-width="1"/>
+            <line x1="45" y1="135" x2="320" y2="135" stroke="#252535" stroke-width="0.5" stroke-dasharray="3,3"/>
+            <line x1="45" y1="95" x2="320" y2="95" stroke="#252535" stroke-width="0.5" stroke-dasharray="3,3"/>
+            <line x1="45" y1="55" x2="320" y2="55" stroke="#252535" stroke-width="0.5" stroke-dasharray="3,3"/>
+            <text x="36" y="179" fill="#606080" font-size="9" text-anchor="end" font-family="Inter,sans-serif">Low</text>
+            <text x="36" y="59" fill="#606080" font-size="9" text-anchor="end" font-family="Inter,sans-serif">High</text>
+            <text x="70" y="190" fill="#606080" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">v1</text>
+            <text x="130" y="190" fill="#606080" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">v2</text>
+            <text x="190" y="190" fill="#606080" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">v3</text>
+            <text x="250" y="190" fill="#606080" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">v4</text>
+            <text x="310" y="190" fill="#606080" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">v5+</text>
+            <!-- Human line -->
+            <path d="M70,158 L130,154 L190,148 L250,145 L310,143" stroke="#606080" stroke-width="1.5" fill="none" stroke-dasharray="4,3"/>
+            <text x="316" y="141" fill="#606080" font-size="8" font-family="Inter,sans-serif">Human</text>
+            <!-- Agent loop line -->
+            <path d="M70,158 C95,145 115,115 145,88 C170,65 205,50 245,43 C270,38 292,35 310,34" stroke="#9F5FFF" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="70" cy="158" r="4" fill="#9F5FFF"/>
+            <circle cx="130" cy="115" r="4" fill="#9F5FFF"/>
+            <circle cx="190" cy="72" r="4" fill="#9F5FFF"/>
+            <circle cx="250" cy="45" r="4" fill="#9F5FFF"/>
+            <circle cx="310" cy="34" r="4" fill="#9F5FFF"/>
+            <text x="316" y="32" fill="#C4B5FD" font-size="8" font-family="Inter,sans-serif">Agent</text>
+            <text x="182" y="204" fill="#606080" font-size="9" text-anchor="middle" font-family="Inter,sans-serif">Iterations →</text>
+            <text x="10" y="105" fill="#606080" font-size="9" text-anchor="middle" font-family="Inter,sans-serif" transform="rotate(-90 10 105)">Quality →</text>
+          </svg>
+        </div>
+        <div class="quality-points">
+          <div class="quality-pt">Every time you give feedback and iterate, quality goes up. Each cycle narrows the gap.</div>
+          <div class="quality-pt">The loop <strong>outsources that iteration</strong> to the agent. Instead of you doing 5 rounds by hand, the agent runs them autonomously — then hands you the polished result.</div>
+          <div class="callout" style="margin-top:0.5rem;">
+            <div class="callout-text" style="font-size:0.95rem;">The agent doesn't stop at good enough. It stops when <em style="color:var(--accent-text);font-style:normal;">you</em> defined good enough.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 · Real Examples -->
+  <section class="slide">
+    <div class="r">
+      <div class="eyebrow">In the Wild</div>
+      <h2>Loops that actually ran.</h2>
+      <div class="examples">
+        <div class="ex-card">
+          <span class="ex-emoji">🎨</span>
+          <div class="ex-title">Thumbnail Design</div>
+          <div class="ex-body">Agent generated 10 concepts, scored each against a rubric, then iterated on the top 3. Reached version 7 entirely autonomously.</div>
+          <div class="ex-badge">✓ Done in 27 minutes</div>
+        </div>
+        <div class="ex-card">
+          <span class="ex-emoji">🌐</span>
+          <div class="ex-title">3D Visualisation</div>
+          <div class="ex-body">Loop built a Three.js plane, rendered it in a real browser, verified visually, and iterated across multiple versions until the output looked right.</div>
+          <div class="ex-badge">✓ Browser-verified output</div>
+        </div>
+        <div class="ex-card">
+          <span class="ex-emoji">🖼</span>
+          <div class="ex-title">HTML Art Recreation</div>
+          <div class="ex-body">Agent recreated Abbey Road imagery in pure HTML/CSS. Took a screenshot after each iteration to verify progress. 7 versions total.</div>
+          <div class="ex-badge">✓ 7 verified iterations</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · Reality Check -->
+  <section class="slide">
+    <div class="r">
+      <div class="eyebrow">Reality Check</div>
+      <h2>You don't need<br>24/7 loops.</h2>
+      <div class="reality-grid">
+        <div class="rbox myth">
+          <div class="rbox-label">❌ The Myth</div>
+          <div class="rbox-head">You need fleets of agents running around the clock</div>
+          <div class="rbox-body">Most advice assumes you're a hardcore developer spinning up dozens of parallel agents at all hours. That's not most people — and it's not necessary.</div>
+        </div>
+        <div class="rbox truth">
+          <div class="rbox-label">✓ The Reality</div>
+          <div class="rbox-head">30 minutes to a few hours is the real-world sweet spot</div>
+          <div class="rbox-body">Scheduled or event-triggered loops running for a short burst get most of the benefit. You don't need continuous operation for the majority of real workflows.</div>
+        </div>
+      </div>
+      <p style="margin-top:1.4rem;font-size:0.83rem;color:var(--text-muted);">Customise based on your actual workflow — not what scale-obsessed experts are doing.</p>
+    </div>
+  </section>
+
+  <!-- 11 · Checklist -->
+  <section class="slide">
+    <div class="r">
+      <div class="eyebrow">Make It Work</div>
+      <h2>What separates a good<br>loop from a bad one.</h2>
+      <div class="checklist">
+        <div class="chk">
+          <div class="chk-icon"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+          <div class="chk-text">A clear, checkable goal — not vague direction</div>
+        </div>
+        <div class="chk">
+          <div class="chk-icon"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+          <div class="chk-text">A verification mechanism the agent can run itself</div>
+        </div>
+        <div class="chk">
+          <div class="chk-icon"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+          <div class="chk-text">The right tools for the job (browser, code runner, etc.)</div>
+        </div>
+        <div class="chk">
+          <div class="chk-icon"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+          <div class="chk-text">A defined stop condition — when is "done" actually done?</div>
+        </div>
+        <div class="chk">
+          <div class="chk-icon"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+          <div class="chk-text">A max iteration limit — cost protection, not optional</div>
+        </div>
+        <div class="chk">
+          <div class="chk-icon"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></div>
+          <div class="chk-text">A trigger that fits your actual workflow — not someone else's</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 · Closing -->
+  <section class="slide s-closing">
+    <div class="r closing-wrap">
+      <div class="closing-h">That's the loop.</div>
+      <div class="closing-contact">Watch the full 20-minute video — it's well worth it.</div>
+      <a class="closing-link" href="https://youtu.be/EuzYhzB0vbI" target="_blank">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        youtu.be/EuzYhzB0vbI
+      </a>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const pb = document.getElementById('pb');
+  const counter = document.getElementById('counter');
+  const total = slides.length;
+  let cur = 0;
+
+  function show(n) {
+    slides[cur].classList.remove('is-active');
+    cur = Math.max(0, Math.min(n, total - 1));
+    slides[cur].classList.add('is-active');
+    pb.style.width = ((cur + 1) / total * 100) + '%';
+    counter.textContent = (cur + 1) + ' / ' + total;
+  }
+
+  function go(dir) { show(cur + dir); }
+
+  // Boot — per deck prefs
+  slides[0].classList.add('is-active');
+  pb.style.width = (1 / total * 100) + '%';
+  counter.textContent = '1 / ' + total;
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); go(1); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); go(-1); }
+    if (e.key === 'Home') show(0);
+    if (e.key === 'End') show(total - 1);
+  });
+
+  // Click to advance
+  document.addEventListener('click', e => {
+    if (e.target.closest('.nav-btn') || e.target.closest('a')) return;
+    go(1);
+  });
+
+  // Touch swipe
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const dx = tx - e.changedTouches[0].clientX;
+    if (Math.abs(dx) > 45) go(dx > 0 ? 1 : -1);
+  }, { passive: true });
+</script>
+</body>
+</html>

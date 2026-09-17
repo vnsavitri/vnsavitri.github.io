@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herdr: The Tmux for AI Agents</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-color: #c9d1d9;
+            --accent-color: #58a6ff;
+            --accent-green: #7ee787;
+            --accent-orange: #f0883e;
+            --border-color: #30363d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .deck-container {
+            position: relative;
+            width: 80%;
+            max-width: 900px;
+            height: 60vh;
+            max-height: 500px;
+            perspective: 1000px;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+            transition: all 0.4s ease-in-out;
+            pointer-events: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        h1, h2 {
+            color: #ffffff;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--accent-color);
+        }
+
+        p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        ul {
+            margin-left: 25px;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+
+        li strong {
+            color: #ffffff;
+        }
+
+        .highlight-box {
+            background-color: rgba(88, 166, 255, 0.1);
+            border-left: 4px solid var(--accent-color);
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-family: monospace;
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            z-index: 20;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1fr;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            border-color: var(--accent-color);
+            color: #ffffff;
+        }
+
+        .progress {
+            font-size: 0.9rem;
+            color: #8b949e;
+            font-family: monospace;
+        }
+
+        .footer-hint {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #8b949e;
+        }
+        
+        .status-working { color: var(--accent-green); font-weight: bold; }
+        .status-block { color: var(--accent-orange); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="deck-container">
+        <!-- Slide 1: Title -->
+        <div class="slide active">
+            <h1>Herdr: The Tmux for AI Agents</h1>
+            <p>Managing persistent, async terminal workflows designed specifically for long-running AI agent sessions.</p>
+            <p style="font-size: 1rem; color: #8b949e;">Based on the video overview by Hal Shin.</p>
+        </div>
+
+        <!-- Slide 2: The Core Problem -->
+        <div class="slide">
+            <h2>The Long-Running Agent Problem</h2>
+            <p>Standard AI coding sessions tie down your local terminal. If you close your laptop or lose your connection, the context and session break.</p>
+            <ul>
+                <li><strong>The Fix:</strong> Herdr acts as a terminal multiplexer (like Tmux), letting you spin up a process, detach, walk away, and safely reattach later.</li>
+                <li><strong>Native CLI:</strong> Unlike GUI alternatives (like CMox), Herdr runs entirely inside any standard terminal environment.</li>
+            </ul>
+        </div>
+
+        <!-- Slide 3: UI & Primitives -->
+        <div class="slide">
+            <h2>Spaces, Panes, and Hybrid Control</h2>
+            <p>Herdr balances the traditional keyboard-driven power of Tmux with modern visual conveniences.</p>
+            <ul>
+                <li><strong>Workspaces ("Spaces"):</strong> Located on the left panel to organize distinct tasks.</li>
+                <li><strong>Panes & Tabs:</strong> Support for vertical and horizontal splits, layout adjustments, and basic mouse window-dragging.</li>
+                <li><strong>Tmux Primitives:</strong> Full keyboard shortcut mapping using prefix keys (e.g., <code>Ctrl + B</code> then <code>?</code> for help).</li>
+            </ul>
+        </div>
+
+        <!-- Slide 4: Smart Agent Statuses -->
+        <div class="slide">
+            <h2>Deep Integration: Visual Statuses</h2>
+            <p>Herdr features an integrated <strong>Agents Tab</strong> in its navigation bar that visually tracks the state of background tasks:</p>
+            <ul>
+                <li><span class="status-working">Working:</span> The agent is actively processing an assigned task or prompt.</li>
+                <li><span class="status-block">Blocker:</span> The agent has encountered a critical issue requiring immediate human intervention (e.g., waiting on OS permissions).</li>
+            </ul>
+            <p>It fires native OS pings so you don't return hours later only to realize your agent stopped after 2 minutes.</p>
+        </div>
+
+        <!-- Slide 5: Persistent Remote Sessions -->
+        <div class="slide">
+            <h2>True Asynchronous Execution</h2>
+            <p>Herdr works directly via a Unix socket backend, making it natively capable of seamless remote management.</p>
+            <ul>
+                <li><strong>The Remote Workflow:</strong> Host your agent workspace on a full-time home server or cloud box.</li>
+                <li><strong>Direct Attachment:</strong> Reattach seamlessly using the remote CLI engine without manually tunneling inside an interactive SSH session.</li>
+            </ul>
+            <div class="highlight-box">
+                $ her --remote [ssh-host-config-name]
+            </div>
+        </div>
+
+        <!-- Slide 6: Agent Orchestration Layer -->
+        <div class="slide">
+            <h2>Using Herdr as an Orchestrator</h2>
+            <p>Because Herdr exposes a robust CLI over a Unix socket, <strong>AI agents can control Herdr itself</strong>.</p>
+            <ul>
+                <li>Agents can read existing layouts by dumping workspace metadata to JSON.</li>
+                <li>An orchestrator agent can systematically execute CLI commands to split panes, open separate tool instances, and assign tasks to sub-agents.</li>
+            </ul>
+            <div class="highlight-box">
+                $ her workspace list <br>
+                $ her pane create
+            </div>
+        </div>
+
+        <!-- Slide 7: Installation & The Missing "E" -->
+        <div class="slide">
+            <h2>Getting Started</h2>
+            <p>Because it utilizes Unix sockets, Herdr natively supports macOS, Ubuntu, and Linux configurations.</p>
+            <ul>
+                <li><strong>The Binary Name:</strong> The CLI tool is actually spelled <code>her</code> (no second "e" due to "tech naming inflation").</li>
+                <li><strong>Session Command Structure:</strong> Managing your persistent environment stack is simple:</li>
+            </ul>
+            <div class="highlight-box">
+                # List active agent sessions<br>
+                $ her session list
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Navigation Controls -->
+    <div class="controls">
+        <button id="prevBtn">← Previous</button>
+        <span class="progress" id="progressIndicator">Slide 1 of 7</span>
+        <button id="nextBtn">Next →</button>
+    </div>
+
+    <div class="footer-hint">
+        Tip: You can also use your <strong>Left / Right Arrow Keys</strong> or <strong>Spacebar</strong> to navigate.
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressIndicator = document.getElementById('progressIndicator');
+        let currentSlideIndex = 0;
+
+        function updateSlides() {
+            slides.forEach((slide, index) => {
+                if (index === currentSlideIndex) {
+                    slide.classList.add('active');
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+            progressIndicator.textContent = `Slide ${currentSlideIndex + 1} of ${slides.length}`;
+        }
+
+        function nextSlide() {
+            if (currentSlideIndex < slides.length - 1) {
+                currentSlideIndex++;
+                updateSlides();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlideIndex > 0) {
+                currentSlideIndex--;
+                updateSlides();
+            }
+        }
+
+        // Click Events
+        nextBtn.addEventListener('click', nextSlide);
+        prevBtn.addEventListener('click', prevSlide);
+
+        // Keyboard Events
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+    </script>
+</body>
+</html>

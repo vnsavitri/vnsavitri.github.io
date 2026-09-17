@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="An interactive explainer deck for the Modality Maturity Index benchmark." />
+  <title>Modality Maturity Index - an interactive explainer</title>
+  <style>
+    :root {
+      --ink: #15213a;
+      --muted: #6a748a;
+      --paper: #f7f8fb;
+      --card: #ffffff;
+      --line: #e5e8ef;
+      --teal: #0b8f86;
+      --teal-soft: #d9f1ee;
+      --coral: #ef735e;
+      --yellow: #f2c94c;
+      --blue: #5d78db;
+      --lavender: #e8e9fb;
+      --shadow: 0 18px 60px rgba(31, 47, 82, .10);
+      --radius: 22px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--paper); color: var(--ink); font-family: var(--sans); }
+    body { overflow: hidden; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .app { height: 100vh; display: flex; flex-direction: column; }
+    .topbar { height: 68px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; border-bottom: 1px solid rgba(21,33,58,.08); background: rgba(247,248,251,.86); backdrop-filter: blur(16px); z-index: 10; }
+    .brand { display: flex; align-items: center; gap: 10px; color: var(--ink); font-size: 12px; letter-spacing: .11em; text-transform: uppercase; font-weight: 800; }
+    .brand-mark { width: 23px; height: 23px; border-radius: 8px; background: var(--ink); position: relative; overflow: hidden; }
+    .brand-mark:before, .brand-mark:after { content: ""; position: absolute; border-radius: 50%; }
+    .brand-mark:before { width: 13px; height: 13px; left: 4px; top: 4px; border: 2px solid var(--yellow); }
+    .brand-mark:after { width: 5px; height: 5px; right: 4px; bottom: 4px; background: var(--coral); }
+    .top-actions { display: flex; align-items: center; gap: 9px; }
+    .icon-btn { border: 1px solid var(--line); background: var(--card); color: var(--ink); width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; transition: .2s ease; }
+    .icon-btn:hover { transform: translateY(-1px); border-color: #bbc4d5; box-shadow: 0 7px 18px rgba(31,47,82,.08); }
+    .icon-btn svg { width: 17px; height: 17px; }
+    .deck { flex: 1; position: relative; overflow: hidden; }
+    .slides { height: 100%; position: relative; }
+    .slide { position: absolute; inset: 0; overflow: auto; padding: clamp(34px, 5vw, 74px) clamp(24px, 8vw, 120px) 110px; opacity: 0; transform: translateX(32px) scale(.985); pointer-events: none; transition: opacity .38s ease, transform .38s ease; }
+    .slide.active { opacity: 1; transform: none; pointer-events: auto; }
+    .slide-inner { max-width: 1180px; margin: 0 auto; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 11px; letter-spacing: .10em; text-transform: uppercase; color: var(--teal); font-weight: 800; margin-bottom: 21px; }
+    .eyebrow:before { content: ""; width: 28px; height: 2px; background: var(--teal); }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(46px, 8vw, 104px); line-height: .94; letter-spacing: -.075em; max-width: 920px; margin-bottom: 30px; }
+    h2 { font-size: clamp(34px, 5.2vw, 70px); line-height: .98; letter-spacing: -.06em; max-width: 940px; margin-bottom: 20px; }
+    h3 { font-size: 20px; line-height: 1.15; letter-spacing: -.025em; margin-bottom: 10px; }
+    p { color: var(--muted); line-height: 1.62; font-size: 16px; max-width: 700px; }
+    .lede { font-size: clamp(18px, 2.2vw, 25px); line-height: 1.4; color: #455169; max-width: 730px; }
+    .micro { font-size: 12px; line-height: 1.5; color: var(--muted); }
+    .hero { min-height: 100%; display: flex; flex-direction: column; justify-content: center; position: relative; }
+    .hero .orb { position: absolute; width: min(43vw, 500px); height: min(43vw, 500px); right: 2%; top: 16%; border-radius: 48% 52% 58% 42%; background: radial-gradient(circle at 32% 27%, #e6faf4 0 10%, transparent 11%), conic-gradient(from 210deg, #f1d063, #ef735e, #5d78db, #0b8f86, #f1d063); filter: saturate(.9); opacity: .95; box-shadow: inset 0 0 0 1px rgba(255,255,255,.5), 0 32px 90px rgba(11,143,134,.15); transform: rotate(-14deg); }
+    .hero .orb:before { content: ""; position: absolute; inset: 16%; border-radius: 50%; background: rgba(247,248,251,.74); backdrop-filter: blur(8px); box-shadow: 0 0 0 1px rgba(255,255,255,.8), inset 0 0 0 18px rgba(255,255,255,.25); }
+    .hero .orb:after { content: "T  I  A  V  D"; position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--mono); font-size: 12px; letter-spacing: .38em; color: var(--ink); transform: rotate(14deg); }
+    .hero-copy { position: relative; z-index: 1; }
+    .hero .lede { max-width: 570px; }
+    .source-pill { display: inline-flex; width: max-content; align-items: center; gap: 9px; margin-top: 28px; border: 1px solid var(--line); background: rgba(255,255,255,.72); padding: 10px 13px; border-radius: 999px; font-size: 12px; color: var(--muted); }
+    .source-pill span { width: 7px; height: 7px; border-radius: 50%; background: var(--coral); }
+    .grid-2 { display: grid; grid-template-columns: 1.05fr .95fr; gap: clamp(22px, 5vw, 70px); align-items: center; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(18px, 2.4vw, 30px); box-shadow: var(--shadow); }
+    .card.flat { box-shadow: none; }
+    .soft { background: linear-gradient(135deg, #eefaf7, #ffffff); }
+    .dark-card { background: var(--ink); color: #fff; border: none; }
+    .dark-card p, .dark-card .micro { color: #acb8cc; }
+    .accent-card { background: var(--teal); color: #fff; border: none; }
+    .accent-card p, .accent-card .micro { color: rgba(255,255,255,.78); }
+    .stat { display: flex; flex-direction: column; gap: 7px; min-height: 130px; justify-content: space-between; }
+    .stat .num { font-size: clamp(36px, 5vw, 62px); line-height: .95; letter-spacing: -.07em; font-weight: 800; }
+    .stat .label { font-size: 13px; color: var(--muted); line-height: 1.3; }
+    .dark-card .label, .accent-card .label { color: rgba(255,255,255,.72); }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 9px; }
+    .tag { border: 1px solid var(--line); padding: 8px 11px; border-radius: 999px; background: #fff; font-size: 12px; color: #536077; }
+    .tag.teal { background: var(--teal-soft); border-color: transparent; color: var(--teal); font-weight: 750; }
+    .tag.coral { background: #fff0ed; border-color: transparent; color: #c75543; font-weight: 750; }
+    .tag.yellow { background: #fff7d9; border-color: transparent; color: #947300; font-weight: 750; }
+    .tag.blue { background: #edf0ff; border-color: transparent; color: #4b60b8; font-weight: 750; }
+    .callout { border-left: 3px solid var(--coral); padding: 4px 0 4px 17px; margin-top: 25px; }
+    .callout strong { display: block; color: var(--ink); font-size: 18px; line-height: 1.25; margin-bottom: 6px; }
+    .callout p { margin: 0; font-size: 14px; }
+    .big-quote { font-size: clamp(25px, 3.5vw, 43px); line-height: 1.08; letter-spacing: -.045em; color: var(--ink); max-width: 640px; }
+    .big-quote em { color: var(--teal); font-style: normal; }
+    .numbered { display: grid; gap: 15px; }
+    .numbered .item { display: grid; grid-template-columns: 36px 1fr; gap: 14px; align-items: start; }
+    .num-badge { width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-family: var(--mono); font-size: 12px; }
+    .numbered h3 { font-size: 16px; margin-bottom: 3px; }
+    .numbered p { font-size: 13px; margin: 0; }
+    .modalities { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 30px; }
+    .modality { min-height: 150px; border-radius: 20px; padding: 17px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid transparent; transition: transform .2s ease; }
+    .modality:hover { transform: translateY(-4px); }
+    .modality .glyph { font-family: var(--mono); font-size: 28px; font-weight: 800; letter-spacing: -.08em; }
+    .modality .m-name { font-size: 14px; font-weight: 800; }
+    .modality .m-note { font-size: 11px; opacity: .7; line-height: 1.35; margin-top: 5px; }
+    .m-text { background: #eaf6f6; color: #086f6a; }
+    .m-image { background: #fff3dd; color: #996500; }
+    .m-audio { background: #ffe9e5; color: #b94b3c; }
+    .m-video { background: #ececff; color: #4b53a3; }
+    .m-document { background: #edf0f3; color: #4b5868; }
+    .flow { display: flex; align-items: stretch; gap: 10px; margin-top: 24px; }
+    .flow-step { flex: 1; background: #fff; border: 1px solid var(--line); padding: 18px; border-radius: 18px; position: relative; }
+    .flow-step:not(:last-child):after { content: "→"; position: absolute; right: -17px; top: 50%; transform: translateY(-50%); color: #aab2c0; font-size: 21px; z-index: 1; }
+    .flow-step .step-kicker { font-family: var(--mono); color: var(--teal); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; }
+    .flow-step strong { display: block; margin-top: 13px; line-height: 1.18; font-size: 15px; }
+    .flow-step p { font-size: 12px; line-height: 1.4; margin: 9px 0 0; }
+    .prompt-card { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 19px; position: relative; }
+    .prompt-card .prompt { color: var(--ink); font-size: 15px; line-height: 1.45; margin-bottom: 15px; }
+    .prompt-card .output { display: flex; gap: 8px; flex-wrap: wrap; }
+    .prompt-card .output span { font-family: var(--mono); font-size: 10px; padding: 6px 8px; border-radius: 7px; }
+    .output .o-text { background: var(--teal-soft); color: var(--teal); }
+    .output .o-image { background: #fff0d0; color: #946a00; }
+    .output .o-audio { background: #ffe3df; color: #ae493c; }
+    .output .o-video { background: var(--lavender); color: #4b53a3; }
+    .output .o-doc { background: #eef0f3; color: #536070; }
+    .prompt-card .label { font-family: var(--mono); color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 9px; }
+    .matrix { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+    .matrix .cell { min-height: 80px; border-radius: 14px; padding: 13px; border: 1px solid var(--line); background: #fff; }
+    .matrix .cell strong { display: block; font-size: 23px; letter-spacing: -.05em; }
+    .matrix .cell span { color: var(--muted); font-size: 11px; line-height: 1.3; }
+    .formula { font-family: var(--mono); background: #101a31; color: #e7edf7; border-radius: 16px; padding: 19px; font-size: 13px; line-height: 1.7; overflow-x: auto; }
+    .formula .hi { color: #72e3d5; }
+    .formula .accent { color: #ffd66a; }
+    .lab { display: grid; grid-template-columns: 1fr .92fr; gap: 16px; align-items: stretch; }
+    .lab-controls { display: grid; gap: 16px; }
+    .control-section { border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+    .control-section:last-child { border: 0; padding: 0; }
+    .control-title { font-size: 12px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 11px; }
+    .check-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .check { position: relative; }
+    .check input { position: absolute; opacity: 0; }
+    .check label { display: block; border: 1px solid var(--line); padding: 9px 11px; border-radius: 10px; font-size: 12px; color: #5a6578; user-select: none; transition: .18s ease; }
+    .check input:checked + label { background: var(--teal-soft); border-color: var(--teal); color: var(--teal); font-weight: 800; }
+    .range-row { display: grid; grid-template-columns: 86px 1fr 40px; align-items: center; gap: 9px; margin-top: 8px; }
+    .range-row span { font-size: 12px; color: #5a6578; }
+    input[type=range] { width: 100%; accent-color: var(--teal); }
+    .score-panel { display: flex; flex-direction: column; justify-content: space-between; background: var(--ink); color: #fff; border-radius: 20px; padding: clamp(20px, 3vw, 30px); }
+    .score-panel .label { font-family: var(--mono); text-transform: uppercase; letter-spacing: .1em; color: #9eacc3; font-size: 10px; }
+    .score-big { font-size: clamp(54px, 8vw, 88px); letter-spacing: -.09em; line-height: .9; margin: 17px 0 12px; }
+    .score-panel p { color: #b8c2d4; font-size: 13px; max-width: 370px; }
+    .score-lines { display: grid; gap: 9px; margin-top: 18px; }
+    .score-line { display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 11px; color: #c3cddd; }
+    .score-line strong { color: #75e4d8; font-size: 12px; }
+    .bar-list { display: grid; gap: 13px; margin-top: 20px; }
+    .bar-row { display: grid; grid-template-columns: 142px 1fr 45px; gap: 12px; align-items: center; }
+    .bar-label { font-size: 12px; color: #4c5970; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-track { height: 11px; background: #e9edf3; border-radius: 999px; overflow: hidden; }
+    .bar { height: 100%; background: var(--teal); border-radius: inherit; }
+    .bar-row:nth-child(2) .bar { background: var(--blue); }
+    .bar-row:nth-child(3) .bar { background: var(--yellow); }
+    .bar-row:nth-child(4) .bar { background: var(--coral); }
+    .bar-row:nth-child(5) .bar { background: #8a93a4; }
+    .bar-value { font-family: var(--mono); font-size: 12px; text-align: right; color: var(--ink); }
+    .result-table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 12px; }
+    .result-table th { color: var(--muted); font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; text-align: right; padding: 0 0 10px 12px; }
+    .result-table th:first-child, .result-table td:first-child { text-align: left; padding-left: 0; }
+    .result-table td { border-top: 1px solid var(--line); padding: 11px 0 11px 12px; text-align: right; color: #526078; }
+    .result-table td:first-child { color: var(--ink); font-weight: 750; }
+    .result-table .best td { color: var(--teal); font-weight: 800; }
+    .result-table .best td:first-child { color: var(--ink); }
+    .pill-note { margin-top: 19px; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #526078; background: #fff; border: 1px solid var(--line); padding: 9px 12px; border-radius: 999px; }
+    .pill-note b { color: var(--coral); }
+    .detection { display: grid; gap: 10px; }
+    .detect-row { display: grid; grid-template-columns: 34px 1fr 92px; gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 15px; padding: 13px; background: #fff; }
+    .detect-icon { width: 31px; height: 31px; border-radius: 10px; background: var(--teal-soft); color: var(--teal); display: grid; place-items: center; font-family: var(--mono); font-size: 13px; font-weight: 800; }
+    .detect-row strong { font-size: 13px; }
+    .detect-row p { font-size: 11px; margin: 3px 0 0; line-height: 1.35; }
+    .detect-badge { font-family: var(--mono); font-size: 10px; color: var(--teal); text-align: right; }
+    .agreement { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 21px; }
+    .agreement .cell { text-align: center; padding: 15px 10px; background: #fff; border: 1px solid var(--line); border-radius: 16px; }
+    .agreement .cell strong { display: block; font-size: 26px; letter-spacing: -.06em; color: var(--teal); }
+    .agreement .cell span { color: var(--muted); font-size: 11px; }
+    .step-list { display: grid; gap: 9px; }
+    .step { border: 1px solid var(--line); border-radius: 15px; background: #fff; overflow: hidden; }
+    .step button { width: 100%; border: 0; background: transparent; display: grid; grid-template-columns: 34px 1fr 20px; gap: 12px; align-items: center; text-align: left; padding: 15px 17px; color: var(--ink); }
+    .step button:hover { background: #fbfcfe; }
+    .step .step-num { width: 28px; height: 28px; background: var(--ink); color: #fff; border-radius: 9px; display: grid; place-items: center; font-family: var(--mono); font-size: 11px; }
+    .step .step-title { font-size: 14px; font-weight: 800; }
+    .step .chev { color: var(--muted); transition: transform .2s ease; }
+    .step.open .chev { transform: rotate(180deg); }
+    .step-body { display: none; padding: 0 17px 17px 63px; }
+    .step.open .step-body { display: block; }
+    .step-body p { font-size: 13px; margin: 0; }
+    .step-body code { font-family: var(--mono); font-size: 11px; color: var(--teal); background: #eefaf7; padding: 2px 5px; border-radius: 5px; }
+    .checklist { display: grid; gap: 9px; margin-top: 22px; }
+    .checklist label { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: #536078; cursor: pointer; }
+    .checklist input { margin-top: 3px; accent-color: var(--teal); }
+    .checklist input:checked + span { text-decoration: line-through; color: #9aa5b7; }
+    .footer-nav { position: absolute; bottom: 22px; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 9px; z-index: 5; pointer-events: none; }
+    .footer-nav > * { pointer-events: auto; }
+    .nav-arrow { width: 38px; height: 38px; border: 1px solid var(--line); background: rgba(255,255,255,.88); border-radius: 12px; color: var(--ink); display: grid; place-items: center; box-shadow: 0 8px 24px rgba(31,47,82,.07); }
+    .dots { display: flex; gap: 5px; max-width: 340px; overflow: hidden; padding: 8px; border-radius: 999px; background: rgba(255,255,255,.8); border: 1px solid rgba(229,232,239,.9); }
+    .dot { width: 6px; height: 6px; border: 0; padding: 0; border-radius: 99px; background: #ccd3df; transition: .2s ease; }
+    .dot.active { width: 19px; background: var(--teal); }
+    .slide-count { min-width: 53px; font-family: var(--mono); font-size: 11px; color: var(--muted); text-align: center; }
+    .progress { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--teal); width: 0; transition: width .3s ease; z-index: 20; }
+    .overview { position: fixed; inset: 0; background: rgba(21,33,58,.78); backdrop-filter: blur(12px); z-index: 30; display: none; padding: 7vh 7vw; overflow: auto; }
+    .overview.open { display: block; }
+    .overview-top { display: flex; align-items: center; justify-content: space-between; color: #fff; margin-bottom: 22px; }
+    .overview-top h2 { font-size: 34px; color: #fff; margin: 0; }
+    .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 13px; max-width: 1200px; margin: 0 auto; }
+    .thumb { min-height: 125px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.08); color: #fff; border-radius: 15px; padding: 14px; text-align: left; transition: .2s ease; }
+    .thumb:hover, .thumb.current { border-color: #75e4d8; background: rgba(117,228,216,.16); transform: translateY(-2px); }
+    .thumb .t-num { font-family: var(--mono); color: #75e4d8; font-size: 10px; }
+    .thumb .t-title { display: block; font-weight: 800; margin-top: 17px; line-height: 1.15; font-size: 14px; }
+    .toast { position: fixed; bottom: 76px; left: 50%; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; z-index: 50; background: var(--ink); color: #fff; padding: 11px 15px; border-radius: 10px; font-size: 12px; transition: .25s ease; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    a { color: var(--teal); text-decoration: none; border-bottom: 1px solid rgba(11,143,134,.26); }
+    a:hover { border-bottom-color: var(--teal); }
+    .source-list { display: grid; gap: 11px; margin-top: 22px; }
+    .source-item { display: flex; gap: 11px; align-items: baseline; font-size: 13px; color: #536078; }
+    .source-item .source-n { font-family: var(--mono); color: var(--coral); font-size: 11px; }
+    .mini-rule { height: 1px; background: var(--line); margin: 24px 0; }
+    .highlight { color: var(--teal); }
+    .coral { color: var(--coral); }
+    .yellow { color: #9a7800; }
+    @media (max-width: 850px) {
+      body { overflow: auto; }
+      .app { min-height: 100vh; height: auto; }
+      .topbar { height: 60px; padding: 0 17px; }
+      .deck { min-height: calc(100vh - 60px); }
+      .slide { padding: 36px 19px 95px; }
+      .hero .orb { opacity: .22; right: -12%; top: 13%; width: 330px; height: 330px; }
+      .grid-2, .lab { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .modalities { grid-template-columns: repeat(2, 1fr); }
+      .modality { min-height: 120px; }
+      .flow { flex-direction: column; }
+      .flow-step:not(:last-child):after { content: "↓"; right: auto; left: 50%; top: auto; bottom: -19px; transform: translateX(-50%); }
+      .bar-row { grid-template-columns: 110px 1fr 38px; gap: 7px; }
+      .result-table { font-size: 10px; }
+      .result-table th { font-size: 8px; }
+      .agreement { grid-template-columns: repeat(2, 1fr); }
+      .footer-nav { bottom: 16px; }
+      .dots { max-width: 190px; }
+      h1 { font-size: clamp(48px, 16vw, 78px); }
+      h2 { font-size: clamp(37px, 12vw, 58px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *:before, *:after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span> MMI / paper explainer</div>
+      <div class="top-actions">
+        <button class="icon-btn" id="overviewBtn" title="Show slide overview" aria-label="Show slide overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+        <button class="icon-btn" id="shareBtn" title="Copy shareable link" aria-label="Copy shareable link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.7 6.6-3.4M8.7 13.3l6.6 3.4"/></svg></button>
+      </div>
+    </header>
+    <main class="deck">
+      <div class="slides">
+        <section class="slide active" data-title="The benchmark for true multimodality">
+          <div class="slide-inner hero">
+            <div class="hero-copy">
+              <div class="eyebrow">A paper in plain English</div>
+              <h1>Are omni models really omni?</h1>
+              <p class="lede">The Modality Maturity Index asks a deceptively simple question: when a user needs an image, an audio clip, a video, or a document, does the model actually return it?</p>
+              <div class="source-pill"><span></span> Patel, Hupkes &amp; Strader / Meta Superintelligence Labs</div>
+            </div>
+            <div class="orb" aria-hidden="true"></div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="TL;DR for beginners">
+          <div class="slide-inner">
+            <div class="eyebrow">01 / TL;DR</div>
+            <div class="grid-2">
+              <div>
+                <h2>Being able to understand media is not the same as using the right media.</h2>
+                <p class="lede">Most multimodal tests ask a model to look at an image, video, or document and answer in text. MMI tests the missing half: can the model choose and deliver the output format the user actually needs?</p>
+                <div class="callout"><strong>The punchline</strong><p>Across five evaluated models, the best Modality Presence Score was only <span class="highlight">34.9</span>. Models almost never returned the wrong modality. They mostly returned <span class="coral">too little</span>, especially outside text.</p></div>
+              </div>
+              <div class="grid-2" style="grid-template-columns:1fr 1fr; gap:12px; align-self:stretch;">
+                <div class="card soft stat"><span class="num highlight">893</span><span class="label">self-contained prompts</span></div>
+                <div class="card stat"><span class="num coral">5</span><span class="label">input and output modalities</span></div>
+                <div class="card stat"><span class="num yellow">34.9</span><span class="label">best MPS in the main evaluation</span></div>
+                <div class="card dark-card stat"><span class="num">70.8%</span><span class="label">judge-human agreement in rubric validation</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Why current evals miss the point">
+          <div class="slide-inner">
+            <div class="eyebrow">02 / The blind spot</div>
+            <h2>Most multimodal benchmarks stop at text.</h2>
+            <p class="lede">They may feed in an image, video, audio clip, or document. But the answer is usually text. That means a model can look multimodal while behaving like a text-only assistant at the point of delivery.</p>
+            <div class="grid-2" style="margin-top:36px; align-items:stretch;">
+              <div class="card">
+                <div class="micro" style="margin-bottom:15px;">THE USUAL TEST</div>
+                <div class="flow">
+                  <div class="flow-step"><span class="step-kicker">Input</span><strong>Image, audio, video or document</strong><p>Rich media enters the model.</p></div>
+                  <div class="flow-step"><span class="step-kicker">Output</span><strong>Text</strong><p>The model describes or answers.</p></div>
+                </div>
+                <div class="pill-note"><b>Hidden assumption:</b> text is always enough.</div>
+              </div>
+              <div class="card accent-card">
+                <div class="micro">THE MMI QUESTION</div>
+                <div class="big-quote" style="color:#fff; margin-top:18px;">“What format would make this answer <em style="color:#ffd66a;">useful</em> to the person asking?”</div>
+                <p style="margin-top:25px;">MMI makes the model select from five possible output modalities, including combinations of up to three.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="MMI at a glance">
+          <div class="slide-inner">
+            <div class="eyebrow">03 / The benchmark</div>
+            <h2>Five modalities. One user goal.</h2>
+            <p class="lede">Each prompt is written so the most useful answer requires a clear set of output formats. The formats are not always named explicitly. The model has to infer them.</p>
+            <div class="modalities">
+              <div class="modality m-text"><div class="glyph">T</div><div><div class="m-name">Text</div><div class="m-note">explanations, lists, instructions</div></div></div>
+              <div class="modality m-image"><div class="glyph">I</div><div><div class="m-name">Image</div><div class="m-note">edits, annotations, visual references</div></div></div>
+              <div class="modality m-audio"><div class="glyph">A</div><div><div class="m-name">Audio</div><div class="m-note">spoken guidance, pronunciation</div></div></div>
+              <div class="modality m-video"><div class="glyph">V</div><div><div class="m-name">Video</div><div class="m-note">tutorials, simulations, demonstrations</div></div></div>
+              <div class="modality m-document"><div class="glyph">D</div><div><div class="m-name">Document</div><div class="m-note">PDF, DOCX, XLSX, PPTX, CSV, TXT</div></div></div>
+            </div>
+            <div class="grid-3" style="margin-top:16px;">
+              <div class="card flat"><div class="stat"><span class="num" style="font-size:41px;">1-3</span><span class="label">input modalities per prompt</span></div></div>
+              <div class="card flat"><div class="stat"><span class="num" style="font-size:41px;">1-3</span><span class="label">output modalities per prompt</span></div></div>
+              <div class="card flat"><div class="stat"><span class="num" style="font-size:41px;">100%</span><span class="label">prompts manually reviewed by at least two authors</span></div></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="What a prompt looks like">
+          <div class="slide-inner">
+            <div class="eyebrow">04 / Prompt design</div>
+            <h2>One request can carry several jobs.</h2>
+            <p class="lede">MMI prompts are ordinary-sounding user requests. The benchmark maps the underlying jobs to the modalities that should carry them.</p>
+            <div class="grid-2" style="margin-top:31px; align-items:start;">
+              <div class="prompt-card">
+                <div class="label">Example / visual + textual + document output</div>
+                <div class="prompt">“I would like to recreate this look. Can you list all the products I need and write out a very detailed instruction in a .txt file?”</div>
+                <div class="output"><span class="o-video">INPUT / VIDEO</span><span class="o-text">OUTPUT / TEXT</span><span class="o-doc">OUTPUT / DOCUMENT</span></div>
+              </div>
+              <div class="prompt-card">
+                <div class="label">Example / multiple output modalities</div>
+                <div class="prompt">“Can you show me how to make soft chocolate chip cookies? A list of ingredients and a tutorial video would be nice.”</div>
+                <div class="output"><span class="o-text">OUTPUT / TEXT</span><span class="o-video">OUTPUT / VIDEO</span></div>
+              </div>
+            </div>
+            <div class="matrix" style="margin-top:17px;">
+              <div class="cell"><strong>475</strong><span>one input / one output</span></div>
+              <div class="cell"><strong>264</strong><span>multiple inputs / one output</span></div>
+              <div class="cell"><strong>76</strong><span>one input / multiple outputs</span></div>
+              <div class="cell"><strong>78</strong><span>multiple inputs / multiple outputs</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="How MMI was built">
+          <div class="slide-inner">
+            <div class="eyebrow">05 / Dataset construction</div>
+            <h2>Start simple. Then add modality combinations.</h2>
+            <p class="lede">The authors built the benchmark in stages, learning where prompts became ambiguous before scaling up.</p>
+            <div class="numbered" style="max-width:850px; margin-top:34px;">
+              <div class="item"><div class="num-badge">01</div><div><h3>Pilot 50 prompts</h3><p>Text input, one desired output modality. Use manual review to make the “right format” clear without spelling it out.</p></div></div>
+              <div class="item"><div class="num-badge">02</div><div><h3>Scale to 500 single-input / single-output prompts</h3><p>Cover varied tasks and modalities while keeping the annotation problem manageable.</p></div></div>
+              <div class="item"><div class="num-badge">03</div><div><h3>Add interleaved inputs, then interleaved outputs</h3><p>Introduce combinations of modalities in the input, then ask for combinations in the output.</p></div></div>
+              <div class="item"><div class="num-badge">04</div><div><h3>Review every final prompt twice</h3><p>At least two authors checked clarity, correctness, diversity and whether the gold output modalities made sense. Disagreements were discussed.</p></div></div>
+            </div>
+            <div class="mini-rule"></div>
+            <div class="tag-row"><span class="tag teal">7,165 rubric criteria</span><span class="tag yellow">1,099 prompt-modality groups</span><span class="tag blue">median 6 criteria per group</span><span class="tag coral">all prompts in English</span></div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="The scoring system">
+          <div class="slide-inner">
+            <div class="eyebrow">06 / Scoring</div>
+            <h2>Separate “missing” from “wrong”.</h2>
+            <p class="lede">MMI uses two complementary scores. The first grades answer quality. The second checks whether the model returned the required formats at all.</p>
+            <div class="grid-2" style="margin-top:29px; align-items:start;">
+              <div>
+                <div class="formula"><span class="hi">MMI Value</span> = average across prompts of<br><span class="accent">mean</span> (score for each expected modality)<br><br>If a required modality is missing, its score is <span class="accent">0</span>.</div>
+                <p class="micro" style="margin-top:13px;">The MMI Value is quality-aware. An LLM judge grades human-written criteria for each expected modality. Every modality gets equal weight within a prompt.</p>
+              </div>
+              <div>
+                <div class="formula"><span class="hi">MPS</span> = mean per-prompt <span class="accent">F1</span><br><br>F1 = 2 × precision × recall<br>      precision + recall</div>
+                <p class="micro" style="margin-top:13px;">The Modality Presence Score ignores content quality. It asks only: did the response contain the correct set of modalities?</p>
+              </div>
+            </div>
+            <div class="pill-note"><b>Why lead with MPS?</b> The evaluated models returned too few non-text assets for MMI Value to be a meaningful main comparison.</div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Interactive scoring lab">
+          <div class="slide-inner">
+            <div class="eyebrow">07 / Try it yourself</div>
+            <h2>See why presence comes first.</h2>
+            <p class="lede">Set the expected output formats, choose what the model actually returned, then adjust answer quality. The two scores tell different stories.</p>
+            <div class="lab" style="margin-top:29px;">
+              <div class="card lab-controls">
+                <div class="control-section"><div class="control-title">Expected output modalities</div><div class="check-grid" id="expectedChecks"></div></div>
+                <div class="control-section"><div class="control-title">Returned by the model</div><div class="check-grid" id="returnedChecks"></div></div>
+                <div class="control-section"><div class="control-title">Quality of returned expected modalities</div><div id="qualityControls"></div></div>
+              </div>
+              <div class="score-panel"><div><div class="label">Live benchmark readout</div><div class="score-big" id="mpsValue">0</div><div class="label">Modality Presence Score / MPS</div><p id="scoreExplain">Choose an expected modality to begin.</p></div><div class="score-lines"><div class="score-line"><span>precision</span><strong id="precisionValue">0</strong></div><div class="score-line"><span>recall</span><strong id="recallValue">0</strong></div><div class="score-line"><span>quality-aware MMI</span><strong id="mmiValue">0</strong></div></div></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Main evaluation results">
+          <div class="slide-inner">
+            <div class="eyebrow">08 / Main evaluation</div>
+            <h2>High precision. Low recall.</h2>
+            <p class="lede">Models rarely returned an output modality that was not wanted. The problem was omission: they often failed to return the modalities the prompt required.</p>
+            <div class="grid-2" style="margin-top:29px; align-items:start;">
+              <div class="card">
+                <div class="micro">MPS / per-prompt mean F1</div>
+                <div class="bar-list">
+                  <div class="bar-row"><span class="bar-label">GPT-5.4</span><span class="bar-track"><span class="bar" style="width:34.9%"></span></span><span class="bar-value">34.9</span></div>
+                  <div class="bar-row"><span class="bar-label">Gemini 3.1 Flash</span><span class="bar-track"><span class="bar" style="width:27.2%"></span></span><span class="bar-value">27.2</span></div>
+                  <div class="bar-row"><span class="bar-label">Gemini 3.1 Pro</span><span class="bar-track"><span class="bar" style="width:25.4%"></span></span><span class="bar-value">25.4</span></div>
+                  <div class="bar-row"><span class="bar-label">Llama 4 Maverick</span><span class="bar-track"><span class="bar" style="width:16.3%"></span></span><span class="bar-value">16.3</span></div>
+                  <div class="bar-row"><span class="bar-label">Claude Opus 4.6</span><span class="bar-track"><span class="bar" style="width:15.6%"></span></span><span class="bar-value">15.6</span></div>
+                </div>
+                <div class="pill-note"><b>Signal:</b> every model scored near 100 on precision.</div>
+              </div>
+              <div class="card" style="overflow-x:auto;">
+                <div class="micro">Table 4 / all figures are percentages</div>
+                <table class="result-table"><thead><tr><th>Model</th><th>MPS</th><th>Recall</th><th>Pass</th><th>Input fail</th></tr></thead><tbody>
+                  <tr class="best"><td>GPT-5.4</td><td>34.9</td><td>33.8</td><td>31.0</td><td>30.1</td></tr>
+                  <tr><td>Gemini 3.1 Flash</td><td>27.2</td><td>25.4</td><td>20.3</td><td>8.2</td></tr>
+                  <tr><td>Gemini 3.1 Pro</td><td>25.4</td><td>23.6</td><td>18.6</td><td>8.0</td></tr>
+                  <tr><td>Llama 4 Maverick</td><td>16.3</td><td>15.1</td><td>12.0</td><td>36.5</td></tr>
+                  <tr><td>Claude Opus 4.6</td><td>15.6</td><td>14.5</td><td>11.3</td><td>37.0</td></tr>
+                </tbody></table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="What the results mean">
+          <div class="slide-inner">
+            <div class="eyebrow">09 / Interpretation</div>
+            <h2>The failure is mostly “not enough”, not “wrong”.</h2>
+            <div class="grid-3" style="margin-top:32px; align-items:stretch;">
+              <div class="card soft"><div class="micro">01 / OMISSION</div><h3 style="margin-top:25px;">Models default to text.</h3><p>Even when the user asks for a visual, spoken, moving, or downloadable artefact, text remains the safest fallback.</p></div>
+              <div class="card"><div class="micro coral">02 / AUDIO</div><h3 style="margin-top:25px;">Audio was the hardest.</h3><p>No evaluated model generated even a link to an audio snippet for prompts requiring audio output.</p></div>
+              <div class="card dark-card"><div class="micro">03 / INPUTS</div><h3 style="margin-top:25px;">Input support still matters.</h3><p>Input failure rates ranged from 8.0% for Gemini 3.1 Pro to 37.0% for Claude Opus 4.6.</p></div>
+            </div>
+            <div class="callout" style="max-width:780px;"><strong>Important nuance</strong><p>These results describe bare provider APIs with default parameters, no system prompt, and no tools. They are not a complete ranking of the assistants people use in products.</p></div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="How output modalities are detected">
+          <div class="slide-inner">
+            <div class="eyebrow">10 / Measurement detail</div>
+            <h2>What counts as “returned”?</h2>
+            <p class="lede">MMI uses a lenient default because a user may be satisfied by a working link, even if the model did not render the asset itself.</p>
+            <div class="grid-2" style="margin-top:29px; align-items:start;">
+              <div class="detection">
+                <div class="detect-row"><div class="detect-icon">01</div><div><strong>Native asset</strong><p>The API returns actual image, audio, video or document data.</p></div><div class="detect-badge">strict + lenient</div></div>
+                <div class="detect-row"><div class="detect-icon">02</div><div><strong>Recognised URL</strong><p>A link points to an asset of the requested modality, such as a video host.</p></div><div class="detect-badge">lenient</div></div>
+                <div class="detect-row"><div class="detect-icon">03</div><div><strong>Fallback judge</strong><p>Gemini 3 Flash parses the response when direct detection finds nothing.</p></div><div class="detect-badge">lenient</div></div>
+              </div>
+              <div class="card dark-card">
+                <div class="micro">WHY THIS CHOICE MATTERS</div>
+                <div class="big-quote" style="color:#fff; margin-top:20px;">A working link can still be a useful answer.</div>
+                <p style="margin-top:25px;">But lenient detection can blur the difference between a model that generated an asset and one that retrieved or linked to one. The paper also reports strict native precision separately.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Rubric validation">
+          <div class="slide-inner">
+            <div class="eyebrow">11 / Rubric validation</div>
+            <h2>Can an LLM judge multimodal quality?</h2>
+            <p class="lede">The authors ran a separate tool-scaffolded experiment to create enough image, audio and video assets to exercise the rubrics. It was for judge validation, not model ranking.</p>
+            <div class="grid-2" style="margin-top:30px; align-items:start;">
+              <div class="card">
+                <div class="micro">JUDGE / HUMAN AGREEMENT</div>
+                <div class="agreement">
+                  <div class="cell"><strong>70.8%</strong><span>overall agreement</span></div>
+                  <div class="cell"><strong>0.41</strong><span>Scott's pi</span></div>
+                  <div class="cell"><strong>1,499</strong><span>judged triples</span></div>
+                  <div class="cell"><strong>71%</strong><span>modalities gradeable</span></div>
+                </div>
+                <div class="mini-rule"></div>
+                <div class="tag-row"><span class="tag teal">Text 70.9%</span><span class="tag coral">Image 66.5%</span><span class="tag yellow">Audio 73.6%</span><span class="tag blue">Video 74.4%</span></div>
+              </div>
+              <div class="card soft">
+                <div class="micro">WHAT THE RUBRIC DOES</div>
+                <div class="numbered" style="margin-top:19px;">
+                  <div class="item"><div class="num-badge">A</div><div><h3>One modality at a time</h3><p>The judge receives only the payload for the modality being graded.</p></div></div>
+                  <div class="item"><div class="num-badge">B</div><div><h3>Atomic criteria</h3><p>Each criterion asserts one concrete, objectively checkable property.</p></div></div>
+                  <div class="item"><div class="num-badge">C</div><div><h3>Blind-friendly</h3><p>The criterion must be decidable from that asset alone, without relying on other outputs.</p></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="callout"><strong>Read the result carefully</strong><p>Agreement is useful, but not perfect. The paper flags judge mistakes, subjective prompts, rubric-writing difficulty and possible self-preference because Gemini judged many Gemini-family assets.</p></div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Limits and implications">
+          <div class="slide-inner">
+            <div class="eyebrow">12 / So what?</div>
+            <h2>MMI is a reality check for “omni”.</h2>
+            <div class="grid-2" style="margin-top:29px; align-items:start;">
+              <div class="card dark-card">
+                <div class="micro">THE PRODUCT LESSON</div>
+                <div class="big-quote" style="color:#fff; margin-top:20px;">Capability claims should be tested at the <em style="color:#75e4d8;">moment of delivery</em>.</div>
+                <p style="margin-top:25px;">A model may ingest many modalities, yet still fail the user because it answers in the wrong form or omits a required artefact.</p>
+              </div>
+              <div class="card">
+                <div class="micro">LIMITATIONS TO CARRY FORWARD</div>
+                <div class="numbered" style="margin-top:20px;">
+                  <div class="item"><div class="num-badge">1</div><div><h3>MMI Value is under-tested</h3><p>Too few assets were returned in the main run for quality scoring to be a meaningful headline.</p></div></div>
+                  <div class="item"><div class="num-badge">2</div><div><h3>APIs are not products</h3><p>Tools, orchestration and system prompts could change the observed behaviour substantially.</p></div></div>
+                  <div class="item"><div class="num-badge">3</div><div><h3>Correctness can be subjective</h3><p>Open-ended requests create ambiguity about both content and acceptable output modality.</p></div></div>
+                  <div class="item"><div class="num-badge">4</div><div><h3>English only, for now</h3><p>The authors identify multilingual benchmark data as future work.</p></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Implementation guide">
+          <div class="slide-inner">
+            <div class="eyebrow">13 / How to implement it</div>
+            <h2>Build an MMI-style eval for your own agent.</h2>
+            <p class="lede">Use the paper as a blueprint, then adapt the modalities, tools and rubrics to the workflows your product actually promises.</p>
+            <div class="step-list" style="margin-top:29px; max-width:900px;">
+              <div class="step open"><button type="button"><span class="step-num">1</span><span class="step-title">Define your modality contract</span><span class="chev">⌄</span></button><div class="step-body"><p>List the input and output modalities your agent claims to support. Include what counts as a native asset, a retrieved link, a generated file, or a tool-mediated result.</p></div></div>
+              <div class="step"><button type="button"><span class="step-num">2</span><span class="step-title">Write self-contained user prompts</span><span class="chev">⌄</span></button><div class="step-body"><p>Start with ordinary user language. Do not name the output format when the point is to test whether the agent can infer it. Include single-modality and multi-modality tasks.</p></div></div>
+              <div class="step"><button type="button"><span class="step-num">3</span><span class="step-title">Annotate the gold output set</span><span class="chev">⌄</span></button><div class="step-body"><p>For each prompt, record the minimum set of modalities that makes the answer useful. Have at least two reviewers resolve ambiguity before evaluation.</p></div></div>
+              <div class="step"><button type="button"><span class="step-num">4</span><span class="step-title">Add atomic, modality-specific rubrics</span><span class="chev">⌄</span></button><div class="step-body"><p>Write criteria that are binary-decidable from one output modality. Include delivery and integrity checks where relevant, then concrete content criteria. Keep each criterion single-purpose.</p></div></div>
+              <div class="step"><button type="button"><span class="step-num">5</span><span class="step-title">Instrument output detection</span><span class="chev">⌄</span></button><div class="step-body"><p>Capture native payloads, parse links, and log fallback detections separately. Report both strict and lenient presence so product teams can see what the user received versus what the model generated.</p></div></div>
+              <div class="step"><button type="button"><span class="step-num">6</span><span class="step-title">Report MPS before MMI Value</span><span class="chev">⌄</span></button><div class="step-body"><p>Use MPS, precision, recall, pass rate and input failure rate to diagnose coverage. Only headline MMI Value once enough outputs are present to grade answer quality reliably.</p></div></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="A practical eval loop">
+          <div class="slide-inner">
+            <div class="eyebrow">14 / Practical loop</div>
+            <h2>Make the benchmark useful to a product team.</h2>
+            <div class="grid-2" style="margin-top:31px; align-items:start;">
+              <div class="card">
+                <div class="micro">RECOMMENDED REPORTING LOOP</div>
+                <div class="flow" style="flex-direction:column; gap:9px;">
+                  <div class="flow-step"><span class="step-kicker">A</span><strong>Run the same prompt set across model + harness versions</strong><p>Keep the user request fixed while changing tools, routing or prompts.</p></div>
+                  <div class="flow-step"><span class="step-kicker">B</span><strong>Track presence and quality separately</strong><p>Do not hide missing assets inside one blended score.</p></div>
+                  <div class="flow-step"><span class="step-kicker">C</span><strong>Slice by modality and input type</strong><p>Find whether the bottleneck is ingestion, tool choice, generation or content quality.</p></div>
+                </div>
+              </div>
+              <div class="card soft">
+                <div class="micro">DONE CONDITION</div>
+                <h3 style="font-size:28px; margin-top:20px;">You can answer four questions.</h3>
+                <div class="checklist">
+                  <label><input type="checkbox"><span>Did the agent accept the inputs?</span></label>
+                  <label><input type="checkbox"><span>Did it return every required modality?</span></label>
+                  <label><input type="checkbox"><span>Did each asset satisfy its modality rubric?</span></label>
+                  <label><input type="checkbox"><span>Did the result improve for the user, not just the score?</span></label>
+                </div>
+                <div class="callout" style="margin-top:23px;"><strong>Product principle</strong><p>Evaluate the complete agent experience, but preserve a model-level diagnostic underneath it.</p></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Final takeaways">
+          <div class="slide-inner">
+            <div class="eyebrow">15 / Takeaways</div>
+            <h2>True multimodality is a delivery problem.</h2>
+            <div class="grid-3" style="margin-top:34px; align-items:stretch;">
+              <div class="card dark-card"><div class="num-badge" style="background:#75e4d8; color:var(--ink);">01</div><h3 style="margin-top:25px;">Test the output choice</h3><p>Understanding an image is only half of a multimodal interaction.</p></div>
+              <div class="card accent-card"><div class="num-badge" style="background:#ffd66a; color:var(--ink);">02</div><h3 style="margin-top:25px;">Separate absence from error</h3><p>MPS tells you whether the right formats appeared. MMI Value tells you how good they were.</p></div>
+              <div class="card soft"><div class="num-badge">03</div><h3 style="margin-top:25px;">Benchmark the whole harness</h3><p>Tools and orchestration can change what users actually receive.</p></div>
+            </div>
+            <p class="lede" style="margin-top:34px;">If an agent can only explain the video it should have made, it is not yet omni in the way the user experiences it.</p>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Sources and links">
+          <div class="slide-inner">
+            <div class="eyebrow">16 / Sources</div>
+            <h2>Read the paper. Run the benchmark.</h2>
+            <p class="lede">This deck is a visual explainer of the attached paper. Figures and numerical claims are transcribed from the paper, with wording simplified for readability.</p>
+            <div class="source-list">
+              <div class="source-item"><span class="source-n">01</span><span>Patel, Rohit; Hupkes, Dieuwke; Strader, Sloan. <em>Modality Maturity Index: A benchmark for assessing multimodal capabilities of omni models.</em> arXiv v1, August 26, 2026. <a href="https://arxiv.org/abs/2608.26317" target="_blank" rel="noreferrer">arXiv</a></span></div>
+              <div class="source-item"><span class="source-n">02</span><span>Code and evaluation harness: <a href="https://github.com/facebookresearch/modality-maturity-index" target="_blank" rel="noreferrer">github.com/facebookresearch/modality-maturity-index</a></span></div>
+              <div class="source-item"><span class="source-n">03</span><span>Dataset and prompt viewer: <a href="https://huggingface.co/datasets/facebook/mmi" target="_blank" rel="noreferrer">huggingface.co/datasets/facebook/mmi</a></span></div>
+            </div>
+            <div class="mini-rule"></div>
+            <div class="card dark-card" style="max-width:700px;"><div class="micro">KEY IDEA TO KEEP</div><div class="big-quote" style="color:#fff; margin-top:18px;">A model is only as multimodal as the <em style="color:#75e4d8;">useful outputs</em> it can deliver.</div></div>
+          </div>
+        </section>
+      </div>
+      <div class="progress" id="progress"></div>
+      <nav class="footer-nav" aria-label="Slide navigation">
+        <button class="nav-arrow" id="prevBtn" aria-label="Previous slide">←</button>
+        <div class="dots" id="dots"></div>
+        <span class="slide-count" id="slideCount">01 / 17</span>
+        <button class="nav-arrow" id="nextBtn" aria-label="Next slide">→</button>
+      </nav>
+    </main>
+  </div>
+
+  <div class="overview" id="overview" aria-hidden="true">
+    <div class="overview-top"><h2>Slide overview</h2><button class="icon-btn" id="closeOverview" aria-label="Close slide overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5l14 14M19 5 5 19"/></svg></button></div>
+    <div class="overview-grid" id="overviewGrid"></div>
+  </div>
+  <div class="toast" id="toast">Link copied</div>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const dots = document.getElementById('dots');
+      const overview = document.getElementById('overview');
+      const overviewGrid = document.getElementById('overviewGrid');
+      const count = document.getElementById('slideCount');
+      const progress = document.getElementById('progress');
+      const toast = document.getElementById('toast');
+      let current = 0;
+
+      slides.forEach((slide, i) => {
+        const dot = document.createElement('button');
+        dot.className = 'dot';
+        dot.title = slide.dataset.title;
+        dot.setAttribute('aria-label', `Go to slide ${i + 1}: ${slide.dataset.title}`);
+        dot.addEventListener('click', () => go(i));
+        dots.appendChild(dot);
+        const thumb = document.createElement('button');
+        thumb.className = 'thumb';
+        thumb.innerHTML = `<span class="t-num">${String(i + 1).padStart(2, '0')}</span><span class="t-title">${slide.dataset.title}</span>`;
+        thumb.addEventListener('click', () => { go(i); closeOverview(); });
+        overviewGrid.appendChild(thumb);
+      });
+
+      function go(index, updateHash = true) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((s, i) => s.classList.toggle('active', i === current));
+        [...dots.children].forEach((d, i) => d.classList.toggle('active', i === current));
+        [...overviewGrid.children].forEach((d, i) => d.classList.toggle('current', i === current));
+        count.textContent = `${String(current + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        if (updateHash) history.replaceState(null, '', `#slide-${current + 1}`);
+        slides[current].scrollTop = 0;
+      }
+      function next() { go(current + 1); }
+      function prev() { go(current - 1); }
+      function openOverview() { overview.classList.add('open'); overview.setAttribute('aria-hidden', 'false'); }
+      function closeOverview() { overview.classList.remove('open'); overview.setAttribute('aria-hidden', 'true'); }
+      function showToast(message) { toast.textContent = message; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 1600); }
+
+      document.getElementById('nextBtn').addEventListener('click', next);
+      document.getElementById('prevBtn').addEventListener('click', prev);
+      document.getElementById('overviewBtn').addEventListener('click', openOverview);
+      document.getElementById('closeOverview').addEventListener('click', closeOverview);
+      overview.addEventListener('click', e => { if (e.target === overview) closeOverview(); });
+      document.addEventListener('keydown', e => {
+        if (overview.classList.contains('open')) { if (e.key === 'Escape') closeOverview(); return; }
+        if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); next(); }
+        if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); prev(); }
+        if (e.key.toLowerCase() === 'o') openOverview();
+        if (e.key === 'Home') go(0);
+        if (e.key === 'End') go(slides.length - 1);
+      });
+      let touchX = null;
+      document.addEventListener('touchstart', e => { touchX = e.changedTouches[0].screenX; }, {passive:true});
+      document.addEventListener('touchend', e => { if (touchX === null) return; const dx = e.changedTouches[0].screenX - touchX; if (Math.abs(dx) > 55) dx < 0 ? next() : prev(); touchX = null; }, {passive:true});
+      document.getElementById('shareBtn').addEventListener('click', async () => {
+        const url = location.href;
+        try { await navigator.clipboard.writeText(url); showToast('Shareable link copied'); }
+        catch { showToast('Copy this page URL to share'); }
+      });
+
+      document.querySelectorAll('.step button').forEach(btn => btn.addEventListener('click', () => btn.closest('.step').classList.toggle('open')));
+
+      const names = ['Text', 'Image', 'Audio', 'Video', 'Document'];
+      const ids = names.map(n => n.toLowerCase());
+      const expectedChecks = document.getElementById('expectedChecks');
+      const returnedChecks = document.getElementById('returnedChecks');
+      const qualityControls = document.getElementById('qualityControls');
+      const defaultExpected = new Set(['text', 'image', 'audio']);
+      const defaultReturned = new Set(['text', 'image']);
+      ids.forEach((id, i) => {
+        const title = names[i];
+        expectedChecks.insertAdjacentHTML('beforeend', `<div class="check"><input type="checkbox" id="e-${id}" ${defaultExpected.has(id) ? 'checked' : ''}><label for="e-${id}">${title}</label></div>`);
+        returnedChecks.insertAdjacentHTML('beforeend', `<div class="check"><input type="checkbox" id="r-${id}" ${defaultReturned.has(id) ? 'checked' : ''}><label for="r-${id}">${title}</label></div>`);
+        qualityControls.insertAdjacentHTML('beforeend', `<div class="range-row" data-quality-row="${id}"><span>${title}</span><input type="range" min="0" max="100" value="${id === 'text' ? 90 : id === 'image' ? 65 : 50}" id="q-${id}"><strong id="qv-${id}" style="font-family:var(--mono);font-size:11px;color:var(--teal);">${id === 'text' ? 90 : id === 'image' ? 65 : 50}</strong></div>`);
+      });
+      [...expectedChecks.querySelectorAll('input'), ...returnedChecks.querySelectorAll('input'), ...qualityControls.querySelectorAll('input')].forEach(el => el.addEventListener('input', updateLab));
+      function updateLab() {
+        const expected = new Set(ids.filter(id => document.getElementById(`e-${id}`).checked));
+        const returned = new Set(ids.filter(id => document.getElementById(`r-${id}`).checked));
+        ids.forEach(id => { document.getElementById(`qv-${id}`).textContent = document.getElementById(`q-${id}`).value; });
+        const tp = [...returned].filter(x => expected.has(x)).length;
+        const fp = [...returned].filter(x => !expected.has(x)).length;
+        const fn = [...expected].filter(x => !returned.has(x)).length;
+        const precision = returned.size ? tp / returned.size : 0;
+        const recall = expected.size ? tp / expected.size : 0;
+        const f1 = (precision + recall) ? (2 * precision * recall) / (precision + recall) : 0;
+        const mmi = expected.size ? [...expected].reduce((sum, id) => sum + (returned.has(id) ? Number(document.getElementById(`q-${id}`).value) / 100 : 0), 0) / expected.size : 0;
+        document.getElementById('mpsValue').textContent = (f1 * 100).toFixed(1);
+        document.getElementById('precisionValue').textContent = (precision * 100).toFixed(1);
+        document.getElementById('recallValue').textContent = (recall * 100).toFixed(1);
+        document.getElementById('mmiValue').textContent = (mmi * 100).toFixed(1);
+        const explain = document.getElementById('scoreExplain');
+        explain.textContent = expected.size ? `${tp} of ${expected.size} expected modalities returned. ${fn ? `${fn} missing. ` : ''}${fp ? `${fp} extra. ` : ''}MMI then asks whether the returned content is correct.` : 'Choose an expected modality to begin.';
+      }
+      updateLab();
+
+      const hashMatch = location.hash.match(/slide-(\d+)/);
+      go(hashMatch ? Number(hashMatch[1]) - 1 : 0, false);
+    })();
+  </script>
+</body>
+</html>

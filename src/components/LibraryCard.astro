@@ -1,0 +1,134 @@
+---
+interface Props {
+  slug: string;
+  title: string;
+  file: string;
+  thumb: string;
+  categoryLabel: string;
+  category?: string;
+  id?: string;
+  badge?: boolean;
+}
+
+const { slug, title, file, thumb, categoryLabel, category, id, badge } = Astro.props;
+---
+
+<article
+  id={id}
+  class="lib-card"
+  data-category={category}
+  data-title={title.toLowerCase()}
+>
+  <a href={file} target="_blank" rel="noopener" class="lib-thumb-link" data-slug={slug}>
+    <img src={thumb} alt="" loading="lazy" width="640" height="400" class="lib-thumb" />
+  </a>
+  <div class="lib-body">
+    <span class="pill lib-cat-pill">{categoryLabel}</span>
+    {badge && <span class="pill pill-accent lib-new-badge">New</span>}
+    <a href={file} target="_blank" rel="noopener" class="lib-title-link" data-slug={slug}>
+      <h3 class="lib-title">{title}</h3>
+    </a>
+    <div class="lib-meta">
+      <span class="lib-views" data-slug={slug}>views —</span>
+      <button
+        type="button"
+        class="lib-like"
+        data-slug={slug}
+        aria-pressed="false"
+        aria-label="Like this deck"
+      >
+        <span class="lib-like-icon">♡</span>
+        <span class="lib-like-count">0</span>
+      </button>
+    </div>
+  </div>
+</article>
+
+<style>
+  .lib-card.hidden {
+    display: none;
+  }
+
+  .lib-thumb-link {
+    position: relative;
+    display: block;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--color-rule);
+    aspect-ratio: 8 / 5;
+  }
+
+  .lib-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.2s ease;
+  }
+
+  .lib-thumb-link:hover .lib-thumb {
+    transform: scale(1.03);
+  }
+
+  .lib-new-badge {
+    margin-left: 0.4rem;
+  }
+
+  .lib-body {
+    padding-top: 0.75rem;
+  }
+
+  .lib-cat-pill {
+    margin-bottom: 0.5rem;
+  }
+
+  .lib-title-link {
+    text-decoration: none;
+  }
+
+  .lib-title {
+    font-size: 0.98rem;
+    line-height: 1.35;
+    margin: 0;
+  }
+
+  .lib-title-link:hover .lib-title {
+    color: var(--color-accent);
+  }
+
+  .lib-meta {
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .lib-views {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-ink-muted);
+  }
+
+  .lib-like {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-ink-muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.15rem 0.3rem;
+  }
+
+  .lib-like-icon {
+    font-size: 0.95rem;
+    line-height: 1;
+  }
+
+  .lib-like[aria-pressed="true"] {
+    color: var(--color-accent);
+  }
+</style>

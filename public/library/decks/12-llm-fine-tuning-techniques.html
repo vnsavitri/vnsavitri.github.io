@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12 LLM fine-tuning techniques</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#211A36;
+    --ink-soft:#635B7A;
+    --paper:#F5F4FA;
+    --card:#FFFFFF;
+    --rule:#E4E0F0;
+    --peft:#0EA5A0;
+    --peft-soft:#DCF4F2;
+    --align:#E85D6B;
+    --align-soft:#FBE1E3;
+    --data:#D9A441;
+    --data-soft:#F7EAD1;
+    --dist:#6C5CE7;
+    --dist-soft:#E7E3FB;
+    --shadow:0 1px 2px rgba(33,26,54,.05), 0 10px 26px rgba(33,26,54,.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){ *{transition-duration:.001ms !important; animation-duration:.001ms !important;} }
+  ::selection{background:var(--data-soft); color:var(--ink);}
+  [contenteditable="true"]{outline:none; border-radius:6px; padding:1px 3px; margin:-1px -3px;}
+  [contenteditable="true"]:hover{background:rgba(33,26,54,.05);}
+  [contenteditable="true"]:focus{background:rgba(217,164,65,.18); box-shadow:0 0 0 2px var(--data);}
+  :focus-visible{outline:2px solid var(--dist); outline-offset:2px;}
+
+  .wrap{max-width:1160px; margin:0 auto; padding:0 22px 90px;}
+
+  .hero{padding:50px 0 30px; text-align:center;}
+  .kicker{display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:18px;}
+  .kicker .badge{
+    font-family:'JetBrains Mono',monospace; font-weight:700; font-size:15px; color:#fff;
+    background:var(--ink); width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+  }
+  .kicker span{font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft);}
+  h1{font-family:'Manrope'; font-weight:800; font-size:clamp(30px,4.6vw,50px); line-height:1.08; margin:0 0 14px; letter-spacing:-.01em;}
+  .sub{max-width:600px; margin:0 auto; font-size:17px; color:var(--ink-soft);}
+  .tip{max-width:480px; margin:16px auto 0; font-size:12.5px; color:var(--ink-soft);}
+
+  .controls{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; align-items:center; margin:30px 0 34px;}
+  .filter-chip{
+    font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; padding:8px 15px;
+    border-radius:999px; border:1.5px solid var(--rule); background:var(--card); color:var(--ink-soft); cursor:pointer;
+  }
+  .filter-chip.active{background:var(--ink); border-color:var(--ink); color:#fff;}
+  .expand-all{
+    font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; padding:8px 15px;
+    border-radius:999px; border:1.5px dashed var(--rule); background:transparent; color:var(--ink-soft); cursor:pointer;
+    margin-left:auto;
+  }
+  .expand-all:hover{border-color:var(--ink-soft); color:var(--ink);}
+
+  .grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(310px,1fr)); gap:18px;}
+
+  .card{
+    background:var(--card); border:1px solid var(--rule); border-radius:18px; box-shadow:var(--shadow);
+    overflow:hidden; transition:opacity .25s ease;
+  }
+  .card.hide{display:none;}
+  .card-head{padding:18px 20px 16px; cursor:pointer;}
+  .card-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+  .cat-tag{
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; text-transform:uppercase;
+    letter-spacing:.04em; padding:4px 10px; border-radius:999px;
+  }
+  .chev{color:var(--ink-soft); transition:transform .25s ease; font-size:14px;}
+  .card.expanded .chev{transform:rotate(180deg);}
+  .card-title{font-family:'Manrope'; font-weight:800; font-size:19px; margin:0 0 8px;}
+  .one-liner{font-size:13.5px; color:var(--ink-soft); margin:0 0 14px; min-height:36px;}
+
+  .pipeline{display:flex; align-items:center; flex-wrap:wrap; gap:4px; font-family:'JetBrains Mono',monospace; font-size:10.5px;}
+  .pipeline .step{
+    background:var(--paper); border:1px solid var(--rule); border-radius:8px; padding:5px 8px; color:var(--ink);
+    white-space:nowrap;
+  }
+  .pipeline .arrow{color:var(--ink-soft); font-size:11px;}
+
+  .card-body{display:grid; grid-template-rows:0fr; transition:grid-template-rows .3s ease;}
+  .card.expanded .card-body{grid-template-rows:1fr;}
+  .card-body-inner{overflow:hidden;}
+  .card-detail{padding:0 20px 20px; border-top:1px solid var(--rule); margin-top:2px; padding-top:16px;}
+  .card-detail p{font-size:14px; color:var(--ink); margin:0 0 12px;}
+  .meta-row{display:flex; gap:10px; flex-wrap:wrap;}
+  .meta-pill{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-soft);
+    background:var(--paper); border:1px solid var(--rule); border-radius:8px; padding:6px 10px;
+  }
+  .meta-pill b{color:var(--ink); font-weight:700;}
+
+  footer{margin-top:50px; border-top:1px solid var(--rule); padding-top:24px; text-align:center;}
+  footer p{max-width:600px; margin:0 auto 8px; font-size:12.5px; color:var(--ink-soft);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section class="hero">
+    <div class="kicker"><span class="badge">12</span><span>Reference card</span></div>
+    <h1 contenteditable="true" spellcheck="false">LLM fine-tuning techniques</h1>
+    <p class="sub" contenteditable="true" spellcheck="false">Twelve ways to adapt a pretrained model, from freezing almost everything to retraining the whole thing. Tap any card to open it up.</p>
+    <p class="tip">Click any heading or description to edit the wording before you send this on.</p>
+  </section>
+
+  <div class="controls" id="filters">
+    <button class="filter-chip active" data-filter="all">All 12</button>
+    <button class="filter-chip" data-filter="peft">Parameter-efficient</button>
+    <button class="filter-chip" data-filter="align">Alignment &amp; preference</button>
+    <button class="filter-chip" data-filter="data">Data paradigm</button>
+    <button class="filter-chip" data-filter="dist">Distributed</button>
+    <button class="expand-all" id="expandAllBtn">Expand all</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <footer>
+    <p>Trainable-parameter figures are typical orders of magnitude, not fixed numbers, they move with model size, rank, and bottleneck choices. Click a card for the fuller explanation.</p>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  const cats = {
+    peft: { label:'Parameter-efficient', color:'var(--peft)', soft:'var(--peft-soft)' },
+    align: { label:'Alignment & preference', color:'var(--align)', soft:'var(--align-soft)' },
+    data: { label:'Data paradigm', color:'var(--data)', soft:'var(--data-soft)' },
+    dist: { label:'Distributed', color:'var(--dist)', soft:'var(--dist-soft)' },
+  };
+
+  const methods = [
+    { id:'lora', name:'LoRA', cat:'peft',
+      one:'Trains two small matrices per layer and adds no inference overhead once merged.',
+      steps:['Freeze base','Inject low-rank A, B','Train A & B','Merge adapter'],
+      trainable:'~0.1–1%',
+      bestFor:'General-purpose fine-tuning where you want small, swappable adapters and zero added latency.',
+      detail:'Freezes the pretrained weight matrix and learns a low-rank decomposition, A × B, alongside it. Only A and B ever train. Because the update is low-rank, it can be folded straight back into the original weights after training, so there\u2019s no extra cost at inference time. It\u2019s cheap to train and easy to swap between many task-specific adapters on one base model, which is most of why it became the default.' },
+    { id:'qlora', name:'QLoRA', cat:'peft',
+      one:'LoRA on a 4-bit frozen base, making large-model fine-tuning possible on a single GPU.',
+      steps:['Quantise to 4-bit','Inject low-rank','Train A & B','Fits one GPU'],
+      trainable:'~0.1–1%',
+      bestFor:'Fine-tuning large models when GPU memory, not compute, is the binding constraint.',
+      detail:'Combines LoRA with 4-bit quantisation of the frozen base model (NF4), plus double quantisation and paged optimisers to keep memory spikes under control. The quantised base never moves; only the LoRA adapters train, in higher precision. This is the trick that let people fine-tune 65B-parameter models on one consumer GPU instead of a cluster.' },
+    { id:'prefix', name:'Prefix Tuning', cat:'peft',
+      one:'Learned vectors prepended at every layer steer attention without touching base weights.',
+      steps:['Freeze base','Prepend prefix vectors','Train prefix only','Steer every layer'],
+      trainable:'<1%',
+      bestFor:'Multi-task setups wanting a lightweight, swappable steering vector per task, no weight changes at all.',
+      detail:'Instead of touching any weights, prefix tuning prepends a small set of trainable \u201cvirtual token\u201d vectors to the keys and values at every transformer layer. The base model stays entirely frozen; only these prefix vectors learn. It\u2019s very parameter-efficient, though it can be fiddlier to optimise than LoRA and sometimes trails it on generation quality.' },
+    { id:'adapter', name:'Adapter Tuning', cat:'peft',
+      one:'Tiny bottleneck modules between layers learn task transformations while the base stays frozen.',
+      steps:['Freeze base','Insert adapters','Down then up project','Task output'],
+      trainable:'~1–4%',
+      bestFor:'Multi-task transfer learning where keeping the adapter as a separate, un-merged module is fine.',
+      detail:'Small bottleneck feed-forward blocks, down-project, nonlinearity, up-project, get inserted between the existing transformer layers. Only these adapter blocks train; everything else stays frozen. Unlike LoRA, adapters usually aren\u2019t merged back into the base, so they add a small amount of inference latency in exchange for very clean task separation.' },
+    { id:'instruct', name:'Instruction Tuning', cat:'data',
+      one:'Trains on instruction-response pairs to teach the model to follow natural-language directions.',
+      steps:['Instruction-response pairs','Filter quality','Supervised fine-tune','Instruction-following model'],
+      trainable:'Often full fine-tune',
+      bestFor:'Turning a raw base model into an instruction-follower, the foundation most alignment pipelines build on.',
+      detail:'A supervised fine-tuning pass over curated pairs of instructions and the responses you want, usually spanning many tasks all phrased as natural-language directions. This is the step that turns a next-token predictor into something that reliably does what you ask, and it typically comes before any preference-based alignment like RLHF or DPO. Can be done as full fine-tuning or layered on top of a PEFT method.' },
+    { id:'ptuning', name:'P-Tuning', cat:'peft',
+      one:'A small MLP encoder optimises continuous prompt embeddings, outperforming hand-crafted discrete prompts.',
+      steps:['Freeze base','Init soft prompts','Encode via MLP','Task output'],
+      trainable:'<1%',
+      bestFor:'NLU tasks like classification and extraction where hand-written prompts have plateaued.',
+      detail:'Similar in spirit to prefix tuning, but the trainable \u201csoft prompt\u201d tokens are re-parameterised through a small MLP or LSTM encoder before reaching the frozen model, which makes optimisation noticeably more stable. P-Tuning v2 goes further and inserts prompts at every layer, closing much of the gap with full fine-tuning on understanding tasks.' },
+    { id:'bitfit', name:'BitFit', cat:'peft',
+      one:'Only bias terms are updated, roughly 0.08% of all parameters, the most parameter-efficient PEFT method.',
+      steps:['Freeze base','Lock all params','Isolate bias terms','Train bias only'],
+      trainable:'~0.08%',
+      bestFor:'Fast experiments, low-resource settings, or a baseline before reaching for something heavier.',
+      detail:'The simplest PEFT method on this list: freeze every weight matrix and train only the bias terms scattered through the network. It\u2019s a strikingly small slice of the model, yet it recovers a meaningful chunk of full fine-tuning performance on many tasks. Worth running first, just to see whether a task actually needs more expressive adaptation.' },
+    { id:'rlhf', name:'RLHF / RLAIF', cat:'align',
+      one:'RLHF collects human rankings to train a reward model; RLAIF replaces the human annotators with an LLM judge.',
+      steps:['Human or LLM ranks','Train reward model','Optimise with PPO','Aligned model'],
+      trainable:'Policy + separate reward model',
+      bestFor:'Alignment at scale when you have reliable preference data and the infrastructure for RL training.',
+      detail:'A reward model is trained on ranked pairs of outputs, ranked by humans for RLHF, or by another LLM acting as judge for RLAIF, and the policy is then optimised against that reward model, usually with PPO. This is the pipeline behind the original ChatGPT-style alignment approach. It works, but it\u2019s expensive: a separate reward model to maintain and an RL loop that can be unstable to tune.' },
+    { id:'dpo', name:'DPO', cat:'align',
+      one:'DPO skips the reward model and optimises the policy directly from preference pairs using a closed-form objective.',
+      steps:['Preference pairs','Compute log ratio','Optimise directly','Aligned model'],
+      trainable:'Policy only',
+      bestFor:'Preference alignment when you want RLHF-like results without a full RL pipeline.',
+      detail:'Reframes the RLHF objective algebraically so the optimal policy has a closed form in terms of preference pairs, letting you train directly on chosen-vs-rejected responses with a simple classification-style loss. No separate reward model, no RL loop. It\u2019s simpler and more stable to train than PPO-based RLHF, and has become the default starting point for preference tuning.' },
+    { id:'grpo', name:'GRPO', cat:'align',
+      one:'Estimates the reward baseline from a group of sampled outputs, dropping the value network entirely.',
+      steps:['Sample response group','Score each response','Normalise rewards','Update policy'],
+      trainable:'Policy only',
+      bestFor:'RL fine-tuning at scale, especially reasoning tasks, without the cost of a critic network.',
+      detail:'Rather than training a separate value network to estimate a baseline the way PPO does, GRPO samples a group of outputs for the same prompt, scores each one, and uses the group\u2019s mean reward as the baseline for computing advantages. Dropping the value network cuts memory and compute meaningfully, and it\u2019s the RL method behind DeepSeek\u2019s reasoning models.' },
+    { id:'rlvr', name:'RLVR', cat:'align',
+      one:'A rule-based verifier returns 0 or 1, removing the need for a learned reward model for math and code tasks.',
+      steps:['Verifiable task','Sample response','Verify correctness','Binary reward'],
+      trainable:'Policy only',
+      bestFor:'Domains with an automatically checkable answer: maths, code, and similar verifiable tasks.',
+      detail:'For tasks with a checkable ground truth, does the code pass its tests, is the maths answer correct, a simple verifier function replaces the learned reward model entirely, returning a binary correct-or-not signal. This sidesteps reward-model hacking altogether, and it\u2019s a big part of why recent reasoning models improved so sharply on maths and coding specifically.' },
+    { id:'federated', name:'Federated Tuning', cat:'dist',
+      one:'Clients train on private local data and share only weight updates, so raw data never leaves the device.',
+      steps:['Distribute to clients','Fine-tune locally','Share weight updates','Aggregate at server'],
+      trainable:'Full or partial, per client',
+      bestFor:'Privacy-sensitive settings, health data, on-device personalisation, where centralising raw data isn\u2019t an option.',
+      detail:'The server distributes the current model to clients, devices or institutions, each one fine-tunes locally on its own private data, and only the resulting weight updates get sent back and aggregated into a new global model. Raw data never has to leave the client. It\u2019s slower and more complex to orchestrate than centralised training, but it\u2019s often the only option when data can\u2019t be pooled for privacy or regulatory reasons.' },
+  ];
+
+  const grid = document.getElementById('grid');
+
+  methods.forEach(m => {
+    const cat = cats[m.cat];
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.cat = m.cat;
+    card.innerHTML = `
+      <div class="card-head">
+        <div class="card-top">
+          <span class="cat-tag" style="background:${cat.soft}; color:${cat.color}">${cat.label}</span>
+          <span class="chev">&#9662;</span>
+        </div>
+        <h3 class="card-title">${m.name}</h3>
+        <p class="one-liner" contenteditable="true" spellcheck="false">${m.one}</p>
+        <div class="pipeline">
+          ${m.steps.map((s,i) => `<span class="step">${s}</span>${i < m.steps.length-1 ? '<span class="arrow">&#8594;</span>' : ''}`).join('')}
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-body-inner">
+          <div class="card-detail">
+            <p contenteditable="true" spellcheck="false">${m.detail}</p>
+            <div class="meta-row">
+              <span class="meta-pill"><b>Trainable:</b> ${m.trainable}</span>
+              <span class="meta-pill" contenteditable="true" spellcheck="false"><b>Best for:</b> ${m.bestFor}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    card.querySelector('.card-head').addEventListener('click', (e) => {
+      if (e.target.closest('[contenteditable="true"]')) return;
+      card.classList.toggle('expanded');
+    });
+    grid.appendChild(card);
+  });
+
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      const f = chip.dataset.filter;
+      document.querySelectorAll('.card').forEach(card => {
+        card.classList.toggle('hide', f !== 'all' && card.dataset.cat !== f);
+      });
+    });
+  });
+
+  let allExpanded = false;
+  document.getElementById('expandAllBtn').addEventListener('click', (e) => {
+    allExpanded = !allExpanded;
+    e.target.textContent = allExpanded ? 'Collapse all' : 'Expand all';
+    document.querySelectorAll('.card').forEach(card => card.classList.toggle('expanded', allExpanded));
+  });
+})();
+</script>
+</body>
+</html>

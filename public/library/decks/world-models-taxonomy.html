@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Functional Taxonomy of World Models</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+/* ── Design Tokens ── */
+:root {
+  --bg:           #FFFFFF;
+  --surface:      #F7F6F4;
+  --surface-2:    #EEECEA;
+  --text:         #1A1917;
+  --text-mid:     #4B4845;
+  --text-muted:   #928E8A;
+  --text-faint:   #D1CEC9;
+  --border:       #E4E1DD;
+  --border-mid:   #C9C5C0;
+  --accent:       #421540;
+  --accent-light: rgba(66, 21, 64, 0.12);
+  --accent-mid:   rgba(66, 21, 64, 0.3);
+  --green:        #166534;
+  --green-bg:     #F0FDF4;
+  --green-border: #BBF7D0;
+
+  --font: 'Outfit', sans-serif;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --out:  cubic-bezier(0, 0, 0.2, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #F0EFED;
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  color: var(--text);
+  zoom: 1.2;
+}
+
+.deck { position: fixed; inset: 0; }
+
+#progress-bar {
+  position: fixed; top: 0; left: 0; height: 2px;
+  background: var(--accent);
+  transition: width 0.45s var(--ease);
+  z-index: 300;
+}
+
+#counter {
+  position: fixed; bottom: 1.8rem; right: 2.2vw;
+  font-size: 0.6rem; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-faint); z-index: 300;
+}
+
+#kbd-hint {
+  position: fixed; bottom: 1.8rem; left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.58rem; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-faint); z-index: 300; pointer-events: none;
+}
+
+.nav-wrap {
+  position: fixed; top: 50%; transform: translateY(-50%);
+  z-index: 300;
+}
+.nav-wrap.is-prev { left: 1.2vw; }
+.nav-wrap.is-next { right: 1.2vw; }
+
+.nav-btn {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--bg);
+  color: var(--text-muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.18s, color 0.18s;
+}
+.nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.nav-btn:disabled { opacity: 0.2; pointer-events: none; }
+
+/* ═══════════════════════════════════
+   SLIDE ENGINE
+═══════════════════════════════════ */
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 6.5vh 9vw;
+  background: var(--bg);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+  transform: translateX(28px);
+}
+.slide.is-active  { opacity: 1; pointer-events: all; transform: none; }
+.slide.is-exit    { opacity: 0; transform: translateX(-28px); }
+
+.slide.is-active .r  { animation: up 0.45s var(--out) both; }
+.slide.is-active .r:nth-child(1) { animation-delay: 0.05s; }
+.slide.is-active .r:nth-child(2) { animation-delay: 0.11s; }
+.slide.is-active .r:nth-child(3) { animation-delay: 0.17s; }
+.slide.is-active .r:nth-child(4) { animation-delay: 0.24s; }
+.slide.is-active .r:nth-child(5) { animation-delay: 0.30s; }
+.slide.is-active .r:nth-child(6) { animation-delay: 0.36s; }
+
+@keyframes up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.lbl {
+  font-size: 0.6rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 1.2rem;
+}
+
+.slide h2 {
+  font-size: clamp(1.5rem, 2.8vw, 2.4rem);
+  font-weight: 700; line-height: 1.15;
+  color: var(--text); letter-spacing: -0.02em;
+}
+
+/* ── TITLE ── */
+.s-title { background: var(--bg); }
+
+.title-eyebrow {
+  font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 2rem;
+}
+
+.title-name {
+  font-size: clamp(3rem, 7vw, 6rem);
+  font-weight: 700; letter-spacing: -0.03em; line-height: 1;
+  color: var(--text); margin-bottom: 1.5rem;
+  padding-left: 1.4rem;
+  border-left: 4px solid var(--accent);
+}
+
+.title-sub {
+  font-size: 1.05rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.5;
+  max-width: 480px; margin-bottom: 2.5rem;
+  padding-left: 1.4rem;
+}
+
+.title-badge {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--border); border-radius: 4px;
+  font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-muted);
+  margin-left: 1.4rem;
+}
+
+.title-agenda {
+  font-size: 0.75rem; font-weight: 400;
+  color: rgba(107, 114, 128, 0.65);
+  line-height: 1.45;
+  margin-top: 1.8rem;
+  padding-left: 1.4rem;
+  letter-spacing: 0.01em;
+  display: flex; flex-direction: column; gap: 0;
+}
+
+/* ── NUMBERED LIST ── */
+.s-list { background: var(--bg); }
+
+.opp-points {
+  display: flex; flex-direction: column;
+  gap: 0; margin-top: 1.8rem;
+  border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+}
+
+.opp-point {
+  display: flex; align-items: flex-start; gap: 2rem;
+  padding: 1.4rem 2rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg); transition: background 0.15s;
+}
+.opp-point:last-child { border-bottom: none; }
+.opp-point:hover { background: var(--surface); }
+
+.opp-n {
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent); flex-shrink: 0; margin-top: 3px;
+  min-width: 24px;
+}
+
+.opp-body strong {
+  display: block; font-size: 0.92rem; font-weight: 600;
+  color: var(--text); margin-bottom: 0.35rem;
+}
+
+.opp-body p {
+  font-size: 0.83rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.65;
+}
+
+/* ── TWO COLUMN ── */
+.s-two-col { background: var(--bg); }
+
+.two-components {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 6px;
+  overflow: hidden; margin-top: 1.8rem; margin-bottom: 1.8rem;
+}
+
+.component {
+  padding: 2.4rem 2.2rem 2.8rem;
+  background: var(--bg);
+}
+
+.component-featured { background: var(--surface); }
+
+.component-tag {
+  display: inline-block;
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent-mid);
+  background: var(--accent-light);
+  padding: 0.2rem 0.6rem; border-radius: 3px;
+  margin-bottom: 1.1rem;
+}
+
+.component h3 {
+  font-size: 1.25rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.7rem;
+  letter-spacing: -0.01em;
+}
+
+.component p {
+  font-size: 0.88rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.68;
+}
+
+.tools-note {
+  font-size: 0.8rem; font-weight: 500;
+  color: var(--text-mid); text-align: center;
+}
+
+/* ── THREE CARDS ── */
+.s-cards { background: var(--bg); }
+
+.who-cards {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1.2rem; margin-top: 1.8rem; margin-bottom: 1.6rem;
+  align-items: stretch;
+}
+
+.who-card {
+  padding: 1.8rem 1.6rem 2rem;
+  border: 1.5px solid var(--border);
+  border-radius: 6px; background: var(--bg);
+}
+
+.who-card--featured {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.who-card-heading {
+  font-size: 1rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.6rem;
+  letter-spacing: -0.01em;
+}
+
+.who-card-heading--featured { color: var(--accent); }
+
+.who-card p {
+  font-size: 0.83rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.65;
+}
+
+.who-footer {
+  font-size: 0.78rem; font-style: italic;
+  color: var(--text-muted); text-align: center;
+}
+
+/* ── BUILD CARDS ── */
+.s-build { background: var(--bg); }
+
+.build-cards {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1.2rem; margin-top: 1.8rem;
+}
+
+.build-card {
+  padding: 1.8rem 1.6rem 2rem;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: 0 0 6px 6px;
+  background: var(--bg);
+}
+
+.build-card-num {
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--text-faint); margin-bottom: 0.8rem;
+}
+
+.build-card-heading {
+  font-size: 0.95rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.6rem;
+  letter-spacing: -0.01em;
+}
+
+.build-card p {
+  font-size: 0.82rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.65;
+}
+
+/* ── ARCH ── */
+.s-arch { background: var(--bg); }
+
+.arch-diagram {
+  display: flex; flex-direction: column; align-items: stretch;
+  margin-top: 1.4rem; gap: 0;
+}
+
+.arch-layer {
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 1.1rem 1.8rem;
+  background: var(--bg);
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+
+.arch-layer--top { background: var(--surface); }
+
+.arch-layer--mid {
+  background: var(--accent); border-color: var(--accent);
+  color: #fff;
+}
+
+.arch-layer--bottom { background: var(--surface-2); }
+
+.arch-name {
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.arch-layer--mid .arch-name { color: rgba(255,255,255,0.7); }
+
+.arch-conn {
+  width: 1px; background: var(--border-mid);
+  height: 14px; margin: 0 auto;
+}
+
+.arch-split {
+  display: flex; gap: 1px; background: rgba(255,255,255,0.2);
+  border-radius: 4px; overflow: hidden; margin-top: 0.3rem;
+}
+
+.arch-split-item {
+  flex: 1; padding: 0.7rem 1rem; background: rgba(255,255,255,0.08);
+  display: flex; flex-direction: column; gap: 0.2rem;
+}
+
+.arch-split-title {
+  font-size: 0.82rem; font-weight: 700; color: #fff;
+}
+
+.arch-split-sub {
+  font-size: 0.7rem; color: rgba(255,255,255,0.65);
+}
+
+.arch-split-div { width: 1px; background: rgba(255,255,255,0.2); }
+
+.arch-pills {
+  display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem;
+}
+
+.arch-pill {
+  font-size: 0.7rem; font-weight: 500;
+  padding: 0.25rem 0.7rem;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 3px; color: var(--text-mid);
+}
+
+.arch-note {
+  font-size: 0.78rem; font-style: italic;
+  color: var(--text-muted); margin-top: 1rem;
+}
+
+/* ── STEPS ── */
+.s-steps { background: var(--bg); }
+
+.s-steps .sub {
+  font-size: 0.92rem; font-weight: 400;
+  color: var(--text-mid); margin-bottom: 1.6rem; line-height: 1.6;
+  max-width: 540px;
+}
+
+.steps {
+  display: flex; align-items: flex-start; gap: 0; position: relative;
+}
+
+.steps::before {
+  content: '';
+  position: absolute; top: 18px; left: 0; right: 0; height: 1px;
+  background: var(--border); z-index: 0;
+}
+
+.stp {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; text-align: center;
+  gap: 0.65rem; position: relative; z-index: 1;
+}
+
+.stp-n {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1.5px solid var(--border-mid); background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; font-weight: 700;
+  color: var(--text-mid);
+}
+.stp.hl .stp-n { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.stp-lbl {
+  font-size: 0.74rem; font-weight: 600;
+  color: var(--text); line-height: 1.3; max-width: 86px;
+}
+.stp-sub {
+  font-size: 0.68rem; font-weight: 400;
+  color: var(--text-muted); line-height: 1.4; max-width: 92px;
+}
+
+.exp-note {
+  display: inline-flex; align-items: center;
+  padding: 0.9rem 1.4rem; margin-top: 1.8rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 4px 4px 0; font-size: 0.88rem;
+  font-weight: 400; color: var(--text-mid);
+  font-style: italic;
+}
+
+/* ── TRUST ── */
+.s-trust { background: var(--bg); }
+
+.s-trust .sub {
+  font-size: 0.95rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.6;
+  max-width: 520px; margin: 0.4rem 0 2.2rem;
+}
+
+.trust-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 6px;
+  overflow: hidden;
+}
+.trust {
+  padding: 1.6rem 2rem; background: var(--bg);
+  transition: background 0.15s;
+}
+.trust:hover { background: var(--surface); }
+
+.trust h3 {
+  font-size: 0.88rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+.trust p {
+  font-size: 0.8rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.65;
+}
+
+.trust--featured {
+  background: rgba(66, 21, 64, 0.05);
+  border-left: 3px solid var(--accent);
+  padding-left: calc(2rem - 3px);
+}
+.trust--featured:hover { background: rgba(66, 21, 64, 0.09); }
+
+.trust-heading--featured {
+  font-size: 0.92rem; font-weight: 700;
+  color: var(--accent); margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+/* ── INTERSTITIAL ── */
+.s-inter { background: var(--surface); }
+
+.s-inter h2 {
+  font-size: clamp(1.8rem, 3.5vw, 3rem);
+  font-weight: 700; color: var(--text);
+  margin-bottom: 0.8rem; letter-spacing: -0.02em;
+}
+
+.s-inter .sub {
+  font-size: 0.95rem; font-weight: 400;
+  color: var(--text-mid); margin-bottom: 2.5rem;
+  max-width: 520px; line-height: 1.6;
+}
+
+.s-inter .quote {
+  font-size: 1rem; font-style: italic;
+  color: var(--text-mid); line-height: 1.7;
+  max-width: 480px;
+  padding-left: 1.4rem;
+  border-left: 3px solid var(--accent);
+  margin-top: 0.5rem;
+}
+
+/* ── STATS ── */
+.s-stats { background: var(--bg); }
+
+.s-stats h2 { margin-bottom: 0.7rem; }
+
+.s-stats .sub {
+  font-size: 0.95rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.65;
+  max-width: 540px; margin-bottom: 2.5rem;
+}
+
+.post-stats {
+  display: flex; gap: 1rem; flex-wrap: wrap;
+}
+.ps {
+  padding: 1.2rem 1.6rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.ps-val {
+  font-size: 1.7rem; font-weight: 700;
+  letter-spacing: -0.02em; color: var(--accent);
+  line-height: 1; margin-bottom: 0.3rem;
+}
+.ps-lbl {
+  font-size: 0.73rem; font-weight: 400;
+  color: var(--text-muted); line-height: 1.4; max-width: 120px;
+}
+
+/* ── CTA ── */
+.s-cta { background: var(--bg); }
+
+.cta-layout {
+  display: grid; grid-template-columns: 1fr 1.1fr;
+  gap: 6vw; align-items: start;
+  margin-top: 1.4rem;
+}
+
+.cta-q {
+  font-size: clamp(1.4rem, 2.6vw, 2.2rem);
+  font-weight: 700; letter-spacing: -0.02em;
+  color: var(--text); line-height: 1.2; margin-bottom: 1rem;
+}
+
+.cta-sub {
+  font-size: 0.9rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.65; max-width: 340px;
+}
+
+.inv-list {
+  display: flex; flex-direction: column;
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+}
+
+.inv {
+  display: flex; align-items: flex-start; gap: 1.2rem;
+  padding: 1.2rem 1.4rem; background: var(--bg);
+  transition: background 0.15s;
+}
+.inv:hover { background: var(--surface); }
+
+.inv-n {
+  font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-faint); flex-shrink: 0; margin-top: 3px;
+}
+.inv-title {
+  font-size: 0.88rem; font-weight: 600;
+  color: var(--text); margin-bottom: 0.2rem;
+}
+.inv-desc {
+  font-size: 0.78rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.55;
+}
+
+/* ── EXTRA: inline accent tag ── */
+.tag-pill {
+  display: inline-block;
+  font-size: 0.58rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent-mid);
+  background: var(--accent-light);
+  padding: 0.18rem 0.55rem; border-radius: 3px;
+  margin-right: 0.4rem; vertical-align: middle;
+}
+
+/* ── Attribution bar ── */
+.attr {
+  font-size: 0.68rem; font-weight: 400;
+  color: var(--text-faint); letter-spacing: 0.04em;
+  margin-top: 2rem; padding-left: 1.4rem;
+}
+
+/* ── Loop diagram (custom SVG-free) ── */
+.loop-diagram {
+  display: flex; align-items: center; gap: 0;
+  margin-top: 2rem;
+}
+
+.loop-node {
+  padding: 1rem 1.3rem;
+  border: 1.5px solid var(--border); border-radius: 6px;
+  background: var(--bg); text-align: center; flex-shrink: 0;
+}
+
+.loop-node.hl {
+  border-color: var(--accent); background: var(--accent-light);
+}
+
+.loop-node-title {
+  font-size: 0.8rem; font-weight: 700; color: var(--text);
+}
+.loop-node.hl .loop-node-title { color: var(--accent); }
+
+.loop-node-sub {
+  font-size: 0.68rem; color: var(--text-muted); margin-top: 0.2rem;
+}
+
+.loop-arrow {
+  flex: 1; text-align: center; font-size: 0.85rem;
+  color: var(--text-faint); user-select: none;
+}
+
+/* ── Maturity grid ── */
+.maturity-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+  margin-top: 1.8rem;
+}
+
+.mat-cell {
+  padding: 1.4rem 1.6rem; background: var(--bg);
+}
+
+.mat-cell-head {
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 0.5rem;
+}
+
+.mat-cell-title {
+  font-size: 0.95rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.4rem;
+}
+
+.mat-cell-body {
+  font-size: 0.78rem; color: var(--text-mid); line-height: 1.6;
+}
+
+.mat-cell--hot { background: rgba(66,21,64,0.04); }
+
+.mat-badge {
+  display: inline-block; margin-top: 0.6rem;
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 0.2rem 0.55rem;
+  border-radius: 3px;
+}
+
+.mat-badge--mature { background: #F0FDF4; color: #166534; border: 1px solid #BBF7D0; }
+.mat-badge--nascent { background: #FFF7ED; color: #92400E; border: 1px solid #FED7AA; }
+.mat-badge--bridge { background: var(--accent-light); color: var(--accent); border: 1px solid var(--accent-mid); }
+
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+  <!-- ══ SLIDE 1: TITLE ══ -->
+  <section class="slide s-title">
+    <div class="r title-eyebrow">Fei-Fei Li &amp; World Labs &nbsp;·&nbsp; June 2026</div>
+    <h1 class="r title-name">A Functional<br>Taxonomy of<br>World Models</h1>
+    <p class="r title-sub">Renderers, Simulators, Planners — and the loop that connects them all.</p>
+    <div class="r title-badge">Spatial Intelligence · AI Frontier</div>
+    <div class="r title-agenda">
+      <span>01 &nbsp; The overloaded term problem</span>
+      <span>02 &nbsp; The POMDP loop</span>
+      <span>03 &nbsp; Three functional kinds</span>
+      <span>04 &nbsp; Why simulation is the linchpin</span>
+      <span>05 &nbsp; The convergence thesis</span>
+    </div>
+  </section>
+
+  <!-- ══ SLIDE 2: The Problem ══ -->
+  <section class="slide s-inter">
+    <div class="r lbl">The Problem</div>
+    <h2 class="r">"World model" is one of the most important<br>— and most overloaded — terms in AI today.</h2>
+    <p class="r sub">Computer vision, robotics, reinforcement learning, and generative AI all claim to be building world models. Each means something quite different.</p>
+    <div class="r quote">
+      "A video model that produces gorgeous but physically impossible flames, a language model improvising a playable game, and a physics engine that faithfully simulates combustion all go by the same name."
+      <br><br><span style="font-style:normal; font-size:0.78rem; color:var(--text-faint);">— Fei-Fei Li</span>
+    </div>
+  </section>
+
+  <!-- ══ SLIDE 3: The POMDP Loop ══ -->
+  <section class="slide s-arch">
+    <div class="r lbl">The Loop Beneath the Taxonomy</div>
+    <h2 class="r">Every world model is a projection of one ancient diagram</h2>
+    <div class="r" style="margin-top:1.8rem;">
+      <div class="arch-diagram">
+
+        <div class="arch-layer arch-layer--top">
+          <span class="arch-name">Agent</span>
+          <div style="font-size:0.82rem; color:var(--text-mid); margin-top:0.2rem;">A person, robot, or software system that takes actions based on observations.</div>
+        </div>
+
+        <div class="arch-conn"></div>
+
+        <div class="arch-layer arch-layer--mid">
+          <span class="arch-name">World State</span>
+          <div class="arch-split">
+            <div class="arch-split-item">
+              <div class="arch-split-title">Actions → State</div>
+              <div class="arch-split-sub">Agent actions affect world state</div>
+            </div>
+            <div class="arch-split-div"></div>
+            <div class="arch-split-item">
+              <div class="arch-split-title">State → Observations</div>
+              <div class="arch-split-sub">Agent perceives partial view only</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="arch-conn"></div>
+
+        <div class="arch-layer arch-layer--bottom">
+          <span class="arch-name">The Three Outputs</span>
+          <div class="arch-pills">
+            <span class="arch-pill">Renderer → pixels</span>
+            <span class="arch-pill">Simulator → state</span>
+            <span class="arch-pill">Planner → actions</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <p class="r arch-note">The POMDP loop — formalised by Sutton &amp; Barto — is where the term "world model" got its technical meaning. Traced to Kenneth Craik's 1943 proposal that minds reason by running "small-scale models" of reality.</p>
+  </section>
+
+  <!-- ══ SLIDE 4: Three Functions ══ -->
+  <section class="slide s-cards">
+    <div class="r lbl">The Taxonomy</div>
+    <h2 class="r">Three functional kinds of world model</h2>
+    <div class="r who-cards">
+
+      <div class="who-card">
+        <div class="who-card-heading">🎬 Renderer</div>
+        <p><strong>Outputs observations — pixels for human eyes.</strong> A video model turning a prompt into a drone shot is a renderer. Quality that matters: visual fidelity. Constraint: no explicit 3D understanding; beautiful output can be physically impossible.</p>
+        <p style="margin-top:0.8rem; font-size:0.75rem; color:var(--text-muted);">Examples: text-to-video, Genie 3, World Labs RTFM</p>
+      </div>
+
+      <div class="who-card who-card--featured">
+        <div class="who-card-heading who-card-heading--featured">🏗️ Simulator</div>
+        <p><strong>Outputs state — geometrically, physically faithful representations</strong> that both humans and computer programs can compute on. Serves architects, filmmakers, RL agents, robot controllers, and AV testing. The linchpin.</p>
+        <p style="margin-top:0.8rem; font-size:0.75rem; color:var(--accent); opacity:0.8;">Examples: World Labs Marble, NVIDIA Omniverse</p>
+      </div>
+
+      <div class="who-card">
+        <div class="who-card-heading">🤖 Planner</div>
+        <p><strong>Outputs actions.</strong> Given an observation and a goal, a planner answers "what should the agent do next?" — the inverse of the renderer. VLA models and World Action Models are planners closing the perception-action loop.</p>
+        <p style="margin-top:0.8rem; font-size:0.75rem; color:var(--text-muted);">Examples: Vision-Language-Action models, model-based RL systems</p>
+      </div>
+
+    </div>
+    <p class="r who-footer">All three draw on the same underlying knowledge: geometry, physics, dynamics. The categories describe what they output, not what they know.</p>
+  </section>
+
+  <!-- ══ SLIDE 5: Maturity Landscape ══ -->
+  <section class="slide s-trust">
+    <div class="r lbl">Maturity Landscape</div>
+    <h2 class="r">Where each category actually stands today</h2>
+    <p class="r sub">The three functions are at wildly different stages of commercial and technical maturity.</p>
+    <div class="r trust-grid">
+
+      <div class="trust">
+        <h3>🎬 Renderer — Most Mature</h3>
+        <p>Image- and text-to-video products are expanding rapidly in consumer and enterprise markets. Google's Nano Banana model has put renderer-quality generation in the hands of hundreds of millions. The ceiling: visual plausibility, not physical accuracy.</p>
+      </div>
+
+      <div class="trust trust--featured">
+        <h3 class="trust-heading--featured">🏗️ Simulator — Most Consequential</h3>
+        <p>Gets the least public attention but is the most consequential. Geometry, physics, and dynamics are the world itself. NVIDIA Omniverse alone targets an estimated trillion-dollar addressable market. The hardest open problems live here.</p>
+      </div>
+
+      <div class="trust">
+        <h3>🤖 Planner — Most Nascent</h3>
+        <p>The most intriguing and most nascent. Robotic demos in the last two years look impressive — but almost all are confined to heavily constrained lab setups. The gap between a demo reel and a robot that reliably works in a kitchen remains vast.</p>
+      </div>
+
+      <div class="trust">
+        <h3>🌉 Simulation Is the Bridge</h3>
+        <p>A model mastering simulation can project into pixels (for renderers) and into action predictions (for planners). A model mastering only rendering, or only planning, cannot do either. The bridge is the point of leverage.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══ SLIDE 6: Why Simulation Wins ══ -->
+  <section class="slide s-list">
+    <div class="r lbl">Why Simulation Is the Linchpin</div>
+    <h2 class="r">The hardest open problems in the field all live in simulation</h2>
+    <div class="r opp-points">
+
+      <div class="opp-point">
+        <div class="opp-n">01</div>
+        <div class="opp-body">
+          <strong>Data scarcity is acute</strong>
+          <p>3D data with explicit geometry, material properties, and physical annotations is orders of magnitude scarcer than internet video. Renderers are data-rich; simulators and planners are not.</p>
+        </div>
+      </div>
+
+      <div class="opp-point">
+        <div class="opp-n">02</div>
+        <div class="opp-body">
+          <strong>The sim-to-real gap persists</strong>
+          <p>The difference between how things behave in simulation versus reality remains a core, unsolved problem. AI-generated geometry can look correct while containing self-intersections or wrong scale that produce nonsensical physics.</p>
+        </div>
+      </div>
+
+      <div class="opp-point">
+        <div class="opp-n">03</div>
+        <div class="opp-body">
+          <strong>Multi-physics is brutally expensive</strong>
+          <p>Rigid bodies, deformable objects, fluids, and cloth interacting simultaneously remains orders of magnitude more expensive than single-domain simulation.</p>
+        </div>
+      </div>
+
+      <div class="opp-point">
+        <div class="opp-n">04</div>
+        <div class="opp-body">
+          <strong>The market surface area is enormous</strong>
+          <p>Robotics training, AV testing, architectural visualisation, engineering simulation, and drug discovery all depend on something simulation-shaped. NVIDIA Omniverse alone targets &gt;$1T addressable market.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══ SLIDE 7: World Labs Marble ══ -->
+  <section class="slide s-two-col">
+    <div class="r lbl">World Labs · Marble</div>
+    <h2 class="r">The first concrete move into the simulation territory</h2>
+    <div class="r two-components">
+
+      <div class="component">
+        <div class="component-tag">What Marble Does</div>
+        <h3>Multimodal → Explorable 3D</h3>
+        <p>Takes multimodal prompts — text, image, video, or spatial sketch — and generates explorable 3D environments. Outputs Gaussian splats for visual exploration alongside collision meshes a physics engine can operate on.</p>
+      </div>
+
+      <div class="component component-featured">
+        <div class="component-tag">Why It Matters</div>
+        <h3>Dissolves Renderer / Simulator Boundary</h3>
+        <p>A single model outputting both Gaussian splats (renderer territory) and collision meshes (simulator territory) is a proof of concept that the categories can be unified. Marble is only the first chapter of a much longer arc.</p>
+      </div>
+
+    </div>
+    <p class="r tools-note">The lines between rendering, simulation, and planning are beginning to collapse — Marble is an early signal of that convergence.</p>
+  </section>
+
+  <!-- ══ SLIDE 8: Convergence ══ -->
+  <section class="slide s-steps">
+    <div class="r lbl">The Convergence Thesis</div>
+    <h2 class="r">Three separate research threads are becoming one</h2>
+    <p class="r sub">The shared insight: the knowledge required to render a world, simulate it, and act in it is largely the same. A model that truly understands a cup on a table should render it, simulate a push, and plan a hand to pick it up.</p>
+    <div class="r steps">
+
+      <div class="stp">
+        <div class="stp-n">1</div>
+        <div class="stp-lbl">Passive Output</div>
+        <div class="stp-sub">Each type produces one kind of output independently</div>
+      </div>
+
+      <div class="stp hl">
+        <div class="stp-n">2</div>
+        <div class="stp-lbl">Action-Conditioned</div>
+        <div class="stp-sub">Renderers become interactive; conditioned on user input</div>
+      </div>
+
+      <div class="stp">
+        <div class="stp-n">3</div>
+        <div class="stp-lbl">Shared Backbone</div>
+        <div class="stp-sub">Pretrained renderer used as backbone for joint world &amp; action prediction</div>
+      </div>
+
+      <div class="stp hl">
+        <div class="stp-n">4</div>
+        <div class="stp-lbl">Unified Architecture</div>
+        <div class="stp-sub">One model, multiple output modalities: pixels, state, actions</div>
+      </div>
+
+      <div class="stp">
+        <div class="stp-n">5</div>
+        <div class="stp-lbl">Spatial Intelligence</div>
+        <div class="stp-sub">Machines that understand, imagine, reason, and act in the physical world</div>
+      </div>
+
+    </div>
+    <div class="r exp-note">"Every level is moving from passive output to interactive system." — Fei-Fei Li</div>
+  </section>
+
+  <!-- ══ SLIDE 9: The Big Bet ══ -->
+  <section class="slide s-inter">
+    <div class="r lbl">The Long Arc</div>
+    <h2 class="r">A bet the field has been making<br>since the late 1980s.</h2>
+    <p class="r sub">A sufficiently rich model of the world is all that any agent needs — to see worlds, build them, and act in them. What gives this "big bet" weight now is that three threads, each already driving multi-billion-dollar industries on its own, are starting to behave like one.</p>
+    <div class="r quote">
+      "Language gave machines a way to talk about the world. World models are how machines will finally come to understand, imagine, reason and interact with it."
+      <br><br><span style="font-style:normal; font-size:0.78rem; color:var(--text-faint);">— Fei-Fei Li</span>
+    </div>
+  </section>
+
+  <!-- ══ SLIDE 10: CTA ══ -->
+  <section class="slide s-cta">
+    <div class="r lbl">The Open Questions · What Comes Next</div>
+    <div class="r cta-layout">
+
+      <div>
+        <p class="cta-q">The defining open problem: unifying rendering, simulation, and planning inside one architecture.</p>
+        <p class="cta-sub">The data picture is uneven — renderers are awash in internet video while simulators face 3D asset shortages. Optimising for visual beauty can sacrifice the precision a robot needs. Reconciling these tensions is the central research challenge.</p>
+        <p style="margin-top:1.2rem; font-size:0.72rem; color:var(--text-muted);">Source: <em>A Functional Taxonomy of World Models</em>, Fei-Fei Li &amp; World Labs, June 2026</p>
+      </div>
+
+      <div class="inv-list">
+
+        <div class="inv">
+          <span class="inv-n">01</span>
+          <div>
+            <div class="inv-title">Read the full essay</div>
+            <div class="inv-desc">drfeifei.substack.com — Fei-Fei Li's original post with deeper technical detail and animations of Marble.</div>
+          </div>
+        </div>
+
+        <div class="inv">
+          <span class="inv-n">02</span>
+          <div>
+            <div class="inv-title">Explore World Labs</div>
+            <div class="inv-desc">worldlabs.ai — see Marble in action and follow the research programme building toward unified world models.</div>
+          </div>
+        </div>
+
+        <div class="inv">
+          <span class="inv-n">03</span>
+          <div>
+            <div class="inv-title">Watch the renderer → planner bridge</div>
+            <div class="inv-desc">Several robotics labs have shown that a pretrained video renderer can be used as the backbone for joint world-and-action prediction — the nascent convergence is already underway.</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+</div><!-- /deck -->
+
+<!-- Chrome -->
+<div id="progress-bar"></div>
+<div id="counter">1 / 10</div>
+<div id="kbd-hint">← → to navigate · click left or right</div>
+
+<div class="nav-wrap is-prev">
+  <button class="nav-btn" id="prevBtn" disabled aria-label="Previous">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <path d="M7.5 2L3.5 6l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+<div class="nav-wrap is-next">
+  <button class="nav-btn" id="nextBtn" aria-label="Next">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <path d="M4.5 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+<script>
+const slides  = document.querySelectorAll('.slide');
+const pb      = document.getElementById('progress-bar');
+const counter = document.getElementById('counter');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+let cur = 0;
+const total = slides.length;
+
+function goTo(n) {
+  if (n < 0 || n >= total) return;
+
+  slides[cur].classList.remove('is-active');
+  slides[cur].classList.add('is-exit');
+  const leaving = slides[cur];
+  setTimeout(() => leaving.classList.remove('is-exit'), 520);
+
+  cur = n;
+  slides[cur].classList.add('is-active');
+
+  pb.style.width = ((cur + 1) / total * 100) + '%';
+  counter.textContent = (cur + 1) + ' / ' + total;
+  prevBtn.disabled = (cur === 0);
+  nextBtn.disabled = (cur === total - 1);
+}
+
+prevBtn.addEventListener('click', () => goTo(cur - 1));
+nextBtn.addEventListener('click', () => goTo(cur + 1));
+
+document.addEventListener('keydown', e => {
+  if (['ArrowRight', ' ', 'ArrowDown'].includes(e.key)) { e.preventDefault(); goTo(cur + 1); }
+  if (['ArrowLeft', 'ArrowUp'].includes(e.key))         { e.preventDefault(); goTo(cur - 1); }
+  if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+  if (e.key === 'End')  { e.preventDefault(); goTo(total - 1); }
+});
+
+// Click left / right half of screen
+document.querySelector('.deck').addEventListener('click', e => {
+  if (e.target.closest('button')) return;
+  goTo(e.clientX > window.innerWidth * 0.6 ? cur + 1 : cur - 1);
+});
+
+// Boot
+slides[0].classList.add('is-active');
+pb.style.width = (1 / total * 100) + '%';
+</script>
+</body>
+</html>

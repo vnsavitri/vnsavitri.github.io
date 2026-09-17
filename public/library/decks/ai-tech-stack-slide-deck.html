@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overwhelmed By AI? Just Copy My Tech Stack — Slide Deck</title>
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-s: #fbbf24;
+            --accent-a: #a78bfa;
+            --accent-specialist: #38bdf8;
+            --accent-graduated: #f87171;
+            --accent-framework: #34d399;
+            --font-stack: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-stack);
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Slide Container Setup */
+        .deck-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Typography & Layout elements */
+        h1 {
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        h2 {
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: var(--text-main);
+            width: 100%;
+            max-width: 1000px;
+            text-align: left;
+            border-bottom: 2px solid #334155;
+            padding-bottom: 0.75rem;
+        }
+
+        p.subtitle {
+            font-size: clamp(1.1rem, 2vw, 1.6rem);
+            color: var(--text-muted);
+            max-width: 800px;
+            margin-bottom: 2rem;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 1100px;
+            text-align: left;
+            margin-top: 1rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* Tier Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .badge-s { background-color: rgba(251, 191, 36, 0.15); color: var(--accent-s); border: 1px solid var(--accent-s); }
+        .badge-a { background-color: rgba(167, 139, 250, 0.15); color: var(--accent-a); border: 1px solid var(--accent-a); }
+        .badge-spec { background-color: rgba(56, 189, 248, 0.15); color: var(--accent-specialist); border: 1px solid var(--accent-specialist); }
+        .badge-grad { background-color: rgba(248, 113, 113, 0.15); color: var(--accent-graduated); border: 1px solid var(--accent-graduated); }
+        .badge-frame { background-color: rgba(52, 211, 153, 0.15); color: var(--accent-framework); border: 1px solid var(--accent-framework); }
+
+        /* Framework Slide Styles */
+        .framework-content {
+            max-width: 850px;
+            text-align: left;
+            font-size: clamp(1rem, 1.5vw, 1.25rem);
+            line-height: 1.7;
+            color: var(--text-muted);
+        }
+
+        .framework-content strong {
+            color: var(--text-main);
+        }
+
+        .framework-content ul {
+            margin-top: 1rem;
+            margin-left: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .framework-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Navigation Controls Overlay */
+        .controls {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .control-btn {
+            background-color: rgba(30, 41, 59, 0.8);
+            border: 1px solid #475569;
+            color: var(--text-main);
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            backdrop-filter: blur(4px);
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .control-btn:hover {
+            background-color: #334155;
+        }
+
+        .progress-indicator {
+            position: absolute;
+            bottom: 2.5rem;
+            left: 2rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            z-index: 100;
+        }
+
+        .source-link {
+            color: var(--accent-specialist);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--accent-specialist);
+        }
+        .source-link:hover {
+            color: #7dd3fc;
+        }
+
+        /* Hotkey visual tip */
+        .tip {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 768px) {
+            .slide { padding: 1.5rem; justify-content: flex-start; overflow-y: auto; }
+            h2 { text-align: center; margin-top: 1rem; }
+            .grid-container { grid-template-columns: 1fr; margin-bottom: 5rem; }
+            .controls { width: 100%; bottom: 0; right: 0; left: 0; background: #0f172a; padding: 1rem; justify-content: space-around; box-shadow: 0 -4px 10px rgba(0,0,0,0.3); }
+            .progress-indicator { display: none; }
+            .tip { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="deck-container">
+
+        <div class="slide active" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);">
+            <span class="badge badge-frame" style="margin-bottom: 1rem;">Core Strategy Presentation</span>
+            <h1 style="color: #f1f5f9;">Overwhelmed By AI?<br><span style="color: var(--accent-s);">Just Copy My Tech Stack</span></h1>
+            <p class="subtitle">A strategic blueprint to block out the noise, establish tool agnosticism, and remain hyper-productive.</p>
+            <p style="font-size:0.95rem; color: var(--text-muted)">
+                Inspired by the frameworks of Nate Herk &bull; <a class="source-link" href="http://www.youtube.com/watch?v=35WuZxbAY68" target="_blank">Watch Original Video</a>
+            </p>
+            <div class="tip">Click anywhere, use Arrow keys, or Spacebar to advance</div>
+        </div>
+
+        <div class="slide">
+            <h2>The S-Tier <span class="badge badge-s">Daily Drivers</span></h2>
+            <p class="subtitle" style="text-align: left; width: 100%; max-width: 1000px; margin-bottom: 1rem;">The foundational operating engine used every single day.</p>
+            <div class="grid-container">
+                <div class="card" style="border-top: 4px solid var(--accent-s);">
+                    <h3>Cloud Code</h3>
+                    <p>The undisputed #1 favorite AI workspace. Functions essentially as a complete developer and command operating system. Everything that can be built or executed runs seamlessly out of custom project directories inside it.</p>
+                </div>
+                <div class="card" style="border-top: 4px solid var(--accent-s);">
+                    <h3>VS Code</h3>
+                    <p>The core local IDE platform. Chosen explicitly to host and map file directories, interact with terminal panels, and execute extension layers alongside Cloud Code.</p>
+                </div>
+                <div class="card" style="border-top: 4px solid var(--accent-s);">
+                    <h3>GLO</h3>
+                    <p>A specialized, ultra-fast, and highly private speech-to-text platform. Switched over entirely from traditional tools like Whisper to enable agentic, rapid audio inputs.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>The A-Tier <span class="badge badge-a">Weekly Companions</span></h2>
+            <p class="subtitle" style="text-align: left; width: 100%; max-width: 1000px; margin-bottom: 1rem;">High-impact components utilized regularly for specialized core processes.</p>
+            <div class="grid-container" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+                <div class="card">
+                    <h3>CodeEx</h3>
+                    <p>An alternative agent harness working side-by-side with Cloud Code. Its structural strengths perfectly patch Cloud Code's minor gaps and vice versa.</p>
+                </div>
+                <div class="card">
+                    <h3>Hermes Agent</h3>
+                    <p>The on-the-go knowledge ally. Built cleanly on top of Telegram to execute instantaneous cron scripts and retrieve high-level knowledge operations without full terminal setups.</p>
+                </div>
+                <div class="card">
+                    <h3>Claude Chat</h3>
+                    <p>Retained purely for standard web interface sessions when making a rapid, isolated inquiry doesn't warrant waking up full infrastructure frameworks.</p>
+                </div>
+                <div class="card">
+                    <h3>Perplexity & Grok</h3>
+                    <p>The core research dynamic. Perplexity handles data gathering and structured agent injections, while Grok on X is weaponized to surface nuanced real-time social insights.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Specialists & Experimentation</h2>
+            <p class="subtitle" style="text-align: left; width: 100%; max-width: 1000px; margin-bottom: 1rem;">Tools serving precise micro-tasks or under active surveillance.</p>
+            <div class="grid-container">
+                <div class="card">
+                    <h3><span class="badge badge-spec">B-Tier Specialists</span></h3>
+                    <p style="margin-top:0.5rem;">
+                        <strong>Apify:</strong> Web scraping & targeted workflow automations.<br>
+                        <strong>GPT Image 2 & Nano Banana 2:</strong> Asset design and prompt-based modifications.<br>
+                        <strong>Key.AI & Open Router:</strong> Strategic multi-model routing layers.<br>
+                        <strong>HeyGen & 11 Labs:</strong> Visual avatar adjustments and deep voice clones.<br>
+                        <strong>Cloud Design:</strong> Unifying landing page designs across team systems.
+                    </p>
+                </div>
+                <div class="card">
+                    <h3><span class="badge badge-spec">C-Tier Experimentation</span></h3>
+                    <p style="margin-top:0.5rem;">
+                        <strong>Ollama:</strong> Kept in the loop solely to experiment with local open-source systems.<br>
+                        <strong>Gemini & Manis:</strong> Tracked closely to evaluate rapid feature evolutions, though not deep enough to shake up the daily setup.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>The "Graduated" Tier <span class="badge badge-grad">Moved Past</span></h2>
+            <div class="framework-content">
+                <p>Features legacy mainstays including <strong>ChatGPT, OpenClaude, Cursor, NotebookLM, n8n, Poppy AI,</strong> and <strong>WhisperFlow</strong>.</p>
+                <br>
+                <p><strong>The Core Realization:</strong> Graduation does <em>not</em> mean a tool is inadequate. Instead, it signifies structural maturity:</p>
+                <ul>
+                    <li><strong>Feature Extraction:</strong> You dissect the features you rely on and rebuild them in a hyper-customized, highly cost-efficient way inside your core ecosystem (e.g., dropping n8n/Poppy AI to code direct scripts inside Cloud Code).</li>
+                    <li><strong>Direct Replacement:</strong> Emerging platforms natively supersede historical stacks (e.g., WhisperFlow completely replaced by GLO).</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Mindset: Agents are Just Harnesses</h2>
+            <div class="framework-content">
+                <p>Whether you deploy Cloud Code, CodeEx, Hermes, or OpenClaude, recognize a universal truth: <strong>Coding agents are superficial interfaces wrapped around a directory.</strong></p>
+                <br>
+                <p><strong>The Law of Directories:</strong></p>
+                <p>Build and maintain your local directories, logic sheets, custom scripts, and prompt bases to be entirely tool-independent. Platforms rise and fall—market dominance shifts overnight. When your file infrastructure is cleanly structured, you can hot-swap any underlying AI harness seamlessly without corrupting your core architecture.</p>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Mindset: Protect Your North Star</h2>
+            <div class="framework-content">
+                <p>The single greatest hazard for modern builders is hyper-distraction driven by the relentless, daily AI news cycle.</p>
+                <br>
+                <ul>
+                    <li><strong>The YouTube Trap:</strong> Creators experiment with <em>everything</em> because their North Star is evaluation, tracking trends, and content production.</li>
+                    <li><strong>Your Mission:</strong> If your goal is executing a highly optimized business or workflow, chasing every newly announced agent library is a distraction loop.</li>
+                    <li><strong>"What" vs. "How":</strong> Focus heavily on knowing <strong>what</strong> exists so it can be cataloged. Banish the urge to learn <strong>how</strong> to build with it unless it directly unblocks your immediate, non-negotiable objective.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>The 20% Productivity Dip Rule</h2>
+            <div class="framework-content">
+                <p>Migrating to a brand-new stack or software structure comes with a steep psychological fee: <strong>An immediate, guaranteed ~20% drop in structural output and efficiency.</strong></p>
+                <br>
+                <p><strong>The Operational Calculus:</strong></p>
+                <p>Before executing an infrastructure swap, strictly map your trajectory. Will the incoming learning curve and immediate drop ultimately propel your business past historical plateaus and onto a vastly superior tier? If the recovery line merely brings you back to parity with your original baseline, <strong>veto the shift entirely.</strong> The friction isn't worth the change.</p>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Needle Moved vs. Hours Worked</h2>
+            <div class="framework-content">
+                <p>Ditch the comforting illusion of the grueling 12-hour workday. Spending an entire day casually reading forums, sorting channels, mapping concepts, and consuming tutorials yields zero leverage if nothing concrete is built.</p>
+                <br>
+                <p><strong>Tool Agnosticism in Action:</strong></p>
+                <ul>
+                    <li><strong>The Benchmark:</strong> True productivity is purely measured by high-impact outputs completed per hour.</li>
+                    <li><strong>Deconstruct Processes:</strong> Break large pipelines down into distinct baby steps. Stop asking <em>"Which tool is globally best?"</em> and demand <em>"For this micro-task, in this narrow context, which tool extracts maximum leverage?"</em> Combine multi-AI pipelines to build efficiently.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="slide" style="background: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);">
+            <h2>The Practical Action Plan</h2>
+            <div class="framework-content">
+                <p>When the next major tool, framework update, or deep-dive tutorial hits your radar, funnel it through this strict filter:</p>
+                <br>
+                <p><strong>"Does this feature solve an agonizing pain point occurring in my workflow right now?"</strong></p>
+                <br>
+                <p><strong>If NO:</strong> Bookmark the link for your archives, close the browser window immediately, and return to your core work.</p>
+                <p><strong>If YES:</strong> Sandbox it immediately. Avoid artificial, clean mock datasets; stress-test it using live, contextual information without creating structural risk. Review its impact at the end of the week: either codify it into your stack or throw it out to keep your environment lean.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="progress-indicator" id="progress">Slide 1 of 10</div>
+    <div class="controls">
+        <button class="control-btn" id="prevBtn">&larr; Prev</button>
+        <button class="control-btn" id="nextBtn">Next &rarr;</button>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progress = document.getElementById('progress');
+        let currentSlide = 0;
+
+        function updateDeck() {
+            slides.forEach((slide, index) => {
+                if(index === currentSlide) {
+                    slide.classList.add('active');
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+            progress.innerText = `Slide ${currentSlide + 1} of ${slides.length}`;
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateDeck();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateDeck();
+            }
+        }
+
+        // Button Click Event Listeners
+        nextBtn.addEventListener('click', (e) => { e.stopPropagation(); nextSlide(); });
+        prevBtn.addEventListener('click', (e) => { e.stopPropagation(); prevSlide(); });
+
+        // Global Keyboard Event Listeners
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+
+        // Global Tap/Click Event Listener (excluding buttons/links themselves)
+        document.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') {
+                // If clicked on the right 60% of the screen go next, else go prev
+                if (e.clientX > window.innerWidth * 0.4) {
+                    nextSlide();
+                } else {
+                    prevSlide();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

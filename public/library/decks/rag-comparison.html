@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG vs Agentic RAG vs CAG</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e2a;
+    --border: #252a38;
+    --rag: #e8704a;
+    --rag-dim: rgba(232,112,74,0.12);
+    --rag-mid: rgba(232,112,74,0.25);
+    --arag: #4caf7d;
+    --arag-dim: rgba(76,175,125,0.12);
+    --arag-mid: rgba(76,175,125,0.25);
+    --cag: #5b9cf6;
+    --cag-dim: rgba(91,156,246,0.12);
+    --cag-mid: rgba(91,156,246,0.25);
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --subtle: #374151;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BACKGROUND TEXTURE */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(ellipse 80% 40% at 50% -10%, rgba(91,156,246,0.07) 0%, transparent 60%),
+                      radial-gradient(ellipse 60% 30% at 0% 60%, rgba(232,112,74,0.05) 0%, transparent 50%),
+                      radial-gradient(ellipse 60% 30% at 100% 40%, rgba(76,175,125,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 48px 24px 64px; }
+
+  /* HEADER */
+  header { text-align: center; margin-bottom: 52px; }
+
+  .title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+
+  .title-word {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .title-word.rag { color: var(--rag); }
+  .title-word.arag { color: var(--arag); }
+  .title-word.cag { color: var(--cag); }
+  .vs-sep { color: var(--muted); font-family: 'Space Mono', monospace; font-size: 1.4rem; }
+
+  .subtitle-row {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-top: 14px;
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: 780px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .sub-badge {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-align: center;
+  }
+  .sub-badge.rag { background: var(--rag); color: #fff; }
+  .sub-badge.arag { background: var(--arag); color: #0d1a12; }
+  .sub-badge.cag { background: var(--cag); color: #0a1428; }
+
+  /* MAIN GRID */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  .col-card {
+    background: var(--surface);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    animation: fadeUp 0.6s ease both;
+  }
+  .col-card:nth-child(1) { animation-delay: 0.05s; }
+  .col-card:nth-child(2) { animation-delay: 0.15s; }
+  .col-card:nth-child(3) { animation-delay: 0.25s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .col-header {
+    padding: 18px 22px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .col-header.rag { background: var(--rag-dim); border-color: rgba(232,112,74,0.2); }
+  .col-header.arag { background: var(--arag-dim); border-color: rgba(76,175,125,0.2); }
+  .col-header.cag { background: var(--cag-dim); border-color: rgba(91,156,246,0.2); }
+
+  .col-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .col-label.rag { color: var(--rag); }
+  .col-label.arag { color: var(--arag); }
+  .col-label.cag { color: var(--cag); }
+
+  .col-body { padding: 20px 18px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+
+  /* STEP */
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative;
+  }
+  .step:hover { transform: translateX(3px); }
+  .step.rag:hover { border-color: var(--rag); }
+  .step.arag:hover { border-color: var(--arag); }
+  .step.cag:hover { border-color: var(--cag); }
+
+  .step-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-num.rag { background: var(--rag); color: #fff; }
+  .step-num.arag { background: var(--arag); color: #0d1a12; }
+  .step-num.cag { background: var(--cag); color: #0a1428; }
+
+  .step-content { flex: 1; }
+  .step-title { font-size: 0.88rem; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .step-sub { font-size: 0.75rem; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+
+  .sub-steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin: 2px 0;
+    padding: 4px 0 4px 38px;
+  }
+  .sub-step {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 6px 10px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .loop-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: rgba(76,175,125,0.15);
+    border: 1px dashed var(--arag);
+    font-size: 0.72rem;
+    color: var(--arag);
+    font-weight: 600;
+    margin: 2px 0 2px 38px;
+    width: fit-content;
+  }
+  .loop-badge::before { content: '↺'; font-size: 0.9rem; }
+
+  /* FINAL RESPONSE */
+  .final-btn {
+    margin-top: 14px;
+    padding: 14px 20px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .final-btn.rag { background: var(--rag); color: #fff; }
+  .final-btn.arag { background: var(--arag); color: #0d1a12; }
+  .final-btn.cag { background: var(--cag); color: #0a1428; }
+  .final-btn::before { content: '▶'; font-size: 0.75rem; }
+
+  /* TOOLS SECTION */
+  .tools-section {
+    margin-top: 14px;
+    padding: 14px 18px;
+    border-top: 1px solid var(--border);
+  }
+  .tools-header {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tools-header.rag { color: var(--rag); }
+  .tools-header.arag { color: var(--arag); }
+  .tools-header.cag { color: var(--cag); }
+  .tools-header::before { content: '⬡'; font-size: 0.8rem; }
+
+  .tools-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .tool-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.77rem;
+    font-weight: 500;
+  }
+  .tool-name { color: var(--text); }
+  .tool-role { color: var(--muted); font-size: 0.68rem; margin-top: 1px; }
+
+  /* COMPARISON TABLE */
+  .comparison-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    animation: fadeUp 0.6s ease 0.35s both;
+  }
+  .comparison-title {
+    padding: 18px 24px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    letter-spacing: -0.3px;
+    background: var(--surface2);
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--surface2); }
+  th {
+    padding: 12px 18px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-align: left;
+  }
+  th:nth-child(1) { color: var(--muted); width: 16%; }
+  th:nth-child(2) { color: var(--rag); }
+  th:nth-child(3) { color: var(--arag); }
+  th:nth-child(4) { color: var(--cag); }
+
+  tbody tr { border-top: 1px solid var(--border); transition: background 0.2s; }
+  tbody tr:hover { background: var(--surface2); }
+  td {
+    padding: 14px 18px;
+    font-size: 0.84rem;
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  td:nth-child(1) {
+    font-weight: 700;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+  }
+  td:nth-child(2) { color: #c8cdd8; }
+  td:nth-child(3) { color: #c8cdd8; }
+  td:nth-child(4) { color: #c8cdd8; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+  }
+  .badge.low { background: rgba(76,175,125,0.2); color: var(--arag); }
+  .badge.high { background: rgba(239,68,68,0.2); color: #f87171; }
+  .badge.medium { background: rgba(251,191,36,0.2); color: #fbbf24; }
+  .badge.minimal { background: rgba(107,114,128,0.2); color: var(--muted); }
+  .badge.deep { background: rgba(76,175,125,0.2); color: var(--arag); }
+  .badge.implicit { background: rgba(91,156,246,0.2); color: var(--cag); }
+
+  /* RESPONSIVE */
+  @media (max-width: 860px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .sub-steps { grid-template-columns: 1fr 1fr; }
+    table { font-size: 0.78rem; }
+    td, th { padding: 10px 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <header>
+    <div class="title-row">
+      <span class="title-word rag">RAG</span>
+      <span class="vs-sep">vs</span>
+      <span class="title-word arag">Agentic RAG</span>
+      <span class="vs-sep">vs</span>
+      <span class="title-word cag">CAG</span>
+    </div>
+    <div class="subtitle-row">
+      <div class="sub-badge rag">Retrieval-Augmented Generation</div>
+      <div class="sub-badge arag">Agentic Retrieval-Augmented Generation</div>
+      <div class="sub-badge cag">Context-Augmented Generation</div>
+    </div>
+  </header>
+
+  <!-- MAIN COLUMNS -->
+  <div class="main-grid">
+
+    <!-- RAG -->
+    <div class="col-card">
+      <div class="col-header rag">
+        <span class="col-label rag">RAG</span>
+      </div>
+      <div class="col-body">
+
+        <div class="step rag">
+          <div class="step-num rag">1</div>
+          <div class="step-content">
+            <div class="step-title">User Query</div>
+            <div class="step-sub">Raw input from user</div>
+          </div>
+        </div>
+
+        <div class="step rag">
+          <div class="step-num rag">2</div>
+          <div class="step-content">
+            <div class="step-title">Query Encoding</div>
+            <div class="step-sub">Tokenize &amp; embed</div>
+          </div>
+        </div>
+        <div class="sub-steps">
+          <div class="sub-step">Tokenization</div>
+          <div class="sub-step">Embedding generation</div>
+        </div>
+
+        <div class="step rag">
+          <div class="step-num rag">3</div>
+          <div class="step-content">
+            <div class="step-title">Knowledge Retrieval</div>
+            <div class="step-sub">Vector DB similarity search</div>
+          </div>
+        </div>
+
+        <div class="step rag">
+          <div class="step-num rag">4</div>
+          <div class="step-content">
+            <div class="step-title">Context Selection</div>
+            <div class="step-sub">Filter top-k passages</div>
+          </div>
+        </div>
+        <div class="sub-steps">
+          <div class="sub-step">Rank chunks</div>
+          <div class="sub-step">Filter noise</div>
+        </div>
+
+        <div class="step rag">
+          <div class="step-num rag">5</div>
+          <div class="step-content">
+            <div class="step-title">Fusion Step</div>
+            <div class="step-sub">Merge query + context</div>
+          </div>
+        </div>
+
+        <div class="step rag">
+          <div class="step-num rag">6</div>
+          <div class="step-content">
+            <div class="step-title">Generation Phase</div>
+            <div class="step-sub">LLM produces output</div>
+          </div>
+        </div>
+
+        <div class="step rag">
+          <div class="step-num rag">7</div>
+          <div class="step-content">
+            <div class="step-title">Validation Layer</div>
+            <div class="step-sub">Quality check</div>
+          </div>
+        </div>
+        <div class="sub-steps">
+          <div class="sub-step">Accuracy check</div>
+          <div class="sub-step">Bias removal</div>
+        </div>
+
+        <div class="step rag">
+          <div class="step-num rag">8</div>
+          <div class="step-content">
+            <div class="step-title">Output Formatting</div>
+            <div class="step-sub">Structure &amp; clean response</div>
+          </div>
+        </div>
+        <div class="sub-steps">
+          <div class="sub-step">Citation tagging</div>
+          <div class="sub-step">Format output</div>
+        </div>
+
+        <div class="final-btn rag">Final Response</div>
+      </div>
+
+      <div class="tools-section">
+        <div class="tools-header rag">Popular RAG Tools</div>
+        <div class="tools-grid">
+          <div class="tool-item"><div class="tool-name">LangChain</div><div class="tool-role">Orchestration</div></div>
+          <div class="tool-item"><div class="tool-name">LlamaIndex</div><div class="tool-role">Data framework</div></div>
+          <div class="tool-item"><div class="tool-name">Pinecone</div><div class="tool-role">Vector DB</div></div>
+          <div class="tool-item"><div class="tool-name">Weaviate</div><div class="tool-role">Vector DB</div></div>
+          <div class="tool-item"><div class="tool-name">Qdrant</div><div class="tool-role">Vector search</div></div>
+          <div class="tool-item"><div class="tool-name">Cohere</div><div class="tool-role">Embeddings</div></div>
+          <div class="tool-item"><div class="tool-name">HuggingFace</div><div class="tool-role">Models</div></div>
+          <div class="tool-item"><div class="tool-name">ChromaDB</div><div class="tool-role">Vector store</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AGENTIC RAG -->
+    <div class="col-card">
+      <div class="col-header arag">
+        <span class="col-label arag">Agentic RAG</span>
+      </div>
+      <div class="col-body">
+
+        <div class="step arag">
+          <div class="step-num arag">1</div>
+          <div class="step-content">
+            <div class="step-title">User Query</div>
+            <div class="step-sub">Complex / multi-step input</div>
+          </div>
+        </div>
+
+        <div class="step arag">
+          <div class="step-num arag">2</div>
+          <div class="step-content">
+            <div class="step-title">Query Decomposition</div>
+            <div class="step-sub">Break into sub-tasks</div>
+          </div>
+        </div>
+
+        <div class="step arag">
+          <div class="step-num arag">3</div>
+          <div class="step-content">
+            <div class="step-title">Agent Planning</div>
+            <div class="step-sub">Select tools &amp; strategy</div>
+          </div>
+        </div>
+        <div class="sub-steps">
+          <div class="sub-step">Search tools</div>
+          <div class="sub-step">Vector DB</div>
+          <div class="sub-step" style="grid-column: span 2; max-width: 50%; margin: 0 auto;">APIs</div>
+        </div>
+
+        <div class="step arag">
+          <div class="step-num arag">4</div>
+          <div class="step-content">
+            <div class="step-title">Iterative Retrieval</div>
+            <div class="step-sub">Multi-hop evidence gathering</div>
+          </div>
+        </div>
+        <div class="loop-badge">Re-query if insufficient</div>
+
+        <div class="step arag">
+          <div class="step-num arag">5</div>
+          <div class="step-content">
+            <div class="step-title">Reasoning &amp; Synthesis</div>
+            <div class="step-sub">Multi-step chain-of-thought</div>
+          </div>
+        </div>
+
+        <div class="step arag">
+          <div class="step-num arag">6</div>
+          <div class="step-content">
+            <div class="step-title">Generation Phase</div>
+            <div class="step-sub">Grounded LLM output</div>
+          </div>
+        </div>
+
+        <div class="step arag">
+          <div class="step-num arag">7</div>
+          <div class="step-content">
+            <div class="step-title">Self-Reflection</div>
+            <div class="step-sub">Agent critiques own output</div>
+          </div>
+        </div>
+        <div class="sub-steps">
+          <div class="sub-step">Fact verification</div>
+          <div class="sub-step">Source citation</div>
+        </div>
+
+        <div class="step arag">
+          <div class="step-num arag">8</div>
+          <div class="step-content">
+            <div class="step-title">Refinement Loop</div>
+            <div class="step-sub">Improve until threshold met</div>
+          </div>
+        </div>
+        <div class="sub-steps">
+          <div class="sub-step">Quality score</div>
+          <div class="sub-step">Re-generate if low</div>
+        </div>
+
+        <div class="final-btn arag">Final Response</div>
+      </div>
+
+      <div class="tools-section">
+        <div class="tools-header arag">Popular Agentic RAG Tools</div>
+        <div class="tools-grid">
+          <div class="tool-item"><div class="tool-name">Claude</div><div class="tool-role">Reasoning agent</div></div>
+          <div class="tool-item"><div class="tool-name">OpenAI Agents</div><div class="tool-role">Agent SDK</div></div>
+          <div class="tool-item"><div class="tool-name">LangGraph</div><div class="tool-role">Agent workflows</div></div>
+          <div class="tool-item"><div class="tool-name">CrewAI</div><div class="tool-role">Multi-agent</div></div>
+          <div class="tool-item"><div class="tool-name">AutoGen</div><div class="tool-role">Agent framework</div></div>
+          <div class="tool-item"><div class="tool-name">Haystack</div><div class="tool-role">NLP pipelines</div></div>
+          <div class="tool-item"><div class="tool-name">Tavily</div><div class="tool-role">Web search</div></div>
+          <div class="tool-item"><div class="tool-name">E2B</div><div class="tool-role">Code execution</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAG -->
+    <div class="col-card">
+      <div class="col-header cag">
+        <span class="col-label cag">CAG</span>
+      </div>
+      <div class="col-body">
+
+        <div class="step cag">
+          <div class="step-num cag">1</div>
+          <div class="step-content">
+            <div class="step-title">User Query</div>
+            <div class="step-sub">Raw input from user</div>
+          </div>
+        </div>
+
+        <div class="step cag">
+          <div class="step-num cag">2</div>
+          <div class="step-content">
+            <div class="step-title">Query Encoding</div>
+            <div class="step-sub">Prepare for context lookup</div>
+          </div>
+        </div>
+
+        <div class="step cag">
+          <div class="step-num cag">3</div>
+          <div class="step-content">
+            <div class="step-title">Context Injection</div>
+            <div class="step-sub">Pre-load full knowledge</div>
+          </div>
+        </div>
+        <div class="sub-steps">
+          <div class="sub-step">Domain memory</div>
+          <div class="sub-step">Knowledge base</div>
+        </div>
+
+        <div class="step cag">
+          <div class="step-num cag">4</div>
+          <div class="step-content">
+            <div class="step-title">Context Expansion</div>
+            <div class="step-sub">Enrich with related context</div>
+          </div>
+        </div>
+
+        <div class="step cag">
+          <div class="step-num cag">5</div>
+          <div class="step-content">
+            <div class="step-title">Fusion Step</div>
+            <div class="step-sub">Merge context into prompt</div>
+          </div>
+        </div>
+
+        <div class="step cag">
+          <div class="step-num cag">6</div>
+          <div class="step-content">
+            <div class="step-title">Generation Phase</div>
+            <div class="step-sub">Long-context LLM generation</div>
+          </div>
+        </div>
+
+        <div class="step cag">
+          <div class="step-num cag">7</div>
+          <div class="step-content">
+            <div class="step-title">Validation Layer</div>
+            <div class="step-sub">Cross-check with context</div>
+          </div>
+        </div>
+        <div class="sub-steps">
+          <div class="sub-step">Consistency check</div>
+          <div class="sub-step">Context alignment</div>
+        </div>
+
+        <div class="step cag">
+          <div class="step-num cag">8</div>
+          <div class="step-content">
+            <div class="step-title">Context Pruning</div>
+            <div class="step-sub">Remove irrelevant context</div>
+          </div>
+        </div>
+        <div class="sub-steps">
+          <div class="sub-step">Trim window</div>
+          <div class="sub-step">Pin key facts</div>
+        </div>
+
+        <div class="final-btn cag">Final Response</div>
+      </div>
+
+      <div class="tools-section">
+        <div class="tools-header cag">Popular CAG Tools</div>
+        <div class="tools-grid">
+          <div class="tool-item"><div class="tool-name">Claude 3.7</div><div class="tool-role">200K context</div></div>
+          <div class="tool-item"><div class="tool-name">GPT-4o</div><div class="tool-role">128K context</div></div>
+          <div class="tool-item"><div class="tool-name">Gemini 1.5</div><div class="tool-role">1M context</div></div>
+          <div class="tool-item"><div class="tool-name">Mistral</div><div class="tool-role">Long context</div></div>
+          <div class="tool-item"><div class="tool-name">Notion AI</div><div class="tool-role">Workspace context</div></div>
+          <div class="tool-item"><div class="tool-name">Mem.ai</div><div class="tool-role">Memory layer</div></div>
+          <div class="tool-item"><div class="tool-name">Cursor</div><div class="tool-role">Codebase context</div></div>
+          <div class="tool-item"><div class="tool-name">Replit AI</div><div class="tool-role">Project context</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-grid -->
+
+  <!-- COMPARISON TABLE -->
+  <div class="comparison-section">
+    <div class="comparison-title">⟳ Head-to-Head Comparison</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Dimension</th>
+          <th>RAG</th>
+          <th>Agentic RAG</th>
+          <th>CAG</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Retrieval</td>
+          <td>Single-pass vector search</td>
+          <td>Multi-hop, iterative, tool-driven</td>
+          <td>No retrieval — pre-loaded context</td>
+        </tr>
+        <tr>
+          <td>Reasoning</td>
+          <td><span class="badge minimal">Minimal</span></td>
+          <td><span class="badge deep">Deep chain-of-thought</span></td>
+          <td><span class="badge implicit">Implicit, within context window</span></td>
+        </tr>
+        <tr>
+          <td>Latency</td>
+          <td><span class="badge low">Low</span></td>
+          <td><span class="badge high">High (multi-step)</span></td>
+          <td><span class="badge medium">Medium (context load)</span></td>
+        </tr>
+        <tr>
+          <td>Best for</td>
+          <td>Fast, factual Q&amp;A over large corpora</td>
+          <td>Complex, multi-step research &amp; planning tasks</td>
+          <td>Domain-specific tasks with bounded, stable knowledge</td>
+        </tr>
+        <tr>
+          <td>Complexity</td>
+          <td>Low — straightforward pipeline</td>
+          <td>High — agent orchestration required</td>
+          <td>Medium — context management critical</td>
+        </tr>
+        <tr>
+          <td>Cost profile</td>
+          <td>Moderate retrieval + inference cost</td>
+          <td>Highest — many LLM calls per query</td>
+          <td>Moderate — large prompt tokens per call</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>

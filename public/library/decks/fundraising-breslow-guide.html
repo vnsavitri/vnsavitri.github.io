@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fundraising — Ryan Breslow | Vivid's Playbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f0e0d;
+    --paper: #f5f0e8;
+    --paper-dark: #ede7d8;
+    --accent: #c94a1a;
+    --accent-light: #f2e0d8;
+    --gold: #b08a3e;
+    --gold-light: #f5edd8;
+    --muted: #6b6258;
+    --rule: #d4cbbf;
+    --chapter-bg: #1a1714;
+    --chapter-text: #f5f0e8;
+    --cta-bg: #c94a1a;
+    --cta-text: #fff8f5;
+    --fs-xl: clamp(2.2rem, 5vw, 3.8rem);
+    --fs-lg: clamp(1.5rem, 3vw, 2.2rem);
+    --fs-md: clamp(1.1rem, 2vw, 1.35rem);
+    --fs-body: clamp(1rem, 1.5vw, 1.125rem);
+    --fs-sm: 0.875rem;
+    --fs-xs: 0.8rem;
+    --lh: 1.75;
+    --max: 860px;
+    --radius: 4px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-size: var(--fs-body);
+    line-height: var(--lh);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--chapter-bg);
+    color: var(--chapter-text);
+    padding: clamp(3rem, 8vw, 7rem) clamp(1.5rem, 5vw, 3rem) clamp(2.5rem, 6vw, 5rem);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 39px,
+      rgba(245,240,232,0.04) 39px,
+      rgba(245,240,232,0.04) 40px
+    );
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: var(--max);
+    margin: 0 auto;
+    position: relative;
+  }
+  .hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .hero-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--gold);
+    opacity: 0.4;
+    max-width: 120px;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: var(--fs-xl);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+  }
+  .hero h1 em {
+    color: var(--accent);
+    font-style: italic;
+  }
+  .hero-sub {
+    font-size: var(--fs-md);
+    color: rgba(245,240,232,0.7);
+    font-weight: 300;
+    margin-bottom: 2rem;
+    line-height: 1.4;
+  }
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    font-family: 'DM Mono', monospace;
+    font-size: var(--fs-xs);
+    color: rgba(245,240,232,0.5);
+    letter-spacing: 0.08em;
+  }
+  .hero-meta span { display: flex; align-items: center; gap: 0.4rem; }
+
+  .caveat-banner {
+    margin: 0 auto;
+    max-width: var(--max);
+    padding: 0 clamp(1.5rem, 5vw, 3rem);
+    transform: translateY(-50%);
+  }
+  .caveat-inner {
+    background: var(--gold-light);
+    border-left: 4px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.4rem;
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+    color: #4a3e28;
+  }
+  .caveat-inner strong {
+    color: #7a5c18;
+    font-weight: 600;
+  }
+
+  /* ── NAV ── */
+  .toc {
+    max-width: var(--max);
+    margin: 0 auto 3rem;
+    padding: 0 clamp(1.5rem, 5vw, 3rem);
+  }
+  .toc-label {
+    font-family: 'DM Mono', monospace;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+  .toc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.5rem;
+  }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.75rem;
+    background: var(--paper-dark);
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: var(--ink);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
+    border: 1px solid var(--rule);
+  }
+  .toc-item:hover { background: var(--accent); color: white; border-color: var(--accent); }
+  .toc-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    font-weight: 500;
+    min-width: 1.5rem;
+  }
+  .toc-item:hover .toc-num { color: rgba(255,255,255,0.7); }
+
+  /* ── MAIN CONTENT ── */
+  .content {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 clamp(1.5rem, 5vw, 3rem) 5rem;
+  }
+
+  /* ── CHAPTER BLOCK ── */
+  .chapter {
+    margin-bottom: 4rem;
+    padding-bottom: 4rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .chapter:last-of-type { border-bottom: none; }
+
+  .chapter-header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.25rem;
+    align-items: start;
+    margin-bottom: 1.75rem;
+  }
+  .chapter-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: var(--rule);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    padding-top: 0.1rem;
+    user-select: none;
+  }
+  .chapter-title-group { padding-top: 0.25rem; }
+  .chapter-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.35rem;
+    display: block;
+  }
+  .chapter-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.3rem, 2.5vw, 1.75rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  /* Thesis pull-quote */
+  .thesis {
+    background: var(--chapter-bg);
+    color: var(--chapter-text);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: clamp(1.05rem, 1.8vw, 1.2rem);
+    line-height: 1.5;
+    position: relative;
+  }
+  .thesis::before {
+    content: '"';
+    font-size: 4rem;
+    line-height: 0;
+    position: absolute;
+    top: 1.4rem;
+    left: 1rem;
+    color: var(--accent);
+    opacity: 0.5;
+    font-style: normal;
+  }
+  .thesis p { padding-left: 1.25rem; }
+
+  /* body prose */
+  .chapter p { margin-bottom: 1.1rem; }
+  .chapter p:last-of-type { margin-bottom: 0; }
+
+  /* scenario block */
+  .scenario {
+    background: var(--accent-light);
+    border-radius: var(--radius);
+    padding: 1.4rem 1.5rem;
+    margin: 1.75rem 0;
+    position: relative;
+  }
+  .scenario-label {
+    font-family: 'DM Mono', monospace;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .scenario-label::before {
+    content: '▶';
+    font-size: 0.6rem;
+  }
+  .scenario-venture {
+    font-weight: 600;
+    color: var(--accent);
+    font-size: var(--fs-sm);
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  .scenario p { font-size: var(--fs-sm); line-height: 1.7; margin-bottom: 0.75rem; }
+  .scenario p:last-child { margin-bottom: 0; }
+  .scenario .dialogue {
+    background: white;
+    border-left: 3px solid var(--accent);
+    padding: 0.75rem 1rem;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-style: italic;
+    font-size: var(--fs-sm);
+    margin: 0.75rem 0;
+    color: #3a1e10;
+    line-height: 1.6;
+  }
+
+  /* inline CTA */
+  .chapter-cta {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    background: var(--gold-light);
+    border-radius: var(--radius);
+    padding: 1.2rem 1.4rem;
+    margin-top: 1.75rem;
+    border: 1px solid rgba(176,138,62,0.25);
+  }
+  .cta-icon {
+    font-size: 1.3rem;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+  .chapter-cta p {
+    font-size: var(--fs-sm);
+    margin: 0;
+    line-height: 1.65;
+    color: #3d2e10;
+  }
+  .chapter-cta strong {
+    color: #7a5c18;
+    font-weight: 600;
+    display: block;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* divider */
+  .rule { border: none; border-top: 1px solid var(--rule); margin: 2rem 0; }
+
+  /* ── CTA MASTER CARD ── */
+  .cta-section {
+    background: var(--chapter-bg);
+    padding: clamp(3rem, 7vw, 5rem) clamp(1.5rem, 5vw, 3rem);
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-section::before {
+    content: 'PLAYBOOK';
+    position: absolute;
+    right: -1rem;
+    top: 50%;
+    transform: translateY(-50%) rotate(90deg);
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(4rem, 12vw, 9rem);
+    font-weight: 900;
+    color: rgba(255,255,255,0.03);
+    letter-spacing: 0.05em;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .cta-inner {
+    max-width: var(--max);
+    margin: 0 auto;
+    position: relative;
+  }
+  .cta-header {
+    margin-bottom: 2.5rem;
+  }
+  .cta-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+  .cta-headline {
+    font-family: 'Playfair Display', serif;
+    font-size: var(--fs-lg);
+    font-weight: 900;
+    color: var(--chapter-text);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+  .cta-headline em { color: var(--accent); font-style: italic; }
+  .cta-desc {
+    color: rgba(245,240,232,0.6);
+    font-size: var(--fs-sm);
+    margin-top: 0.75rem;
+    max-width: 540px;
+    line-height: 1.7;
+  }
+
+  .cta-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .cta-table thead tr {
+    background: rgba(201,74,26,0.25);
+  }
+  .cta-table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-family: 'DM Mono', monospace;
+    font-size: var(--fs-xs);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    border-bottom: 1px solid rgba(201,74,26,0.3);
+  }
+  .cta-table tbody tr {
+    border-bottom: 1px solid rgba(245,240,232,0.07);
+    transition: background 0.12s;
+  }
+  .cta-table tbody tr:hover { background: rgba(245,240,232,0.04); }
+  .cta-table td {
+    padding: 0.9rem 1rem;
+    font-size: var(--fs-sm);
+    line-height: 1.55;
+    vertical-align: top;
+  }
+  .cta-table td:first-child {
+    color: rgba(245,240,232,0.55);
+    font-style: italic;
+    width: 36%;
+    font-family: 'Playfair Display', serif;
+  }
+  .cta-table td:last-child {
+    color: rgba(245,240,232,0.9);
+    font-weight: 400;
+  }
+  .cta-table .action-badge {
+    display: inline-block;
+    background: rgba(201,74,26,0.2);
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: var(--paper-dark);
+    padding: 2.5rem clamp(1.5rem, 5vw, 3rem);
+    text-align: center;
+    border-top: 1px solid var(--rule);
+  }
+  .footer p {
+    font-size: var(--fs-xs);
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 600px;
+    margin: 0 auto;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── UTILS ── */
+  .tag {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.55rem;
+    border-radius: 2px;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 500;
+    vertical-align: middle;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .chapter-header { grid-template-columns: 1fr; }
+    .chapter-number { font-size: 2.2rem; }
+    .cta-table td:first-child { width: 40%; }
+    .cta-table th, .cta-table td { padding: 0.7rem 0.75rem; }
+  }
+
+  /* ── SCROLL ANIMATIONS ── */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-inner">
+    <p class="hero-label">Vivid's Annotated Playbook</p>
+    <h1>Fundraising<br><em>by Ryan Breslow</em></h1>
+    <p class="hero-sub">Chapter-by-chapter breakdown — with personalised scenarios<br>for Synbiote, sorzero.com, and Kingdom of Hype.</p>
+    <div class="hero-meta">
+      <span>📖 12 Chapters</span>
+      <span>🎯 Seed &amp; Pre-Seed Focus</span>
+      <span>🌏 Sydney-based Founder</span>
+      <span>⚠️ Read the caveat below first</span>
+    </div>
+  </div>
+</header>
+
+<!-- CAVEAT BANNER -->
+<div class="caveat-banner">
+  <div class="caveat-inner">
+    <strong>⚠️ Honest context before we start.</strong> Ryan Breslow's process framework is tactically solid and widely cited — but the man himself had a very public meltdown at Bolt (see the March 2024 Forbes piece). At least one practising founder who actually raised capital walked back their praise after reading critically. Takeaway: <strong>separate the playbook from the player.</strong> The mechanics work. Use them. Don't idolise the source.
+  </div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<nav class="toc">
+  <p class="toc-label">Contents</p>
+  <div class="toc-grid">
+    <a href="#ch00" class="toc-item"><span class="toc-num">00</span> Context &amp; Framing</a>
+    <a href="#ch01" class="toc-item"><span class="toc-num">01</span> The Mindset</a>
+    <a href="#ch02" class="toc-item"><span class="toc-num">02</span> Lay the Soil</a>
+    <a href="#ch03" class="toc-item"><span class="toc-num">03</span> Plant the Seeds</a>
+    <a href="#ch04" class="toc-item"><span class="toc-num">04</span> First &amp; Second Meetings</a>
+    <a href="#ch05" class="toc-item"><span class="toc-num">05</span> The Formal Raise</a>
+    <a href="#ch06" class="toc-item"><span class="toc-num">06</span> References</a>
+    <a href="#ch07" class="toc-item"><span class="toc-num">07</span> No's and Yes's</a>
+    <a href="#ch08" class="toc-item"><span class="toc-num">08</span> Good vs Bad Investors</a>
+    <a href="#ch09" class="toc-item"><span class="toc-num">09</span> Board Seats &amp; Control</a>
+    <a href="#ch10" class="toc-item"><span class="toc-num">10</span> Staggered Valuation Caps</a>
+    <a href="#ch11" class="toc-item"><span class="toc-num">11</span> The Pitch</a>
+    <a href="#ch12" class="toc-item"><span class="toc-num">12</span> Later Rounds</a>
+    <a href="#cta-card" class="toc-item"><span class="toc-num">✦</span> Master CTA Card</a>
+  </div>
+</nav>
+
+<!-- CONTENT -->
+<main class="content">
+
+  <!-- CH 00 -->
+  <section class="chapter fade-in" id="ch00">
+    <div class="chapter-header">
+      <div class="chapter-number">00</div>
+      <div class="chapter-title-group">
+        <span class="chapter-tag">Framing</span>
+        <h2 class="chapter-title">Context &amp; Ground Rules</h2>
+      </div>
+    </div>
+    <div class="thesis"><p>This is a seed and pre-seed playbook. Authenticity matters more than any tactic. Treat fundraising as a skill — not luck — and practise it accordingly.</p></div>
+    <p>Breslow opens by setting the playing field. He's writing for founders at the terrifying, ambiguous, relationship-heavy early stage — not for someone closing a Series B. The book is short by design: he's distilling process, not padding a narrative.</p>
+    <p>His six starting premises: this is seed/pre-seed; minimise chance; authenticity is paramount; don't take advice from lucky people, only skilled ones; read the guide repeatedly; and have fun — because fundraising is how you get better at articulating what you're building.</p>
+    <p>For context: Synbiote is squarely in pre-seed territory. Kingdom of Hype is concept-stage. sorzero.com is bootstrapped with a potential angel conversation ahead. All three benefit from exactly this playbook — before a big institutional round is even relevant.</p>
+  </section>
+
+  <!-- CH 01 -->
+  <section class="chapter fade-in" id="ch01">
+    <div class="chapter-header">
+      <div class="chapter-number">01</div>
+      <div class="chapter-title-group">
+        <span class="chapter-tag">Mindset</span>
+        <h2 class="chapter-title">Confident and Kind</h2>
+      </div>
+    </div>
+    <div class="thesis"><p>Money is plentiful. You are the scarce resource. Never doubt your own worthiness — or you'll signal to investors that they shouldn't believe in you either.</p></div>
+    <p>This is Breslow's central reframe. Founders tend to show up to investor meetings slightly apologetic — cap in hand, hoping they're good enough. He inverts this. Capital is abundant; great founders are rare. The investor is also trying to make an impression on you.</p>
+    <p>The qualities investors are actually scanning for: relentlessness, uniqueness, positivity, and kindness. Note what's not on that list — perfect business metrics, an MBA, a Stanford pedigree. It's founder character first. Also: avoid high-ego investors. They may grow resentful of a founder who outshines them.</p>
+
+    <div class="scenario">
+      <p class="scenario-label">Your Scenario</p>
+      <span class="scenario-venture">Synbiote — pitching deep tech to cleantech investors</span>
+      <p>You're a solo founder pitching biopolymer solid electrolytes. The temptation is to over-hedge: "we haven't validated the full stack yet," "we're still early," "I don't have a co-founder scientist yet." Don't. You've founded and exited two companies on two continents. You have an AI PM cert, a Stanford GSB entrepreneurship cert, and you're building at the intersection of materials science and AI. That's not a common profile — it's genuinely rare.</p>
+      <p class="dialogue">"Why me? I've built and exited twice. I understand how to take hard technical bets from zero to commercial — and I've lived in twelve countries, which means I know how to navigate ambiguity and build trust across cultures. That's exactly what deep-tech commercialisation demands."</p>
+      <p>Lead with the person first. The business can come second.</p>
+    </div>
+
+    <div class="chapter-cta">
+      <div class="cta-icon">✍️</div>
+      <p><strong>CTA — Do This Now</strong>Write a single paragraph: "Why me, why now?" — not about the company, about you as the founder. Practice saying it aloud until it stops feeling like bragging. That discomfort is the muscle you're training.</p>
+    </div>
+  </section>
+
+  <!-- CH 02 -->
+  <section class="chapter fade-in" id="ch02">
+    <div class="chapter-header">
+      <div class="chapter-number">02</div>
+      <div class="chapter-title-group">
+        <span class="chapter-tag">Step 1 of 3</span>
+        <h2 class="chapter-title">Lay the Soil — Build Your Champion Network</h2>
+      </div>
+    </div>
+    <div class="thesis"><p>A strong introduction changes everything. The best champions aren't investors — they're founders and mentors who can vouch for you with genuine credibility.</p></div>
+    <p>This chapter is about groundwork — the phase that happens months before you ever say the word "raise." Breslow's path was hosting gatherings of interesting people. The goal is to build a small circle of trusted connectors who can open doors not with a cold email, but with a warm, credible "you have to meet this founder."</p>
+    <p>The key insight: investors trust the recommendations of people they know and respect far more than cold outreach or even a beautiful deck. Your champions are the force multiplier. They're not doing you a favour — if you're good, they're doing their network a favour by making the introduction.</p>
+
+    <div class="scenario">
+      <p class="scenario-label">Your Scenario</p>
+      <span class="scenario-venture">sorzero.com &amp; Kingdom of Hype — non-standard ventures need warm intros most</span>
+      <p>sorzero is building an AI SDR agent on n8n. Kingdom of Hype is a fantasy corporate RPG with AI-generated narrative. Neither maps cleanly onto "standard startup." A cold deck won't convey the vision — you need someone who already trusts you to say "you need to talk to this founder."</p>
+      <p>Your fishing ponds: Sydney's Stone &amp; Chalk, Fishburners, Antler Australia, and the global AI-gaming community (Discord servers, GDC network, IndieDB). You've lived across 12 countries — that's a global address book most founders would kill for.</p>
+    </div>
+
+    <div class="chapter-cta">
+      <div class="cta-icon">🗺️</div>
+      <p><strong>CTA — Do This Now</strong>Map 10 names: founders, former colleagues, mentors who have credibility with investors in AI, gaming, or deep tech. For each, note what you'd ask of them (intro, advisory role, reference). That list is your champion shortlist. Start one coffee conversation per week.</p>
+    </div>
+  </section>
+
+  <!-- CH 03 -->
+  <section class="chapter fade-in" id="ch03">
+    <div class="chapter-header">
+      <div class="chapter-number">03</div>
+      <div class="chapter-title-group">
+        <span class="chapter-tag">Step 2 of 3</span>
+        <h2 class="chapter-title">Plant the Seeds — Meet Investors Casually (Before You're Raising)</h2>
+      </div>
+    </div>
+    <div class="thesis"><p>You cannot receive a "no" from a meeting that wasn't a pitch. Meet investors while you're not raising — and you collect intelligence, relationships, and sometimes a yes, with zero downside.</p></div>
+    <p>This is one of the most tactically clever ideas in the book. Breslow argues you should be having informal conversations with investors months before you open a round. Keep it relationship-mode: you care about the space, you're building your network, you'd love their perspective. You're not pitching — you're getting to know people.</p>
+    <p>The benefits are asymmetric: it signals you're relationship-first rather than transaction-first; it shows you're thoughtful about who you partner with; you can't get a hard no (because there was no ask); and sometimes, an impressed investor will lean in unprompted — which is the strongest possible signal of genuine interest. The first meeting rule: 30 minutes maximum. Goal: only to earn a second meeting.</p>
+    <p>Breslow also makes an underrated point — ditch the deck for early meetings. A deck lets an investor think they understand your business without actually talking to you. At the earliest stages, they should be investing in you as a founder. Make them feel you, not read you.</p>
+
+    <div class="scenario">
+      <p class="scenario-label">Your Scenario</p>
+      <span class="scenario-venture">Synbiote or FlavourMind — deep tech dinner conversation</span>
+      <p>You're at a Techboard Sydney event or an Antler Australia deep tech mixer. Someone asks what you're working on. You could pull up Notion. Don't.</p>
+      <p class="dialogue">"We're working on a biopolymer electrolyte that could replace lithium-ion separators — the materials problem nobody likes to talk about, but that every battery manufacturer needs to solve. I'm not raising yet, but I'm building out my advisor circle. Would love to grab coffee sometime — your perspective on the commercialisation side would be genuinely useful."</p>
+      <p>You've just planted a seed. No deck, no pitch, no ask — and zero downside if they're not interested.</p>
+    </div>
+
+    <div class="chapter-cta">
+      <div class="cta-icon">📅</div>
+      <p><strong>CTA — Do This Now</strong>Identify two industry events in Sydney or one global AI/deep tech conference in the next 90 days. Attend as a relationship-builder, not a pitcher. Target five genuine conversations per event — no decks, no formal asks.</p>
+    </div>
+  </section>
+
+  <!-- CH 04 -->
+  <section class="chapter fade-in" id="ch04">
+    <div class="chapter-header">
+      <div class="chapter-number">04</div>
+      <div class="chapter-title-group">
+        <span class="chapter-tag">Tactics</span>
+        <h2 class="chapter-title">The First &amp; Second Meetings</h2>
+      </div>
+    </div>
+    <div class="thesis"><p>The first meeting is about chemistry. The second is about conviction. When an investor says "I'm in" — slow down. Don't make it too easy.</p></div>
+    <p>Breslow is precise about meeting choreography. In the first meeting: be confident and authentic, keep it under 30 minutes, and let the conversation be about connection rather than a structured pitch. The only goal is earning a second meeting.</p>
+    <p>In the second meeting, flip the dynamic. Tell them you don't just want to talk about your company — you want to get to know them. Ask what they've invested in, what excites them, why they back what they back. This is unusual and memorable. It signals you're choosing them as carefully as they're evaluating you.</p>
+    <p>The post-meeting email is a sleeper tactic. Send a short 1–2 sentence note within 60 seconds of ending the meeting. Not a long recap — just warmth and a clear next step. It shows diligence, prevents the desperate "following up on our chat from last week" email, and places the action back on them.</p>
+
+    <div class="scenario">
+      <p class="scenario-label">Your Scenario</p>
+      <span class="scenario-venture">Kingdom of Hype — a gaming-focused investor says "I'm in"</span>
+      <p>They love the concept. Corporate RPG, AI narrative, MidJourney Patchwork — they're excited. They say the words. Here's where founders blow it: they gush, immediately say yes, and lose all leverage.</p>
+      <p class="dialogue">"That genuinely means a lot — I want to make sure we're a real fit though. Could we do one more conversation, maybe with one of my early advisors? And I'd love to call a couple of your portfolio founders first. I'm intentional about who I build this with."</p>
+      <p>Measured. Confident. Paradoxically, this increases their excitement — they're now chasing a little. That's the dynamic you want.</p>
+    </div>
+
+    <div class="chapter-cta">
+      <div class="cta-icon">✉️</div>
+      <p><strong>CTA — Do This Now</strong>Write your 2-sentence post-meeting email template and save it as a phone note. Customise the middle line per meeting. Rule: send within 60 seconds of hanging up. Never chase more than once without a response.</p>
+    </div>
+  </section>
+
+  <!-- CH 05 -->
+  <section class="chapter fade-in" id="ch05">
+    <div class="chapter-header">
+      <div class="chapter-number">05</div>
+      <div class="chapter-title-group">
+        <span class="chapter-tag">Step 3 of 3</span>
+        <h2 class="chapter-title">The Formal Raise — Creating a Wave</h2>
+      </div>
+    </div>
+    <div class="thesis"><p>When you formally raise, compress the timeline and run conversations in parallel. Momentum is artificial — and essential. Build it deliberately.</p></div>
+    <p>This is where all the soil-laying pays off. By the time you announce you're raising, you should have had multiple warm conversations, be polished at pitching, and ideally have early indications of interest from two or three investors. Now you email everyone on the same week. Parallel process creates the perception — and reality — of competition. Nobody wants to miss the bus.</p>
+    <p>Breslow is clear: fundraising should be a full-time job for one founder. Plan for three months minimum. As a solopreneur, this is your biggest tension — you're doing everything. This is precisely where your n8n agent infrastructure and AI-assisted workflows become survival tools, not just interesting projects.</p>
+
+    <div class="scenario">
+      <p class="scenario-label">Your Scenario</p>
+      <span class="scenario-venture">Synbiote pre-seed round launch</span>
+      <p>You've had coffees with eight people over three months. Three are genuinely warm. On the same Monday, you email all three:</p>
+      <p class="dialogue">"We're officially opening our pre-seed round this week. Given our conversations, I wanted to give you first look before we go wider. Happy to jump on a quick call to walk you through where we are."</p>
+      <p>Parallel process creates real signal. The three investors now know there are at least two others who've been in dialogue. That's not manipulation — it's an accurate representation of your pipeline, and it's how rounds get done.</p>
+    </div>
+
+    <div class="chapter-cta">
+      <div class="cta-icon">📊</div>
+      <p><strong>CTA — Do This Now</strong>Build your investor tracker — even if the raise is six months away. Columns: Firm | Contact Name | Last Touchpoint | Next Step | Interest Level | Notes on what lit them up. Organisation is half the battle. Your tracker compounds across rounds.</p>
+    </div>
+  </section>
+
+  <!-- CH 06 -->
+  <section class="chapter fade-in" id="ch06">
+    <div class="chapter-header">
+      <div class="chapter-number">06</div>
+      <div class="chapter-title-group">
+        <span class="chapter-tag">Due Diligence</span>
+        <h2 class="chapter-title">References — The Two-Way Street</h2>
+      </div>
+    </div>
+    <div class="thesis"><p>You should be doing diligence on your investors as rigorously as they're doing it on you. Running references on an investor signals maturity, protects your equity, and often surfaces crucial intelligence.</p></div>
+    <p>Most first-time founders treat references as something the investor runs on them. Breslow flips it. You should be calling two or three of their portfolio founders before you agree to terms. Ask: how are they in a crisis? Have they ever done something that upset you? Do you feel comfortable bringing them your hardest problems?</p>
+    <p>This act alone signals something rare: that you're intentional and professional, that you view this as a genuine partnership, and that you're not desperate. All of those signals increase investor confidence, paradoxically. The questions to ask portfolio founders: How is it to work with X? Have you been through tough times together? Did they ever do anything that upset you? How have they helped you? Do you feel comfortable approaching them with challenges?</p>
+
+    <div class="scenario">
+      <p class="scenario-label">Your Scenario</p>
+      <span class="scenario-venture">Any raise — a VC with Asia-Pacific deep tech exposure approaches you</span>
+      <p>They seem like a strong fit. Before agreeing to anything, you message two portfolio founders on LinkedIn: "I'm considering working with [Firm] — would love 15 minutes to understand your experience as a founder." Even cold, most founders will take this call. What you learn could save you years of pain — or confirm you've found an exceptional partner.</p>
+    </div>
+
+    <div class="chapter-cta">
+      <div class="cta-icon">📞</div>
+      <p><strong>CTA — Before Any Close</strong>Run at least 3 founder references per potential investor. Use LinkedIn to find portfolio companies. If you have to reach out cold, do it — most founders respect the ask and will be honest with you in ways they wouldn't be in public.</p>
+    </div>
+  </section>
+
+  <!-- CH 07 -->
+  <section class="chapter fade-in" id="ch07">
+    <div class="chapter-header">
+      <div class="chapter-number">07</div>
+      <div class="chapter-title-group">
+        <span class="chapter-tag">Signal Reading</span>
+        <h2 class="chapter-title">Understanding No's and Yes's</h2>
+      </div>
+    </div>
+    <div class="thesis"><p>Most soft yes's are actually no's. A real yes looks like: they ask about terms, they follow up without prompting, they introduce you to their partners.</p></div>
+    <p>Fundraising is all about momentum and timing — and most investors who say they'll invest, won't. "Let's stay in touch" is investor-speak for "I'm passing but I want to preserve optionality." Learning to read these signals fast saves you weeks of chasing ghosts.</p>
+    <p>The real tells of genuine interest: they ask about wire instructions, they introduce you to a partner unbidden, they follow up proactively, they ask about your timeline with urgency. Anything else is polite ambiguity — and you should treat it accordingly by moving your energy elsewhere.</p>
+
+    <div class="scenario">
+      <p class="scenario-label">Your Scenario</p>
+      <span class="scenario-venture">sorzero.com — an angel says "send me your deck"</span>
+      <p>Sounds like progress. But a deck request without a scheduled follow-up is often a soft pass — a socially graceful way to disengage. Counter:</p>
+      <p class="dialogue">"Happy to send it — actually, it's quite interactive. Want to grab 20 minutes this week so I can walk you through it live? Much easier to get your questions answered in real time."</p>
+      <p>If they say yes, the interest is real. If they go quiet, you've just saved three weeks of chasing a ghost. That's valuable intelligence either way.</p>
+    </div>
+
+    <div class="chapter-cta">
+      <div class="cta-icon">🔍</div>
+      <p><strong>CTA — Audit Your Pipeline</strong>For every warm contact who hasn't taken a concrete next step (meeting booked, amount discussed, intro made), reclassify them as "soft no — re-engage in 60 days." Concentrate your energy on those leaning in. Pipeline hygiene is a superpower.</p>
+    </div>
+  </section>
+
+  <!-- CH 08 -->
+  <section class="chapter fade-in" id="ch08">
+    <div class="chapter-header">
+      <div class="chapter-number">08</div>
+      <div class="chapter-title-group">
+        <span class="chapter-tag">Partner Selection</span>
+        <h2 class="chapter-title">Good Investors vs Bad Investors</h2>
+      </div>
+    </div>
+    <div class="thesis"><p>Investor quality matters more than the size of the cheque. A bad investor at the table will cost you more than their capital is worth.</p></div>
+    <p>Red flags Breslow calls out: high ego, no real value-add beyond money, can't make decisions without committee approval, and wanting board control early. One that stings later — make sure the person you're talking to actually has decision-making authority at their firm. If they don't, when things get hard, other partners start appearing out of nowhere with opinions and veto power you didn't know existed.</p>
+    <p>Good investors are responsive, have a track record of supporting founders through hard patches (not just good times), and give you something beyond capital — intros, domain expertise, or candid feedback when you need it most.</p>
+
+    <div class="scenario">
+      <p class="scenario-label">Your Scenario</p>
+      <span class="scenario-venture">Kingdom of Hype — a gaming publisher wants in</span>
+      <p>A strategic investor from a gaming publisher is excited. They'd bring distribution contacts, credibility in the space. But they mention they need "internal approval" from their investment committee. Breslow would structure them as a follower once you have a lead — never give them control, and never let the process block your timeline. Excited partners without authority are liabilities in a crisis.</p>
+    </div>
+  </section>
+
+  <!-- CH 09 -->
+  <section class="chapter fade-in" id="ch09">
+    <div class="chapter-header">
+      <div class="chapter-number">09</div>
+      <div class="chapter-title-group">
+        <span class="chapter-tag">Legal &amp; Structure</span>
+        <h2 class="chapter-title">Board Seats and Control</h2>
+      </div>
+    </div>
+    <div class="thesis"><p>Never give up a board seat in a seed round. Giving up a Preferred Board Seat is like getting married to that investor — with a prenup that favours them.</p></div>
+    <p>This chapter is one of the most practically important. Founders routinely underestimate how much early dilution and board control shapes their entire future. Breslow's clear hierarchy: Observer seats are fine (they can watch, they have no vote); Common Board Seats are acceptable (you still hold control); Preferred Board Seats are the ones to guard like gold.</p>
+    <p>Your seed round will have the most dilution for the least capital — which is exactly why protecting your cap table at this stage matters most. Use a tool like Note Genie or a simple cap table model to track what you've actually given away. Most founders are shocked when they run the numbers.</p>
+
+    <div class="chapter-cta">
+      <div class="cta-icon">⚖️</div>
+      <p><strong>CTA — Before Any Term Sheet</strong>Engage a founder-friendly startup lawyer in Sydney (Gilbert + Tobin's startup practice or Nexus Law Group are worth exploring). Know what every clause means. Lean on your lawyer, but don't fully trust them to optimise for you — tell them explicitly: "I want the most founder-friendly terms possible."</p>
+    </div>
+  </section>
+
+  <!-- CH 10 -->
+  <section class="chapter fade-in" id="ch10">
+    <div class="chapter-header">
+      <div class="chapter-number">10</div>
+      <div class="chapter-title-group">
+        <span class="chapter-tag">Deal Structure</span>
+        <h2 class="chapter-title">Staggered Valuation Caps</h2>
+      </div>
+    </div>
+    <div class="thesis"><p>You don't have to set one price for the whole round. Reward early believers with lower caps — and raise the cap as momentum builds.</p></div>
+    <p>This is counterintuitive but powerful. Most founders think the round has one price. It doesn't have to. Investors understand that early backers take more risk — and deserve better terms as a result. Breslow's typical framework: a small first close at a $6M–$8M cap, then graduate to $10M–$12M as traction and interest grows. If anyone later asks why earlier investors got a better cap, the answer is simple and honest: "They backed us when the risk was highest."</p>
+
+    <div class="scenario">
+      <p class="scenario-label">Your Scenario</p>
+      <span class="scenario-venture">Synbiote — pre-seed SAFE structure</span>
+      <p>Your first two believers come in at a $5M SAFE cap — before you have a prototype. When you hit proof-of-concept on the biopolymer, you raise the cap to $8M and send the formal raise email to 15 more contacts. Your early believers are rewarded; your new investors see traction and a higher-conviction ask. That's a clean, defensible, momentum-building structure.</p>
+    </div>
+
+    <div class="chapter-cta">
+      <div class="cta-icon">📐</div>
+      <p><strong>CTA — Sketch This Now</strong>Even if your raise is months away, sketch your SAFE structure: what's your entry cap? What's your graduation trigger — a milestone, a date, a first-close amount? This thinking crystallises your story and forces you to define what "traction" actually means for your venture.</p>
+    </div>
+  </section>
+
+  <!-- CH 11 -->
+  <section class="chapter fade-in" id="ch11">
+    <div class="chapter-header">
+      <div class="chapter-number">11</div>
+      <div class="chapter-title-group">
+        <span class="chapter-tag">Communication</span>
+        <h2 class="chapter-title">The Pitch — Casual Beats Polished</h2>
+      </div>
+    </div>
+    <div class="thesis"><p>The most powerful pitch is a casual one. The deck is a supplement, not the star. Know your business so deeply that you can explain it in a dinner conversation and make someone lean forward.</p></div>
+    <p>Breslow's pitch deck framework, when you do need one: (1) Here's how the world works today. (2) Here's how it should work, and what's broken. (3) Here's why no one has solved it yet. (4) Here's our secret — the unique insight, timing shift, or technology that opens the door. (5) Here's why we execute best — team, traction, unfair advantage.</p>
+    <p>But the real pitch happens before you ever open a deck. It's the dinner conversation, the 90-second hallway explanation, the answer to "what do you do?" that makes someone ask a follow-up question. If you can nail that, the formal deck is just documentation of a belief the investor already has.</p>
+
+    <div class="scenario">
+      <p class="scenario-label">Your Scenario</p>
+      <span class="scenario-venture">Kingdom of Hype — the 60-second casual pitch</span>
+      <p class="dialogue">"Corporate life is a game everyone plays but no one admits. We're building the first AI-driven RPG that turns office politics, promotions, and power moves into actual gameplay — with AI-generated narrative that reflects real workplace dynamics. Nobody's done this because they didn't take it seriously enough, or they tried and couldn't generate content at scale. We can, because we're combining generative AI with game design I've been practising since my first studio exit in Shanghai."</p>
+      <p>That's a casual pitch. No deck. No projector. Just a story that makes someone curious enough to ask "wait — how does the AI part actually work?"</p>
+    </div>
+
+    <div class="chapter-cta">
+      <div class="cta-icon">🎙️</div>
+      <p><strong>CTA — Do This for Each Venture</strong>Write your 60-second verbal pitch. No jargon. No buzzwords. Test it on a smart non-technical friend. If they can explain it back to you in their own words five minutes later — it works. If they ask a clarifying question — it works even better.</p>
+    </div>
+  </section>
+
+  <!-- CH 12 -->
+  <section class="chapter fade-in" id="ch12">
+    <div class="chapter-header">
+      <div class="chapter-number">12</div>
+      <div class="chapter-title-group">
+        <span class="chapter-tag">Looking Ahead</span>
+        <h2 class="chapter-title">Later Rounds — Your Seed is the Foundation</h2>
+      </div>
+    </div>
+    <div class="thesis"><p>Everything you do at seed shapes how Series A looks. Choose your first investors like you're casting your founding ensemble — each one should add credibility for the next conversation.</p></div>
+    <p>Breslow's advice for later-stage rounds largely echoes the seed principles — but the stakes on board control are higher. In priced rounds, investors have more leverage, especially if they're getting a board seat. His guidance: push for Observer seats where possible, or Common Board Seats you control, rather than Preferred Board Seats. In practice, later-stage investors will push harder — which is why setting the right norms early matters.</p>
+    <p>The deeper point: your seed investor list is a signal to your Series A investors. Who believed in you early, and why? Who's on your cap table says something about your judgment, your network, and your story. Think of the seed round not just as capital — but as your founding mythology.</p>
+
+    <div class="chapter-cta">
+      <div class="cta-icon">🔭</div>
+      <p><strong>CTA — Think in Rounds</strong>For each potential seed investor, ask: "Would having this person on my cap table help me raise my next round?" If the answer is no, price that into how much of your equity they're getting. Your seed round is a portfolio of relationships — curate it deliberately.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- MASTER CTA CARD -->
+<section class="cta-section" id="cta-card">
+  <div class="cta-inner">
+    <div class="cta-header">
+      <span class="cta-eyebrow">Pull-Out Reference</span>
+      <h2 class="cta-headline">The Master <em>CTA Card</em></h2>
+      <p class="cta-desc">What to do — and say — in the exact moment it matters. Keep this open on your phone before any investor conversation.</p>
+    </div>
+
+    <table class="cta-table" role="table" aria-label="Fundraising CTA reference card">
+      <thead>
+        <tr>
+          <th scope="col">Situation</th>
+          <th scope="col">What to Do</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Networking event — you're not raising yet</td>
+          <td><span class="action-badge">Say</span>Tell the story, not the deck. Offer coffee. No ask.</td>
+        </tr>
+        <tr>
+          <td>End of any investor meeting</td>
+          <td><span class="action-badge">Do</span>Send your 2-sentence follow-up email within 60 seconds. No exceptions.</td>
+        </tr>
+        <tr>
+          <td>"Send me your deck"</td>
+          <td><span class="action-badge">Counter</span>"Happy to — want to do a quick live walkthrough? Much easier to answer your questions in real time."</td>
+        </tr>
+        <tr>
+          <td>Investor says "I'm in"</td>
+          <td><span class="action-badge">Pause</span>Say you're honoured. Then slow it down. Run references first. Don't make it too easy.</td>
+        </tr>
+        <tr>
+          <td>Ready to formally raise</td>
+          <td><span class="action-badge">Launch</span>Email all warm contacts the same week. Compress the timeline. Parallel conversations create real momentum.</td>
+        </tr>
+        <tr>
+          <td>"Why did earlier investors get a better cap?"</td>
+          <td><span class="action-badge">Say</span>"Yes — they took on more risk by coming in earlier. That's how it should work."</td>
+        </tr>
+        <tr>
+          <td>Term sheet arrives</td>
+          <td><span class="action-badge">Legal</span>Lawyer reviews everything. Never give up a board seat at seed. Know every clause before you sign.</td>
+        </tr>
+        <tr>
+          <td>A warm contact goes quiet after deck request</td>
+          <td><span class="action-badge">Reclassify</span>Move to "soft no — re-engage in 60 days." Shift energy to those leaning in.</td>
+        </tr>
+        <tr>
+          <td>Impostor syndrome hits before a pitch</td>
+          <td><span class="action-badge">Remember</span>Money is plentiful. You — with two exits, 12 countries, AI + design + science depth — are the scarce resource.</td>
+        </tr>
+        <tr>
+          <td>Investor can't make decisions without committee</td>
+          <td><span class="action-badge">Structure</span>Position them as a follower, not a lead. Never let their process block your timeline or your control.</td>
+        </tr>
+        <tr>
+          <td>Before any close</td>
+          <td><span class="action-badge">References</span>Call 3 portfolio founders from that investor's portfolio. What you learn in 15 minutes could save you years.</td>
+        </tr>
+        <tr>
+          <td>You want to open with a strong "why you"</td>
+          <td><span class="action-badge">Say</span>"I've built and exited twice, across two continents. I understand how to take hard bets from zero to commercial — and that's exactly what this requires."</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>Synthesised from Ryan Breslow's <em>Fundraising</em> (2021) · Sources: blas.com/fundraising &amp; auresnotes.com · Personalised for Vivid — Head of AI, Breville/Sage · Ventures: Synbiote · sorzero.com · Kingdom of Hype</p>
+  <p style="margin-top:0.5rem;">Note: Breslow's credibility took a hit after the Bolt collapse (Forbes, March 2024). The process framework remains useful. Separate the playbook from the player.</p>
+</footer>
+
+<script>
+  // Fade-in on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

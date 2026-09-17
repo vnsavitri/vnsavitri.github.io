@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive explainer of the conceptual mechanics behind Anthropic's text watermarking approach.">
+  <title>The mark lives in the choices — Anthropic text watermarking</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f4f1ea;
+      --muted: #a8a5a0;
+      --soft: #d1cec5;
+      --bg: #111217;
+      --surface: #1a1b21;
+      --surface-2: #23252d;
+      --line: #3a3b45;
+      --lime: #c7f36b;
+      --lime-ink: #17200d;
+      --coral: #ff806e;
+      --blue: #8bb8ff;
+      --lavender: #c9b8ff;
+      --yellow: #f5d77a;
+      --danger: #ffb2a7;
+      --shadow: rgba(0, 0, 0, .24);
+      --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+    ::selection { background: var(--lime); color: var(--lime-ink); }
+
+    .page-shell { max-width: 1240px; margin: 0 auto; padding: 0 28px 80px; }
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 20px;
+      padding: 23px 0 18px; border-bottom: 1px solid var(--line);
+    }
+    .wordmark { display: flex; align-items: center; gap: 10px; font-weight: 500; letter-spacing: -.02em; }
+    .mark-glyph { width: 20px; height: 20px; border: 2px solid var(--lime); border-radius: 50%; position: relative; }
+    .mark-glyph::after { content: ""; position: absolute; width: 6px; height: 6px; background: var(--coral); border-radius: 50%; top: 5px; left: 5px; }
+    .topnav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .topnav a { padding: 6px 10px; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: 13px; }
+    .topnav a:hover, .topnav a:focus-visible { color: var(--ink); background: var(--surface-2); outline: none; }
+
+    .hero { position: relative; padding: 92px 0 72px; isolation: isolate; }
+    .hero::before {
+      content: ""; position: absolute; z-index: -1; width: 520px; height: 340px; right: -150px; top: 0;
+      background: radial-gradient(circle, rgba(199,243,107,.18), rgba(199,243,107,0) 68%); pointer-events: none;
+    }
+    .hero-kicker { display: inline-flex; align-items: center; gap: 8px; color: var(--lime); font: 500 12px var(--mono); letter-spacing: .05em; text-transform: uppercase; }
+    .hero-kicker span { width: 8px; height: 8px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 0 4px rgba(255,128,110,.13); }
+    h1 { max-width: 820px; margin: 18px 0 24px; font-size: clamp(48px, 8vw, 102px); line-height: .96; letter-spacing: -.035em; text-wrap: balance; font-weight: 500; }
+    .hero-copy { max-width: 660px; color: var(--soft); font-size: clamp(18px, 2.1vw, 24px); line-height: 1.35; text-wrap: pretty; }
+    .hero-note { max-width: 640px; color: var(--muted); font-size: 14px; margin-top: 22px; }
+    .hero-note strong { color: var(--yellow); font-weight: 500; }
+
+    .section { padding: 40px 0 70px; scroll-margin-top: 28px; }
+    .section-header { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+    .section-title { margin: 0; font-size: clamp(28px, 4vw, 48px); line-height: 1.02; letter-spacing: -.035em; font-weight: 500; text-wrap: balance; }
+    .section-deck { max-width: 470px; color: var(--muted); margin: 0; font-size: 15px; }
+    .section-rule { border: 0; border-top: 1px solid var(--line); margin: 0 0 34px; }
+
+    .lab-wrap { border: 1px solid var(--line); background: #16171c; }
+    .lab-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding: 16px 18px; border-bottom: 1px solid var(--line); }
+    .toolbar-label { color: var(--muted); font: 500 12px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+    .mode-switch { display: inline-flex; gap: 3px; padding: 3px; background: var(--surface-2); border-radius: 8px; }
+    .mode-switch button { border: 0; background: transparent; color: var(--muted); padding: 8px 12px; border-radius: 6px; font-size: 13px; }
+    .mode-switch button[aria-pressed="true"] { background: var(--lime); color: var(--lime-ink); font-weight: 500; }
+    .lab-main { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr); min-height: 430px; }
+    .lab-stage { padding: clamp(22px, 4vw, 42px); border-right: 1px solid var(--line); }
+    .stage-top { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 36px; }
+    .stage-step { color: var(--lime); font: 500 12px var(--mono); }
+    .stage-title { margin: 4px 0 0; font-size: clamp(24px, 3vw, 38px); line-height: 1.05; letter-spacing: -.035em; font-weight: 500; }
+    .stage-helper { max-width: 240px; color: var(--muted); font-size: 13px; text-align: right; }
+    .context-line { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; color: var(--soft); font-size: clamp(18px, 2.4vw, 26px); line-height: 1.55; }
+    .context-line .token { padding: 5px 8px; border: 1px solid #545662; background: var(--surface-2); border-radius: 6px; }
+    .context-line .ellipsis { color: var(--muted); }
+    .candidate-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 32px; }
+    .candidate {
+      position: relative; min-height: 116px; text-align: left; border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+      border-radius: 8px; padding: 15px; transition: transform .2s ease, border-color .2s ease, background .2s ease;
+    }
+    .candidate:hover, .candidate:focus-visible { transform: translateY(-3px); border-color: var(--soft); outline: none; }
+    .candidate.is-valid { border-color: var(--lime); background: rgba(199,243,107,.1); }
+    .candidate.is-picked { box-shadow: inset 0 -3px 0 var(--coral); }
+    .candidate-word { display: block; font-size: 18px; font-weight: 500; }
+    .candidate-prob { display: block; color: var(--muted); font: 12px var(--mono); margin-top: 5px; }
+    .candidate-bar { height: 4px; background: #343640; margin-top: 19px; overflow: hidden; }
+    .candidate-bar i { display: block; height: 100%; background: var(--blue); transition: width .35s ease; }
+    .candidate.is-valid .candidate-bar i { background: var(--lime); }
+    .candidate.is-picked .candidate-bar i { background: var(--coral); }
+    .candidate-state { position: absolute; right: 11px; top: 12px; color: var(--lime); font: 11px var(--mono); opacity: 0; }
+    .candidate.is-valid .candidate-state { opacity: 1; }
+    .lab-side { display: flex; flex-direction: column; padding: 25px 24px; background: #1c1d24; }
+    .side-label { color: var(--muted); font: 500 12px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+    .key-oracle { margin: 18px 0 24px; padding: 20px; border: 1px solid #4a465e; background: #24212f; }
+    .key-oracle-top { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .key-oracle h3 { margin: 0; font-size: 18px; font-weight: 500; }
+    .key-dot { width: 26px; height: 26px; border-radius: 7px; background: var(--lavender); color: #291b4a; display: grid; place-items: center; font-weight: 500; }
+    .key-oracle p { color: var(--soft); font-size: 13px; margin: 14px 0 0; }
+    .key-code { color: var(--lavender); font: 12px var(--mono); letter-spacing: .12em; margin-top: 18px; }
+    .side-readout { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--line); }
+    .readout-line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 9px 0; }
+    .readout-line span { color: var(--muted); font-size: 13px; }
+    .readout-line strong { color: var(--ink); font: 500 14px var(--mono); }
+    .readout-line strong.good { color: var(--lime); }
+    .stage-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 28px; }
+    .control-btn { border: 1px solid var(--line); color: var(--ink); background: var(--surface-2); padding: 9px 13px; border-radius: 6px; font-size: 13px; }
+    .control-btn:hover, .control-btn:focus-visible { border-color: var(--soft); outline: none; }
+    .control-btn.primary { background: var(--lime); color: var(--lime-ink); border-color: var(--lime); font-weight: 500; }
+    .control-btn.primary:hover, .control-btn.primary:focus-visible { background: #d8fb8c; }
+    .sequence-band { padding: 22px 24px 26px; border-top: 1px solid var(--line); }
+    .sequence-label { color: var(--muted); font: 500 12px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+    .token-ribbon { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+    .ribbon-token { padding: 6px 9px; border: 1px solid #444650; background: #24252d; color: var(--soft); font-size: 13px; border-radius: 4px; }
+    .ribbon-token.signal { color: var(--lime-ink); border-color: var(--lime); background: var(--lime); }
+    .ribbon-token.current { border-color: var(--coral); box-shadow: 0 0 0 2px rgba(255,128,110,.16); }
+    .ribbon-empty { color: var(--muted); font-size: 13px; }
+
+    .mechanics { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .mechanic { padding: 24px 22px 28px; min-height: 210px; border-right: 1px solid var(--line); }
+    .mechanic:last-child { border-right: 0; }
+    .mechanic-no { color: var(--coral); font: 500 13px var(--mono); }
+    .mechanic h3 { margin: 18px 0 9px; font-size: 20px; letter-spacing: -.02em; font-weight: 500; }
+    .mechanic p { color: var(--muted); font-size: 14px; margin: 0; }
+    .equation { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-top: 18px; color: var(--soft); font: 12px var(--mono); }
+    .equation b { padding: 4px 6px; border: 1px solid var(--line); color: var(--blue); font-weight: 500; }
+    .equation b.key { color: var(--lavender); border-color: #4a465e; }
+    .equation b.result { color: var(--lime); border-color: #566e30; }
+
+    .detector-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .78fr); gap: 42px; align-items: start; }
+    .detector-copy { max-width: 620px; }
+    .detector-copy p { color: var(--soft); font-size: 18px; line-height: 1.45; margin: 0; }
+    .detector-copy p + p { margin-top: 18px; color: var(--muted); font-size: 15px; }
+    .meter-panel { padding: 22px; background: var(--surface); border: 1px solid var(--line); }
+    .meter-title { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+    .meter-title h3 { font-size: 18px; margin: 0; font-weight: 500; }
+    .score { color: var(--lime); font: 500 24px var(--mono); }
+    .meter { position: relative; height: 22px; margin: 28px 0 10px; background: #363740; }
+    .meter-fill { width: 68%; height: 100%; background: var(--lime); transition: width .35s ease; }
+    .meter-threshold { position: absolute; top: -9px; bottom: -9px; left: 62%; border-left: 2px dashed var(--coral); }
+    .meter-axis { display: flex; justify-content: space-between; color: var(--muted); font: 11px var(--mono); }
+    .meter-status { margin: 20px 0 0; padding-top: 17px; border-top: 1px solid var(--line); color: var(--soft); font-size: 14px; }
+    .range-row { margin-top: 23px; }
+    .range-row label { display: flex; justify-content: space-between; gap: 12px; color: var(--soft); font-size: 13px; margin-bottom: 8px; }
+    .range-row output { color: var(--lime); font-family: var(--mono); }
+    input[type="range"] { width: 100%; accent-color: var(--lime); }
+
+    .limits { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 32px; border-top: 1px solid var(--line); }
+    details { border-bottom: 1px solid var(--line); }
+    summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 21px 0; color: var(--ink); font-weight: 500; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "+"; color: var(--lime); font: 22px var(--mono); font-weight: 400; }
+    details[open] summary::after { content: "−"; }
+    details p { max-width: 520px; color: var(--muted); margin: -4px 0 22px; font-size: 14px; }
+    details p strong { color: var(--soft); font-weight: 500; }
+
+    .source-strip { margin-top: 36px; padding: 22px 0 0; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
+    .source-strip p { max-width: 760px; color: var(--muted); margin: 0; font-size: 13px; }
+    .source-strip a { color: var(--lime); text-underline-offset: 3px; }
+    .source-tag { color: var(--yellow); font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+    .fine-print { color: #77767a; font-size: 12px; margin-top: 28px; }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    :focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    }
+    @media (max-width: 800px) {
+      .page-shell { padding: 0 18px 54px; }
+      .hero { padding: 62px 0 54px; }
+      .lab-main, .detector-grid { grid-template-columns: 1fr; }
+      .lab-stage { border-right: 0; border-bottom: 1px solid var(--line); }
+      .mechanics { grid-template-columns: 1fr; }
+      .mechanic { border-right: 0; border-bottom: 1px solid var(--line); min-height: auto; }
+      .mechanic:last-child { border-bottom: 0; }
+      .limits { grid-template-columns: 1fr; }
+      .section-header { display: block; }
+      .section-deck { margin-top: 12px; }
+      .source-strip { display: block; }
+      .source-tag { display: block; margin-bottom: 12px; }
+    }
+    @media (max-width: 460px) {
+      .topbar { align-items: flex-start; }
+      .topnav { max-width: 180px; }
+      h1 { font-size: clamp(45px, 14vw, 72px); }
+      .stage-top { display: block; }
+      .stage-helper { max-width: none; text-align: left; margin-top: 12px; }
+      .candidate-grid { grid-template-columns: 1fr; }
+      .candidate { min-height: 85px; }
+      .candidate-bar { margin-top: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <div class="wordmark"><span class="mark-glyph" aria-hidden="true"></span><span>Watermark / text</span></div>
+      <nav class="topnav" aria-label="Page sections">
+        <a href="#lab">Lab</a>
+        <a href="#detector">Detector</a>
+        <a href="#limits">Limits</a>
+      </nav>
+    </header>
+
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-kicker"><span aria-hidden="true"></span> a conceptual field guide</div>
+      <h1 id="hero-title">The mark lives in the choices.</h1>
+      <p class="hero-copy">Anthropic’s text watermarking approach is designed to leave a statistical fingerprint without adding visible characters or changing what the text means.</p>
+      <p class="hero-note"><strong>Important:</strong> the lab below is an illustrative model of the idea, not Anthropic’s private implementation or a live detector.</p>
+    </section>
+
+    <section class="section" id="lab" aria-labelledby="lab-title">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title" id="lab-title">Enter the token lab</h2>
+        </div>
+        <p class="section-deck">The trick happens in low-stakes moments, when more than one next word would make sense.</p>
+      </div>
+      <hr class="section-rule">
+
+      <div class="lab-wrap">
+        <div class="lab-toolbar">
+          <span class="toolbar-label">Step through one next-word decision</span>
+          <div class="mode-switch" role="group" aria-label="Watermark mode">
+            <button type="button" id="mode-off" aria-pressed="false">Ordinary sampling</button>
+            <button type="button" id="mode-on" aria-pressed="true">Keyed sampling</button>
+          </div>
+        </div>
+        <div class="lab-main">
+          <div class="lab-stage">
+            <div class="stage-top">
+              <div>
+                <div class="stage-step" id="stage-step">01 / SCORE</div>
+                <h3 class="stage-title" id="stage-title">What could come next?</h3>
+              </div>
+              <div class="stage-helper" id="stage-helper">The model scores candidate continuations before selecting one.</div>
+            </div>
+            <div class="context-line" aria-label="Current text context">
+              <span class="token">The</span><span class="token">weather</span><span class="token">today</span><span class="token">was</span><span class="token">cold</span><span class="token">and</span><span class="ellipsis">…</span>
+            </div>
+            <div class="candidate-grid" id="candidate-grid" aria-live="polite"></div>
+            <div class="stage-controls">
+              <button type="button" class="control-btn" id="prev-step">← Previous</button>
+              <button type="button" class="control-btn primary" id="next-step">Next step →</button>
+              <button type="button" class="control-btn" id="reset-lab">Reset</button>
+            </div>
+          </div>
+          <aside class="lab-side" aria-label="Key and readout">
+            <span class="side-label">The hidden ingredient</span>
+            <div class="key-oracle">
+              <div class="key-oracle-top"><h3>Secret key + context</h3><div class="key-dot" aria-hidden="true">#</div></div>
+              <p>The key and a few preceding words determine which plausible choices count as keyed for this turn.</p>
+              <div class="key-code">•••• 7C9A ••••</div>
+            </div>
+            <div class="side-readout" aria-live="polite">
+              <div class="readout-line"><span>Current mode</span><strong id="mode-readout" class="good">KEYED</strong></div>
+              <div class="readout-line"><span>Keyed candidates</span><strong id="valid-readout">—</strong></div>
+              <div class="readout-line"><span>Selected token</span><strong id="picked-readout">—</strong></div>
+            </div>
+          </aside>
+        </div>
+        <div class="sequence-band">
+          <div class="sequence-label">Repeated across a response</div>
+          <div class="token-ribbon" id="token-ribbon" aria-live="polite"><span class="ribbon-empty">Run the steps to reveal where the signal accumulates.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="mechanics-title">
+      <div class="section-header">
+        <h2 class="section-title" id="mechanics-title">One loop. Three moves.</h2>
+        <p class="section-deck">The signal is not a visible stamp. It is a pattern in repeated, plausible choices.</p>
+      </div>
+      <div class="mechanics">
+        <article class="mechanic">
+          <div class="mechanic-no">01</div>
+          <h3>Score candidates</h3>
+          <p>The model produces a probability distribution for the next token.</p>
+          <div class="equation"><b>context</b><span>→</span><b>candidate scores</b></div>
+        </article>
+        <article class="mechanic">
+          <div class="mechanic-no">02</div>
+          <h3>Settle the choice</h3>
+          <p>Ordinary sampling uses a random source. Keyed sampling uses the key and recent context to settle the random choice.</p>
+          <div class="equation"><b class="key">key</b><span>+</span><b>context</b><span>→</span><b class="result">choice</b></div>
+        </article>
+        <article class="mechanic">
+          <div class="mechanic-no">03</div>
+          <h3>Repeat, then test</h3>
+          <p>Across enough flexible choices, the sequence can become statistically recognisable to someone with the key.</p>
+          <div class="equation"><b>many choices</b><span>→</span><b class="result">signal</b></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="detector" aria-labelledby="detector-title">
+      <div class="section-header">
+        <h2 class="section-title" id="detector-title">A detector asks: is this pattern unlikely by chance?</h2>
+        <p class="section-deck">One word proves very little. The sequence is where the evidence lives.</p>
+      </div>
+      <hr class="section-rule">
+      <div class="detector-grid">
+        <div class="detector-copy">
+          <p>For each observed token, a detector can check whether it was consistent with the keyed choice rule given the preceding context.</p>
+          <p>It then aggregates the matches. Longer passages usually provide more evidence; short, exact, or heavily edited passages provide less.</p>
+        </div>
+        <div class="meter-panel">
+          <div class="meter-title"><h3>Illustrative signal strength</h3><span class="score" id="score">68%</span></div>
+          <div class="meter" role="progressbar" aria-label="Illustrative watermark signal strength" aria-valuemin="0" aria-valuemax="100" aria-valuenow="68"><div class="meter-fill" id="meter-fill"></div><div class="meter-threshold" aria-hidden="true"></div></div>
+          <div class="meter-axis"><span>little evidence</span><span>more evidence</span></div>
+          <p class="meter-status" id="meter-status" aria-live="polite">This demo passage has enough repeated choices to look consistent with the key.</p>
+          <div class="range-row"><label for="length-range"><span>Passage length</span><output id="length-output">12 choices</output></label><input id="length-range" type="range" min="1" max="30" value="12"></div>
+          <div class="range-row"><label for="edit-range"><span>Human edits</span><output id="edit-output">0%</output></label><input id="edit-range" type="range" min="0" max="80" value="0"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="limits" aria-labelledby="limits-title">
+      <div class="section-header">
+        <h2 class="section-title" id="limits-title">What the mark can — and can’t — say</h2>
+        <p class="section-deck">Detection is a signal about model involvement, not a universal authorship oracle.</p>
+      </div>
+      <div class="limits">
+        <details open>
+          <summary>A detected mark means Claude was likely involved</summary>
+          <p><strong>It does not establish full authorship.</strong> Claude may have written, edited, translated, summarised, or transformed text that began elsewhere.</p>
+        </details>
+        <details>
+          <summary>No mark does not prove “human-written”</summary>
+          <p>A passage may be too short, heavily changed, produced by an older unsupported model, or generated by another system with a different method.</p>
+        </details>
+        <details>
+          <summary>Exact facts and code offer fewer places to mark</summary>
+          <p>When one continuation is clearly correct, nudging the choice would risk accuracy. Flexible prose creates more low-stakes decisions.</p>
+        </details>
+        <details>
+          <summary>The mark is not a user identity tag</summary>
+          <p>The watermark is intended to indicate model involvement. It is not designed to reveal a person, organisation, prompt, or chat.</p>
+        </details>
+      </div>
+      <div class="source-strip">
+        <div class="source-tag">Source check · 14 Aug 2026</div>
+        <p>This explainer is adapted from the supplied diagrams and checked against <a href="https://www.anthropic.com/news/claude-text-watermark" target="_blank" rel="noreferrer">Anthropic’s official explainer</a>, which says future Claude models will generate text with a watermark and that “nothing is added to the text and there are no hidden characters”.</p>
+      </div>
+      <p class="fine-print">Conceptual education only. It is not a watermark detector, authorship judgement, or statement of Anthropic’s private implementation details.</p>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const candidates = [
+        { word: "overcast", probability: 60 },
+        { word: "grey", probability: 35 },
+        { word: "sugary", probability: 5 }
+      ];
+      const signalWords = ["overcast", "grey"];
+      const responseWords = ["The", "weather", "today", "was", "cold", "and", "overcast", "but", "the", "air", "felt", "clear", "enough", "for", "a", "walk"];
+      let watermark = true;
+      let step = 1;
+      let picked = null;
+      let ribbon = [];
+
+      const $ = (id) => document.getElementById(id);
+      const modeOn = $("mode-on");
+      const modeOff = $("mode-off");
+      const stageStep = $("stage-step");
+      const stageTitle = $("stage-title");
+      const stageHelper = $("stage-helper");
+      const candidateGrid = $("candidate-grid");
+      const validReadout = $("valid-readout");
+      const pickedReadout = $("picked-readout");
+      const modeReadout = $("mode-readout");
+      const ribbonEl = $("token-ribbon");
+
+      function keyedCandidates() {
+        return watermark ? signalWords : [];
+      }
+
+      function renderCandidates() {
+        const valid = keyedCandidates();
+        candidateGrid.innerHTML = candidates.map((candidate, index) => {
+          const isValid = valid.includes(candidate.word);
+          const isPicked = picked === candidate.word;
+          return `<button type="button" class="candidate${isValid ? " is-valid" : ""}${isPicked ? " is-picked" : ""}" data-word="${candidate.word}" aria-pressed="${isPicked}">
+            <span class="candidate-word">${candidate.word}</span>
+            <span class="candidate-prob">${candidate.probability}% likely</span>
+            <span class="candidate-state">KEYED</span>
+            <span class="candidate-bar"><i style="width:${candidate.probability}%"></i></span>
+          </button>`;
+        }).join("");
+        validReadout.textContent = valid.length ? valid.join(" + ") : "none added";
+        pickedReadout.textContent = picked || "—";
+        modeReadout.textContent = watermark ? "KEYED" : "ORDINARY";
+        modeReadout.className = watermark ? "good" : "";
+        candidateGrid.querySelectorAll(".candidate").forEach((button) => {
+          button.addEventListener("click", () => {
+            picked = button.dataset.word;
+            if (step === 2) {
+              ribbon.push({ word: picked, signal: valid.includes(picked) });
+              renderRibbon();
+            }
+            renderCandidates();
+          });
+        });
+      }
+
+      function renderRibbon() {
+        if (!ribbon.length) {
+          ribbonEl.innerHTML = '<span class="ribbon-empty">Run the steps to reveal where the signal accumulates.</span>';
+          return;
+        }
+        ribbonEl.innerHTML = ribbon.map((item) => `<span class="ribbon-token${item.signal ? " signal" : ""}">${item.word}</span>`).join("");
+      }
+
+      function setStep(nextStep) {
+        step = Math.max(1, Math.min(3, nextStep));
+        const copy = {
+          1: ["01 / SCORE", "What could come next?", "The model scores candidate continuations before selecting one."],
+          2: ["02 / SELECT", watermark ? "Let the key settle it." : "Let randomness settle it.", watermark ? "The key and the recent context determine which plausible choices count as keyed." : "Without a watermark, the random source has no keyed pattern to check later."],
+          3: ["03 / REPEAT", "Now zoom out.", "The same kind of decision happens again and again across the response." ]
+        }[step];
+        stageStep.textContent = copy[0];
+        stageTitle.textContent = copy[1];
+        stageHelper.textContent = copy[2];
+        if (step === 3 && !ribbon.length) {
+          ribbon = responseWords.map((word, index) => ({ word, signal: watermark && [6, 9, 12, 15].includes(index) }));
+          renderRibbon();
+        }
+        renderCandidates();
+      }
+
+      function setMode(nextMode) {
+        watermark = nextMode;
+        picked = null;
+        ribbon = [];
+        modeOn.setAttribute("aria-pressed", String(watermark));
+        modeOff.setAttribute("aria-pressed", String(!watermark));
+        setStep(step);
+      }
+
+      modeOn.addEventListener("click", () => setMode(true));
+      modeOff.addEventListener("click", () => setMode(false));
+      $("next-step").addEventListener("click", () => setStep(step === 3 ? 1 : step + 1));
+      $("prev-step").addEventListener("click", () => setStep(step === 1 ? 3 : step - 1));
+      $("reset-lab").addEventListener("click", () => { picked = null; ribbon = []; setStep(1); renderRibbon(); });
+
+      const lengthRange = $("length-range");
+      const editRange = $("edit-range");
+      function updateMeter() {
+        const length = Number(lengthRange.value);
+        const edits = Number(editRange.value);
+        const score = Math.max(7, Math.min(95, Math.round(22 + length * 4.4 - edits * .62)));
+        $("score").textContent = `${score}%`;
+        $("meter-fill").style.width = `${score}%`;
+        $("meter").setAttribute("aria-valuenow", String(score));
+        $("length-output").textContent = `${length} choice${length === 1 ? "" : "s"}`;
+        $("edit-output").textContent = `${edits}%`;
+        const status = score >= 62 ? "This demo passage has enough repeated choices to look consistent with the key." : score >= 35 ? "There is a hint of a pattern, but not enough evidence for a confident read." : "There are too few consistent choices to separate signal from chance.";
+        $("meter-status").textContent = status;
+      }
+      lengthRange.addEventListener("input", updateMeter);
+      editRange.addEventListener("input", updateMeter);
+
+      setStep(1);
+      updateMeter();
+    })();
+  </script>
+</body>
+</html>

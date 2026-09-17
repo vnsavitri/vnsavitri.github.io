@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>23 repos that stop Claude eating your tokens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0D1117;
+    --panel:#161B22;
+    --panel2:#1C2129;
+    --border:#30363D;
+    --text:#E6EDF3;
+    --text-soft:#8B949E;
+    --blue:#58A6FF;
+    --orange:#F0883E;
+    --purple:#BC8CFF;
+    --green:#3FB950;
+    --gold:#E3B341;
+    --live-dot:#3FB950;
+    --cached-dot:#E3B341;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){ *{transition-duration:.001ms !important; animation-duration:.001ms !important;} }
+  ::selection{background:var(--gold); color:#0D1117;}
+  a{color:inherit;}
+  [contenteditable="true"]{outline:none; border-radius:5px; padding:1px 3px; margin:-1px -3px;}
+  [contenteditable="true"]:hover{background:rgba(230,237,243,.06);}
+  [contenteditable="true"]:focus{background:rgba(227,179,65,.16); box-shadow:0 0 0 2px var(--gold);}
+  :focus-visible{outline:2px solid var(--blue); outline-offset:2px;}
+  code, .mono{font-family:'JetBrains Mono',monospace;}
+
+  .layout{display:grid; grid-template-columns:250px 1fr; min-height:100vh;}
+  @media (max-width:860px){ .layout{grid-template-columns:1fr;} }
+
+  /* ---------- sidebar ---------- */
+  .sidebar{
+    background:var(--panel); border-right:1px solid var(--border); padding:18px 14px;
+    position:sticky; top:0; height:100vh; overflow-y:auto; font-family:'JetBrains Mono',monospace; font-size:12.5px;
+  }
+  @media (max-width:860px){ .sidebar{position:relative; height:auto; border-right:none; border-bottom:1px solid var(--border);} }
+  .sidebar-head{color:var(--text-soft); letter-spacing:.08em; font-size:10.5px; font-weight:700; margin-bottom:10px; display:flex; justify-content:space-between;}
+  .sidebar-root{color:var(--text); font-weight:700; margin-bottom:8px;}
+  .folder{margin-bottom:2px;}
+  .folder-row{
+    display:flex; align-items:center; gap:8px; padding:6px 6px; border-radius:6px; cursor:pointer; user-select:none;
+  }
+  .folder-row:hover{background:rgba(230,237,243,.06);}
+  .caret{color:var(--text-soft); width:10px; font-size:10px; transition:transform .15s ease;}
+  .caret.open{transform:rotate(90deg);}
+  .sq{width:9px; height:9px; border-radius:2px; flex:none;}
+  .folder-name{flex:1; color:var(--text);}
+  .folder-count{color:var(--text-soft); font-size:11px;}
+  .file-list{display:none; padding-left:26px; margin:2px 0 6px;}
+  .file-list.open{display:block;}
+  .file-row{
+    display:block; padding:4px 6px; border-radius:6px; color:var(--text-soft);
+    text-decoration:none; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .file-row:hover{background:rgba(230,237,243,.06); color:var(--text);}
+  .sidebar-file{
+    display:flex; align-items:center; gap:8px; padding:6px 6px; border-radius:6px; cursor:pointer; color:var(--text-soft);
+  }
+  .sidebar-file:hover{background:rgba(230,237,243,.06); color:var(--text);}
+  .sidebar-file .sq{background:var(--text-soft); opacity:.4;}
+  .install-note{
+    display:none; margin:4px 6px 10px; padding:8px 10px; border-radius:8px; background:var(--panel2);
+    color:var(--text-soft); font-size:11px; line-height:1.5;
+  }
+  .install-note.open{display:block;}
+  .sidebar-outline{margin-top:16px; padding-top:12px; border-top:1px solid var(--border); color:var(--text-soft);}
+
+  /* ---------- main ---------- */
+  .main{padding:44px 40px 80px; max-width:920px;}
+  @media (max-width:600px){ .main{padding:28px 18px 60px;} }
+
+  .notice{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-soft);
+    border:1px solid var(--border); border-radius:10px; padding:9px 13px; margin-bottom:26px; display:inline-block;
+  }
+  .notice b{color:var(--text);}
+
+  h1{
+    font-family:'JetBrains Mono',monospace; font-weight:800; font-size:clamp(28px,4.4vw,46px);
+    line-height:1.12; margin:0 0 16px; letter-spacing:-.01em;
+  }
+  h1 .accent{color:var(--orange);}
+  .sub{font-size:16px; color:var(--text-soft); max-width:56ch; margin:0 0 22px;}
+
+  .tally{
+    display:flex; gap:22px; flex-wrap:wrap; align-items:baseline; margin-bottom:38px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .tally .num{font-size:26px; font-weight:800; color:var(--gold);}
+  .tally .lbl{font-size:11px; color:var(--text-soft); text-transform:uppercase; letter-spacing:.05em;}
+  .sort-toggle{display:flex; gap:6px; margin-left:auto;}
+  .sort-btn{
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; padding:7px 12px;
+    border-radius:999px; border:1px solid var(--border); background:transparent; color:var(--text-soft); cursor:pointer;
+  }
+  .sort-btn.active{background:var(--text); color:var(--bg); border-color:var(--text);}
+
+  .cat{margin-bottom:38px; scroll-margin-top:20px;}
+  .cat-head{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .cat-icon{width:26px; height:26px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:13px; flex:none;}
+  .cat-title{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:19px;}
+  .cat-num{opacity:.6; margin-right:6px;}
+
+  .repo-row{
+    display:grid; grid-template-columns:1fr auto; gap:10px 16px; align-items:baseline;
+    padding:11px 4px; border-bottom:1px solid var(--border); scroll-margin-top:80px;
+    transition:background .3s ease;
+  }
+  .repo-row.flash{background:rgba(227,179,65,.12);}
+  .repo-main a{
+    font-family:'JetBrains Mono',monospace; font-weight:600; font-size:14.5px; text-decoration:none;
+    border-bottom:1px solid transparent;
+  }
+  .repo-main a:hover{border-bottom-color:currentColor;}
+  .repo-desc{color:var(--text-soft); font-size:13.5px; margin-left:10px;}
+  .repo-stars{
+    font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13.5px; white-space:nowrap;
+    display:flex; align-items:center; gap:6px; justify-content:flex-end;
+  }
+  .star-dot{width:6px; height:6px; border-radius:50%; flex:none;}
+  .star-dot.live{background:var(--live-dot);}
+  .star-dot.cached{background:var(--cached-dot);}
+  .star-dot.pending{background:var(--text-soft); opacity:.5;}
+
+  footer{margin-top:50px; border-top:1px solid var(--border); padding-top:22px; font-size:12.5px; color:var(--text-soft);}
+  footer p{max-width:640px; margin:0 0 10px;}
+  footer .legend{display:flex; gap:18px; flex-wrap:wrap; margin-bottom:14px; font-family:'JetBrains Mono',monospace; font-size:11.5px;}
+  footer .legend span{display:inline-flex; align-items:center; gap:6px;}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-head"><span>EXPLORER</span><span>&hellip;</span></div>
+    <div class="sidebar-root">token-chain/</div>
+    <div id="folderTree"></div>
+    <div class="sidebar-file" id="readmeLink"><i class="sq" style="background:var(--orange)"></i>README.md</div>
+    <div class="sidebar-file" id="installLink"><i class="sq"></i>install.sh</div>
+    <div class="install-note" id="installNote">There's no installer here. Click a repo below to open it straight on GitHub, and check the star colour: green dot means the count was just fetched live, amber means it's a cached fallback.</div>
+    <div class="sidebar-outline">▸ OUTLINE</div>
+  </nav>
+
+  <main class="main">
+    <p class="notice">Star counts are fetched live from <b>api.github.com</b> when this page loads, not hardcoded. If a fetch fails or you're rate-limited, that repo falls back to a cached snapshot, flagged with an amber dot.</p>
+
+    <h1 contenteditable="true" spellcheck="false">23 repos that stop Claude <span class="accent">eating</span> your tokens</h1>
+    <p class="sub" contenteditable="true" spellcheck="false">Your limit vanishes by Wednesday and you blame the model. It's usually the setup around it.</p>
+
+    <div class="tally">
+      <div><span class="num" id="totalStars">&hellip;</span><br><span class="lbl">stars tracked live</span></div>
+      <div><span class="num" id="totalRepos">23</span><br><span class="lbl">repos, 4 categories</span></div>
+      <div class="sort-toggle">
+        <button class="sort-btn active" data-sort="curated">Curated order</button>
+        <button class="sort-btn" data-sort="stars">Rank by stars</button>
+      </div>
+    </div>
+
+    <div id="categories"></div>
+
+    <footer>
+      <div class="legend">
+        <span><i class="star-dot live" style="display:inline-block"></i>live from GitHub</span>
+        <span><i class="star-dot cached" style="display:inline-block"></i>cached fallback</span>
+      </div>
+      <p>This is an independent curation, not endorsed by Anthropic, GitHub, or the maintainers listed. Descriptions are paraphrased summaries, not quotes from any project's own copy. Click a repo name to read the real thing before you install it.</p>
+      <p>Click any heading or description above to edit the wording before you send this on.</p>
+    </footer>
+  </main>
+
+</div>
+
+<script>
+(function(){
+  const categories = [
+    { id:'context', num:'01', title:'Get context in', color:'var(--blue)', icon:'&darr;' },
+    { id:'remember', num:'02', title:'Remember it', color:'var(--orange)', icon:'&#9670;' },
+    { id:'burn', num:'03', title:'See the burn', color:'var(--purple)', icon:'&#9673;' },
+    { id:'cut', num:'04', title:'Cut the burn', color:'var(--green)', icon:'&#8862;' },
+  ];
+
+  const repos = [
+    { owner:'diegosouzapw', repo:'OmniRoute', cat:'context', desc:'340 providers and 90+ free tiers, behind one endpoint.', fallback:50100 },
+    { owner:'decolua', repo:'9router', cat:'context', desc:'Free routing for Claude Code, Codex and Cursor.', fallback:25700 },
+    { owner:'upstash', repo:'context7', cat:'context', desc:'Pulls current library docs, so Claude stops guessing at APIs.', fallback:60900 },
+    { owner:'colbymchenry', repo:'codegraph', cat:'context', desc:'A pre-indexed map of the repo, so Claude stops re-reading files.', fallback:66900 },
+    { owner:'DeusData', repo:'codebase-memory-mcp', cat:'context', desc:'Indexes the repo once, then answers from that instead of rescanning.', fallback:39300 },
+    { owner:'deepset-ai', repo:'haystack', cat:'context', desc:'Context-engineered retrieval pipelines, not raw document dumps.', fallback:26200 },
+
+    { owner:'thedotmack', repo:'claude-mem', cat:'remember', desc:'Carries what happened in one session into the next.', fallback:91100 },
+    { owner:'mem0ai', repo:'mem0', cat:'remember', desc:'A memory layer that plugs into more or less any agent.', fallback:63500 },
+    { owner:'MemPalace', repo:'mempalace', cat:'remember', desc:'An open memory system, benchmarked and free to self-host.', fallback:58400 },
+    { owner:'topoteretes', repo:'cognee', cat:'remember', desc:'An open memory platform your agents can query directly.', fallback:30100 },
+    { owner:'rohitg00', repo:'agentmemory', cat:'remember', desc:'Persistent memory built and tuned against real benchmarks.', fallback:27100 },
+    { owner:'gastownhall', repo:'beads', cat:'remember', desc:'A drop-in memory upgrade for a coding agent.', fallback:26400 },
+
+    { owner:'jarrodwatts', repo:'claude-hud', cat:'burn', desc:'Context and active agents, live in your terminal status line.', fallback:27500 },
+    { owner:'ccusage', repo:'ccusage', cat:'burn', desc:'Turns your own local logs into a cost report per session.', fallback:18000 },
+    { owner:'steipete', repo:'CodexBar', cat:'burn', desc:'Claude Code and Codex usage, sitting in the menu bar.', fallback:20300 },
+    { owner:'affaan-m', repo:'ECC', cat:'burn', desc:'A full harness tuned hard for agent performance.', fallback:241000 },
+
+    { owner:'DietrichGebert', repo:'ponytail', cat:'cut', desc:'Talks the agent out of over-building before it writes the code.', fallback:105000 },
+    { owner:'JuliusBrussee', repo:'caveman', cat:'cut', desc:'Why use many token when few token do trick.', fallback:98800 },
+    { owner:'rtk-ai', repo:'rtk', cat:'cut', desc:'A proxy that cuts token use by roughly 60 to 90 percent.', fallback:76500 },
+    { owner:'headroomlabs-ai', repo:'headroom', cat:'cut', desc:'Compresses tool output before it ever reaches context.', fallback:66700 },
+    { owner:'code-yeongyu', repo:'oh-my-openagent', cat:'cut', desc:'A coding agent built from the ground up for token discipline.', fallback:68000 },
+    { owner:'bytedance', repo:'deer-flow', cat:'cut', desc:'A long-horizon agent harness aimed at fewer wasted loops.', fallback:80200 },
+    { owner:'obra', repo:'superpowers', cat:'cut', desc:'One install for a whole disciplined coding methodology.', fallback:273000 },
+  ];
+
+  const catsEl = document.getElementById('categories');
+  const folderTree = document.getElementById('folderTree');
+  let sortMode = 'curated';
+
+  function fmtStars(n){
+    if (n >= 1000) {
+      let s = (Math.round(n/100)/10).toFixed(1);
+      s = s.replace(/\.0$/, '');
+      return s + 'k';
+    }
+    return String(n);
+  }
+
+  function slug(o, r){ return (o + '-' + r).toLowerCase().replace(/[^a-z0-9-]/g,''); }
+
+  // build category sections
+  categories.forEach(cat => {
+    const items = repos.filter(r => r.cat === cat.id);
+    const section = document.createElement('section');
+    section.className = 'cat';
+    section.id = 'cat-' + cat.id;
+    section.innerHTML = `
+      <div class="cat-head">
+        <span class="cat-icon" style="background:${cat.color}22; color:${cat.color}">${cat.icon}</span>
+        <span class="cat-title"><span class="cat-num" style="color:${cat.color}">${cat.num}</span>${cat.title}</span>
+      </div>
+      <div class="cat-rows" id="rows-${cat.id}"></div>
+    `;
+    catsEl.appendChild(section);
+    const rowsEl = section.querySelector('.cat-rows');
+    items.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'repo-row';
+      row.id = 'repo-' + slug(r.owner, r.repo);
+      row.dataset.owner = r.owner; row.dataset.repo = r.repo;
+      row.innerHTML = `
+        <div class="repo-main">
+          <a href="https://github.com/${r.owner}/${r.repo}" target="_blank" rel="noopener" style="color:${cat.color}">${r.owner}/${r.repo}</a>
+          <span class="repo-desc" contenteditable="true" spellcheck="false">${r.desc}</span>
+        </div>
+        <div class="repo-stars" id="stars-${slug(r.owner, r.repo)}"><span class="star-dot pending"></span>&middot;&middot;&middot;</div>
+      `;
+      rowsEl.appendChild(row);
+      r._row = row;
+      r._starsEl = row.querySelector('.repo-stars');
+      r.current = null;
+    });
+  });
+
+  // build sidebar tree
+  categories.forEach(cat => {
+    const items = repos.filter(r => r.cat === cat.id);
+    const folder = document.createElement('div');
+    folder.className = 'folder';
+    folder.innerHTML = `
+      <div class="folder-row" data-target="cat-${cat.id}">
+        <span class="caret">&#9656;</span>
+        <i class="sq" style="background:${cat.color}"></i>
+        <span class="folder-name">${cat.num}-${cat.title.toLowerCase().replace(/\s+/g,'-')}/</span>
+        <span class="folder-count">${items.length}</span>
+      </div>
+      <div class="file-list"></div>
+    `;
+    folderTree.appendChild(folder);
+    const fileList = folder.querySelector('.file-list');
+    items.forEach(r => {
+      const f = document.createElement('div');
+      f.className = 'file-row';
+      f.textContent = r.repo.toLowerCase() + '.md';
+      f.dataset.target = 'repo-' + slug(r.owner, r.repo);
+      fileList.appendChild(f);
+    });
+    const row = folder.querySelector('.folder-row');
+    const caret = folder.querySelector('.caret');
+    row.addEventListener('click', () => {
+      const open = fileList.classList.toggle('open');
+      caret.classList.toggle('open', open);
+    });
+  });
+
+  // click delegation for scrolling + flash highlight
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-target]');
+    if (!t) return;
+    const target = document.getElementById(t.dataset.target);
+    if (!target) return;
+    target.scrollIntoView({ behavior:'smooth', block:'center' });
+    if (target.classList.contains('repo-row')) {
+      target.classList.add('flash');
+      setTimeout(() => target.classList.remove('flash'), 900);
+    }
+  });
+
+  document.getElementById('readmeLink').addEventListener('click', () => window.scrollTo({ top:0, behavior:'smooth' }));
+  document.getElementById('installLink').addEventListener('click', () => document.getElementById('installNote').classList.toggle('open'));
+
+  // sort toggle
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      sortMode = btn.dataset.sort;
+      applySort();
+    });
+  });
+
+  function applySort(){
+    categories.forEach(cat => {
+      const rowsEl = document.getElementById('rows-' + cat.id);
+      const items = repos.filter(r => r.cat === cat.id);
+      const sorted = sortMode === 'stars'
+        ? items.slice().sort((a,b) => (b.current ?? b.fallback) - (a.current ?? a.fallback))
+        : items;
+      sorted.forEach(r => rowsEl.appendChild(r._row));
+    });
+  }
+
+  function updateTotal(){
+    const total = repos.reduce((sum, r) => sum + (r.current ?? 0), 0);
+    document.getElementById('totalStars').textContent = fmtStars(total) + '+';
+  }
+
+  function setStars(r, count, live){
+    r.current = count;
+    r._starsEl.innerHTML = `<span class="star-dot ${live ? 'live' : 'cached'}"></span>${fmtStars(count)}&#9733;`;
+    updateTotal();
+    if (sortMode === 'stars') applySort();
+  }
+
+  async function fetchStars(r){
+    try {
+      const res = await fetch(`https://api.github.com/repos/${r.owner}/${r.repo}`);
+      if (!res.ok) throw new Error('not ok');
+      const data = await res.json();
+      if (typeof data.stargazers_count === 'number') {
+        setStars(r, data.stargazers_count, true);
+        return;
+      }
+      throw new Error('no count');
+    } catch (e) {
+      setStars(r, r.fallback, false);
+    }
+  }
+
+  repos.forEach((r, i) => setTimeout(() => fetchStars(r), i * 90));
+})();
+</script>
+</body>
+</html>

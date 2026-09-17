@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Never Split the Difference — Field Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #141414;
+    --surface2: #1c1c1c;
+    --border: #2a2a2a;
+    --accent: #c8a96e;
+    --accent2: #e8c88e;
+    --danger: #c0392b;
+    --success: #27ae60;
+    --text: #e8e4dc;
+    --muted: #888;
+    --tag-bg: #1f1a12;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    padding: 80px 40px 60px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse at 50% 0%, #1a1408 0%, #0d0d0d 70%);
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 39px,
+      rgba(200,169,110,0.04) 40px
+    );
+    pointer-events: none;
+  }
+
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+    opacity: 0.8;
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.4rem, 6vw, 4.5rem);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: 1rem;
+    color: var(--muted);
+    font-weight: 300;
+    max-width: 480px;
+    margin: 0 auto 32px;
+    line-height: 1.6;
+  }
+
+  .hero-author {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* NAV PILLS */
+  .sticky-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(13,13,13,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .sticky-nav::-webkit-scrollbar { display: none; }
+
+  .nav-pill {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-decoration: none;
+  }
+  .nav-pill:hover, .nav-pill.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(200,169,110,0.08);
+  }
+
+  /* SEARCH */
+  .search-wrap {
+    padding: 24px 20px 0;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .search-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px 12px 44px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    position: relative;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-wrap { position: relative; }
+  .search-icon {
+    position: absolute;
+    left: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 16px;
+    pointer-events: none;
+  }
+
+  /* LAYOUT */
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  /* CHAPTER CARD */
+  .chapter {
+    margin-bottom: 48px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface);
+    transition: border-color 0.3s;
+  }
+  .chapter:hover { border-color: #3a3a3a; }
+  .chapter.hidden { display: none; }
+
+  .chapter-header {
+    padding: 28px 28px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .chapter-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem;
+    font-weight: 900;
+    color: var(--accent);
+    opacity: 0.25;
+    line-height: 1;
+    flex-shrink: 0;
+    min-width: 52px;
+    text-align: right;
+  }
+
+  .chapter-title-wrap { flex: 1; }
+
+  .chapter-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+    opacity: 0.7;
+  }
+
+  .chapter-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .chapter-tagline {
+    font-size: 13px;
+    color: var(--muted);
+    font-style: italic;
+    font-family: 'Playfair Display', serif;
+  }
+
+  .chapter-chevron {
+    color: var(--muted);
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 4px;
+    transition: transform 0.3s;
+  }
+  .chapter.open .chapter-chevron { transform: rotate(180deg); }
+
+  .chapter-body {
+    display: none;
+    padding: 28px;
+  }
+  .chapter.open .chapter-body { display: block; }
+
+  /* CONCEPT */
+  .concept {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .concept:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+  .concept-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .concept-desc {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #ccc;
+    margin-bottom: 12px;
+  }
+
+  .quote-block {
+    border-left: 3px solid var(--accent);
+    padding: 10px 16px;
+    margin: 12px 0;
+    background: rgba(200,169,110,0.05);
+    border-radius: 0 6px 6px 0;
+  }
+  .quote-block p {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 13.5px;
+    color: var(--accent2);
+    line-height: 1.6;
+  }
+
+  /* TIPS */
+  .tips-list {
+    list-style: none;
+    margin-top: 10px;
+  }
+  .tips-list li {
+    display: flex;
+    gap: 10px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #bbb;
+    margin-bottom: 8px;
+  }
+  .tips-list li::before {
+    content: '→';
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* CTA SCENARIOS */
+  .cta-section {
+    margin-top: 48px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .cta-header {
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, #1a1408 0%, #141414 100%);
+  }
+
+  .cta-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .cta-header p {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .scenario {
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .scenario:last-child { border-bottom: none; }
+
+  .scenario-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .tag-work { background: rgba(39,174,96,0.15); color: #4ae08a; border: 1px solid rgba(39,174,96,0.3); }
+  .tag-personal { background: rgba(52,152,219,0.15); color: #5bc4f5; border: 1px solid rgba(52,152,219,0.3); }
+  .tag-salary { background: rgba(192,57,43,0.15); color: #f07060; border: 1px solid rgba(192,57,43,0.3); }
+
+  .scenario-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+  }
+
+  .scenario-steps {
+    list-style: none;
+    counter-reset: step;
+  }
+
+  .scenario-steps li {
+    counter-increment: step;
+    display: flex;
+    gap: 12px;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: #bbb;
+    margin-bottom: 10px;
+    position: relative;
+  }
+
+  .scenario-steps li::before {
+    content: counter(step, decimal-leading-zero);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 3px;
+    min-width: 20px;
+  }
+
+  .script-example {
+    margin-top: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  .script-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 4px;
+  }
+
+  /* CHEAT SHEET */
+  .cheat-sheet {
+    margin-top: 48px;
+    padding: 28px;
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    background: rgba(200,169,110,0.04);
+  }
+
+  .cheat-sheet h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent2);
+    margin-bottom: 20px;
+  }
+
+  .cheat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .cheat-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+
+  .cheat-item-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .cheat-item-text {
+    font-size: 13px;
+    color: #bbb;
+    line-height: 1.55;
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 40px 20px;
+    border-top: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* HIGHLIGHT */
+  .highlight { background: rgba(200,169,110,0.25); border-radius: 2px; padding: 0 2px; }
+
+  @media (max-width: 600px) {
+    .hero { padding: 50px 20px 40px; }
+    .chapter-header { padding: 20px; gap: 12px; }
+    .chapter-body { padding: 20px; }
+    .chapter-num { font-size: 2rem; min-width: 36px; }
+    .chapter-title { font-size: 1.1rem; }
+    .scenario { padding: 20px; }
+    .cta-header { padding: 20px; }
+    .cheat-sheet { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-eyebrow">Field Reference Guide</div>
+  <h1>Never Split the Difference</h1>
+  <p class="hero-sub">Every concept. Every tactic. Mapped to real situations — salary talks, promotions, and the messy negotiations life throws at you.</p>
+  <div class="hero-author">Chris Voss &amp; Tahl Raz · FBI Hostage Negotiation → Boardroom</div>
+</section>
+
+<nav class="sticky-nav">
+  <a href="#ch1" class="nav-pill">Ch.1 New Rules</a>
+  <a href="#ch2" class="nav-pill">Ch.2 Mirroring</a>
+  <a href="#ch3" class="nav-pill">Ch.3 Labelling</a>
+  <a href="#ch4" class="nav-pill">Ch.4 Accusation Audit</a>
+  <a href="#ch5" class="nav-pill">Ch.5 Calibrated Qs</a>
+  <a href="#ch6" class="nav-pill">Ch.6 Bending Reality</a>
+  <a href="#ch7" class="nav-pill">Ch.7 Black Swans</a>
+  <a href="#ch8" class="nav-pill">Ch.8 Bargaining</a>
+  <a href="#ch9" class="nav-pill">Ch.9 Find a Deal</a>
+  <a href="#cta" class="nav-pill">🎯 CTAs</a>
+  <a href="#cheat" class="nav-pill">⚡ Cheat Sheet</a>
+</nav>
+
+<div class="search-wrap">
+  <span class="search-icon">🔍</span>
+  <input type="text" class="search-input" id="searchInput" placeholder="Search techniques, concepts, or scenarios..." oninput="filterContent()">
+</div>
+
+<div class="container">
+
+  <!-- CHAPTER 1 -->
+  <div class="chapter open" id="ch1" data-text="new rules hostage negotiation rational irrational emotion empathy active listening system 1 2 kahneman">
+    <div class="chapter-header" onclick="toggleChapter(this)">
+      <div class="chapter-num">01</div>
+      <div class="chapter-title-wrap">
+        <div class="chapter-label">Chapter 1</div>
+        <div class="chapter-title">The New Rules</div>
+        <div class="chapter-tagline">"How to become the smartest person in any room"</div>
+      </div>
+      <div class="chapter-chevron">▾</div>
+    </div>
+    <div class="chapter-body">
+      <div class="concept">
+        <div class="concept-name">The Core Premise</div>
+        <div class="concept-desc">Classical negotiation assumed people are rational actors — that if you present enough logic and find the right split, everyone gets to yes. Voss spent 24 years as an FBI hostage negotiator and realised that's completely wrong. People are emotional first, rational second. The brain's fast, emotional "System 1" dominates decision-making (hat tip to Kahneman), and any negotiation strategy that ignores this is playing checkers while the other side is playing chess.</div>
+        <div class="quote-block"><p>"Negotiation is not an act of battle; it's a process of discovery."</p></div>
+      </div>
+      <div class="concept">
+        <div class="concept-name">Key Insight: Empathy as a Weapon</div>
+        <div class="concept-desc">Tactical empathy — understanding the other party's feelings and articulating them back — is the foundation of everything Voss teaches. It's not sympathy (agreeing with them). It's demonstrating that you <em>see</em> their world clearly, which drops their guard and opens genuine communication.</div>
+        <ul class="tips-list">
+          <li>Don't aim to be the smartest — aim to be the most curious person in the room.</li>
+          <li>Assume the other party has information you don't. Your job is to uncover it, not overwhelm it.</li>
+          <li>Emotions are not obstacles — they're data. Use them to guide the conversation.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAPTER 2 -->
+  <div class="chapter" id="ch2" data-text="mirroring FBI technique repeat words active listening rapport silence pause">
+    <div class="chapter-header" onclick="toggleChapter(this)">
+      <div class="chapter-num">02</div>
+      <div class="chapter-title-wrap">
+        <div class="chapter-label">Chapter 2</div>
+        <div class="chapter-title">Be a Mirror</div>
+        <div class="chapter-tagline">"How to quickly establish rapport"</div>
+      </div>
+      <div class="chapter-chevron">▾</div>
+    </div>
+    <div class="chapter-body">
+      <div class="concept">
+        <div class="concept-name">Mirroring</div>
+        <div class="concept-desc">A mirror is one of Voss's simplest and most powerful tools: repeat the last 1–3 words the other person just said, with a slight upward inflection. That's it. People have a deep neurological need to feel heard, and mirroring triggers them to keep talking — often revealing far more than they intended. In high-stakes situations, this buys you time and information simultaneously.</div>
+        <div class="quote-block"><p>"Mirrors work magic. Use them to keep people talking, buy time, and gather intelligence."</p></div>
+        <ul class="tips-list">
+          <li>Repeat the key 1–3 words. Then go silent. Let the pause work.</li>
+          <li>Works best delivered in a calm, curious tone — not interrogative.</li>
+          <li>In salary talks: your boss says "We just don't have the budget." You say: "Don't have the budget?" Then wait. They'll keep talking and often reveal the real constraint.</li>
+        </ul>
+      </div>
+      <div class="concept">
+        <div class="concept-name">The Late Night DJ Voice</div>
+        <div class="concept-desc">Voss identifies three voices. The <strong>playful/positive</strong> voice is your default. The <strong>assertive</strong> voice creates problems — it's read as aggression. The <strong>late-night FM DJ voice</strong> — slow, deep, calm, downward inflection at the end of sentences — conveys authority and safety simultaneously. Use it when delivering hard facts, anchoring numbers, or holding a position.</div>
+        <ul class="tips-list">
+          <li>Slow down. Silence is not awkward — it's powerful.</li>
+          <li>A smile, even over the phone, literally changes your vocal tone. Start there.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAPTER 3 -->
+  <div class="chapter" id="ch3" data-text="labelling emotions naming feelings de-escalation tactical empathy acknowledge articulate">
+    <div class="chapter-header" onclick="toggleChapter(this)">
+      <div class="chapter-num">03</div>
+      <div class="chapter-title-wrap">
+        <div class="chapter-label">Chapter 3</div>
+        <div class="chapter-title">Don't Feel Their Pain, Label It</div>
+        <div class="chapter-tagline">"How to create trust using tactical empathy"</div>
+      </div>
+      <div class="chapter-chevron">▾</div>
+    </div>
+    <div class="chapter-body">
+      <div class="concept">
+        <div class="concept-name">Labelling</div>
+        <div class="concept-desc">Labelling means naming the emotion you observe in the other person. It's not agreeing. It's articulating. When you name what someone is feeling, you give the emotion less power over them — neuroscience backs this up (affect labelling reduces amygdala activity). It also signals, unmistakably, that you are paying attention.</div>
+        <div class="quote-block"><p>"It seems like… / It sounds like… / It looks like…" — never say "I feel."</p></div>
+        <ul class="tips-list">
+          <li>Use "It seems like you're frustrated that…" not "I understand how you feel." The latter sounds hollow.</li>
+          <li>Label even positive emotions to reinforce them: "It seems like you're excited about this direction."</li>
+          <li>If you get the label wrong, the other person will correct you — and that correction is valuable data.</li>
+          <li>In promotions: "It seems like there's a concern about setting a precedent here…" — surfaces their real objection without forcing them to say it aloud.</li>
+        </ul>
+      </div>
+      <div class="concept">
+        <div class="concept-name">The Minimal Encourager</div>
+        <div class="concept-desc">A simple "yes," "go on," "mm-hmm," or "I see" keeps the other person talking without you committing to anything. It's an active listening signal that costs you nothing and generates information.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAPTER 4 -->
+  <div class="chapter" id="ch4" data-text="accusation audit no yes beware objections preempt fear dynamic reverse">
+    <div class="chapter-header" onclick="toggleChapter(this)">
+      <div class="chapter-num">04</div>
+      <div class="chapter-title-wrap">
+        <div class="chapter-label">Chapter 4</div>
+        <div class="chapter-title">Beware "Yes" — Master "No"</div>
+        <div class="chapter-tagline">"How to generate momentum and anchor the right mindset"</div>
+      </div>
+      <div class="chapter-chevron">▾</div>
+    </div>
+    <div class="chapter-body">
+      <div class="concept">
+        <div class="concept-name">The Power of "No"</div>
+        <div class="concept-desc">"No" is not failure — it's the start of a real negotiation. "Yes" can mean many things (agreement, appeasement, exhaustion), none of which you can rely on. "No," by contrast, makes people feel safe, in control, and protected. A "no" from the other side is often their way of saying "I'm not comfortable yet" — and that's workable.</div>
+        <div class="quote-block"><p>"'No' is protection. It starts the conversation."</p></div>
+        <ul class="tips-list">
+          <li>If someone goes cold or stops responding, try: "Have you given up on this project?" — the question demands a "no," which re-engages them.</li>
+          <li>Design your questions to invite "no": "Is it a ridiculous idea to discuss a title change?" is easier to engage with than "Can we talk about my title?"</li>
+          <li>"No" from a counterpart is not the end — ask: "What would need to be true for this to work?"</li>
+        </ul>
+      </div>
+      <div class="concept">
+        <div class="concept-name">The Accusation Audit</div>
+        <div class="concept-desc">Before any high-stakes conversation, list every negative thing the other person might be thinking or feeling about you, your request, or the situation — and then say them out loud, first. This sounds insane. It works because it disarms people before they've even loaded the weapon. You name their doubts; they relax; they feel understood; the dynamic shifts.</div>
+        <div class="quote-block"><p>"You probably think I'm asking for too much… / You're probably frustrated I haven't brought this up sooner…"</p></div>
+        <ul class="tips-list">
+          <li>List every accusation they might have. Write them down before the meeting.</li>
+          <li>Start the conversation with: "I know this might seem like I'm…" and name the worst version.</li>
+          <li>People can't attack you with a weapon you've already handed them yourself.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAPTER 5 -->
+  <div class="chapter" id="ch5" data-text="calibrated questions how what open ended solutions thinking problem solving trap yes">
+    <div class="chapter-header" onclick="toggleChapter(this)">
+      <div class="chapter-num">05</div>
+      <div class="chapter-title-wrap">
+        <div class="chapter-label">Chapter 5</div>
+        <div class="chapter-title">Trigger the Two Words that Immediately Transform Any Negotiation</div>
+        <div class="chapter-tagline">"That's right" — the magic phrase</div>
+      </div>
+      <div class="chapter-chevron">▾</div>
+    </div>
+    <div class="chapter-body">
+      <div class="concept">
+        <div class="concept-name">"That's Right" vs. "You're Right"</div>
+        <div class="concept-desc">The difference is everything. "You're right" is polite dismissal — your counterpart says it to end the conversation. "That's right" means they feel genuinely understood. It's a breakthrough moment. Your job is to create the conditions for the other person to say "that's right" — usually by summarising their position so accurately and empathetically that they feel completely seen.</div>
+        <div class="quote-block"><p>"'That's right' is a green light. 'You're right' is a stop sign."</p></div>
+        <ul class="tips-list">
+          <li>Paraphrase and summarise their worldview back to them with accuracy. Not flattery — accuracy.</li>
+          <li>Use a summary + label combination: "So it sounds like you're juggling competing priorities and a tight cycle, and there's real risk in any change right now — is that right?" Watch for "that's right."</li>
+          <li>If they say "you're right" — you've been dismissed. Dig deeper. You haven't found the real issue yet.</li>
+        </ul>
+      </div>
+      <div class="concept">
+        <div class="concept-name">Calibrated Questions</div>
+        <div class="concept-desc">Calibrated questions are open-ended, non-judgmental questions that begin with "how" or "what." They force the other side to think, engage, and — critically — solve your problem for you. They give the counterpart the illusion of control while you direct the flow.</div>
+        <div class="quote-block"><p>"How am I supposed to do that? / What does success look like for you? / How does that affect the team?"</p></div>
+        <ul class="tips-list">
+          <li>Never ask "why" — it sounds accusatory and puts people on defence.</li>
+          <li>"What is the biggest challenge you face with this?" is worth more than ten yes/no questions.</li>
+          <li>"How do we solve this?" makes them your partner. "Can you do it?" makes them your opponent.</li>
+          <li>When told "no budget": "What would have to change for this to be possible?" — forces them to imagine a path.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAPTER 6 -->
+  <div class="chapter" id="ch6" data-text="bending reality loss aversion fairness deadline anchor extreme offers framing prospect theory">
+    <div class="chapter-header" onclick="toggleChapter(this)">
+      <div class="chapter-num">06</div>
+      <div class="chapter-title-wrap">
+        <div class="chapter-label">Chapter 6</div>
+        <div class="chapter-title">Bend Their Reality</div>
+        <div class="chapter-tagline">"How to shape what feels fair — and make the other side grateful for it"</div>
+      </div>
+      <div class="chapter-chevron">▾</div>
+    </div>
+    <div class="chapter-body">
+      <div class="concept">
+        <div class="concept-name">Anchoring</div>
+        <div class="concept-desc">Anchoring means putting an extreme number on the table first to skew the entire negotiation range in your favour. The anchor doesn't need to be accepted — it just needs to reframe what "reasonable" looks like. In salary talks, anchoring high with confidence (and a brief rationale) shifts the entire midpoint upward before you've even started bargaining.</div>
+        <ul class="tips-list">
+          <li>Anchor extreme — but not insultingly so. 20–30% above your target is a reasonable starting position for salary.</li>
+          <li>Use a precise number, not a round one. "$127,000" reads as researched; "$130,000" reads as guessed.</li>
+          <li>Let them respond. Don't rush to fill the silence after your anchor.</li>
+        </ul>
+      </div>
+      <div class="concept">
+        <div class="concept-name">Loss Aversion Framing</div>
+        <div class="concept-desc">People are twice as motivated to avoid loss as they are to achieve gain (Kahneman and Tversky). Voss weaponises this: frame your proposal in terms of what the other side stands to <em>lose</em> by not agreeing, not just what they gain by saying yes.</div>
+        <div class="quote-block"><p>"What does it cost the team if this role stays under-levelled for another year?"</p></div>
+        <ul class="tips-list">
+          <li>In promotion talks: "What's the cost of continuing without proper recognition — in terms of retention risk, and the signal it sends?" hits harder than "here's what I deserve."</li>
+          <li>Pair with a tight deadline: "I've been approached about other opportunities and I'd love to resolve this here first."</li>
+        </ul>
+      </div>
+      <div class="concept">
+        <div class="concept-name">"Fair"</div>
+        <div class="concept-desc">The word "fair" is a trap when your counterpart uses it offensively ("we've made you a fair offer"). Respond with: "I want you to feel like you're being treated fairly. Please stop me if anything feels unfair." This reframes fairness as a shared standard you're both committed to — and makes it very hard for them to weaponise the word again.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAPTER 7 -->
+  <div class="chapter" id="ch7" data-text="black swans unknown unknowns hidden information leverage religion needs worldview surprise">
+    <div class="chapter-header" onclick="toggleChapter(this)">
+      <div class="chapter-num">07</div>
+      <div class="chapter-title-wrap">
+        <div class="chapter-label">Chapter 7</div>
+        <div class="chapter-title">Create the Illusion of Control</div>
+        <div class="chapter-tagline">"Calibrated questions as a tool of control — and discovering Black Swans"</div>
+      </div>
+      <div class="chapter-chevron">▾</div>
+    </div>
+    <div class="chapter-body">
+      <div class="concept">
+        <div class="concept-name">Black Swans</div>
+        <div class="concept-desc">Black Swans are the hidden pieces of information — often not known to either party going in — that can completely flip the outcome of a negotiation. In a salary negotiation, a Black Swan might be that your manager is fighting their own budget battle with finance. In a personal negotiation, it might be an undisclosed fear or constraint driving the other person's behaviour. Your job is to find them by listening deeply, asking open questions, and paying attention to what seems inconsistent or emotionally charged.</div>
+        <ul class="tips-list">
+          <li>Spend the first third of any negotiation listening, not talking. Black Swans live in what people say sideways.</li>
+          <li>Inconsistencies are breadcrumbs — follow them with curiosity, not confrontation.</li>
+          <li>Ask: "What's your biggest concern about this not working out?"</li>
+        </ul>
+      </div>
+      <div class="concept">
+        <div class="concept-name">Three Types of Leverage</div>
+        <div class="concept-desc"><strong>Positive leverage:</strong> what you can give them. <strong>Negative leverage:</strong> what they stand to lose. <strong>Normative leverage:</strong> holding them to their own stated values and standards. The last one is criminally underused — if your company claims to reward high performers, that's a lever.</div>
+        <div class="quote-block"><p>"You've said publicly that you invest in people who take initiative — I'd love to explore what that looks like for my situation."</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAPTER 8 -->
+  <div class="chapter" id="ch8" data-text="ackerman model bargaining 65 85 95 100 Ackerman strategic concessions salary offer counter">
+    <div class="chapter-header" onclick="toggleChapter(this)">
+      <div class="chapter-num">08</div>
+      <div class="chapter-title-wrap">
+        <div class="chapter-label">Chapter 8</div>
+        <div class="chapter-title">Guarantee Execution</div>
+        <div class="chapter-tagline">"How to ensure the deal sticks and the other party actually delivers"</div>
+      </div>
+      <div class="chapter-chevron">▾</div>
+    </div>
+    <div class="chapter-body">
+      <div class="concept">
+        <div class="concept-name">The Ackerman Bargaining Model</div>
+        <div class="concept-desc">When you're in a pure price negotiation, Voss recommends the Ackerman model: a precise, structured concession pattern that signals you've hit your limit before you actually have. It's calibrated to feel like a natural exhaustion of your range.</div>
+        <div class="quote-block"><p>Start at 65% of your target → move to 85% → 95% → 100%. Each concession gets smaller. End with a non-monetary throw-in.</p></div>
+        <ul class="tips-list">
+          <li>Start at 65% of your target price. This is your anchor — it will feel outrageous, and that's the point.</li>
+          <li>Make three concessions: up to 85%, then 95%, then your target. Each increment gets smaller — it signals you're running out of room.</li>
+          <li>End with a precise, odd number (e.g. $112,750) and throw in a small non-monetary item (e.g. "and I'd want to formalise the remote flexibility we discussed"). Precision signals you've done the maths; the add-on signals you're at your limit.</li>
+          <li>Express "reluctant acceptance" at each concession — a slight wince or "I'd have to push really hard on my end for that" keeps pressure on.</li>
+        </ul>
+      </div>
+      <div class="concept">
+        <div class="concept-name">Getting Implementation Buy-In</div>
+        <div class="concept-desc">An agreement that isn't implemented is worth nothing. Voss insists on getting explicit verbal or behavioural confirmation — not just "yes" — by asking "how" and "what" questions that force the other person to articulate the <em>path</em> to delivery.</div>
+        <ul class="tips-list">
+          <li>"How do we make sure this actually happens by the agreed date?"</li>
+          <li>Get three "yes" responses — not just one. The first yes is often cheap; by the third, it's genuine commitment.</li>
+          <li>Summarise the agreement in writing and send immediately after the conversation: "Just to confirm what we agreed…"</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAPTER 9 -->
+  <div class="chapter" id="ch9" data-text="find a deal colleague ally liars bad faith deal breaker personality type analyst accommodator assertive">
+    <div class="chapter-header" onclick="toggleChapter(this)">
+      <div class="chapter-num">09</div>
+      <div class="chapter-title-wrap">
+        <div class="chapter-label">Chapter 9</div>
+        <div class="chapter-title">Bargain Hard</div>
+        <div class="chapter-tagline">"How to negotiate with personality types, and walk away when you must"</div>
+      </div>
+      <div class="chapter-chevron">▾</div>
+    </div>
+    <div class="chapter-body">
+      <div class="concept">
+        <div class="concept-name">Three Negotiator Archetypes</div>
+        <div class="concept-desc">Voss identifies three types — and your approach must adapt to who you're talking to.</div>
+        <ul class="tips-list">
+          <li><strong>Analyst:</strong> methodical, data-driven, slow to decide. Give them time, precision, and facts. Don't rush or emote at them.</li>
+          <li><strong>Accommodator:</strong> relationship-first, wants everyone happy, often avoids conflict. Build warmth, share feelings openly, don't mistake their agreeableness for commitment — follow up in writing.</li>
+          <li><strong>Assertive:</strong> results-focused, impatient, direct. Get to the point, listen actively (they want to feel heard before they'll hear you), and never show weakness or hesitation.</li>
+        </ul>
+      </div>
+      <div class="concept">
+        <div class="concept-name">Punching Through a Brick Wall</div>
+        <div class="concept-desc">When negotiations stall or the other side goes bad-faith, Voss recommends a combination of a "I" message + a calibrated question: not accusatory, but firmly reality-anchoring.</div>
+        <div class="quote-block"><p>"I feel like we're going backwards here. What's happened to change things since our last conversation?"</p></div>
+        <ul class="tips-list">
+          <li>Spot deception: liars over-explain (too much detail = red flag), avoid first-person pronouns, and speak in complex sentences.</li>
+          <li>The "7-38-55" rule: 7% of meaning from words, 38% from tone, 55% from body language. If the tone doesn't match the words, trust the tone.</li>
+          <li>Know your BATNA (Best Alternative to a Negotiated Agreement) before you walk in. It's your true source of power — and it determines when to walk away.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA SECTION -->
+  <div class="cta-section" id="cta">
+    <div class="cta-header">
+      <h2>🎯 Real-World CTAs</h2>
+      <p>Step-by-step playbooks mapped to actual situations — with example scripts.</p>
+    </div>
+
+    <div class="scenario">
+      <div class="scenario-tag tag-salary">Salary</div>
+      <div class="scenario-title">Asking for a Salary Raise</div>
+      <ol class="scenario-steps">
+        <li>Run an accusation audit before the meeting. Write down everything they might think: "She's being greedy," "This is bad timing," "We'll have to do this for everyone." Start by saying them out loud yourself.
+          <div class="script-label">Say this:</div>
+          <div class="script-example">"I know this might feel like the timing isn't ideal, and you might be thinking about the precedent it sets. I want to acknowledge that upfront — and I still want to have this conversation because I think it's important for both of us."</div>
+        </li>
+        <li>Label their situation first. Demonstrate you understand their constraints before you state your ask.</li>
+        <li>Use loss aversion framing — not entitlement framing.
+          <div class="script-label">Say this:</div>
+          <div class="script-example">"What's the cost of this role being undervalued for another cycle — in terms of how it affects my focus, and what it signals about growth paths here?"</div>
+        </li>
+        <li>Anchor with a precise, researched number. Use the late-night FM DJ voice. Pause afterward.
+          <div class="script-label">Say this:</div>
+          <div class="script-example">"Based on market data and what this role delivers, I'd be looking at $[X,XXX]. I want to work through what that looks like with you."</div>
+        </li>
+        <li>When they push back, use calibrated questions — not defence.
+          <div class="script-label">Say this:</div>
+          <div class="script-example">"What would need to be true for this to be possible in the next review cycle?"</div>
+        </li>
+        <li>If they give a low counter, use the Ackerman model — make smaller and smaller concessions. End with a precise number and a non-monetary add-on (extra leave, title change, learning budget).</li>
+        <li>Confirm implementation with: "How do we make sure this is formalised before the next cycle?" and follow up in writing within 24 hours.</li>
+      </ol>
+    </div>
+
+    <div class="scenario">
+      <div class="scenario-tag tag-work">Promotion / Title Change</div>
+      <div class="scenario-title">Negotiating a Promotion or Senior Title</div>
+      <ol class="scenario-steps">
+        <li>Identify their archetype. Is your manager an Analyst, Accommodator, or Assertive? Adapt your opening accordingly.</li>
+        <li>Use normative leverage: hold them to their own stated values.
+          <div class="script-label">Say this:</div>
+          <div class="script-example">"You've said that people who operate above their level get recognised for it. I want to explore what that looks like in my case."</div>
+        </li>
+        <li>Elicit "that's right" by summarising their position before making your case.
+          <div class="script-label">Say this:</div>
+          <div class="script-example">"So it sounds like you're balancing a lot of competing priorities right now, and any change sets a precedent you'd need to justify upward — is that right?"</div>
+        </li>
+        <li>Surface Black Swans: what's the constraint they haven't named?
+          <div class="script-label">Say this:</div>
+          <div class="script-example">"What's your biggest concern about moving on this?"</div>
+        </li>
+        <li>Design a "no"-inviting question to restart stalled conversations.
+          <div class="script-label">Say this:</div>
+          <div class="script-example">"Is it a ridiculous idea to put together a concrete proposal for what a Director-level scope looks like for my role?"</div>
+        </li>
+        <li>Get three explicit yeses on the path forward: what happens next, by when, and who else needs to be involved.</li>
+      </ol>
+    </div>
+
+    <div class="scenario">
+      <div class="scenario-tag tag-personal">Personal</div>
+      <div class="scenario-title">Difficult Conversation with a Partner / Family Member</div>
+      <ol class="scenario-steps">
+        <li>Lead with a label, not an accusation.
+          <div class="script-label">Say this:</div>
+          <div class="script-example">"It seems like you've been feeling unheard about this for a while."</div>
+        </li>
+        <li>Let them correct you if wrong — that correction gets you closer to the real issue faster than any direct question.</li>
+        <li>Use mirroring when emotions run high. Repeat their last words. Then go silent. The silence is not awkward — it's productive.</li>
+        <li>Invite "no" to give them a sense of control.
+          <div class="script-label">Say this:</div>
+          <div class="script-example">"Is it completely off the table to revisit how we make this decision together?"</div>
+        </li>
+        <li>Summarise their perspective until you get "that's right" — not "you're right." Don't move forward until you hear it.</li>
+        <li>Use calibrated questions to build a joint path.
+          <div class="script-label">Say this:</div>
+          <div class="script-example">"What would make you feel genuinely comfortable with this?"</div>
+        </li>
+      </ol>
+    </div>
+
+    <div class="scenario">
+      <div class="scenario-tag tag-work">Work</div>
+      <div class="scenario-title">Pushing Back on an Unfair Decision at Work</div>
+      <ol class="scenario-steps">
+        <li>Don't go assertive — it will entrench them. Go curious and empathetic first.</li>
+        <li>Label their decision context before challenging it.
+          <div class="script-label">Say this:</div>
+          <div class="script-example">"It seems like this decision was made under real time pressure and with a lot of constraints I may not be fully across."</div>
+        </li>
+        <li>Use a calibrated question to open the door.
+          <div class="script-label">Say this:</div>
+          <div class="script-example">"What would it take to revisit this with fresh eyes?"</div>
+        </li>
+        <li>If they invoke fairness, turn it back.
+          <div class="script-label">Say this:</div>
+          <div class="script-example">"I want us both to feel like this is fair. Can we walk through the reasoning together so I can understand it fully?"</div>
+        </li>
+        <li>Know your BATNA going in. Walk in knowing what you'll do if the answer is no — it gives you genuine calm and leverage.</li>
+      </ol>
+    </div>
+
+    <div class="scenario">
+      <div class="scenario-tag tag-personal">Personal</div>
+      <div class="scenario-title">Negotiating a Major Purchase (Car, Property, Services)</div>
+      <ol class="scenario-steps">
+        <li>Never make the first offer — ask them for a number first. If they won't budge, anchor extreme.</li>
+        <li>Use the Ackerman model: anchor at 65% of your target, concede in decreasing increments to 85%, 95%, then your actual target.</li>
+        <li>End on a precise odd number — it signals you've done real maths, not just split the difference.</li>
+        <li>Throw in a non-monetary ask at the end (extended warranty, free delivery, something small) to signal you've hit your limit.</li>
+        <li>Mirror any counter-offer: "Forty-five thousand?" Then wait. They'll almost always adjust before you say another word.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- CHEAT SHEET -->
+  <div class="cheat-sheet" id="cheat">
+    <h2>⚡ The Voss Cheat Sheet</h2>
+    <div class="cheat-grid">
+      <div class="cheat-item">
+        <div class="cheat-item-title">Mirroring</div>
+        <div class="cheat-item-text">Repeat their last 1–3 words. Pause. Let them fill the silence.</div>
+      </div>
+      <div class="cheat-item">
+        <div class="cheat-item-title">Labelling</div>
+        <div class="cheat-item-text">"It seems like…" Name their emotion. Don't agree — observe.</div>
+      </div>
+      <div class="cheat-item">
+        <div class="cheat-item-title">Accusation Audit</div>
+        <div class="cheat-item-text">List their worst thoughts about you. Say them first. Defang the room.</div>
+      </div>
+      <div class="cheat-item">
+        <div class="cheat-item-title">Calibrated Questions</div>
+        <div class="cheat-item-text">"How…?" and "What…?" only. Never "Why?" — it sounds like blame.</div>
+      </div>
+      <div class="cheat-item">
+        <div class="cheat-item-title">"That's Right"</div>
+        <div class="cheat-item-text">Summarise their worldview until they say it. It signals genuine understanding.</div>
+      </div>
+      <div class="cheat-item">
+        <div class="cheat-item-title">Ackerman Model</div>
+        <div class="cheat-item-text">65% → 85% → 95% → 100% of target. Decreasing increments. Precise final number.</div>
+      </div>
+      <div class="cheat-item">
+        <div class="cheat-item-title">Loss Framing</div>
+        <div class="cheat-item-text">Frame in terms of what they lose by saying no — not what they gain by saying yes.</div>
+      </div>
+      <div class="cheat-item">
+        <div class="cheat-item-title">The "No" Invite</div>
+        <div class="cheat-item-text">"Is it ridiculous to…?" Gets them engaged without cornering them.</div>
+      </div>
+      <div class="cheat-item">
+        <div class="cheat-item-title">Black Swans</div>
+        <div class="cheat-item-text">Listen for what seems off. Inconsistencies reveal hidden constraints and motivations.</div>
+      </div>
+      <div class="cheat-item">
+        <div class="cheat-item-title">FM DJ Voice</div>
+        <div class="cheat-item-text">Slow. Deep. Calm. Downward inflection. Authority without aggression.</div>
+      </div>
+      <div class="cheat-item">
+        <div class="cheat-item-title">BATNA</div>
+        <div class="cheat-item-text">Know your walk-away before you walk in. It's the source of all genuine calm.</div>
+      </div>
+      <div class="cheat-item">
+        <div class="cheat-item-title">Implementation</div>
+        <div class="cheat-item-text">"How do we make sure this happens?" Get three yeses. Confirm in writing.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>Never Split the Difference · Chris Voss &amp; Tahl Raz · Field Reference · Built for real negotiations</footer>
+
+<script>
+  function toggleChapter(headerEl) {
+    const chapter = headerEl.closest('.chapter');
+    chapter.classList.toggle('open');
+  }
+
+  function filterContent() {
+    const query = document.getElementById('searchInput').value.toLowerCase().trim();
+    const chapters = document.querySelectorAll('.chapter');
+    chapters.forEach(ch => {
+      const text = (ch.innerText + ' ' + (ch.dataset.text || '')).toLowerCase();
+      ch.classList.toggle('hidden', query.length > 1 && !text.includes(query));
+    });
+  }
+
+  // Smooth scroll for nav pills
+  document.querySelectorAll('.nav-pill').forEach(pill => {
+    pill.addEventListener('click', e => {
+      const href = pill.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        e.preventDefault();
+        const target = document.querySelector(href);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Open chapter if closed
+          if (target.classList.contains('chapter') && !target.classList.contains('open')) {
+            target.classList.add('open');
+          }
+        }
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

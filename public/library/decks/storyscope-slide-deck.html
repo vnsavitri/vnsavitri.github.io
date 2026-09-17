@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StoryScope: Investigating Idiosyncrasies in AI Fiction</title>
+    <style>
+        /* Modern Literary Aesthetic Theme */
+        :root {
+            --bg-color: #fdfcfb;
+            --text-main: #2b2b2a;
+            --text-muted: #6e6d6a;
+            --accent-coral: #c84b31;
+            --accent-blue: #3d6cb9;
+            --accent-bg: #f4f1ea;
+            --slide-width: 100%;
+            --slide-height: 100vh;
+            --border-ui: #e4dec9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Georgia, serif;
+            background-color: #111;
+            color: var(--text-main);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Presentation Canvas Container */
+        .deck-container {
+            width: 100%;
+            max-width: 1280px;
+            height: 100%;
+            max-height: 720px;
+            background-color: var(--bg-color);
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+
+        /* Slide Viewport */
+        .slides-viewport {
+            flex: 1;
+            position: relative;
+        }
+
+        /* Native Slide Card Template */
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            padding: 60px 80px;
+            justify-content: flex-start;
+            background-color: var(--bg-color);
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            z-index: 10;
+        }
+
+        /* Typography Hierarchy */
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            line-height: 1.15;
+            color: var(--text-main);
+            margin-bottom: 20px;
+            font-family: Georgia, serif;
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 24px;
+            font-family: Georgia, serif;
+            border-bottom: 2px solid var(--accent-coral);
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--accent-coral);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        p, li {
+            font-size: 1.15rem;
+            line-height: 1.6;
+            color: var(--text-main);
+        }
+
+        ul {
+            list-style-type: none;
+        }
+
+        li {
+            margin-bottom: 12px;
+            position: relative;
+            padding-left: 24px;
+        }
+
+        li::before {
+            content: "—";
+            position: absolute;
+            left: 0;
+            color: var(--accent-coral);
+            font-weight: bold;
+        }
+
+        /* Native Presentation UI Elements */
+        .presentation-footer {
+            height: 60px;
+            border-top: 1px solid var(--border-ui);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+            background-color: var(--bg-color);
+            z-index: 20;
+        }
+
+        .paper-meta {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .controls-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .slide-counter {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        .nav-btn {
+            background: var(--accent-bg);
+            border: 1px solid var(--border-ui);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background-color: var(--accent-coral);
+            color: white;
+            border-color: var(--accent-coral);
+        }
+
+        /* Grid Layout Components */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: start;
+            margin-top: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        /* Component Cards */
+        .card {
+            background-color: var(--accent-bg);
+            padding: 24px;
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-coral);
+        }
+
+        .card-blue {
+            border-left-color: var(--accent-blue);
+        }
+
+        /* Native Metric Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .data-table th {
+            background-color: var(--accent-bg);
+            color: var(--text-main);
+            text-align: left;
+            padding: 12px;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-ui);
+        }
+
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-ui);
+            font-size: 1.05rem;
+        }
+
+        .data-table tr:highlight, .highlight-row {
+            font-weight: bold;
+            background-color: rgba(200, 75, 49, 0.05);
+        }
+
+        /* Data Bar Styling */
+        .bar-container {
+            width: 100%;
+            background-color: #e4e2dd;
+            border-radius: 3px;
+            height: 12px;
+            margin-top: 6px;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background-color: var(--accent-coral);
+        }
+
+        /* Title Slide Custom Layout */
+        .slide-title-layout {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            height: 100%;
+        }
+
+        .author-block {
+            margin-top: 30px;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+
+        .institution-block {
+            margin-top: 10px;
+            font-size: 1rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+
+<div class="deck-container">
+    <div class="slides-viewport">
+
+        <!-- SLIDE 1: TITLE SLIDE -->
+        <div class="slide active slide-title-layout" id="slide-0">
+            <h3>Research Presentation</h3>
+            <h1>StoryScope: Investigating Idiosyncrasies<br>in AI Fiction</h1>
+            <p class="author-block">Jenna Russell, Rishanth Rajendhran, Chau Minh Pham, Mohit Iyyer, John Wieting</p>
+            <p class="institution-block">University of Maryland, College Park &nbsp;|&nbsp; Google DeepMind</p>
+        </div>
+
+        <!-- SLIDE 2: THE CORE INTENT -->
+        <div class="slide" id="slide-1">
+            <h2>Moving Beyond Surface Style</h2>
+            <div class="grid-2">
+                <div>
+                    <h3>The Detection Problem</h3>
+                    <p style="margin-bottom: 20px;">AI writing detectors rely heavily on surface artifacts (e.g., overuse of words like "delve" or specific sentence patterns). However, these stylistic signals are fleeting, easily bypassed via fine-tuning or post-hoc humanizing edits[cite: 1].</p>
+                    <div class="card">
+                        <strong>The Shift:</strong> StoryScope evaluates whether AI fiction can be distinguished purely through <strong>discourse-level narrative choices</strong> like character agency, structural subplots, and chronological continuity[cite: 1].
+                    </div>
+                </div>
+                <div>
+                    <h3>The Experimental Framework</h3>
+                    <ul>
+                        <li><strong>Massive Parallel Corpus:</strong> 10,272 writing prompts derived from real literature, matching human text against 5 state-of-the-art LLMs[cite: 1].</li>
+                        <li><strong>Total Generation Scale:</strong> 61,608 unique stories spanning roughly 5,000 words each[cite: 1].</li>
+                        <li><strong>Fine-Grained Space:</strong> 304 automatically induced structural narrative features across 10 core aspects[cite: 1].</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 3: PIPELINE ARCHITECTURE -->
+        <div class="slide" id="slide-2">
+            <h2>The StoryScope Pipeline</h2>
+            <p style="margin-bottom: 25px;">To process over 60,000 long-form stories objectively without style bias, the framework utilizes an automated structural translation sequence[cite: 1]:</p>
+            <div class="grid-3">
+                <div class="card">
+                    <h3>1. Template Induction</h3>
+                    <p style="font-size: 1rem;">Converts raw story text into highly detailed JSON schemas based on NarraBench dimensions (e.g., event tracking, perspective, time setup) to strip out lexical choices and focus purely on structure[cite: 1].</p>
+                </div>
+                <div class="card">
+                    <h3>2. Discovery &amp; Deduplication</h3>
+                    <p style="font-size: 1rem;">Executes cross-source template comparisons across parallel prompts using advanced LLM auditing[cite: 1]. Features are clustered via embedded vectors to yield a final structured space of $d = 304$ features[cite: 1].</p>
+                </div>
+                <div class="card">
+                    <h3>3. Automated Featurization</h3>
+                    <p style="font-size: 1rem;">Annotates the entire corpus using an aspect-isolated pipeline[cite: 1]. The resulting semantic mapping yields an encoded vector representation $x \in \mathbb{R}^D$ used to train tree-based classifiers[cite: 1].</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 4: KEY EXPERIMENTAL METRICS -->
+        <div class="slide" id="slide-3">
+            <h2>Classification Performance</h2>
+            <div class="grid-2">
+                <div>
+                    <h3>Key Takeaway</h3>
+                    <p>Narrative features alone carry immense structural signatures, retaining over <strong>97% of the performance</strong> of detectors that rely fully on prose style artifacts[cite: 1].</p>
+                    <p style="margin-top: 15px;">Even when surface style constraints are completely edited out via artifact-removal frameworks like LAMP, the narrative models maintain a high detection accuracy (93.9% F1)[cite: 1].</p>
+                </div>
+                <div>
+                    <h3>Performance Table</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Feature Profile</th>
+                                <th>Count</th>
+                                <th>Human vs AI F1</th>
+                                <th>6-Way Class F1</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="highlight-row">
+                                <td>Narrative Only</td>
+                                <td>257</td>
+                                <td>93.2%</td>
+                                <td>68.4%</td>
+                            </tr>
+                            <tr>
+                                <td>Core Only</td>
+                                <td>30</td>
+                                <td>84.8%</td>
+                                <td>46.5%</td>
+                            </tr>
+                            <tr>
+                                <td>Core + Fingerprint</td>
+                                <td>101</td>
+                                <td>91.1%</td>
+                                <td>63.4%</td>
+                            </tr>
+                            <tr>
+                                <td>Narrative + Style</td>
+                                <td>304</td>
+                                <td>96.0%</td>
+                                <td>77.3%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px;">* Evaluated on an independent test set of 1,384 prompts[cite: 1].</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: NARRATIVE CLUSTERING VISUALIZATION -->
+        <div class="slide" id="slide-4">
+            <h2>The Topology of Narrative Space</h2>
+            <div class="grid-2">
+                <div>
+                    <h3>AI Convergence</h3>
+                    <p>When projected onto Linear Discriminant components, the 5 prominent AI engines cluster tightly together[cite: 1]. They share an underlying set of storytelling defaults despite hailing from different engineering pipelines[cite: 1].</p>
+                    <br>
+                    <h3>Human Variance</h3>
+                    <p>Human text populates a much broader, highly dispersed territory[cite: 1]. The average distance within human-authored configurations is 22% more spread out than the collective AI grouping radius[cite: 1].</p>
+                </div>
+                <div style="text-align: center;">
+                    <h3>Centroid Projection (LD1 vs LD2)</h3>
+                    <!-- Native Inline SVG representation of paper's clustering graph -->
+                    <svg viewBox="0 0 400 240" style="width: 100%; max-width: 380px; background: var(--accent-bg); border-radius: 6px; padding: 10px; margin-top: 10px;">
+                        <!-- X & Y Axis -->
+                        <line x1="40" y1="200" x2="360" y2="200" stroke="#6e6d6a" stroke-width="2"/>
+                        <line x1="40" y1="30" x2="40" y2="200" stroke="#6e6d6a" stroke-width="2"/>
+                        
+                        <!-- Axis Labels -->
+                        <text x="200" y="225" font-size="12" fill="#2b2b2a" text-anchor="middle">LD1 (Separation Axis)</text>
+                        <text x="15" y="115" font-size="12" fill="#2b2b2a" text-anchor="middle" transform="rotate(-90 15 115)">LD2</text>
+                        
+                        <!-- Dispersed Human Points (Light Coral Dots) -->
+                        <circle cx="70" cy="120" r="3" fill="#c84b31" opacity="0.3"/>
+                        <circle cx="95" cy="85" r="3" fill="#c84b31" opacity="0.3"/>
+                        <circle cx="110" cy="150" r="3" fill="#c84b31" opacity="0.3"/>
+                        <circle cx="140" cy="110" r="3" fill="#c84b31" opacity="0.3"/>
+                        <circle cx="85" cy="165" r="3" fill="#c84b31" opacity="0.3"/>
+                        <!-- Human Centroid -->
+                        <polygon points="100,110 106,120 100,130 94,120" fill="#c84b31"/>
+                        <text x="100" y="145" font-size="11" font-weight="bold" fill="#c84b31" text-anchor="middle">Human Centroid</text>
+
+                        <!-- Tightly Clustered AI Points (Blue Dots) -->
+                        <circle cx="280" cy="90" r="3" fill="#3d6cb9" opacity="0.4"/>
+                        <circle cx="295" cy="115" r="3" fill="#3d6cb9" opacity="0.4"/>
+                        <circle cx="310" cy="80" r="3" fill="#3d6cb9" opacity="0.4"/>
+                        <circle cx="270" cy="105" r="3" fill="#3d6cb9" opacity="0.4"/>
+                        <circle cx="300" cy="100" r="3" fill="#3d6cb9" opacity="0.4"/>
+                        <!-- AI Cluster Boundary -->
+                        <circle cx="290" cy="100" r="35" fill="none" stroke="#3d6cb9" stroke-width="1.5" stroke-dasharray="4"/>
+                        <text x="290" y="150" font-size="11" font-weight="bold" fill="#3d6cb9" text-anchor="middle">AI Cluster Zone</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 6: CORE ARCHITECTURAL PARADIGMS -->
+        <div class="slide" id="slide-5">
+            <h2>The Human vs AI Divergence Profile</h2>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>AI Narrative Fingerprints</h3>
+                    <ul>
+                        <li><strong>Thematic Over-Determination:</strong> Tells the moral explicitly. Narrators state themes outright 77% of the time vs 52% for humans[cite: 1].</li>
+                        <li><strong>Streamlined Causality:</strong> Focuses on clean, single-track paths with minimal side subplots (79% feature "no subplots")[cite: 1].</li>
+                        <li><strong>Sensory Body Focus:</strong> Overly prone to illustrating emotional arcs through intense physical sensations (81% vs 38%)[cite: 1].</li>
+                    </ul>
+                </div>
+                <div class="card card-blue">
+                    <h3>Human Narrative Fingerprints</h3>
+                    <ul>
+                        <li><strong>Temporal Complexity:</strong> High reliance on nonlinear order hooks, flashbacks, and time jumps to strategically obscure setups[cite: 1].</li>
+                        <li><strong>Moral Ambiguity:</strong> Characters encounter complex ethical gray zones (59% framing vs 38% across AI models)[cite: 1].</li>
+                        <li><strong>Real-World Trajectories:</strong> Introduces direct named citations, real places, and structural fourth-wall reader engagement[cite: 1].</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 7: SPECIFIC MODEL FINGERPRINTS -->
+        <div class="slide" id="slide-6">
+            <h2>Individual Model Idiosyncrasies</h2>
+            <p style="margin-bottom: 20px;">While AI text generally clusters tightly together, individual model variants exhibit localized unique habits[cite: 1]:</p>
+            <div class="grid-3">
+                <div class="card" style="border-left-color: #4b6584;">
+                    <h3>Claude</h3>
+                    <p style="font-size: 1rem; margin-bottom: 8px;"><strong>Restraint &amp; Flat Escalation</strong></p>
+                    <p style="font-size: 0.95rem; color: var(--text-muted);">Displays notably flat event intensity paths. Deeply mirrors established traditions, relies heavily on extended epilogues, and actively actively blocks dream sequence hooks[cite: 1].</p>
+                </div>
+                <div class="card" style="border-left-color: #20bf6b;">
+                    <h3>GPT</h3>
+                    <p style="font-size: 1rem; margin-bottom: 8px;"><strong>Social Dynamics &amp; Gossip</strong></p>
+                    <p style="font-size: 0.95rem; color: var(--text-muted);">Indexes heavily on community rumors as key plot machinery (64%). Frames stories through historical recollection and designs high-density social networks[cite: 1].</p>
+                </div>
+                <div class="card" style="border-left-color: #a55eea;">
+                    <h3>Gemini &amp; DeepSeek</h3>
+                    <p style="font-size: 1rem; margin-bottom: 8px;"><strong>Tidy Resolution vs Front-Loading</strong></p>
+                    <p style="font-size: 0.95rem; color: var(--text-muted);">Gemini favors exceptionally clean setups set in bleak, oppressive atmospheres[cite: 1]. DeepSeek immediately front-loads backstories that other engines distribute down the line[cite: 1].</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 8: OPERATIONALIZING ORIGINALITY -->
+        <div class="slide" id="slide-7">
+            <h2>Quantifying Rarity and Originality</h2>
+            <div class="grid-2">
+                <div>
+                    <h3> Rarity Percentile Metric</h3>
+                    <p>The paper defines narrative originality by calculating Euclidean feature proximity to its 25 nearest structural neighbors[cite: 1].</p>
+                    
+                    <div class="bar-container" style="margin-top: 25px;">
+                        <div class="bar-fill" style="width: 71%;"></div>
+                    </div>
+                    <p style="font-size: 0.95rem; margin-top: 5px;"><strong>Human Mean Rarity:</strong> 71st Percentile[cite: 1]</p>
+
+                    <div class="bar-container" style="margin-top: 20px;">
+                        <div class="bar-fill" style="width: 49%; background-color: var(--accent-blue);"></div>
+                    </div>
+                    <p style="font-size: 0.95rem; margin-top: 5px;"><strong>AI Combined Mean Rarity:</strong> 49th Percentile[cite: 1]</p>
+                </div>
+                <div>
+                    <h3>The Rarest Tail Distribution</h3>
+                    <ul>
+                        <li><strong>Extreme Overrepresentation:</strong> 24.7% of all human narratives populate the top 10% rarest tier corpus-wide[cite: 1].</li>
+                        <li><strong>AI Scarcity in Innovations:</strong> Only 7.1% of AI generations touch that same rare frontier[cite: 1].</li>
+                        <li><strong>Prompt Ranking:</strong> When evaluated side-by-side, the human version registers as structurally unique 57.8% of the time[cite: 1].</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PRESENTATION CONTEXT FOOTER INTERACTIVE CONTROL -->
+    <div class="presentation-footer">
+        <div class="paper-meta">StoryScope: Investigating idiosyncrasies in AI fiction (2026)</div>
+        <div class="controls-wrapper">
+            <span class="slide-counter" id="slide-indicator">1 / 8</span>
+            <button class="nav-btn" id="prev-btn">Previous</button>
+            <button class="nav-btn" id="next-btn">Next</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Lightweight Presentation State Controller Engine
+    const slides = document.querySelectorAll('.slide');
+    const indicator = document.getElementById('slide-indicator');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    let currentSlideIndex = 0;
+
+    function updateSlideDisplay() {
+        slides.forEach((slide, idx) => {
+            if (idx === currentSlideIndex) {
+                slide.classList.add('active');
+            } else {
+                slide.classList.remove('active');
+            }
+        });
+        indicator.textContent = `${currentSlideIndex + 1} / ${slides.length}`;
+    }
+
+    function goToNextSlide() {
+        if (currentSlideIndex < slides.length - 1) {
+            currentSlideIndex++;
+            updateSlideDisplay();
+        }
+    }
+
+    function goToPrevSlide() {
+        if (currentSlideIndex > 0) {
+            currentSlideIndex--;
+            updateSlideDisplay();
+        }
+    }
+
+    // Button Click Routing
+    nextBtn.addEventListener('click', goToNextSlide);
+    prevBtn.addEventListener('click', goToPrevSlide);
+
+    // Keyboard Controller Hook
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+            e.preventDefault();
+            goToNextSlide();
+        } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            goToPrevSlide();
+        }
+    });
+</script>
+
+</body>
+</html>

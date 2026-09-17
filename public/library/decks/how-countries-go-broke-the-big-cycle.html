@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Countries Go Broke — The Big Cycle by Ray Dalio</title>
+<style>
+  /* ===== RESET & BASE ===== */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0f; color: #fff; }
+
+  /* ===== SLIDE SYSTEM ===== */
+  .slide-deck { position: relative; width: 100vw; height: 100vh; }
+  .slide { position: absolute; inset: 0; display: none; flex-direction: column; justify-content: center; padding: 4rem 5vw; background-size: cover; background-position: center; overflow: hidden; }
+  .slide.active { display: flex; }
+  .slide-bg { position: absolute; inset: 0; z-index: 0; }
+  .slide-content { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; width: 100%; }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes fadeInRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+  @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+  @keyframes bounceHint { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  @keyframes progressFill { from { width: 0%; } }
+
+  .anim-fade { animation: fadeIn 0.6s ease-out both; }
+  .anim-left { animation: fadeInLeft 0.6s ease-out both; }
+  .anim-right { animation: fadeInRight 0.6s ease-out both; }
+  .anim-scale { animation: scaleIn 0.5s ease-out both; }
+  .d1 { animation-delay: 0.1s; }
+  .d2 { animation-delay: 0.2s; }
+  .d3 { animation-delay: 0.3s; }
+  .d4 { animation-delay: 0.4s; }
+  .d5 { animation-delay: 0.5s; }
+  .d6 { animation-delay: 0.6s; }
+
+  /* ===== TYPOGRAPHY ===== */
+  .title-main { font-size: clamp(2.5rem, 6vw, 5.5rem); font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; }
+  .title-section { font-size: clamp(1.8rem, 4vw, 3.5rem); font-weight: 700; line-height: 1.1; }
+  .title-chapter { font-size: clamp(1rem, 2vw, 1.5rem); font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; }
+  .subtitle { font-size: clamp(1rem, 2vw, 1.4rem); font-weight: 400; opacity: 0.8; margin-top: 0.5rem; }
+  .body-text { font-size: clamp(0.95rem, 1.5vw, 1.15rem); line-height: 1.6; opacity: 0.9; }
+  .quote-text { font-size: clamp(1.2rem, 2.5vw, 2rem); font-weight: 300; line-height: 1.5; font-style: italic; }
+  .stat-value { font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 700; }
+  .stat-label { font-size: clamp(0.8rem, 1.2vw, 1rem); opacity: 0.7; margin-top: 0.25rem; }
+  .center { text-align: center; }
+
+  /* ===== ACCENT COLORS ===== */
+  .accent-amber { color: #f59e0b; }
+  .accent-sky { color: #38bdf8; }
+  .accent-emerald { color: #34d399; }
+  .accent-red { color: #f87171; }
+  .accent-violet { color: #a78bfa; }
+  .accent-indigo { color: #818cf8; }
+  .accent-orange { color: #fb923c; }
+  .accent-rose { color: #fb7185; }
+  .accent-pink { color: #f472b6; }
+  .accent-yellow { color: #facc15; }
+  .bg-accent { background: currentColor; }
+
+  /* ===== DECORATIVE ELEMENTS ===== */
+  .accent-bar { width: 48px; height: 4px; border-radius: 2px; margin-bottom: 1.5rem; }
+  .accent-bar.centered { margin-left: auto; margin-right: auto; }
+  .divider { width: 64px; height: 2px; border-radius: 1px; margin: 1.5rem auto; }
+  .bullet { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 0.6em; margin-right: 1rem; }
+  .bullet-ring { width: 10px; height: 10px; border-radius: 50%; border: 2px solid currentColor; flex-shrink: 0; margin-right: 0.75rem; }
+
+  /* ===== LAYOUT COMPONENTS ===== */
+  .bullet-list { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
+  .bullet-list li { display: flex; align-items: flex-start; }
+  .bullet-list li strong { color: #fff; font-weight: 600; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; }
+  .stat-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.5rem; text-align: center; transition: transform 0.3s, background 0.3s; }
+  .stat-card:hover { transform: translateY(-4px) scale(1.02); background: rgba(255,255,255,0.1); }
+
+  .flow-grid { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+  .flow-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1.25rem 1.5rem; min-width: 160px; flex: 1 1 160px; transition: transform 0.3s, background 0.3s; }
+  .flow-card:hover { transform: scale(1.03); background: rgba(255,255,255,0.1); }
+  .flow-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.25rem; }
+  .flow-desc { font-size: 0.85rem; opacity: 0.8; }
+  .flow-arrow { font-size: 1.5rem; opacity: 0.5; flex-shrink: 0; display: none; }
+  @media (min-width: 768px) { .flow-arrow { display: block; } }
+
+  .timeline { position: relative; padding-left: 2rem; }
+  .timeline-line { position: absolute; left: 0.55rem; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,0.15); }
+  .timeline-item { position: relative; margin-bottom: 1.25rem; padding-left: 1.5rem; }
+  .timeline-dot { position: absolute; left: -2rem; top: 0.3rem; width: 14px; height: 14px; border-radius: 50%; border: 3px solid currentColor; background: #0a0a0f; }
+  .timeline-content { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 0.75rem 1rem; }
+  .timeline-label { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.15rem; }
+  .timeline-desc { font-size: 0.8rem; opacity: 0.8; }
+
+  .stage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+  .stage-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.25rem; transition: background 0.3s; }
+  .stage-card:hover { background: rgba(255,255,255,0.1); }
+  .stage-name { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+  .stage-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; }
+  .stage-details { list-style: none; font-size: 0.85rem; opacity: 0.8; }
+  .stage-details li { display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.3rem; }
+
+  .principle-list { display: flex; flex-direction: column; gap: 0.75rem; }
+  .principle-item { padding: 1rem 1.25rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.04); font-size: clamp(0.85rem, 1.3vw, 1.05rem); line-height: 1.5; transition: background 0.3s; }
+  .principle-item:hover { background: rgba(255,255,255,0.08); }
+  .principle-item.highlight { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); font-weight: 500; }
+  .principle-item .star { margin-right: 0.5rem; }
+
+  /* ===== NAVIGATION ===== */
+  .progress-bar { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 100; background: rgba(255,255,255,0.05); }
+  .progress-fill { height: 100%; background: #f59e0b; transition: width 0.4s ease; }
+  .slide-counter { position: fixed; top: 12px; right: 16px; z-index: 100; font-family: ui-monospace, monospace; font-size: 0.75rem; color: rgba(255,255,255,0.4); }
+
+  .nav-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; gap: 6px; background: rgba(0,0,0,0.5); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); border-radius: 100px; padding: 6px; }
+  .nav-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 0.9rem; }
+  .nav-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .side-nav { position: fixed; top: 50%; transform: translateY(-50%); z-index: 100; width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; opacity: 0; font-size: 1.1rem; }
+  .slide-deck:hover .side-nav { opacity: 1; }
+  .side-nav:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .side-nav.prev { left: 12px; }
+  .side-nav.next { right: 12px; }
+  .side-nav:disabled { opacity: 0; }
+
+  /* ===== MODALS ===== */
+  .modal-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-overlay.active { display: flex; }
+  .modal-box { background: #111827; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 1.5rem; max-width: 420px; width: 100%; max-height: 80vh; overflow-y: auto; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .modal-title { font-size: 1.1rem; font-weight: 600; }
+  .modal-close { width: 32px; height: 32px; border-radius: 50%; border: none; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+  .modal-close:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .toc-list { list-style: none; }
+  .toc-list li { margin-bottom: 2px; }
+  .toc-list button { width: 100%; text-align: left; padding: 0.5rem 0.75rem; border-radius: 8px; border: none; background: none; color: rgba(255,255,255,0.7); cursor: pointer; display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; transition: all 0.15s; }
+  .toc-list button:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .toc-list button.current { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .toc-num { font-family: ui-monospace, monospace; font-size: 0.7rem; opacity: 0.4; width: 20px; flex-shrink: 0; }
+  .toc-icon { width: 18px; text-align: center; flex-shrink: 0; font-size: 0.85rem; }
+
+  .kbd { display: inline-block; padding: 2px 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 4px; font-family: ui-monospace, monospace; font-size: 0.8rem; }
+
+  /* ===== BACKGROUND GRADIENTS (all inline as classes) ===== */
+  .bg-title { background: linear-gradient(135deg, #020617 0%, #0f172a 40%, #1a1005 100%); }
+  .bg-dark { background: linear-gradient(135deg, #0a0a0f 0%, #111827 50%, #0a0a0f 100%); }
+  .bg-sky { background: linear-gradient(135deg, #0a0a0f 0%, #0c1929 50%, #0a0a0f 100%); }
+  .bg-emerald { background: linear-gradient(135deg, #0a0a0f 0%, #0a1f14 50%, #0a0a0f 100%); }
+  .bg-red { background: linear-gradient(135deg, #0a0a0f 0%, #1f0a0a 50%, #0a0a0f 100%); }
+  .bg-violet { background: linear-gradient(135deg, #0a0a0f 0%, #170a1f 50%, #0a0a0f 100%); }
+  .bg-indigo { background: linear-gradient(135deg, #0a0a0f 0%, #12102b 50%, #0a0a0f 100%); }
+  .bg-orange { background: linear-gradient(135deg, #0a0a0f 0%, #1f1205 50%, #0a0a0f 100%); }
+  .bg-rose { background: linear-gradient(135deg, #0a0a0f 0%, #1f050a 50%, #0a0a0f 100%); }
+  .bg-pink { background: linear-gradient(135deg, #0a0a0f 0%, #1f0a14 50%, #0a0a0f 100%); }
+  .bg-amber { background: linear-gradient(135deg, #0a0a0f 0%, #1f1405 50%, #0a0a0f 100%); }
+
+  /* Pattern overlay */
+  .slide::after { content: ''; position: absolute; inset: 0; z-index: 0; opacity: 0.02; background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 40px 40px; pointer-events: none; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 640px) {
+    .slide { padding: 2rem 1.5rem; }
+    .nav-bar { bottom: 12px; }
+    .side-nav { display: none; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .stat-card { padding: 1rem; }
+    .stage-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="slide-deck" id="deck">
+  <!-- Progress Bar -->
+  <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+  <div class="slide-counter" id="counter">1 / 37</div>
+
+  <!-- ===== SLIDE 1: Title ===== -->
+  <div class="slide active bg-title" data-slide="0">
+    <div class="slide-content center">
+      <div class="accent-bar centered anim-fade" style="background:#f59e0b;"></div>
+      <p class="title-chapter accent-amber anim-fade d1">Ray Dalio</p>
+      <h1 class="title-main anim-fade d2" style="margin-top:1rem;">HOW COUNTRIES<br><span class="accent-amber">GO BROKE</span></h1>
+      <div class="divider anim-fade d3" style="background:#f59e0b;"></div>
+      <p class="subtitle anim-fade d3">The Big Cycle</p>
+      <div class="anim-fade d5" style="margin-top:2.5rem; font-size:0.85rem; color:rgba(255,255,255,0.35); display:flex; align-items:center; justify-content:center; gap:0.5rem;">
+        <span>Press space or arrows to begin</span>
+        <span style="animation: bounceHint 2s ease-in-out infinite;">&rarr;</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 2: The Critical Questions ===== -->
+  <div class="slide bg-sky" data-slide="1">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#38bdf8;"></div>
+      <h2 class="title-section anim-left d1">The Critical Questions</h2>
+      <p class="subtitle accent-sky anim-left d2">Why This Study Matters</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#38bdf8;"></span><span class="body-text">Are there limits to a country's debt and debt growth?</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#38bdf8;"></span><span class="body-text">What will happen to interest rates if government debt growth isn't slowed?</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#38bdf8;"></span><span class="body-text">Can a major reserve currency country like the US go broke?</span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#38bdf8;"></span><span class="body-text">Is there a "Big Debt Cycle" we can track to know when to worry?</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 3: A Unique Perspective ===== -->
+  <div class="slide bg-indigo" data-slide="2">
+    <div class="slide-content center" style="max-width:800px;">
+      <div class="anim-scale d1" style="font-size:4rem; color:#818cf8; font-family:Georgia,serif; line-height:1;">&ldquo;</div>
+      <p class="quote-text anim-fade d2">I don't come to this subject as an economist. I come as a global macro investor who for over 50 years has been through many debt cycles in many countries and has had to navigate and understand them well enough to bet on how they would go.</p>
+      <div class="divider anim-fade d3" style="background:#818cf8;"></div>
+      <p class="accent-indigo anim-fade d4" style="font-weight:600;">&mdash; Ray Dalio</p>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 4: A Stark Discovery ===== -->
+  <div class="slide bg-red" data-slide="3">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#f87171;"></div>
+      <h2 class="title-section anim-left d1">A Stark Discovery</h2>
+      <p class="subtitle accent-red anim-left d2">The Scale of Debt Cycles Throughout History</p>
+      <div class="stat-grid anim-fade d3" style="margin-top:2.5rem;">
+        <div class="stat-card"><div class="stat-value accent-red">~750</div><div class="stat-label">Debt/Currency Markets Since 1700</div><div style="font-size:0.75rem; opacity:0.5; margin-top:0.5rem;">Only about 20% remain</div></div>
+        <div class="stat-card"><div class="stat-value accent-red">80%</div><div class="stat-label">Have Been Severely Devalued</div><div style="font-size:0.75rem; opacity:0.5; margin-top:0.5rem;">Through mechanistic processes</div></div>
+        <div class="stat-card"><div class="stat-value accent-red">~80</div><div class="stat-label">Years Per Big Cycle</div><div style="font-size:0.75rem; opacity:0.5; margin-top:0.5rem;">Give or take 25 years</div></div>
+        <div class="stat-card"><div class="stat-value accent-red">48</div><div class="stat-label">Major Debt Crises Studied</div><div style="font-size:0.75rem; opacity:0.5; margin-top:0.5rem;">Between 1918 and 2018</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 5: PART I ===== -->
+  <div class="slide bg-amber" data-slide="4">
+    <div class="slide-content center">
+      <div class="accent-bar centered anim-fade" style="background:#f59e0b;"></div>
+      <p class="title-chapter accent-amber anim-fade d1">Part I</p>
+      <h2 class="title-section anim-fade d2" style="margin-top:0.75rem;">Overview of the Big Debt Cycle</h2>
+      <p class="subtitle anim-fade d3" style="max-width:600px; margin:1.5rem auto 0;">The mechanics of money, credit, debt, and economic activity — and how they create the Big Debt Cycle.</p>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 6: How the Machine Works ===== -->
+  <div class="slide bg-emerald" data-slide="5">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#34d399;"></div>
+      <h2 class="title-section anim-left d1">How the Machine Works</h2>
+      <p class="subtitle accent-emerald anim-left d2">The Fundamental Mechanics</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#34d399;"></span><span class="body-text">Credit is the primary vehicle for funding spending and it can easily be created.</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#34d399;"></span><span class="body-text"><strong>One person's spending is another's earnings</strong> — credit creation drives economic activity.</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#34d399;"></span><span class="body-text">Credit creates debt that must be paid back, creating the opposite (contractionary) effect.</span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#34d399;"></span><span class="body-text"><strong>This dynamic is why the credit/spending/debt cycle is inherently cyclical.</strong></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 7: The Short-Term Debt Cycle ===== -->
+  <div class="slide bg-sky" data-slide="6">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#38bdf8;"></div>
+      <h2 class="title-section anim-left d1">The Short-Term Debt Cycle</h2>
+      <p class="subtitle accent-sky anim-left d2">What Everyone Knows</p>
+      <div class="flow-grid anim-fade d3" style="margin-top:2.5rem;">
+        <div class="flow-card"><div class="flow-label accent-sky">Recession</div><div class="flow-desc">Economic activity and inflation are low</div></div>
+        <span class="flow-arrow accent-sky">&rarr;</span>
+        <div class="flow-card"><div class="flow-label accent-sky">Stimulus</div><div class="flow-desc">Central banks lower rates, provide credit</div></div>
+        <span class="flow-arrow accent-sky">&rarr;</span>
+        <div class="flow-card"><div class="flow-label accent-sky">Expansion</div><div class="flow-desc">Borrowing increases, asset prices rise</div></div>
+        <span class="flow-arrow accent-sky">&rarr;</span>
+        <div class="flow-card"><div class="flow-label accent-sky">Bubble</div><div class="flow-desc">Growth becomes unsustainable</div></div>
+        <span class="flow-arrow accent-sky">&rarr;</span>
+        <div class="flow-card"><div class="flow-label accent-sky">Tightening</div><div class="flow-desc">Central banks raise rates</div></div>
+        <span class="flow-arrow accent-sky">&rarr;</span>
+        <div class="flow-card"><div class="flow-label accent-sky">Contraction</div><div class="flow-desc">Economy slows, cycle restarts</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 8: Short-Term Cycles Add Up ===== -->
+  <div class="slide bg-amber" data-slide="7">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#f59e0b;"></div>
+      <h2 class="title-section anim-left d1">Short-Term Cycles Add Up to Big Cycles</h2>
+      <p class="subtitle accent-amber anim-left d2">What Almost Nobody Recognizes</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#f59e0b;"></span><span class="body-text"><strong>Each short-term cycle typically ends with HIGHER debt than the previous one.</strong></span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#f59e0b;"></span><span class="body-text">Policymakers try to end recessions by lowering rates enough to get borrowing going again.</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#f59e0b;"></span><span class="body-text"><strong>Debt rises over time, creating successively higher peaks and troughs.</strong></span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#f59e0b;"></span><span class="body-text">The capacity for debt is different early vs. late in the Big Debt Cycle.</span></li>
+        <li class="anim-fade d6"><span class="bullet" style="background:#f59e0b;"></span><span class="body-text"><strong>Late in the cycle, debt burdens become too great to be sustained.</strong></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 9: THE FIVE STAGES ===== -->
+  <div class="slide bg-emerald" data-slide="8">
+    <div class="slide-content center">
+      <div class="accent-bar centered anim-fade" style="background:#34d399;"></div>
+      <p class="title-chapter accent-emerald anim-fade d1">The Five Stages</p>
+      <h2 class="title-section anim-fade d2" style="margin-top:0.75rem;">Of the Big Debt Cycle</h2>
+      <p class="subtitle anim-fade d3" style="max-width:600px; margin:1.5rem auto 0;">From sound money to debt bust — the archetypical progression.</p>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 10: Stage 1 ===== -->
+  <div class="slide bg-emerald" data-slide="9">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#34d399;"></div>
+      <h2 class="title-section anim-left d1">Stage 1: The Sound Money Stage</h2>
+      <p class="subtitle accent-emerald anim-left d2">Strong Foundation</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#34d399;"></span><span class="body-text"><strong>Net debt levels are low, money is sound, the country is competitive.</strong></span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#34d399;"></span><span class="body-text">Debt growth fuels productivity growth — incomes are more than enough to pay back debts.</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#34d399;"></span><span class="body-text">Money is "hard" (gold, silver, Bitcoin) — not easily increased in supply.</span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#34d399;"></span><span class="body-text">Risky assets are relatively inexpensive compared to safe assets.</span></li>
+        <li class="anim-fade d6"><span class="bullet" style="background:#34d399;"></span><span class="body-text"><strong>Example: Late 1940s — US stock earnings yields were ~4x bond yields.</strong></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 11: Stage 2 ===== -->
+  <div class="slide bg-yellow" data-slide="10">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#facc15;"></div>
+      <h2 class="title-section anim-left d1">Stage 2: The Debt Bubble Stage</h2>
+      <p class="subtitle accent-yellow anim-left d2">Warning Signs</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#facc15;"></span><span class="body-text"><strong>Debt and investment growth exceed what can be serviced from incomes.</strong></span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#facc15;"></span><span class="body-text">Money is readily available and cheap — debt-financed economic boom.</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#facc15;"></span><span class="body-text"><strong>There is always a "most popular meme" that everyone believes — reflected in prices.</strong></span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#facc15;"></span><span class="body-text">Wealth is created out of nothing — imagined wealth vs. actual wealth.</span></li>
+        <li class="anim-fade d6"><span class="bullet" style="background:#facc15;"></span><span class="body-text"><strong>Debt spiral reaches point of no return: borrowing just to service debt.</strong></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 12: Stage 3 ===== -->
+  <div class="slide bg-orange" data-slide="11">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#fb923c;"></div>
+      <h2 class="title-section anim-left d1">Stage 3: The Top</h2>
+      <p class="subtitle accent-orange anim-left d2">The Bubble Pops</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#fb923c;"></span><span class="body-text"><strong>The popping occurs due to tightening money + unsustainable debt growth.</strong></span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#fb923c;"></span><span class="body-text">A self-reinforcing contraction begins — debt problems spread like aggressive cancer.</span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#fb923c;"></span><span class="body-text">Can be temporarily reversed by more credit/debt — until it can't continue.</span></li>
+        <li class="anim-fade d6"><span class="bullet" style="background:#fb923c;"></span><span class="body-text"><strong>Then a big deleveraging must occur.</strong></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 13: Stage 4 ===== -->
+  <div class="slide bg-red" data-slide="12">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#f87171;"></div>
+      <h2 class="title-section anim-left d1">Stage 4: The Deleveraging</h2>
+      <p class="subtitle accent-red anim-left d2">The Painful Adjustment</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#f87171;"></span><span class="body-text"><strong>Debt problems spread from private sector → central government → central bank.</strong></span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#f87171;"></span><span class="body-text"><strong>Net selling of debt assets is a big red flag.</strong></span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#f87171;"></span><span class="body-text">Debt "death spiral": rising rates → problems → selling → higher rates/more printing.</span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#f87171;"></span><span class="body-text">Cutting spending at such times typically INCREASES debt-to-income ratios.</span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#f87171;"></span><span class="body-text"><strong>Central banks must choose: hard money (defaults) or soft money (devaluation).</strong></span></li>
+        <li class="anim-fade d6"><span class="bullet" style="background:#f87171;"></span><span class="body-text"><strong>They always eventually choose to print and devalue.</strong></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 14: The Beautiful Deleveraging ===== -->
+  <div class="slide bg-emerald" data-slide="13">
+    <div class="slide-content center" style="max-width:800px;">
+      <div class="anim-scale d1" style="font-size:4rem; color:#34d399; font-family:Georgia,serif; line-height:1;">&ldquo;</div>
+      <p class="quote-text anim-fade d2">When managed in the best possible way, the deflationary ways of reducing debt burdens (through restructurings) are balanced with the inflationary ways (by monetizing them), so the deleveraging occurs without unacceptable amounts of either deflation or inflation.</p>
+      <div class="divider anim-fade d3" style="background:#34d399;"></div>
+      <p class="accent-emerald anim-fade d4" style="font-weight:600;">&mdash; Ray Dalio</p>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 15: Stage 5 ===== -->
+  <div class="slide bg-sky" data-slide="14">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#38bdf8;"></div>
+      <h2 class="title-section anim-left d1">Stage 5: The Crisis Recedes</h2>
+      <p class="subtitle accent-sky anim-left d2">A New Equilibrium</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#38bdf8;"></span><span class="body-text"><strong>Debt/money must be sound enough to be a viable storehold of wealth.</strong></span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#38bdf8;"></span><span class="body-text">Debt and debt service burdens must align with incomes.</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#38bdf8;"></span><span class="body-text">Creditors and debtors must believe the system is viable.</span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#38bdf8;"></span><span class="body-text">Central government must earn more than it spends and/or central bank makes money hard again.</span></li>
+        <li class="anim-fade d6"><span class="bullet" style="background:#38bdf8;"></span><span class="body-text">Interest rates need to be high enough to compensate for currency weakness.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 16: THE SIX PHASES ===== -->
+  <div class="slide bg-violet" data-slide="15">
+    <div class="slide-content center">
+      <div class="accent-bar centered anim-fade" style="background:#a78bfa;"></div>
+      <p class="title-chapter accent-violet anim-fade d1">The Six Phases</p>
+      <h2 class="title-section anim-fade d2" style="margin-top:0.75rem;">Of Monetary Policy Evolution</h2>
+      <p class="subtitle anim-fade d3" style="max-width:600px; margin:1.5rem auto 0;">As the Big Debt Cycle progresses, central banks must change how they run monetary policy.</p>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 17: MP0 ===== -->
+  <div class="slide bg-amber" data-slide="16">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#f59e0b;"></div>
+      <h2 class="title-section anim-left d1">MP0: Linked (Hard) Monetary System</h2>
+      <p class="subtitle accent-amber anim-left d2">1945 — 1971</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#f59e0b;"></span><span class="body-text">Currency is convertible to hard money (gold) at a fixed price.</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#f59e0b;"></span><span class="body-text">Limited amount of paper money and debt outstanding.</span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#f59e0b;"></span><span class="body-text"><strong>Ends when debt bubble bursts and "run on the bank" dynamic begins.</strong></span></li>
+        <li class="anim-fade d6"><span class="bullet" style="background:#f59e0b;"></span><span class="body-text">Limited hard money causes massive defaults — creating desire to print.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 18: MP1 ===== -->
+  <div class="slide bg-sky" data-slide="17">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#38bdf8;"></div>
+      <h2 class="title-section anim-left d1">MP1: Interest-Rate-Driven Policy</h2>
+      <p class="subtitle accent-sky anim-left d2">1971 — 2008</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#38bdf8;"></span><span class="body-text">Fiat money system — interest rates, bank reserves, and capital requirements control credit growth.</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#38bdf8;"></span><span class="body-text">Provides more flexibility but less assurance against money printing.</span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#38bdf8;"></span><span class="body-text"><strong>Ends when interest rates hit 0% and/or private demand for debt falls short of supply.</strong></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 19: MP2 ===== -->
+  <div class="slide bg-violet" data-slide="18">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#a78bfa;"></div>
+      <h2 class="title-section anim-left d1">MP2: Debt Monetization (QE)</h2>
+      <p class="subtitle accent-violet anim-left d2">2008 — 2020</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#a78bfa;"></span><span class="body-text">Central bank creates money to buy investment assets (government debt, mortgages).</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#a78bfa;"></span><span class="body-text">Used when interest rates can't be lowered further and private demand is insufficient.</span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#a78bfa;"></span><span class="body-text"><strong>Good for financial asset prices — disproportionately benefits those with financial assets.</strong></span></li>
+        <li class="anim-fade d6"><span class="bullet" style="background:#a78bfa;"></span><span class="body-text">Doesn't effectively deliver money to those most stressed financially.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 20: MP3 ===== -->
+  <div class="slide bg-rose" data-slide="19">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#fb7185;"></div>
+      <h2 class="title-section anim-left d1">MP3: Coordinated Fiscal &amp; Monetary Policy</h2>
+      <p class="subtitle accent-rose anim-left d2">2020 — Present</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#fb7185;"></span><span class="body-text"><strong>Central government fiscal policy and central bank monetary policy are coordinated.</strong></span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#fb7185;"></span><span class="body-text">Money and credit are directed to those who need it most.</span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#fb7185;"></span><span class="body-text"><strong>Temporarily alleviates debt problems but does not rectify them.</strong></span></li>
+        <li class="anim-fade d6"><span class="bullet" style="background:#fb7185;"></span><span class="body-text">The final stage before the big deleveraging.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 21: MP4 & MP5 ===== -->
+  <div class="slide bg-red" data-slide="20">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#f87171;"></div>
+      <h2 class="title-section anim-left d1">MP4 &amp; MP5: The Breaking Point</h2>
+      <p class="subtitle accent-red anim-left d2">What Comes Next</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#f87171;"></span><span class="body-text"><strong>MP4: Big Deleveraging — massive reduction in debt through restructuring and/or monetization.</strong></span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#f87171;"></span><span class="body-text"><strong>MP5: Return to Hard Money — restoring soundness of money and debt.</strong></span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#f87171;"></span><span class="body-text">For great countries, the end of the Big Debt Cycle typically means the end of their prominence.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 22: PART II ===== -->
+  <div class="slide bg-indigo" data-slide="21">
+    <div class="slide-content center">
+      <div class="accent-bar centered anim-fade" style="background:#818cf8;"></div>
+      <p class="title-chapter accent-indigo anim-fade d1">Part II</p>
+      <h2 class="title-section anim-fade d2" style="margin-top:0.75rem;">The Archetypical Sequence</h2>
+      <p class="subtitle anim-fade d3" style="max-width:600px; margin:1.5rem auto 0;">The 9-stage sequence leading to central governments and central banks going broke.</p>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 23: The Sequence of Collapse ===== -->
+  <div class="slide bg-red" data-slide="22">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#f87171;"></div>
+      <h2 class="title-section anim-left d1">The Sequence of Collapse</h2>
+      <p class="subtitle accent-red anim-left d2">How It Unfolds</p>
+      <div class="stage-grid anim-fade d3" style="margin-top:2rem;">
+        <div class="stage-card">
+          <div class="stage-name accent-red">Stages 1-2</div>
+          <div class="stage-title">Private sector overborrows</div>
+          <ul class="stage-details">
+            <li><span class="bullet-ring accent-red"></span>Healthy borrowing turns speculative</li>
+            <li><span class="bullet-ring accent-red"></span>Debt growth exceeds income growth</li>
+            <li><span class="bullet-ring accent-red"></span>Asset prices become inflated</li>
+          </ul>
+        </div>
+        <div class="stage-card">
+          <div class="stage-name accent-red">Stages 3-4</div>
+          <div class="stage-title">Private debt crisis hits</div>
+          <ul class="stage-details">
+            <li><span class="bullet-ring accent-red"></span>Bubble pops</li>
+            <li><span class="bullet-ring accent-red"></span>Self-reinforcing contraction begins</li>
+            <li><span class="bullet-ring accent-red"></span>Defaults and restructurings start</li>
+          </ul>
+        </div>
+        <div class="stage-card">
+          <div class="stage-name accent-red">Stages 5-6</div>
+          <div class="stage-title">Crisis spills to government &amp; central bank</div>
+          <ul class="stage-details">
+            <li><span class="bullet-ring accent-red"></span>Government borrows to bail out private sector</li>
+            <li><span class="bullet-ring accent-red"></span>Central bank prints to buy government debt</li>
+            <li><span class="bullet-ring accent-red"></span>Death spiral begins</li>
+          </ul>
+        </div>
+        <div class="stage-card">
+          <div class="stage-name accent-red">Stages 7-9</div>
+          <div class="stage-title">New equilibrium &amp; new cycle</div>
+          <ul class="stage-details">
+            <li><span class="bullet-ring accent-red"></span>Debt burdens reduced</li>
+            <li><span class="bullet-ring accent-red"></span>Monetary order restructured</li>
+            <li><span class="bullet-ring accent-red"></span>Cycle begins again</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 24: PART III ===== -->
+  <div class="slide bg-amber" data-slide="23">
+    <div class="slide-content center">
+      <div class="accent-bar centered anim-fade" style="background:#f59e0b;"></div>
+      <p class="title-chapter accent-amber anim-fade d1">Part III</p>
+      <h2 class="title-section anim-fade d2" style="margin-top:0.75rem;">Looking Back</h2>
+      <p class="subtitle anim-fade d3" style="max-width:600px; margin:1.5rem auto 0;">Historical case studies: The US since 1945, China, and Japan.</p>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 25: US 1945-1971 ===== -->
+  <div class="slide bg-amber" data-slide="24">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#f59e0b;"></div>
+      <h2 class="title-section anim-left d1">US: 1945 — 1971</h2>
+      <p class="subtitle accent-amber anim-left d2">The Hard Money Era</p>
+      <div class="timeline anim-fade d3" style="margin-top:2rem; max-width:700px; color:#f59e0b;">
+        <div class="timeline-line"></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-label accent-amber">Bretton Woods</div><div class="timeline-desc">Dollar linked to gold at $35/oz — a hard money system</div></div></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-label accent-amber">Post-War Boom</div><div class="timeline-desc">US debt/GDP was ~100%, fell to ~30% by 1970s</div></div></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-label accent-amber">Growing Imbalances</div><div class="timeline-desc">Vietnam War spending + Great Society programs increased debt</div></div></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-label accent-amber">1971 Break</div><div class="timeline-desc">Nixon closed gold window — end of hard money system</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 26: US 1971-2008 ===== -->
+  <div class="slide bg-sky" data-slide="25">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#38bdf8;"></div>
+      <h2 class="title-section anim-left d1">US: 1971 — 2008</h2>
+      <p class="subtitle accent-sky anim-left d2">The Fiat Money Era</p>
+      <div class="timeline anim-fade d3" style="margin-top:2rem; max-width:700px; color:#38bdf8;">
+        <div class="timeline-line"></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-label accent-sky">High Inflation</div><div class="timeline-desc">1970s stagflation — oil shocks, loose monetary policy</div></div></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-label accent-sky">Volcker Shock</div><div class="timeline-desc">Fed funds rate raised to 20% to crush inflation</div></div></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-label accent-sky">Great Moderation</div><div class="timeline-desc">1982-2007 — declining rates, rising debt, multiple bubbles</div></div></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-label accent-sky">2008 Crisis</div><div class="timeline-desc">Global financial crisis — Lehman, housing collapse</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 27: US 2008-2020 ===== -->
+  <div class="slide bg-violet" data-slide="26">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#a78bfa;"></div>
+      <h2 class="title-section anim-left d1">US: 2008 — 2020</h2>
+      <p class="subtitle accent-violet anim-left d2">Debt Monetization Era</p>
+      <div class="timeline anim-fade d3" style="margin-top:2rem; max-width:700px; color:#a78bfa;">
+        <div class="timeline-line"></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-label accent-violet">Zero Interest Rates</div><div class="timeline-desc">Fed cuts to 0%, begins quantitative easing (QE)</div></div></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-label accent-violet">QE Expands</div><div class="timeline-desc">Multiple rounds — Fed balance sheet grows from $1T to $4.5T</div></div></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-label accent-violet">Wealth Inequality</div><div class="timeline-desc">Asset prices soar, benefits concentrate at top</div></div></div>
+        <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-label accent-violet">COVID Response</div><div class="timeline-desc">Massive fiscal + monetary stimulus — MP3 begins</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 28: US 2020-Present ===== -->
+  <div class="slide bg-rose" data-slide="27">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#fb7185;"></div>
+      <h2 class="title-section anim-left d1">US: 2020 — Present</h2>
+      <p class="subtitle accent-rose anim-left d2">The Breaking Point</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#fb7185;"></span><span class="body-text"><strong>Government debt surged from ~$23T to over $35T.</strong></span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#fb7185;"></span><span class="body-text">Fed balance sheet peaked near $9T — unprecedented monetization.</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#fb7185;"></span><span class="body-text">Inflation returned — highest in 40 years.</span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#fb7185;"></span><span class="body-text"><strong>Interest rates rose sharply — debt service costs exploding.</strong></span></li>
+        <li class="anim-fade d6"><span class="bullet" style="background:#fb7185;"></span><span class="body-text"><strong>The US is now in the late stages of the Big Debt Cycle.</strong></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 29: China's Big Cycle ===== -->
+  <div class="slide bg-red" data-slide="28">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#f87171;"></div>
+      <h2 class="title-section anim-left d1">China's Big Cycle</h2>
+      <p class="subtitle accent-red anim-left d2">A Different Path</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#f87171;"></span><span class="body-text">1949: Communist revolution — new monetary and political order.</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#f87171;"></span><span class="body-text">1950s-70s: Central planning, isolated from global economy.</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#f87171;"></span><span class="body-text">1978: Deng Xiaoping's reforms — opening up, market economy begins.</span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#f87171;"></span><span class="body-text">2001: WTO entry — export-led growth accelerates dramatically.</span></li>
+        <li class="anim-fade d6"><span class="bullet" style="background:#f87171;"></span><span class="body-text"><strong>2008-now: Massive debt-fueled investment boom — now facing deleveraging.</strong></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 30: Japan: The Lessons ===== -->
+  <div class="slide bg-pink" data-slide="29">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#f472b6;"></div>
+      <h2 class="title-section anim-left d1">Japan: The Lessons</h2>
+      <p class="subtitle accent-pink anim-left d2">Further Along the Cycle</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#f472b6;"></span><span class="body-text">1989: Asset bubble peaks — stocks and real estate at all-time highs.</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#f472b6;"></span><span class="body-text">1990s-2000s: "Lost Decades" — deflation, stagnation, 0% rates.</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#f472b6;"></span><span class="body-text">BOJ pioneered QE — bought stocks, bonds, kept rates at 0%.</span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#f472b6;"></span><span class="body-text"><strong>Debt/GDP reached ~260% — highest in developed world.</strong></span></li>
+        <li class="anim-fade d6"><span class="bullet" style="background:#f472b6;"></span><span class="body-text"><strong>Bond holders lost 45% vs. USD, 60% vs. gold since 2013.</strong></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 31: PART IV ===== -->
+  <div class="slide bg-emerald" data-slide="30">
+    <div class="slide-content center">
+      <div class="accent-bar centered anim-fade" style="background:#34d399;"></div>
+      <p class="title-chapter accent-emerald anim-fade d1">Part IV</p>
+      <h2 class="title-section anim-fade d2" style="margin-top:0.75rem;">Looking Ahead</h2>
+      <p class="subtitle anim-fade d3" style="max-width:600px; margin:1.5rem auto 0;">What the indicators show and what the future may hold.</p>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 32: What the Indicators Show ===== -->
+  <div class="slide bg-red" data-slide="31">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#f87171;"></div>
+      <h2 class="title-section anim-left d1">What the Indicators Show</h2>
+      <p class="subtitle accent-red anim-left d2">US Debt Metrics</p>
+      <div class="stat-grid anim-fade d3" style="margin-top:2.5rem;">
+        <div class="stat-card"><div class="stat-value accent-red">$35T+</div><div class="stat-label">Federal Debt</div><div style="font-size:0.75rem; opacity:0.5; margin-top:0.5rem;">And growing rapidly</div></div>
+        <div class="stat-card"><div class="stat-value accent-red">120%+</div><div class="stat-label">Debt/GDP Ratio</div><div style="font-size:0.75rem; opacity:0.5; margin-top:0.5rem;">Highest since WWII</div></div>
+        <div class="stat-card"><div class="stat-value accent-red">$1T+</div><div class="stat-label">Annual Interest Payments</div><div style="font-size:0.75rem; opacity:0.5; margin-top:0.5rem;">More than defense spending</div></div>
+        <div class="stat-card"><div class="stat-value accent-red">37x</div><div class="stat-label">Debt to Gold Ratio</div><div style="font-size:0.75rem; opacity:0.5; margin-top:0.5rem;">Was 7x in 1945</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 33: The 3% 3-Part Solution ===== -->
+  <div class="slide bg-emerald" data-slide="32">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#34d399;"></div>
+      <h2 class="title-section anim-left d1">The 3% 3-Part Solution</h2>
+      <p class="subtitle accent-emerald anim-left d2">Ray Dalio's Proposal</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#34d399;"></span><span class="body-text"><strong>Cut the deficit to 3% of GDP through smart fiscal consolidation.</strong></span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#34d399;"></span><span class="body-text">Raise revenues without killing growth — broaden tax base, reduce loopholes.</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#34d399;"></span><span class="body-text"><strong>Restructure spending — prioritize investments that raise productivity.</strong></span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#34d399;"></span><span class="body-text">The key: spread the paying back over time at a sustainable rate (~3-4% per year).</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 34: KEY PRINCIPLES ===== -->
+  <div class="slide bg-amber" data-slide="33">
+    <div class="slide-content center">
+      <div class="accent-bar centered anim-fade" style="background:#f59e0b;"></div>
+      <p class="title-chapter accent-amber anim-fade d1">Key Principles</p>
+      <h2 class="title-section anim-fade d2" style="margin-top:0.75rem;">Timeless Truths</h2>
+      <p class="subtitle anim-fade d3" style="max-width:600px; margin:1.5rem auto 0;">Core principles for understanding and navigating debt cycles.</p>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 35: Principles to Remember ===== -->
+  <div class="slide bg-amber" data-slide="34">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#f59e0b;"></div>
+      <h2 class="title-section anim-left d1">Principles to Remember</h2>
+      <div class="principle-list anim-fade d2" style="margin-top:2rem; max-width:800px;">
+        <div class="principle-item highlight anim-fade d2"><span class="star accent-amber">&#9733;</span> If we don't agree on how things work, we won't be able to agree on what's happening or what is likely to happen.</div>
+        <div class="principle-item anim-fade d3">Big debt crises are inevitable because lending is never done perfectly.</div>
+        <div class="principle-item anim-fade d3">It pays to build up savings in good times so there are savings to draw on in bad times.</div>
+        <div class="principle-item highlight anim-fade d4"><span class="star accent-amber">&#9733;</span> A debt is a promise to deliver money. A debt crisis occurs when more promises have been made than there is money to deliver on them.</div>
+        <div class="principle-item anim-fade d5">If debts are in a country's own currency, its central bank will print money to alleviate the crisis — but this reduces the value of money.</div>
+        <div class="principle-item anim-fade d5">All debt crises can be managed well by balancing deflationary restructurings with inflationary monetizations.</div>
+        <div class="principle-item anim-fade d6">Debt crises provide great risks and opportunities — they have destroyed empires and created great fortunes.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 36: Where We Are Now ===== -->
+  <div class="slide bg-rose" data-slide="35">
+    <div class="slide-content">
+      <div class="accent-bar anim-left" style="background:#fb7185;"></div>
+      <h2 class="title-section anim-left d1">Where We Are Now</h2>
+      <p class="subtitle accent-rose anim-left d2">The Big Picture</p>
+      <ul class="bullet-list" style="margin-top:2rem; max-width:800px;">
+        <li class="anim-fade d3"><span class="bullet" style="background:#fb7185;"></span><span class="body-text"><strong>We are heading into a period in which central governments and central banks will "go broke" in the ways that have happened hundreds of times before.</strong></span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#fb7185;"></span><span class="body-text">The Big Debt Cycle is just one of five interrelated forces that make up the Overall Big Cycle.</span></li>
+        <li class="anim-fade d4"><span class="bullet" style="background:#fb7185;"></span><span class="body-text"><strong>The other forces: internal political cycle, external geopolitical cycle, acts of nature, and human inventiveness/technology.</strong></span></li>
+        <li class="anim-fade d5"><span class="bullet" style="background:#fb7185;"></span><span class="body-text">These changes happen about once in a lifetime — roughly every 80 years.</span></li>
+        <li class="anim-fade d6"><span class="bullet" style="background:#fb7185;"></span><span class="body-text"><strong>Understanding the template helps you see what seems improbable today will make perfect sense tomorrow.</strong></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 37: Final ===== -->
+  <div class="slide bg-title" data-slide="36">
+    <div class="slide-content center">
+      <div class="accent-bar centered anim-fade" style="background:#f59e0b;"></div>
+      <h1 class="title-main anim-fade d1">HOW COUNTRIES<br><span class="accent-amber">GO BROKE</span></h1>
+      <p class="subtitle anim-fade d2" style="margin-top:0.5rem;">The Big Cycle</p>
+      <p class="quote-text anim-fade d3" style="max-width:700px; margin:2rem auto 0; font-size:clamp(0.95rem, 1.8vw, 1.3rem);">"If you try to focus on debt cycles precisely or focus your attention on the short term, you won't see them. It's like comparing two snowflakes and missing that they are pretty much the same because they're not exactly the same."</p>
+      <div class="divider anim-fade d4" style="background:#f59e0b;"></div>
+      <p class="accent-amber anim-fade d5" style="font-weight:600;">&mdash; Ray Dalio</p>
+      <div class="anim-fade d6" style="margin-top:2rem; font-size:0.85rem; color:rgba(255,255,255,0.35);">&#9000; Press R to restart</div>
+    </div>
+  </div>
+
+  <!-- ===== NAVIGATION BAR ===== -->
+  <div class="nav-bar">
+    <button class="nav-btn" id="btnPrev" title="Previous (&larr;)" aria-label="Previous slide">&#10094;</button>
+    <button class="nav-btn" id="btnTOC" title="Table of Contents (T)" aria-label="Table of contents">&#9776;</button>
+    <button class="nav-btn" id="btnHelp" title="Help (H)" aria-label="Keyboard shortcuts">&#63;</button>
+    <button class="nav-btn" id="btnNext" title="Next (&rarr;)" aria-label="Next slide">&#10095;</button>
+  </div>
+
+  <!-- Side arrows -->
+  <button class="side-nav prev" id="sidePrev" title="Previous" aria-label="Previous slide">&#10094;</button>
+  <button class="side-nav next" id="sideNext" title="Next" aria-label="Next slide">&#10095;</button>
+
+  <!-- TOC Modal -->
+  <div class="modal-overlay" id="tocModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-title">&#9776; Table of Contents</span>
+        <button class="modal-close" id="tocClose" aria-label="Close">&times;</button>
+      </div>
+      <ul class="toc-list" id="tocList"></ul>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div class="modal-overlay" id="helpModal">
+    <div class="modal-box" style="max-width:340px;">
+      <div class="modal-header">
+        <span class="modal-title">Keyboard Shortcuts</span>
+        <button class="modal-close" id="helpClose" aria-label="Close">&times;</button>
+      </div>
+      <div style="display:grid; gap:0.75rem; font-size:0.9rem; color:rgba(255,255,255,0.7);">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>Next slide</span><div style="display:flex;gap:4px;"><span class="kbd">&rarr;</span><span class="kbd">Space</span></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>Previous slide</span><span class="kbd">&larr;</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>First slide</span><span class="kbd">Home</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>Last slide</span><span class="kbd">End</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>Table of contents</span><span class="kbd">T</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>Help</span><span class="kbd">H</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span>Restart</span><span class="kbd">R</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+  const totalSlides = 37;
+  let current = 0;
+
+  const slides = document.querySelectorAll('.slide');
+  const progressEl = document.getElementById('progress');
+  const counterEl = document.getElementById('counter');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  const sidePrev = document.getElementById('sidePrev');
+  const sideNext = document.getElementById('sideNext');
+  const tocModal = document.getElementById('tocModal');
+  const helpModal = document.getElementById('helpModal');
+
+  const tocItems = [
+    { n:'01', t:'HOW COUNTRIES GO BROKE', i:'&#128214;' },
+    { n:'02', t:'The Critical Questions', i:'&#128200;' },
+    { n:'03', t:'A Unique Perspective', i:'&#9878;' },
+    { n:'04', t:'A Stark Discovery', i:'&#128202;' },
+    { n:'05', t:'PART I: Overview', i:'&#127963;' },
+    { n:'06', t:'How the Machine Works', i:'&#128200;' },
+    { n:'07', t:'The Short-Term Debt Cycle', i:'&#128200;' },
+    { n:'08', t:'Short-Term Cycles Add Up', i:'&#128200;' },
+    { n:'09', t:'THE FIVE STAGES', i:'&#127963;' },
+    { n:'10', t:'Stage 1: Sound Money', i:'&#128200;' },
+    { n:'11', t:'Stage 2: Debt Bubble', i:'&#128200;' },
+    { n:'12', t:'Stage 3: The Top', i:'&#128200;' },
+    { n:'13', t:'Stage 4: The Deleveraging', i:'&#128200;' },
+    { n:'14', t:'The Beautiful Deleveraging', i:'&#9878;' },
+    { n:'15', t:'Stage 5: Crisis Recedes', i:'&#128200;' },
+    { n:'16', t:'THE SIX PHASES', i:'&#127963;' },
+    { n:'17', t:'MP0: Hard Money (1945-71)', i:'&#128200;' },
+    { n:'18', t:'MP1: Interest Rate Policy', i:'&#128200;' },
+    { n:'19', t:'MP2: Debt Monetization', i:'&#128200;' },
+    { n:'20', t:'MP3: Coordinated Policy', i:'&#128200;' },
+    { n:'21', t:'MP4 & MP5: Breaking Point', i:'&#128200;' },
+    { n:'22', t:'PART II: Archetypical Sequence', i:'&#127963;' },
+    { n:'23', t:'The Sequence of Collapse', i:'&#9888;' },
+    { n:'24', t:'PART III: Looking Back', i:'&#127963;' },
+    { n:'25', t:'US: 1945 — 1971', i:'&#128336;' },
+    { n:'26', t:'US: 1971 — 2008', i:'&#128336;' },
+    { n:'27', t:'US: 2008 — 2020', i:'&#128336;' },
+    { n:'28', t:'US: 2020 — Present', i:'&#128200;' },
+    { n:'29', t:"China's Big Cycle", i:'&#128200;' },
+    { n:'30', t:'Japan: The Lessons', i:'&#128200;' },
+    { n:'31', t:'PART IV: Looking Ahead', i:'&#127963;' },
+    { n:'32', t:'What the Indicators Show', i:'&#128202;' },
+    { n:'33', t:'The 3% 3-Part Solution', i:'&#128200;' },
+    { n:'34', t:'KEY PRINCIPLES', i:'&#127963;' },
+    { n:'35', t:'Principles to Remember', i:'&#127963;' },
+    { n:'36', t:'Where We Are Now', i:'&#128200;' },
+    { n:'37', t:'HOW COUNTRIES GO BROKE', i:'&#127758;' },
+  ];
+
+  function goTo(n) {
+    if (n < 0 || n >= totalSlides) return;
+    slides[current].classList.remove('active');
+    current = n;
+    slides[current].classList.add('active');
+    updateUI();
+  }
+
+  function next() { if (current < totalSlides - 1) goTo(current + 1); }
+  function prev() { if (current > 0) goTo(current - 1); }
+
+  function updateUI() {
+    progressEl.style.width = ((current + 1) / totalSlides * 100) + '%';
+    counterEl.textContent = (current + 1) + ' / ' + totalSlides;
+    btnPrev.disabled = current === 0;
+    btnNext.disabled = current === totalSlides - 1;
+    sidePrev.disabled = current === 0;
+    sideNext.disabled = current === totalSlides - 1;
+  }
+
+  // Build TOC
+  const tocList = document.getElementById('tocList');
+  tocItems.forEach((item, i) => {
+    const li = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.innerHTML = '<span class="toc-num">' + item.n + '</span><span class="toc-icon">' + item.i + '</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + item.t + '</span>';
+    btn.addEventListener('click', function() { goTo(i); closeTOC(); });
+    tocList.appendChild(li).appendChild(btn);
+  });
+
+  function openTOC() { tocModal.classList.add('active'); highlightTOC(); }
+  function closeTOC() { tocModal.classList.remove('active'); }
+  function openHelp() { helpModal.classList.add('active'); }
+  function closeHelp() { helpModal.classList.remove('active'); }
+
+  function highlightTOC() {
+    tocList.querySelectorAll('button').forEach((b, i) => {
+      b.classList.toggle('current', i === current);
+    });
+  }
+
+  // Keyboard
+  document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    switch(e.key) {
+      case 'ArrowRight': case ' ': case 'PageDown': e.preventDefault(); next(); break;
+      case 'ArrowLeft': case 'PageUp': e.preventDefault(); prev(); break;
+      case 'Home': e.preventDefault(); goTo(0); break;
+      case 'End': e.preventDefault(); goTo(totalSlides - 1); break;
+      case 't': case 'T': tocModal.classList.contains('active') ? closeTOC() : openTOC(); break;
+      case 'h': case 'H': case '?': helpModal.classList.contains('active') ? closeHelp() : openHelp(); break;
+      case 'r': case 'R': goTo(0); break;
+      case 'Escape': closeTOC(); closeHelp(); break;
+    }
+  });
+
+  // Touch/swipe
+  let touchStartX = 0;
+  document.addEventListener('touchstart', function(e) { touchStartX = e.changedTouches[0].screenX; });
+  document.addEventListener('touchend', function(e) {
+    const diff = touchStartX - e.changedTouches[0].screenX;
+    if (Math.abs(diff) > 50) diff > 0 ? next() : prev();
+  });
+
+  // Button listeners
+  btnPrev.addEventListener('click', prev);
+  btnNext.addEventListener('click', next);
+  sidePrev.addEventListener('click', prev);
+  sideNext.addEventListener('click', next);
+  document.getElementById('btnTOC').addEventListener('click', openTOC);
+  document.getElementById('btnHelp').addEventListener('click', openHelp);
+  document.getElementById('tocClose').addEventListener('click', closeTOC);
+  document.getElementById('helpClose').addEventListener('click', closeHelp);
+
+  // Close modals on backdrop click
+  tocModal.addEventListener('click', function(e) { if(e.target === tocModal) closeTOC(); });
+  helpModal.addEventListener('click', function(e) { if(e.target === helpModal) closeHelp(); });
+
+  // Init
+  updateUI();
+})();
+</script>
+</body>
+</html>

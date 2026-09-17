@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Litigation Brain — Architecture Guide | BRG Legal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+
+/* ═══════════════════════════════════
+   TOKENS
+═══════════════════════════════════ */
+:root {
+  --purple:         #421540;
+  --purple-mid:     #6B3068;
+  --purple-light:   rgba(66,21,64,0.10);
+  --purple-faint:   rgba(66,21,64,0.05);
+  --purple-border:  rgba(66,21,64,0.20);
+  --gold:           #C4922A;
+  --gold-faint:     rgba(196,146,42,0.14);
+  --gold-border:    rgba(196,146,42,0.35);
+  --cream:          #FDFAF6;
+  --cream-2:        #F5F0E8;
+  --ink:            #1C1410;
+  --ink-mid:        #4A3F3A;
+  --ink-soft:       #8B8480;
+  --border:         #E8E2D9;
+  --border-mid:     #D4CBBF;
+  --green:          #166534;
+  --green-bg:       #F0FDF4;
+  --green-border:   #BBF7D0;
+  --amber:          #B45309;
+  --amber-bg:       #FFFBEB;
+  --amber-border:   #FDE68A;
+  --teal:           #0E7490;
+  --blue:           #1D4ED8;
+
+  --ff-disp: 'Cormorant Garamond', Georgia, serif;
+  --ff-body: 'Sora', -apple-system, sans-serif;
+  --ease:    cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ═══════════════════════════════════
+   RESET
+═══════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--ff-body);
+  font-size: 14px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.82em;
+  background: var(--cream-2);
+  border: 1px solid var(--border);
+  padding: 0.08em 0.35em;
+  border-radius: 3px;
+  color: var(--purple);
+}
+
+/* ═══════════════════════════════════
+   HERO
+═══════════════════════════════════ */
+.hero {
+  background: var(--purple);
+  padding: 72px 7vw 84px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+.hero-glow {
+  position: absolute;
+  top: -120px; right: -80px;
+  width: 520px; height: 520px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(196,146,42,0.18) 0%, transparent 68%);
+  pointer-events: none;
+}
+.hero-inner {
+  position: relative; z-index: 1;
+  max-width: 880px; margin: 0 auto;
+}
+.hero-eyebrow {
+  font-family: var(--ff-body);
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.24em; text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 2rem;
+  display: flex; align-items: center; gap: 0.8rem;
+}
+.hero-eyebrow::before {
+  content: '';
+  display: block; width: 28px; height: 1px;
+  background: var(--gold);
+}
+.hero h1 {
+  font-family: var(--ff-disp);
+  font-size: clamp(3.2rem, 7.5vw, 5.8rem);
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+  margin-bottom: 1.2rem;
+}
+.hero h1 em {
+  font-style: italic;
+  color: rgba(255,255,255,0.55);
+}
+.hero-sub {
+  font-size: 0.88rem; font-weight: 300;
+  color: rgba(255,255,255,0.5);
+  max-width: 480px; line-height: 1.75;
+  margin-bottom: 2.8rem;
+}
+.hero-tags {
+  display: flex; flex-wrap: wrap; gap: 0.8rem;
+}
+.hero-tag {
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 0.11em; text-transform: uppercase;
+  color: rgba(255,255,255,0.38);
+  padding: 0.3rem 0.85rem;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 2px;
+}
+
+/* ═══════════════════════════════════
+   WRAPPER
+═══════════════════════════════════ */
+.wrap {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 7vw;
+}
+
+/* ═══════════════════════════════════
+   SECTION SHELL
+═══════════════════════════════════ */
+.section {
+  padding: 76px 0;
+  border-bottom: 1px solid var(--border);
+}
+.section:last-child { border-bottom: none; }
+
+.section-label {
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 2.4rem;
+}
+.s-num {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--purple);
+  background: var(--purple-light);
+  border: 1px solid var(--purple-border);
+  padding: 0.28rem 0.7rem;
+  border-radius: 2px;
+}
+.s-name {
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.section h2 {
+  font-family: var(--ff-disp);
+  font-size: clamp(2rem, 3.8vw, 3rem);
+  font-weight: 600; line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 1.1rem;
+}
+.lead {
+  font-size: 0.88rem; font-weight: 300;
+  color: var(--ink-mid); line-height: 1.8;
+  max-width: 580px; margin-bottom: 2.5rem;
+}
+
+/* ═══════════════════════════════════
+   CALLOUTS
+═══════════════════════════════════ */
+.box {
+  padding: 1.1rem 1.35rem;
+  border-radius: 4px;
+  font-size: 0.8rem; line-height: 1.65;
+  margin-bottom: 1rem;
+}
+.box strong { font-weight: 600; }
+.box--green  { background: var(--green-bg);  border: 1px solid var(--green-border);  border-left: 3px solid var(--green);  color: #064e3b; }
+.box--amber  { background: var(--amber-bg);  border: 1px solid var(--amber-border);  border-left: 3px solid var(--amber);  color: #78350f; }
+.box--purple { background: var(--purple-faint); border: 1px solid var(--purple-border); border-left: 3px solid var(--purple); color: var(--ink-mid); }
+
+/* ═══════════════════════════════════
+   §1 — CONCEPT  (two columns)
+═══════════════════════════════════ */
+.concept-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+.concept-col { padding: 2rem 1.8rem; background: var(--cream); }
+.concept-col--b { background: rgba(66,21,64,0.035); }
+
+.concept-tag {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.concept-tag--no  { color: #dc2626; }
+.concept-tag--yes { color: var(--green); }
+
+.badge {
+  width: 16px; height: 16px; border-radius: 50%;
+  font-size: 9px; font-weight: 800;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.badge--no  { background: #fef2f2; color: #dc2626; }
+.badge--yes { background: #f0fdf4; color: #16a34a; }
+
+.concept-col h3 {
+  font-family: var(--ff-disp);
+  font-size: 1.3rem; font-weight: 600;
+  color: var(--ink); line-height: 1.25;
+  margin-bottom: 0.7rem;
+}
+.concept-col p { font-size: 0.78rem; color: var(--ink-mid); line-height: 1.7; }
+.concept-note {
+  margin-top: 0.7rem; font-size: 0.72rem;
+  padding: 0.5rem 0.7rem; border-radius: 3px;
+  font-weight: 500;
+}
+.concept-note--no  { background: #fef2f2; color: #991b1b; }
+.concept-note--yes { background: #f0fdf4; color: #166534; }
+
+/* ═══════════════════════════════════
+   §2 — HOW COWORK WORKS
+═══════════════════════════════════ */
+.machine-flow {
+  display: flex; align-items: stretch; gap: 0;
+  border: 1px solid var(--border); border-radius: 8px;
+  overflow: hidden; margin-bottom: 1.5rem;
+}
+.mf-node {
+  flex: 1; padding: 1.6rem 1.4rem;
+  background: var(--cream); text-align: center;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.mf-node:last-child { border-right: none; }
+.mf-node--hl { background: var(--purple-faint); }
+
+.mf-arrow {
+  flex: 0 0 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--cream-2);
+  color: var(--ink-soft); font-size: 1rem;
+  border-right: 1px solid var(--border);
+}
+
+.mf-icon { font-size: 2rem; margin-bottom: 0.55rem; line-height: 1; }
+.mf-label { font-size: 0.78rem; font-weight: 600; color: var(--ink); margin-bottom: 0.2rem; }
+.mf-sub   { font-size: 0.68rem; color: var(--ink-soft); line-height: 1.5; }
+
+.cowork-facts {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+}
+.fact-card {
+  padding: 1.1rem 1.3rem;
+  border: 1px solid var(--border); border-radius: 5px;
+  background: var(--cream);
+}
+.fact-card h4 {
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--ink); margin-bottom: 0.3rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.fact-card p { font-size: 0.73rem; color: var(--ink-mid); line-height: 1.65; }
+
+/* ═══════════════════════════════════
+   §3 — FOLDER ARCHITECTURE
+═══════════════════════════════════ */
+.arch-wrap {
+  display: grid; grid-template-columns: 1.1fr 1fr;
+  gap: 2.8rem; align-items: start;
+}
+
+/* Dark terminal-style tree */
+.tree-card {
+  background: #1e0d1d;
+  border-radius: 10px; overflow: hidden;
+  box-shadow: 0 12px 40px rgba(66,21,64,0.3);
+}
+.tree-topbar {
+  background: #2d1529;
+  padding: 0.65rem 1.1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.tree-dot { width: 10px; height: 10px; border-radius: 50%; }
+.tree-dot-1 { background: #ff5f57; }
+.tree-dot-2 { background: #febc2e; }
+.tree-dot-3 { background: #28c840; }
+.tree-title {
+  margin-left: auto; font-size: 9px; font-weight: 500;
+  letter-spacing: 0.12em; color: rgba(255,255,255,0.25);
+  text-transform: uppercase;
+}
+.tree-body {
+  padding: 1.4rem 1.4rem 1.6rem;
+  font-family: 'Courier New', 'Lucida Console', monospace;
+  font-size: 0.72rem; line-height: 2;
+}
+.tr { display: flex; align-items: baseline; }
+.tr-pre  { color: rgba(255,255,255,0.18); white-space: pre; user-select: none; }
+.tr-dir  { color: #e8b4e3; font-weight: 700; }
+.tr-file { color: rgba(255,255,255,0.5); }
+.tr-root { color: var(--gold); font-weight: 700; font-size: 0.78rem; margin-bottom: 0.1rem; }
+.tr-cmt  { color: rgba(196,146,42,0.55); font-size: 0.62rem; margin-left: 0.5rem; font-style: italic; }
+.tr-gap  { height: 0.4rem; }
+
+/* Annotation notes */
+.ann-list { display: flex; flex-direction: column; gap: 1rem; }
+.ann {
+  padding: 1rem 1.2rem 1rem 1.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--cream);
+  position: relative;
+}
+.ann::before {
+  content: ''; position: absolute;
+  left: 0; top: 0; bottom: 0; width: 3px;
+  border-radius: 3px 0 0 3px;
+}
+.ann--gold::before   { background: var(--gold); }
+.ann--purple::before { background: var(--purple); }
+.ann--teal::before   { background: var(--teal); }
+.ann--blue::before   { background: var(--blue); }
+
+.ann h4 { font-size: 0.76rem; font-weight: 600; color: var(--ink); margin-bottom: 0.25rem; }
+.ann p  { font-size: 0.71rem; color: var(--ink-mid); line-height: 1.65; }
+
+/* ═══════════════════════════════════
+   §4 — SYNTHESIS FLOW
+═══════════════════════════════════ */
+.query-box {
+  background: var(--purple-faint);
+  border: 1px solid var(--purple-border);
+  border-radius: 6px; padding: 1.2rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.query-lbl {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--purple); margin-bottom: 0.5rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.query-lbl::before {
+  content: '';
+  display: block; width: 14px; height: 1px;
+  background: var(--purple);
+}
+.query-box p {
+  font-size: 0.9rem; font-style: italic;
+  color: var(--ink-mid); line-height: 1.7;
+}
+
+/* Matter cards */
+.matter-row {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0.8rem; margin-bottom: 0.8rem;
+}
+.mc {
+  border: 1.5px solid var(--border); border-radius: 6px;
+  background: var(--cream); padding: 1rem 1.1rem;
+  position: relative; overflow: hidden;
+}
+.mc::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+}
+.mc:nth-child(1)::before { background: var(--teal); }
+.mc:nth-child(2)::before { background: var(--blue); }
+.mc:nth-child(3)::before { background: var(--amber); }
+
+.mc-num {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink-soft); margin-bottom: 0.4rem;
+}
+.mc h4 { font-size: 0.78rem; font-weight: 600; color: var(--ink); margin-bottom: 0.2rem; line-height: 1.3; }
+.mc-meta { font-size: 0.67rem; color: var(--ink-soft); margin-bottom: 0.5rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.chip {
+  font-size: 0.58rem; font-weight: 500;
+  padding: 0.12rem 0.42rem;
+  border: 1px solid var(--border); border-radius: 3px;
+  color: var(--ink-soft); background: var(--cream-2);
+}
+
+/* Flow arrow */
+.flow-arrow {
+  display: flex; align-items: center; gap: 1rem;
+  font-size: 0.72rem; font-weight: 500;
+  color: var(--ink-soft); margin: 0.5rem 0;
+}
+.flow-arrow::before, .flow-arrow::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* Claude synthesis node */
+.claude-synth {
+  background: var(--purple);
+  border-radius: 8px; padding: 1.8rem 2rem;
+  text-align: center; position: relative; overflow: hidden;
+  margin-bottom: 0.8rem;
+}
+.claude-synth-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.cs-eyebrow {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.24em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 0.5rem;
+  position: relative;
+}
+.cs-title {
+  font-family: var(--ff-disp);
+  font-size: 1.55rem; font-weight: 600;
+  color: #fff; margin-bottom: 0.3rem;
+  position: relative;
+}
+.cs-sub {
+  font-size: 0.72rem; color: rgba(255,255,255,0.4);
+  position: relative;
+}
+
+/* Output cards */
+.output-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem;
+}
+.oc {
+  border: 1.5px solid var(--border); border-radius: 5px;
+  padding: 1rem 1.1rem; background: var(--cream);
+}
+.oc-tag {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--purple); margin-bottom: 0.45rem;
+}
+.oc h4 { font-size: 0.77rem; font-weight: 600; color: var(--ink); margin-bottom: 0.25rem; }
+.oc p  { font-size: 0.68rem; color: var(--ink-mid); line-height: 1.58; }
+
+/* ═══════════════════════════════════
+   §5 — TEAM ACCESS
+═══════════════════════════════════ */
+.team-layout { margin-top: 1.5rem; }
+
+.onedrive-card {
+  background: var(--cream-2);
+  border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 1.2rem 1.6rem; text-align: center;
+  max-width: 320px; margin: 0 auto;
+}
+.od-icon { font-size: 2.2rem; display: block; margin-bottom: 0.5rem; }
+.od-label { font-size: 0.82rem; font-weight: 600; color: var(--ink); margin-bottom: 0.15rem; }
+.od-sub   { font-size: 0.7rem; color: var(--ink-soft); }
+
+/* Dotted connector lines */
+.connectors {
+  position: relative; height: 52px; margin: 0;
+}
+.conn-line {
+  position: absolute; top: 0; bottom: 0; width: 1px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--border-mid) 0, var(--border-mid) 5px,
+    transparent 5px, transparent 11px
+  );
+}
+.conn-line:nth-child(1) { left: 17%; }
+.conn-line:nth-child(2) { left: 50%; }
+.conn-line:nth-child(3) { left: 83%; }
+
+/* Machine cards */
+.machines {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+}
+.machine {
+  border: 1.5px solid var(--border); border-radius: 7px;
+  overflow: hidden; background: var(--cream);
+}
+.machine-head {
+  background: var(--purple-faint);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1rem;
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.mh-icon { font-size: 1.25rem; }
+.mh-name { font-size: 0.77rem; font-weight: 600; color: var(--ink); }
+.mh-role { font-size: 0.63rem; color: var(--ink-soft); }
+
+.machine-body { padding: 0.9rem 1rem; }
+.m-step {
+  font-size: 0.68rem; color: var(--ink-mid);
+  display: flex; align-items: flex-start; gap: 0.5rem;
+  margin-bottom: 0.4rem; line-height: 1.55;
+}
+.m-n {
+  flex-shrink: 0;
+  width: 16px; height: 16px;
+  background: var(--purple); color: #fff;
+  border-radius: 50%; font-size: 8px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+}
+
+/* ═══════════════════════════════════
+   §6 — GETTING STARTED
+═══════════════════════════════════ */
+.gates {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+  margin: 1.5rem 0;
+}
+.gate {
+  border: 1.5px solid var(--border);
+  border-top: 4px solid;
+  border-radius: 6px; background: var(--cream);
+  padding: 1.4rem 1.3rem;
+}
+.gate--1 { border-top-color: var(--amber); }
+.gate--2 { border-top-color: var(--teal); }
+.gate--3 { border-top-color: var(--purple); }
+
+.gate-num {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink-soft); margin-bottom: 0.5rem;
+}
+.gate h3 { font-size: 0.88rem; font-weight: 600; color: var(--ink); margin-bottom: 0.4rem; line-height: 1.3; }
+.gate p   { font-size: 0.74rem; color: var(--ink-mid); line-height: 1.65; }
+
+/* ═══════════════════════════════════
+   FOOTER
+═══════════════════════════════════ */
+.footer {
+  background: var(--purple); padding: 2.8rem 7vw;
+}
+.footer-inner {
+  max-width: 880px; margin: 0 auto;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 1rem;
+}
+.footer-brand {
+  font-family: var(--ff-disp);
+  font-size: 1.15rem; font-weight: 500; font-style: italic;
+  color: rgba(255,255,255,0.88);
+}
+.footer-meta {
+  font-size: 0.68rem; line-height: 1.7;
+  color: rgba(255,255,255,0.32); text-align: right;
+}
+
+/* ═══════════════════════════════════
+   §7 — GOVERNANCE
+═══════════════════════════════════ */
+.gov-intro {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+  margin-bottom: 1.8rem;
+}
+.gov-stat {
+  padding: 1.2rem 1.4rem;
+  border: 1.5px solid var(--border); border-radius: 6px;
+  background: var(--cream);
+}
+.gov-stat-icon { font-size: 1.6rem; margin-bottom: 0.5rem; display: block; }
+.gov-stat h4 { font-size: 0.8rem; font-weight: 600; color: var(--ink); margin-bottom: 0.25rem; }
+.gov-stat p  { font-size: 0.73rem; color: var(--ink-mid); line-height: 1.6; }
+
+/* Permission tier table */
+.perm-table {
+  border: 1px solid var(--border); border-radius: 8px;
+  overflow: hidden; margin-bottom: 1.5rem;
+}
+.perm-head {
+  display: grid;
+  grid-template-columns: 1.2fr 1.4fr 1fr 1.8fr;
+  background: var(--purple); padding: 0.7rem 1.2rem;
+  gap: 1rem;
+}
+.perm-head-cell {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+}
+.perm-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.4fr 1fr 1.8fr;
+  padding: 0.95rem 1.2rem; gap: 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--cream); align-items: start;
+  transition: background 0.12s;
+}
+.perm-row:last-child { border-bottom: none; }
+.perm-row:hover { background: var(--cream-2); }
+.perm-row--admin { background: rgba(66,21,64,0.04); }
+.perm-row--admin:hover { background: rgba(66,21,64,0.08); }
+
+.perm-role { font-size: 0.78rem; font-weight: 600; color: var(--ink); line-height: 1.4; }
+.perm-who  { font-size: 0.73rem; color: var(--ink-mid); line-height: 1.5; }
+
+.perm-badge {
+  display: inline-block;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 0.22rem 0.55rem; border-radius: 3px;
+}
+.perm-badge--admin  { background: rgba(66,21,64,0.12); color: var(--purple); border: 1px solid var(--purple-border); }
+.perm-badge--edit   { background: rgba(14,116,144,0.10); color: var(--teal); border: 1px solid rgba(14,116,144,0.25); }
+.perm-badge--read   { background: rgba(29,78,216,0.08); color: var(--blue); border: 1px solid rgba(29,78,216,0.2); }
+.perm-badge--upload { background: rgba(180,83,9,0.08); color: var(--amber); border: 1px solid rgba(180,83,9,0.2); }
+
+.perm-scope { font-size: 0.71rem; color: var(--ink-mid); line-height: 1.6; }
+
+/* Folder permission diagram */
+.folder-gov {
+  display: flex; flex-direction: column; gap: 0;
+  border: 1px solid var(--border); border-radius: 8px;
+  overflow: hidden; margin-bottom: 1.5rem;
+}
+.fg-row {
+  display: flex; align-items: stretch;
+  border-bottom: 1px solid var(--border);
+}
+.fg-row:last-child { border-bottom: none; }
+.fg-path {
+  flex: 0 0 260px;
+  padding: 0.85rem 1.1rem;
+  background: var(--cream-2);
+  border-right: 1px solid var(--border);
+  font-family: 'Courier New', monospace;
+  font-size: 0.7rem; color: var(--ink-mid);
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.fg-path--root { font-weight: 700; color: var(--ink); }
+.fg-path-indent { padding-left: 1.5rem; }
+.fg-path-indent2 { padding-left: 2.8rem; }
+.fg-roles {
+  flex: 1; padding: 0.75rem 1.1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.fg-note {
+  flex: 0 0 auto;
+  font-size: 0.65rem; color: var(--ink-soft);
+  font-style: italic; margin-left: auto;
+  padding-left: 1rem;
+}
+
+/* Version control panel */
+.vc-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.vc-card {
+  padding: 1.2rem 1.3rem;
+  border: 1.5px solid var(--border); border-radius: 6px;
+  background: var(--cream);
+}
+.vc-card-icon { font-size: 1.4rem; display: block; margin-bottom: 0.5rem; }
+.vc-card h4  { font-size: 0.78rem; font-weight: 600; color: var(--ink); margin-bottom: 0.3rem; }
+.vc-card p   { font-size: 0.71rem; color: var(--ink-mid); line-height: 1.65; }
+
+/* ═══════════════════════════════════
+   SCROLL REVEAL
+═══════════════════════════════════ */
+.r {
+  opacity: 0; transform: translateY(16px);
+  transition: opacity 0.55s var(--ease), transform 0.55s var(--ease);
+}
+.r.on { opacity: 1; transform: none; }
+.r.d1 { transition-delay: 0.09s; }
+.r.d2 { transition-delay: 0.18s; }
+.r.d3 { transition-delay: 0.27s; }
+
+/* ═══════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════ */
+@media (max-width: 700px) {
+  .concept-cols, .arch-wrap, .matter-row, .output-row,
+  .machines, .gates, .cowork-facts { grid-template-columns: 1fr; }
+  .machine-flow { flex-direction: column; }
+  .mf-arrow { transform: rotate(90deg); width: 100%; justify-content: center; padding: 0.5rem 0; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     HERO
+══════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-inner">
+    <div class="hero-eyebrow">BRG Legal &nbsp;·&nbsp; AI Program</div>
+    <h1>The <em>Litigation</em><br>Brain</h1>
+    <p class="hero-sub">Architecture &amp; setup guide — how to build a cross-matter AI knowledge system using Claude CoWork and OneDrive.</p>
+    <div class="hero-tags">
+      <div class="hero-tag">Prepared for: Savannah</div>
+      <div class="hero-tag">June 2026</div>
+      <div class="hero-tag">Claude CoWork · OneDrive</div>
+      <div class="hero-tag">From: Lilly &amp; Vivid</div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+
+  <!-- ══════════════════════════════════════════
+       §1 — THE CONCEPT
+  ══════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-label r">
+      <span class="s-num">01</span>
+      <span class="s-name">The Concept</span>
+    </div>
+    <h2 class="r">What you described is feasible.<br>The architecture just works differently.</h2>
+    <p class="lead r">Your instinct is exactly right: Claude can synthesise knowledge across all past matters to reduce costs on future litigation. The setup is simpler than you might expect.</p>
+
+    <div class="concept-cols r">
+      <div class="concept-col">
+        <div class="concept-tag concept-tag--no">
+          <span class="badge badge--no">✕</span>
+          Common assumption
+        </div>
+        <h3>Separate "Projects" that a Brain bridges</h3>
+        <p>Each lawsuit lives in its own CoWork Project — and a central Brain has special access across all of them, like a hub that connects separate silos.</p>
+        <div class="concept-note concept-note--no">CoWork Projects are sandboxed local folders. There's no native cross-project bridge. This architecture won't work.</div>
+      </div>
+      <div class="concept-col concept-col--b">
+        <div class="concept-tag concept-tag--yes">
+          <span class="badge badge--yes">✓</span>
+          How it actually works
+        </div>
+        <h3>One shared folder — every matter inside it</h3>
+        <p>All lawsuit materials live in a single shared workspace on OneDrive. Each matter is a subfolder. Because Claude sees everything inside one workspace, it already synthesises across all of them — automatically.</p>
+        <div class="concept-note concept-note--yes">Same outcome you described. Simpler architecture. Achievable this month.</div>
+      </div>
+    </div>
+
+    <div class="box box--green r">
+      <strong>The key insight:</strong> Claude doesn't need a special feature. Because every matter lives inside the same workspace folder, Claude can read and connect them all in a single session. <em>The Brain is the folder.</em>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       §2 — HOW COWORK WORKS
+  ══════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-label r">
+      <span class="s-num">02</span>
+      <span class="s-name">How CoWork Works</span>
+    </div>
+    <h2 class="r">CoWork = a local folder<br>on your machine</h2>
+    <p class="lead r">CoWork is a desktop app — not a cloud service. It reads and writes files in a folder you point it to. Understanding this single fact unlocks the whole architecture.</p>
+
+    <div class="machine-flow r">
+      <div class="mf-node">
+        <div class="mf-icon">💻</div>
+        <div class="mf-label">Your machine</div>
+        <div class="mf-sub">Desktop app installed<br>Mac or Windows</div>
+      </div>
+      <div class="mf-arrow">→</div>
+      <div class="mf-node mf-node--hl">
+        <div class="mf-icon">📁</div>
+        <div class="mf-label">CoWork folder</div>
+        <div class="mf-sub">One local folder<br>= one workspace</div>
+      </div>
+      <div class="mf-arrow">→</div>
+      <div class="mf-node">
+        <div class="mf-icon">🤖</div>
+        <div class="mf-label">Claude</div>
+        <div class="mf-sub">Reads &amp; writes<br>everything inside</div>
+      </div>
+      <div class="mf-arrow">→</div>
+      <div class="mf-node">
+        <div class="mf-icon">📄</div>
+        <div class="mf-label">Output files</div>
+        <div class="mf-sub">Drafts, briefs, analysis<br>saved back into the folder</div>
+      </div>
+    </div>
+
+    <div class="cowork-facts r">
+      <div class="fact-card">
+        <h4>📍 Sandboxed by design</h4>
+        <p>Claude only sees files inside the folder you've pointed it to. This is a security feature — your data stays local, and Claude cannot reach outside the workspace.</p>
+      </div>
+      <div class="fact-card">
+        <h4>🔄 Works with OneDrive sync</h4>
+        <p>Sync any OneDrive folder to your machine, and CoWork can read and write it. Changes save back to the cloud automatically — giving the whole team access.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       §3 — THE FOLDER ARCHITECTURE
+  ══════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-label r">
+      <span class="s-num">03</span>
+      <span class="s-name">The Litigation Brain Structure</span>
+    </div>
+    <h2 class="r">One OneDrive folder.<br>Every matter inside it.</h2>
+    <p class="lead r">Below is the Litigation Brain folder structure. No special software or integration is required — just a well-organised shared folder that the whole Legal team syncs locally.</p>
+
+    <div class="arch-wrap r">
+
+      <!-- Tree -->
+      <div class="tree-card">
+        <div class="tree-topbar">
+          <div class="tree-dot tree-dot-1"></div>
+          <div class="tree-dot tree-dot-2"></div>
+          <div class="tree-dot tree-dot-3"></div>
+          <div class="tree-title">OneDrive · Legal Litigation Brain</div>
+        </div>
+        <div class="tree-body">
+          <div class="tr tr-root">📁&nbsp; Legal Litigation Brain/</div>
+
+          <div class="tr"><span class="tr-pre">├── </span><span class="tr-file">📄 CLAUDE.md</span><span class="tr-cmt">← brain instructions</span></div>
+          <div class="tr"><span class="tr-pre">├── </span><span class="tr-file">📄 MEMORY.md</span><span class="tr-cmt">← cross-matter patterns</span></div>
+          <div class="tr"><span class="tr-pre">├── </span><span class="tr-file">📄 _Index.md</span><span class="tr-cmt">← matter registry</span></div>
+          <div class="tr-gap"></div>
+
+          <div class="tr"><span class="tr-pre">├── </span><span class="tr-dir">📁 Matter_001_Smith_v_BRG/</span></div>
+          <div class="tr"><span class="tr-pre">│   ├── </span><span class="tr-file">📁 pleadings/</span></div>
+          <div class="tr"><span class="tr-pre">│   ├── </span><span class="tr-file">📁 discovery/</span></div>
+          <div class="tr"><span class="tr-pre">│   ├── </span><span class="tr-file">📁 correspondence/</span></div>
+          <div class="tr"><span class="tr-pre">│   └── </span><span class="tr-file">📄 matter-summary.md</span></div>
+          <div class="tr-gap"></div>
+
+          <div class="tr"><span class="tr-pre">├── </span><span class="tr-dir">📁 Matter_002_IP_Dispute_EU/</span></div>
+          <div class="tr"><span class="tr-pre">│   ├── </span><span class="tr-file">📁 expert-reports/</span></div>
+          <div class="tr"><span class="tr-pre">│   └── </span><span class="tr-file">📄 matter-summary.md</span></div>
+          <div class="tr-gap"></div>
+
+          <div class="tr"><span class="tr-pre">├── </span><span class="tr-dir">📁 Matter_003_Supplier_Contract/</span></div>
+          <div class="tr"><span class="tr-pre">│   └── </span><span class="tr-file">📄 matter-summary.md</span></div>
+          <div class="tr-gap"></div>
+
+          <div class="tr"><span class="tr-pre">└── </span><span class="tr-dir">📁 _Templates/</span><span class="tr-cmt">← reusable precedents</span></div>
+        </div>
+      </div>
+
+      <!-- Annotations -->
+      <div class="ann-list">
+        <div class="ann ann--gold">
+          <h4>📁 The shared OneDrive folder</h4>
+          <p>This is your workspace. Every Legal team member syncs this folder to their machine. CoWork is pointed here. Everything Claude knows about BRG litigation lives inside.</p>
+        </div>
+        <div class="ann ann--purple">
+          <h4>📄 The brain files (root level)</h4>
+          <p><strong>CLAUDE.md</strong> — instructions for how Claude should behave as your litigation assistant<br><br>
+          <strong>MEMORY.md</strong> — accumulated patterns: cost benchmarks, counsel performance, winning arguments, risk flags<br><br>
+          <strong>_Index.md</strong> — a one-line registry of every matter: type, status, outcome, total cost</p>
+        </div>
+        <div class="ann ann--teal">
+          <h4>📁 One subfolder per matter</h4>
+          <p>Each lawsuit gets its own folder. Drop in pleadings, discovery, emails, expert reports as-is. Add a plain-English <code>matter-summary.md</code> that Claude reads for fast context.</p>
+        </div>
+        <div class="ann ann--blue">
+          <h4>📁 _Templates</h4>
+          <p>Reusable precedent documents, clause libraries, and standard briefs that Claude can reference and adapt for new matters.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       §4 — HOW CLAUDE SYNTHESISES
+  ══════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-label r">
+      <span class="s-num">04</span>
+      <span class="s-name">How Claude Synthesises</span>
+    </div>
+    <h2 class="r">Ask once. Claude reads<br>every matter before answering.</h2>
+    <p class="lead r">When you open CoWork pointed at the Litigation Brain and ask a question, Claude reads the entire workspace — all matter folders, the index, and the memory file — before producing an answer.</p>
+
+    <!-- Example query -->
+    <div class="query-box r">
+      <div class="query-lbl">Example prompt to the Brain</div>
+      <p>"Draft an initial defence strategy for a new IP infringement claim. Reference any similar matters we've handled before — what arguments succeeded, what outside counsel costs look like, and what to watch out for."</p>
+    </div>
+
+    <!-- Matter cards -->
+    <div class="matter-row r">
+      <div class="mc">
+        <div class="mc-num">Matter 001</div>
+        <h4>Smith v BRG</h4>
+        <div class="mc-meta">Product liability · Settled · $240K</div>
+        <div class="chips">
+          <span class="chip">pleadings</span>
+          <span class="chip">correspondence</span>
+          <span class="chip">summary</span>
+        </div>
+      </div>
+      <div class="mc">
+        <div class="mc-num">Matter 002</div>
+        <h4>IP Infringement · EU</h4>
+        <div class="mc-meta">Patent dispute · Resolved · $180K</div>
+        <div class="chips">
+          <span class="chip">discovery</span>
+          <span class="chip">expert reports</span>
+          <span class="chip">summary</span>
+        </div>
+      </div>
+      <div class="mc">
+        <div class="mc-num">Matter 003</div>
+        <h4>Supplier Contract Breach</h4>
+        <div class="mc-meta">Ongoing · Est. $90K</div>
+        <div class="chips">
+          <span class="chip">pleadings</span>
+          <span class="chip">timeline</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow-arrow r">Claude reads all matter folders simultaneously</div>
+
+    <!-- Synthesis node -->
+    <div class="claude-synth r">
+      <div class="claude-synth-grid"></div>
+      <div class="cs-eyebrow">Claude · Litigation Brain</div>
+      <div class="cs-title">Cross-matter synthesis</div>
+      <div class="cs-sub">Pattern recognition across all matters · Cost benchmarking · Precedent identification · Risk flagging</div>
+    </div>
+
+    <div class="flow-arrow r">Produces</div>
+
+    <!-- Outputs -->
+    <div class="output-row r">
+      <div class="oc">
+        <div class="oc-tag">Output 1</div>
+        <h4>Defence strategy draft</h4>
+        <p>References arguments that prevailed in Matter 002, adapted for the new claim's facts. Flags the key distinctions to establish.</p>
+      </div>
+      <div class="oc">
+        <div class="oc-tag">Output 2</div>
+        <h4>Cost estimate &amp; counsel guidance</h4>
+        <p>Based on comparable matters: likely $150–200K range. Notes which external counsel delivered best value in similar disputes.</p>
+      </div>
+      <div class="oc">
+        <div class="oc-tag">Output 3</div>
+        <h4>Precedent &amp; risk alert</h4>
+        <p>Flags that the EU IP matter had similar technology facts. Links directly to the relevant discovery documents for review.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       §5 — TEAM ACCESS
+  ══════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-label r">
+      <span class="s-num">05</span>
+      <span class="s-name">Team Access via OneDrive</span>
+    </div>
+    <h2 class="r">The whole team accesses<br>the same Brain.</h2>
+    <p class="lead r">Because the Litigation Brain folder lives on OneDrive, every team member syncs it locally and points their CoWork at it. Adding a new matter is as simple as creating a subfolder.</p>
+
+    <div class="box box--amber r">
+      <strong>Note on collaboration:</strong> CoWork is not a live co-editing tool — two people can't simultaneously edit the same document. For a knowledge base like this — where you're adding new matter files, not editing together in real time — this is never an issue.
+    </div>
+
+    <div class="team-layout r">
+      <div class="onedrive-card">
+        <span class="od-icon">☁️</span>
+        <div class="od-label">OneDrive — Legal Litigation Brain</div>
+        <div class="od-sub">Managed by Legal team · Syncs automatically</div>
+      </div>
+
+      <div class="connectors">
+        <div class="conn-line"></div>
+        <div class="conn-line"></div>
+        <div class="conn-line"></div>
+      </div>
+
+      <div class="machines">
+        <div class="machine">
+          <div class="machine-head">
+            <span class="mh-icon">💻</span>
+            <div>
+              <div class="mh-name">Savannah</div>
+              <div class="mh-role">Legal Lead</div>
+            </div>
+          </div>
+          <div class="machine-body">
+            <div class="m-step"><span class="m-n">1</span> Sync OneDrive folder locally</div>
+            <div class="m-step"><span class="m-n">2</span> Open CoWork → select that folder</div>
+            <div class="m-step"><span class="m-n">3</span> Ask the Brain questions, get drafted output</div>
+          </div>
+        </div>
+        <div class="machine">
+          <div class="machine-head">
+            <span class="mh-icon">💻</span>
+            <div>
+              <div class="mh-name">Solicitor</div>
+              <div class="mh-role">Legal Team</div>
+            </div>
+          </div>
+          <div class="machine-body">
+            <div class="m-step"><span class="m-n">1</span> Sync OneDrive folder locally</div>
+            <div class="m-step"><span class="m-n">2</span> Open CoWork → select that folder</div>
+            <div class="m-step"><span class="m-n">3</span> Drop new matter documents into the right subfolder</div>
+          </div>
+        </div>
+        <div class="machine">
+          <div class="machine-head">
+            <span class="mh-icon">💻</span>
+            <div>
+              <div class="mh-name">Paralegal</div>
+              <div class="mh-role">Legal Team</div>
+            </div>
+          </div>
+          <div class="machine-body">
+            <div class="m-step"><span class="m-n">1</span> Sync OneDrive folder locally</div>
+            <div class="m-step"><span class="m-n">2</span> Open CoWork → select that folder</div>
+            <div class="m-step"><span class="m-n">3</span> Update matter summaries after hearings</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="box box--purple" style="margin-top:1.5rem;">
+      <strong>Adding a new matter:</strong> Create a subfolder → drop in the documents → write a one-paragraph <code>matter-summary.md</code>. Claude picks it up automatically next session. No reconfiguration needed.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       §6 — BEFORE YOU START
+  ══════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-label r">
+      <span class="s-num">06</span>
+      <span class="s-name">Before You Start</span>
+    </div>
+    <h2 class="r">Three gates to clear<br>before setup begins.</h2>
+    <p class="lead r">The Litigation Brain is technically ready to build. These three steps must happen first — and all three can clear within a week.</p>
+
+    <div class="gates">
+      <div class="gate gate--1 r d1">
+        <div class="gate-num">Gate 01 · Priority</div>
+        <h3>Data governance check</h3>
+        <p>Litigation documents may carry Legal Professional Privilege (LPP) considerations that sit above BRG's standard AI data policy. A 15-minute call with Madison Sertic (Privacy) is needed before any files go into Claude.</p>
+      </div>
+      <div class="gate gate--2 r d2">
+        <div class="gate-num">Gate 02 · Quick</div>
+        <h3>OneDrive folder setup</h3>
+        <p>A shared OneDrive folder for the Legal team, with the right editors provisioned. Savannah or IT can set this up in under 10 minutes. This becomes the Brain's home.</p>
+      </div>
+      <div class="gate gate--3 r d3">
+        <div class="gate-num">Gate 03 · Book it</div>
+        <h3>90-min setup session</h3>
+        <p>Once the folder is live, the AI CoE (Lilly + Vivid) will run a setup session: build the <code>CLAUDE.md</code> brain instructions, create the matter index, onboard the team, and run a live demo with a real matter.</p>
+      </div>
+    </div>
+
+    <div class="box box--green r">
+      <strong>Timeline:</strong> Gates 01 and 02 can clear this week. Setup session takes half a day. The Litigation Brain can be live and populated within the month — ahead of the August board presentation where Legal's outside counsel savings target is slated as the program's first formal case study.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       §7 — GOVERNANCE & ACCESS CONTROL
+  ══════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-label r">
+      <span class="s-num">07</span>
+      <span class="s-name">Governance &amp; Access Control</span>
+    </div>
+    <h2 class="r">Not everyone needs edit rights.<br>Most people shouldn't have them.</h2>
+    <p class="lead r">Ten people with full edit access to a folder of sensitive litigation documents is a data integrity risk. The right model uses tiered permissions — and OneDrive's built-in version control as the safety net.</p>
+
+    <div class="gov-intro r">
+      <div class="gov-stat">
+        <span class="gov-stat-icon">🔁</span>
+        <h4>Automatic version history</h4>
+        <p>OneDrive (SharePoint) keeps up to 500 versions of every file automatically. Any document — including <code>CLAUDE.md</code> — can be restored in one click. Nothing is permanently deletable without deliberate action by an Owner.</p>
+      </div>
+      <div class="gov-stat">
+        <span class="gov-stat-icon">👥</span>
+        <h4>Azure AD group management</h4>
+        <p>Access is managed via Azure AD groups — not individual invitations. When someone leaves Legal, IT removes them from the group and access is revoked across the entire folder structure simultaneously.</p>
+      </div>
+    </div>
+
+    <!-- Permission tier table -->
+    <div class="perm-table r">
+      <div class="perm-head">
+        <div class="perm-head-cell">Role</div>
+        <div class="perm-head-cell">Who</div>
+        <div class="perm-head-cell">Permission level</div>
+        <div class="perm-head-cell">Scope</div>
+      </div>
+
+      <div class="perm-row perm-row--admin">
+        <div class="perm-role">Brain Admin</div>
+        <div class="perm-who">Savannah + 1 designated backup</div>
+        <div><span class="perm-badge perm-badge--admin">Full Control</span></div>
+        <div class="perm-scope">Everything — including <code>CLAUDE.md</code>, <code>MEMORY.md</code>, <code>_Index.md</code>, and all matter folders. Only role that can change how the brain behaves.</div>
+      </div>
+
+      <div class="perm-row">
+        <div class="perm-role">Matter Lead</div>
+        <div class="perm-who">Solicitor assigned to each matter</div>
+        <div><span class="perm-badge perm-badge--edit">Edit</span></div>
+        <div class="perm-scope">Edit access to their own matter subfolder only. Read-only on all other matters (so Claude can still synthesise across them).</div>
+      </div>
+
+      <div class="perm-row">
+        <div class="perm-role">Legal Team</div>
+        <div class="perm-who">Paralegals, support staff</div>
+        <div><span class="perm-badge perm-badge--upload">Contribute</span></div>
+        <div class="perm-scope">Can upload documents to assigned matter folders. Cannot delete, rename, or overwrite existing files. Read-only on root brain files.</div>
+      </div>
+
+      <div class="perm-row">
+        <div class="perm-role">Read-only Users</div>
+        <div class="perm-who">Senior leadership, auditors (if applicable)</div>
+        <div><span class="perm-badge perm-badge--read">View only</span></div>
+        <div class="perm-scope">Full read access across all matters. Can open CoWork and query the Brain. Cannot modify any files.</div>
+      </div>
+    </div>
+
+    <!-- Folder-level permission map -->
+    <h3 class="r" style="font-family: var(--ff-disp); font-size: 1.25rem; font-weight: 600; color: var(--ink); margin-bottom: 1rem;">Permissions mapped to the folder structure</h3>
+
+    <div class="folder-gov r">
+      <div class="fg-row">
+        <div class="fg-path fg-path--root">📁 Legal Litigation Brain/</div>
+        <div class="fg-roles">
+          <span class="perm-badge perm-badge--admin">Brain Admin — Full Control</span>
+          <span class="perm-badge perm-badge--read">All others — Read</span>
+        </div>
+      </div>
+      <div class="fg-row">
+        <div class="fg-path fg-path-indent">📄 CLAUDE.md</div>
+        <div class="fg-roles">
+          <span class="perm-badge perm-badge--admin">Brain Admin only</span>
+          <span class="fg-note">⚠️ Most critical file — guards how the Brain behaves</span>
+        </div>
+      </div>
+      <div class="fg-row">
+        <div class="fg-path fg-path-indent">📄 MEMORY.md</div>
+        <div class="fg-roles">
+          <span class="perm-badge perm-badge--admin">Brain Admin only</span>
+          <span class="fg-note">Accumulated cross-matter patterns — no ad hoc edits</span>
+        </div>
+      </div>
+      <div class="fg-row">
+        <div class="fg-path fg-path-indent">📄 _Index.md</div>
+        <div class="fg-roles">
+          <span class="perm-badge perm-badge--admin">Brain Admin — Edit</span>
+          <span class="perm-badge perm-badge--read">All others — Read</span>
+        </div>
+      </div>
+      <div class="fg-row">
+        <div class="fg-path fg-path-indent">📁 Matter_001_.../</div>
+        <div class="fg-roles">
+          <span class="perm-badge perm-badge--edit">Matter Lead — Edit</span>
+          <span class="perm-badge perm-badge--upload">Team — Contribute</span>
+          <span class="perm-badge perm-badge--read">Others — Read</span>
+        </div>
+      </div>
+      <div class="fg-row">
+        <div class="fg-path fg-path-indent">📁 Matter_002_.../</div>
+        <div class="fg-roles">
+          <span class="perm-badge perm-badge--edit">Matter Lead — Edit</span>
+          <span class="perm-badge perm-badge--upload">Team — Contribute</span>
+          <span class="perm-badge perm-badge--read">Others — Read</span>
+        </div>
+      </div>
+      <div class="fg-row">
+        <div class="fg-path fg-path-indent">📁 _Outputs/</div>
+        <div class="fg-roles">
+          <span class="perm-badge perm-badge--edit">All Legal — Edit</span>
+          <span class="fg-note">Claude writes here · Team can edit outputs freely</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Version control -->
+    <h3 class="r" style="font-family: var(--ff-disp); font-size: 1.25rem; font-weight: 600; color: var(--ink); margin-bottom: 1rem;">Version control &amp; safety net</h3>
+
+    <div class="vc-row r">
+      <div class="vc-card">
+        <span class="vc-card-icon">🕐</span>
+        <h4>500-version file history</h4>
+        <p>SharePoint keeps every saved version automatically. Right-click any file → Version history → restore in one click. Works on <code>CLAUDE.md</code>, matter documents, everything.</p>
+      </div>
+      <div class="vc-card">
+        <span class="vc-card-icon">🗑️</span>
+        <h4>Recycle bin protection</h4>
+        <p>Deleted files go to the OneDrive recycle bin for 93 days before permanent removal. Only an Owner can purge. Accidental deletion is fully recoverable.</p>
+      </div>
+      <div class="vc-card">
+        <span class="vc-card-icon">📋</span>
+        <h4>Audit log</h4>
+        <p>SharePoint logs every file access, edit, download, and deletion with timestamp and user. Exportable by IT or Legal admin. Supports any compliance or LPP audit trail requirement.</p>
+      </div>
+    </div>
+
+    <div class="box box--purple r">
+      <strong>Setup note:</strong> Savannah (as Brain Admin) or IT can configure these permission tiers in SharePoint admin in under 30 minutes. The AI CoE will provide a permissions checklist as part of the 90-min setup session.
+    </div>
+  </section>
+
+</div><!-- /wrap -->
+
+<!-- ══════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════ -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">BRG Legal · Litigation Brain Architecture</div>
+    <div class="footer-meta">
+      BRG AI Program · Lilly Liang &amp; Vivid Savitri<br>
+      lilly.liang@breville.com · #bai-claude-ama
+    </div>
+  </div>
+</footer>
+
+<script>
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('on'); });
+}, { threshold: 0.08, rootMargin: '0px 0px -28px 0px' });
+document.querySelectorAll('.r').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>

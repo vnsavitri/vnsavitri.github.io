@@ -1,0 +1,2191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Own CoworkOS — Vivid Savitri-Hampton</title>
+
+<meta property="og:type"        content="website">
+<meta property="og:title"       content="Build Your Own CoworkOS">
+<meta property="og:description" content="Set up Claude with persistent memory, your own voice, and custom workflows — in one afternoon. A practical setup guide.">
+<meta property="og:url"         content="https://vnsavitri.github.io/">
+<meta property="og:image"       content="REPLACE_WITH_THUMBNAIL_IMAGE_URL">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card"       content="summary_large_image">
+<meta name="twitter:title"      content="Build Your Own CoworkOS">
+<meta name="twitter:description" content="Set up Claude with persistent memory, your own voice, and custom workflows — in one afternoon.">
+<meta name="twitter:image"      content="REPLACE_WITH_THUMBNAIL_IMAGE_URL">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+/* ── Design Tokens ── */
+:root {
+  /* Ocean palette — Coolors #03045e / #0077b6 / #00b4d8 / #90e0ef / #caf0f8 */
+  --navy:         #03045e;
+  --ocean:        #0077b6;
+  --cyan:         #00b4d8;
+  --sky:          #90e0ef;
+  --ice:          #caf0f8;
+
+  --bg:           #FFFFFF;
+  --surface:      #f4fbfd;
+  --surface-2:    #e8f5fb;
+  --text:         #0d1117;
+  --text-mid:     #3b4a5a;
+  --text-muted:   #7a909e;
+  --text-faint:   #b8ccd4;
+  --border:       #d8edf4;
+  --border-mid:   #b0d4e2;
+  --accent:       #0077b6;
+  --accent-light: rgba(0, 119, 182, 0.10);
+  --accent-mid:   rgba(0, 119, 182, 0.28);
+  --green:        #166534;
+  --green-bg:     #F0FDF4;
+  --green-border: #BBF7D0;
+
+  --font: 'Outfit', sans-serif;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --out:  cubic-bezier(0, 0, 0.2, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #eaf5fb;
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  color: var(--text);
+  zoom: 1.2;
+}
+
+.deck { position: fixed; inset: 0; }
+
+#progress-bar {
+  position: fixed; top: 0; left: 0; height: 2px;
+  background: var(--accent);
+  transition: width 0.45s var(--ease);
+  z-index: 300;
+}
+
+#counter {
+  position: fixed; bottom: 1.8rem; right: 2.2vw;
+  font-size: 0.6rem; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-faint); z-index: 300;
+}
+
+#kbd-hint {
+  position: fixed; bottom: 1.8rem; left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.58rem; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-faint); z-index: 300; pointer-events: none;
+}
+
+.nav-wrap {
+  position: fixed; top: 50%; transform: translateY(-50%);
+  z-index: 300;
+}
+.nav-wrap.is-prev { left: 1.2vw; }
+.nav-wrap.is-next { right: 1.2vw; }
+
+.nav-btn {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--bg);
+  color: var(--text-muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.18s, color 0.18s;
+}
+.nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.nav-btn:disabled { opacity: 0.2; pointer-events: none; }
+
+
+/* ═══════════════════════════════════
+   SLIDE ENGINE
+═══════════════════════════════════ */
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 6.5vh 9vw;
+  background: var(--bg);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+  transform: translateX(28px);
+}
+.slide.is-active  { opacity: 1; pointer-events: all; transform: none; }
+.slide.is-exit    { opacity: 0; transform: translateX(-28px); }
+
+.slide.is-active .r  { animation: up 0.45s var(--out) both; }
+.slide.is-active .r:nth-child(1) { animation-delay: 0.05s; }
+.slide.is-active .r:nth-child(2) { animation-delay: 0.11s; }
+.slide.is-active .r:nth-child(3) { animation-delay: 0.17s; }
+.slide.is-active .r:nth-child(4) { animation-delay: 0.24s; }
+.slide.is-active .r:nth-child(5) { animation-delay: 0.30s; }
+.slide.is-active .r:nth-child(6) { animation-delay: 0.36s; }
+
+@keyframes up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.lbl {
+  font-size: 0.6rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 1.2rem;
+}
+.lbl--phase { color: var(--accent); }
+
+.slide h2 {
+  font-size: clamp(1.5rem, 2.8vw, 2.4rem);
+  font-weight: 700; line-height: 1.15;
+  color: var(--text); letter-spacing: -0.02em;
+}
+
+
+/* ═══════════════════════════════════
+   LAYOUT: TITLE  (s-title)
+═══════════════════════════════════ */
+.s-title { background: var(--bg); }
+
+.title-eyebrow {
+  font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 2rem;
+}
+
+.title-name {
+  font-size: clamp(3rem, 7vw, 6rem);
+  font-weight: 700; letter-spacing: -0.03em; line-height: 1;
+  color: var(--text); margin-bottom: 1.5rem;
+  padding-left: 1.4rem;
+  border-left: 4px solid var(--accent);
+}
+
+.title-sub {
+  font-size: 1.05rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.5;
+  max-width: 520px; margin-bottom: 2.5rem;
+  padding-left: 1.4rem;
+}
+
+.title-badge {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--border); border-radius: 4px;
+  font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-muted);
+  margin-left: 1.4rem;
+}
+
+.title-agenda {
+  font-size: 0.75rem; font-weight: 400;
+  color: rgba(120, 140, 155, 0.65);
+  line-height: 1.45;
+  margin-top: 1.8rem;
+  padding-left: 1.4rem;
+  letter-spacing: 0.01em;
+  display: flex; flex-direction: column; gap: 0;
+}
+
+
+/* ═══════════════════════════════════
+   LAYOUT: TWO-COLUMN  (s-two-col)
+═══════════════════════════════════ */
+.s-two-col { background: var(--bg); }
+
+.two-components {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 6px;
+  overflow: hidden; margin-top: 1.8rem; margin-bottom: 1.8rem;
+}
+
+.component { padding: 2.4rem 2.2rem 2.8rem; background: var(--bg); }
+.component-featured { background: var(--surface); }
+
+.component-tag {
+  display: inline-block;
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent-mid);
+  background: var(--accent-light);
+  padding: 0.2rem 0.6rem; border-radius: 3px;
+  margin-bottom: 1.1rem;
+}
+
+.component h3 {
+  font-size: 1.25rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.7rem;
+  letter-spacing: -0.01em;
+}
+
+.component p {
+  font-size: 0.88rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.68;
+}
+
+.tools-note {
+  font-size: 0.8rem; font-weight: 500;
+  color: var(--text-mid); text-align: center;
+}
+
+
+/* ═══════════════════════════════════
+   LAYOUT: ARCHITECTURE  (s-arch)
+═══════════════════════════════════ */
+.s-arch { background: var(--bg); }
+
+.arch-diagram {
+  display: flex; flex-direction: column;
+  margin-top: 1.4rem; margin-bottom: 1.2rem;
+  width: 100%;
+}
+
+.arch-layer {
+  display: flex; align-items: center;
+  gap: 2rem; padding: 0.85rem 1.5rem;
+  border: 1.5px solid var(--border-mid);
+  border-radius: 6px;
+}
+
+.arch-layer--top   { background: var(--surface); justify-content: center; }
+.arch-layer--mid   { background: var(--navy); border-color: var(--navy); }
+.arch-layer--bottom { background: var(--bg); }
+
+.arch-name {
+  font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  white-space: nowrap; flex-shrink: 0;
+  color: var(--text-muted);
+}
+.arch-layer--top .arch-name    { color: var(--text); font-size: 0.72rem; }
+.arch-layer--mid .arch-name    { color: rgba(255,255,255,0.6); }
+
+.arch-split {
+  display: flex; align-items: stretch;
+  flex: 1; border-radius: 4px; overflow: hidden;
+  background: rgba(255,255,255,0.08);
+}
+.arch-split-item { flex: 1; padding: 0.45rem 1.1rem; }
+.arch-split-div  { width: 1px; background: rgba(255,255,255,0.15); flex-shrink: 0; }
+.arch-split-title { font-size: 0.8rem; font-weight: 700; color: #fff; margin-bottom: 0.1rem; }
+.arch-split-sub   { font-size: 0.65rem; font-weight: 400; color: rgba(255,255,255,0.5); }
+
+.arch-pills {
+  display: flex; align-items: center; gap: 0.45rem; flex: 1; flex-wrap: wrap;
+}
+.arch-pill {
+  padding: 0.32rem 0.8rem;
+  border: 1.5px solid var(--border-mid);
+  border-radius: 4px; background: var(--surface);
+  font-size: 0.67rem; font-weight: 600;
+  letter-spacing: 0.03em; color: var(--text-mid);
+  white-space: nowrap;
+}
+
+.arch-conn { height: 16px; position: relative; }
+.arch-conn::before {
+  content: ''; position: absolute;
+  left: 50%; top: 0; bottom: 0;
+  width: 1px; background: var(--border-mid);
+}
+
+.arch-note {
+  font-size: 0.78rem; font-weight: 400; color: var(--text-muted);
+  line-height: 1.6; padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+
+/* ═══════════════════════════════════
+   LAYOUT: BUILD CARDS  (s-build)
+═══════════════════════════════════ */
+.s-build { background: var(--bg); }
+
+.build-cards {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1.2rem; margin-top: 1.8rem;
+  align-items: stretch;
+}
+
+.build-card {
+  padding: 1.8rem 1.6rem 2rem;
+  border: 1.5px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: 6px; background: var(--bg);
+  display: flex; flex-direction: column; gap: 0.75rem;
+}
+
+.build-card--featured {
+  background: rgba(0, 119, 182, 0.05);
+  border: 1.5px solid var(--accent-mid);
+  border-top: 4px solid var(--accent);
+}
+
+.build-card-badge {
+  display: inline-block;
+  font-size: 0.48rem; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: #fff; background: var(--accent);
+  padding: 0.15rem 0.6rem; border-radius: 3px;
+  margin-bottom: 0.1rem;
+}
+
+.build-card-num {
+  font-size: 0.58rem; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent);
+}
+
+.build-card-heading {
+  font-size: 1rem; font-weight: 700;
+  color: var(--text); line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.build-card p {
+  font-size: 0.84rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.68;
+}
+
+
+/* ═══════════════════════════════════
+   LAYOUT: CTA  (s-cta)
+═══════════════════════════════════ */
+.s-cta { background: var(--bg); }
+
+.cta-layout {
+  display: grid; grid-template-columns: 1fr 1.1fr;
+  gap: 6vw; align-items: start;
+  margin-top: 1.4rem;
+}
+
+.cta-q {
+  font-size: clamp(1.4rem, 2.6vw, 2.2rem);
+  font-weight: 700; letter-spacing: -0.02em;
+  color: var(--text); line-height: 1.2; margin-bottom: 1rem;
+}
+
+.cta-sub {
+  font-size: 0.9rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.65; max-width: 340px;
+}
+
+.inv-list {
+  display: flex; flex-direction: column;
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+}
+
+.inv {
+  display: flex; align-items: flex-start; gap: 1.2rem;
+  padding: 1.2rem 1.4rem; background: var(--bg);
+  transition: background 0.15s;
+}
+.inv:hover { background: var(--surface); }
+
+.inv-n {
+  font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-faint); flex-shrink: 0; margin-top: 3px;
+}
+.inv-title {
+  font-size: 0.88rem; font-weight: 600;
+  color: var(--text); margin-bottom: 0.2rem;
+}
+.inv-desc {
+  font-size: 0.78rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.55;
+}
+
+
+/* ═══════════════════════════════════
+   CUSTOM: TEMPLATE SLIDES  (s-tmpl)
+═══════════════════════════════════ */
+.s-tmpl { background: var(--bg); padding-top: 5vh; padding-bottom: 4vh; }
+
+.tmpl-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.75fr;
+  gap: 2.5vw;
+  margin-top: 1.4rem;
+  align-items: start;
+}
+
+.tmpl-desc { display: flex; flex-direction: column; gap: 1rem; }
+
+.tmpl-desc-tag {
+  display: inline-block;
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent-mid);
+  background: var(--accent-light);
+  padding: 0.2rem 0.6rem; border-radius: 3px;
+  margin-bottom: 0.2rem;
+  align-self: flex-start;
+}
+
+.tmpl-desc h3 {
+  font-size: 1.15rem; font-weight: 700;
+  color: var(--text); line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.tmpl-desc p {
+  font-size: 0.83rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.68;
+}
+
+.tmpl-hint {
+  font-size: 0.74rem; font-weight: 500;
+  color: var(--text-muted);
+  padding: 0.65rem 1rem;
+  background: var(--surface);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+  line-height: 1.55;
+}
+
+.tmpl-code-wrap { position: relative; }
+
+.tmpl-pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.1rem 1.3rem;
+  font-family: 'Courier New', 'Lucida Console', monospace;
+  font-size: 0.62rem;
+  line-height: 1.65;
+  color: var(--text-mid);
+  white-space: pre;
+  overflow: auto;
+  max-height: 56vh;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 0.55rem; right: 0.55rem;
+  padding: 0.28rem 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border-mid);
+  border-radius: 4px;
+  font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font);
+  z-index: 10;
+}
+.copy-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.copy-btn.copied { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+
+/* Diff highlight for new/updated template sections */
+.tmpl-diff-add {
+  display: block;
+  background: rgba(187, 247, 208, 0.38);
+  border-left: 2px solid #16a34a;
+  margin-left: -1.3rem;
+  padding-left: calc(1.3rem - 2px);
+  margin-right: -1.3rem;
+  padding-right: 1.3rem;
+}
+.tmpl-diff-badge {
+  display: inline-block;
+  font-size: 0.46rem; font-weight: 700;
+  letter-spacing: 0.13em; text-transform: uppercase;
+  color: #166534; background: #bbf7d0;
+  border-radius: 3px; padding: 0.08rem 0.45rem;
+  margin-bottom: 0.15rem;
+  font-family: var(--font);
+  line-height: 1.6;
+}
+
+/* Trust grid */
+.s-trust { background: var(--bg); }
+
+.s-trust .sub {
+  font-size: 0.95rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.6;
+  max-width: 520px; margin: 0.4rem 0 2.2rem;
+}
+
+.trust-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 6px;
+  overflow: hidden;
+}
+.trust { padding: 1.6rem 2rem; background: var(--bg); transition: background 0.15s; }
+.trust:hover { background: var(--surface); }
+
+.trust h3 {
+  font-size: 0.88rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+.trust p {
+  font-size: 0.8rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.65;
+}
+
+.trust--featured {
+  background: rgba(0, 119, 182, 0.04);
+  border-left: 3px solid var(--accent);
+  padding-left: calc(2rem - 3px);
+}
+.trust--featured:hover { background: rgba(0, 119, 182, 0.08); }
+
+.trust-heading--featured {
+  font-size: 0.92rem; font-weight: 700;
+  color: var(--accent); margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+/* Memory Cycle */
+.mem-cycle {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+}
+.mem-step {
+  flex: 1; text-align: center;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 0.3rem;
+  padding: 0.6rem 0.3rem;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 5px;
+}
+.mem-step--hi { border-color: var(--accent); background: var(--accent-light); }
+.mem-step-ico { font-size: 1.1rem; line-height: 1; }
+.mem-step-lbl {
+  font-size: 0.55rem; font-weight: 600;
+  color: var(--text-muted); letter-spacing: 0.04em;
+  line-height: 1.3;
+}
+.mem-step--hi .mem-step-lbl { color: var(--accent); }
+.mem-arr { color: var(--border-mid); font-size: 0.85rem; flex-shrink: 0; }
+
+
+/* ═══════════════════════════════════
+   LAYOUT: TOOL PICKER  (s-tools)
+═══════════════════════════════════ */
+.s-tools { background: var(--bg); padding-top: 4.5vh; padding-bottom: 3.5vh; }
+
+.tools-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+
+.tools-eyebrow {
+  font-size: 0.55rem; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent);
+}
+
+.tools-subtitle-line {
+  font-size: 0.65rem; color: var(--text-muted);
+  margin-top: 0.2rem; margin-bottom: 0.9rem;
+}
+
+.tools-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.85rem; }
+
+.tool-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: flex; flex-direction: column;
+  overflow: hidden; position: relative;
+}
+
+.tool-col::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px; border-radius: 6px 6px 0 0;
+}
+
+.tool-col--chat::before   { background: var(--cyan); }
+.tool-col--cowork::before { background: var(--accent); }
+.tool-col--code::before   { background: #E8762C; }
+
+.tool-col-header {
+  padding: 0.8rem 0.95rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.tool-col-label {
+  font-size: 0.52rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.15rem;
+}
+
+.tool-col--chat  .tool-col-label  { color: var(--cyan); }
+.tool-col--cowork .tool-col-label { color: var(--accent); }
+.tool-col--code  .tool-col-label  { color: #E8762C; }
+
+.tool-col-name { font-size: 0.95rem; font-weight: 700; color: var(--text); line-height: 1.1; }
+.tool-col-access { font-size: 0.56rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+.tool-trigger { margin: 0.45rem 0.95rem 0.3rem; border-radius: 4px; padding: 0.38rem 0.6rem; }
+.tool-col--chat  .tool-trigger { background: rgba(0,180,216,0.08);  border-left: 3px solid var(--cyan); }
+.tool-col--cowork .tool-trigger { background: var(--accent-light);   border-left: 3px solid var(--accent); }
+.tool-col--code  .tool-trigger  { background: rgba(232,118,44,0.08); border-left: 3px solid #E8762C; }
+
+.tool-trigger-label {
+  font-size: 0.52rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.12rem;
+}
+.tool-col--chat  .tool-trigger-label  { color: var(--cyan); }
+.tool-col--cowork .tool-trigger-label { color: var(--accent); }
+.tool-col--code  .tool-trigger-label  { color: #E8762C; }
+
+.tool-trigger-text { font-size: 0.68rem; color: var(--text-mid); font-weight: 500; line-height: 1.4; }
+
+.tool-use-cases { padding: 0.38rem 0.95rem 0; flex: 1; }
+.tool-use-label {
+  font-size: 0.52rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 0.35rem;
+}
+
+.tool-uc { display: flex; align-items: flex-start; gap: 0.38rem; margin-bottom: 0.38rem; }
+.tool-uc-dot { width: 4px; height: 4px; border-radius: 50%; margin-top: 0.33em; flex-shrink: 0; }
+.tool-col--chat  .tool-uc-dot  { background: var(--cyan); }
+.tool-col--cowork .tool-uc-dot { background: var(--accent); }
+.tool-col--code  .tool-uc-dot  { background: #E8762C; }
+
+.tool-uc-main { font-size: 0.68rem; color: var(--text); font-weight: 600; line-height: 1.35; }
+.tool-uc-sub  { font-size: 0.58rem; color: var(--text-muted); line-height: 1.3; margin-top: 0.04rem; }
+
+.tool-not-for {
+  margin: 0.45rem 0.95rem 0.8rem;
+  padding: 0.38rem 0.55rem;
+  background: var(--bg); border-radius: 4px; border: 1px solid var(--border);
+}
+.tool-not-for-label {
+  font-size: 0.52rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 0.12rem;
+}
+.tool-not-for-text { font-size: 0.58rem; color: var(--text-muted); line-height: 1.4; }
+
+.tools-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 0.6rem; margin-top: 0.7rem;
+  border-top: 1px solid var(--border);
+  gap: 1rem; flex-wrap: wrap;
+}
+.tools-footer-note { font-size: 0.6rem; color: var(--text-muted); line-height: 1.5; }
+.tools-footer-note strong { color: var(--accent); }
+.tools-legend { display: flex; gap: 1rem; flex-shrink: 0; }
+.tools-legend-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.58rem; color: var(--text-muted); }
+.tools-legend-dot  { width: 6px; height: 6px; border-radius: 50%; }
+
+
+/* ═══════════════════════════════════
+   LAYOUT: SECTION PHASE BREAK (s-phase)
+   Ocean gradient — ice → sky blue
+═══════════════════════════════════ */
+.s-phase {
+  background: linear-gradient(145deg, #caf0f8 0%, #90e0ef 100%);
+  align-items: center;
+  justify-content: center;
+}
+
+.s-phase h2 {
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-weight: 700; color: #03045e;
+  letter-spacing: -0.03em; line-height: 1.05;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.phase-eyebrow {
+  font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: #0077b6; margin-bottom: 1.1rem;
+  text-align: center;
+}
+
+.phase-sub {
+  font-size: 0.9rem; font-weight: 400;
+  color: #024d7a;
+  line-height: 1.65; text-align: center;
+  margin-bottom: 2.4rem;
+  max-width: 540px;
+}
+
+.phase-flow {
+  display: flex; align-items: stretch;
+  gap: 0; max-width: 840px; width: 100%;
+}
+
+.phase-step {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; text-align: center;
+  gap: 0.55rem; padding: 1.6rem 1.1rem 1.8rem;
+  background: rgba(255,255,255,0.72);
+  border: 1.5px solid rgba(0, 180, 216, 0.3);
+  border-radius: 8px;
+}
+
+.phase-step-ico { font-size: 2.4rem; line-height: 1; }
+.phase-step-num { font-size: 0.5rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: #0077b6; }
+.phase-step-title { font-size: 0.88rem; font-weight: 700; color: #03045e; line-height: 1.25; }
+.phase-step-sub   { font-size: 0.68rem; color: #024d7a; line-height: 1.5; }
+.phase-arr { color: #90e0ef; font-size: 1.3rem; align-self: center; padding: 0 1rem; flex-shrink: 0; }
+
+
+/* ═══════════════════════════════════
+   LAYOUT: FOLDER REVEAL  (s-folder-reveal)
+═══════════════════════════════════ */
+.s-folder-reveal { background: linear-gradient(145deg, #caf0f8 0%, #90e0ef 100%); }
+
+.s-folder-reveal .phase-eyebrow { text-align: left; margin-bottom: 1.2rem; }
+
+.s-folder-reveal h2 {
+  font-size: clamp(1.7rem, 3.2vw, 2.6rem);
+  font-weight: 700; color: #03045e;
+  letter-spacing: -0.025em; line-height: 1.1;
+  text-align: left;
+}
+
+.folder-reveal-layout {
+  display: grid; grid-template-columns: 1fr 1.05fr;
+  gap: 4.5vw; align-items: start;
+  margin-top: 1.6rem;
+}
+
+.folder-reveal-desc { display: flex; flex-direction: column; gap: 1.1rem; }
+.folder-reveal-desc p { font-size: 0.88rem; color: #024d7a; line-height: 1.7; }
+
+.folder-reveal-hint {
+  font-size: 0.76rem; color: #0077b6; font-weight: 500;
+  padding: 0.65rem 0.95rem;
+  background: rgba(255,255,255,0.6);
+  border-left: 3px solid #0077b6;
+  border-radius: 0 4px 4px 0;
+  line-height: 1.55;
+}
+
+.folder-card {
+  background: rgba(255,255,255,0.92);
+  border: 1.5px solid rgba(0, 180, 216, 0.3);
+  border-radius: 10px; padding: 1.4rem 1.6rem;
+  font-family: 'Courier New', 'Lucida Console', monospace;
+  font-size: 0.7rem; line-height: 1.85;
+  color: #03045e;
+  box-shadow: 0 6px 24px rgba(3, 4, 94, 0.08);
+}
+
+.folder-card .folder-root { font-weight: 700; color: #03045e; font-size: 0.78rem; margin-bottom: 0.15rem; }
+.folder-dir  { color: #0077b6; font-weight: 600; }
+.folder-file { color: #00b4d8; }
+.folder-muted { color: #90e0ef; font-style: italic; font-size: 0.62rem; }
+.folder-ws-block {
+  margin-top: 0.5rem; padding-top: 0.5rem;
+  border-top: 1px dashed rgba(0, 180, 216, 0.4);
+}
+
+
+/* ── Glossary Slide ── */
+.s-glossary {
+  background: linear-gradient(165deg, #f0f9fc 0%, #e4f4f9 100%);
+  padding-top: 4.5vh; padding-bottom: 3.5vh;
+}
+
+.s-glossary h2 {
+  font-size: clamp(1.5rem, 2.8vw, 2.4rem);
+  font-weight: 700; color: #03045e;
+  letter-spacing: -0.02em; line-height: 1.15;
+}
+
+.glossary-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; margin-top: 1.3rem;
+  background: rgba(0, 180, 216, 0.2);
+  border: 1.5px solid rgba(0, 180, 216, 0.25);
+  border-radius: 8px; overflow: hidden;
+}
+
+.glossary-item {
+  display: grid; grid-template-columns: 9rem 1fr;
+  gap: 0.75rem; align-items: baseline;
+  padding: 0.72rem 1.1rem;
+  background: rgba(255,255,255,0.65);
+  transition: background 0.15s;
+}
+.glossary-item:hover { background: rgba(255,255,255,0.88); }
+
+.glossary-item--full {
+  grid-column: 1 / -1;
+  display: flex; flex-direction: column;
+  gap: 0.45rem;
+  background: rgba(0, 119, 182, 0.06);
+  border-bottom: 1.5px solid rgba(0, 180, 216, 0.25) !important;
+}
+
+.g-term { font-size: 0.68rem; font-weight: 700; color: var(--accent); letter-spacing: 0.01em; white-space: nowrap; }
+.g-def  { font-size: 0.67rem; color: var(--text-mid); line-height: 1.55; }
+
+.g-note {
+  font-size: 0.62rem; font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-light);
+  border-left: 3px solid var(--accent);
+  padding: 0.28rem 0.65rem;
+  border-radius: 0 3px 3px 0;
+  display: inline-block; align-self: flex-start;
+  line-height: 1.45;
+}
+
+
+/* ═══════════════════════════════════
+   LAYOUT: MODEL PICKER  (s-models)
+   Four Claude models, ocean tiers
+═══════════════════════════════════ */
+.s-models {
+  background: linear-gradient(165deg, #f0f9fc 0%, #e4f4f9 100%);
+  padding-top: 4.5vh; padding-bottom: 3.5vh;
+}
+
+.s-models h2 {
+  font-size: clamp(1.5rem, 2.8vw, 2.4rem);
+  font-weight: 700; color: #03045e;
+  letter-spacing: -0.02em; line-height: 1.15;
+  margin-bottom: 0;
+}
+
+.models-subtitle-line {
+  font-size: 0.68rem; color: #0077b6;
+  margin-top: 0.25rem; margin-bottom: 1rem;
+}
+
+.models-columns {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.8rem;
+}
+
+.model-col {
+  background: rgba(255,255,255,0.72);
+  border: 1.5px solid rgba(0,180,216,0.3);
+  border-radius: 7px;
+  display: flex; flex-direction: column;
+  overflow: hidden; position: relative;
+}
+
+.model-col::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+}
+
+.model-col--haiku::before  { background: #00b4d8; }
+.model-col--sonnet::before { background: #0077b6; }
+.model-col--opus::before   { background: #024d7a; }
+.model-col--fable::before  { background: #03045e; }
+
+.model-col--sonnet {
+  border-color: #0077b6;
+  box-shadow: 0 6px 22px rgba(3,4,94,0.12);
+}
+
+.model-col-header {
+  padding: 0.85rem 0.95rem 0.65rem;
+  border-bottom: 1px solid rgba(0,180,216,0.28);
+}
+
+.model-tier {
+  font-size: 0.5rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+
+.model-col--haiku  .model-tier { color: #00b4d8; }
+.model-col--sonnet .model-tier { color: #0077b6; }
+.model-col--opus   .model-tier { color: #024d7a; }
+.model-col--fable  .model-tier { color: #03045e; }
+
+.model-name {
+  font-size: 0.98rem; font-weight: 700;
+  color: #03045e; line-height: 1.1;
+}
+
+.model-default-flag {
+  display: inline-block; margin-top: 0.3rem;
+  font-size: 0.46rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: #fff; background: #0077b6;
+  padding: 0.14rem 0.5rem; border-radius: 3px;
+}
+
+.model-when {
+  margin: 0.5rem 0.95rem 0.35rem;
+  padding: 0.4rem 0.6rem; border-radius: 4px;
+  background: rgba(0,119,182,0.08);
+  border-left: 3px solid #0077b6;
+}
+.model-col--haiku .model-when  { border-left-color: #00b4d8; background: rgba(0,180,216,0.1); }
+.model-col--opus  .model-when  { border-left-color: #024d7a; }
+.model-col--fable .model-when  { border-left-color: #03045e; }
+
+.model-when-label {
+  font-size: 0.5rem; font-weight: 700;
+  letter-spacing: 0.13em; text-transform: uppercase;
+  color: #0077b6; margin-bottom: 0.12rem;
+}
+.model-when-text {
+  font-size: 0.66rem; color: #03045e; font-weight: 600; line-height: 1.4;
+}
+
+.model-good { padding: 0.35rem 0.95rem 0; flex: 1; }
+
+.model-good-label {
+  font-size: 0.5rem; font-weight: 700;
+  letter-spacing: 0.13em; text-transform: uppercase;
+  color: #00b4d8; margin-bottom: 0.3rem;
+}
+
+.model-good-item {
+  display: flex; align-items: flex-start;
+  gap: 0.35rem; margin-bottom: 0.3rem;
+  font-size: 0.63rem; color: #024d7a; line-height: 1.35;
+}
+.model-good-item::before {
+  content: ''; width: 4px; height: 4px; border-radius: 50%;
+  background: #0077b6; margin-top: 0.4em; flex-shrink: 0;
+}
+
+.model-cost {
+  margin: 0.4rem 0.95rem 0.85rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed rgba(0,180,216,0.4);
+  font-size: 0.56rem; color: #0077b6; line-height: 1.4;
+}
+.model-cost strong { color: #03045e; }
+
+.models-footer {
+  font-size: 0.62rem; color: #024d7a; line-height: 1.5;
+  padding-top: 0.65rem; margin-top: 0.75rem;
+  border-top: 1px solid rgba(0,180,216,0.4);
+}
+.models-footer strong { color: #03045e; }
+
+
+/* ── Closing Slide — deep navy ── */
+.s-closing {
+  background: var(--navy);
+  justify-content: center; align-items: center;
+}
+.closing-wrap {
+  text-align: center;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 1.2rem;
+}
+.closing-h {
+  font-size: clamp(2.6rem, 5vw, 4.2rem);
+  font-weight: 700; color: #fff;
+  line-height: 1.1; letter-spacing: -0.02em;
+}
+.closing-contact {
+  font-size: 0.95rem; font-weight: 400;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.6;
+}
+.closing-contact strong { color: #fff; font-weight: 600; }
+.closing-links {
+  display: flex; gap: 0.65rem; flex-wrap: wrap; justify-content: center;
+}
+.closing-link {
+  display: inline-flex; padding: 0.42rem 1.1rem;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  font-size: 0.78rem; font-weight: 500;
+  color: rgba(255,255,255,0.88);
+  font-family: var(--font);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.closing-link:hover { background: rgba(255,255,255,0.18); }
+.closing-note {
+  font-size: 0.8rem; color: rgba(255,255,255,0.42);
+  max-width: 380px; line-height: 1.65;
+}
+
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 1 — TITLE
+  ══════════════════════════════════════════ -->
+  <section class="slide s-title">
+    <div class="r title-eyebrow">Vivid Savitri-Hampton &nbsp;·&nbsp; July 2026</div>
+    <h1 class="r title-name">Build Your Own<br>CoworkOS</h1>
+    <p class="r title-sub">Give Claude persistent memory, your voice, and custom workflows — in one afternoon.</p>
+    <div class="r title-badge">Claude Cowork &nbsp;·&nbsp; Desktop App</div>
+    <div class="r title-agenda">
+      <span>What CoworkOS is and why it matters</span>
+      <span>The three core files that power everything</span>
+      <span>Starter templates — copy and paste to get going</span>
+      <span>Prompts to bootstrap your setup and workstations</span>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 2 — CLAUDE TOOLS OVERVIEW
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tools">
+
+    <div class="r tools-meta">
+      <span class="tools-eyebrow">AI Enablement</span>
+    </div>
+    <h2 class="r">Claude Tools — When to Use What</h2>
+    <p class="r tools-subtitle-line">A quick reference for anyone getting started with Claude</p>
+
+    <div class="r tools-columns">
+
+      <div class="tool-col tool-col--chat">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Browser &nbsp;/&nbsp; Mobile &nbsp;/&nbsp; Desktop</div>
+          <div class="tool-col-name">Claude Chat</div>
+          <div class="tool-col-access">claude.ai &nbsp;·&nbsp; No setup required</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Reach for it when</div>
+          <div class="tool-trigger-text">You need a smart thinking partner — right now, from anywhere.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">Good for</div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Quick research &amp; summarisation</div>
+            <div class="tool-uc-sub">Paste a doc, ask a question, get a clear answer fast</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Drafting &amp; editing on the fly</div>
+            <div class="tool-uc-sub">Emails, messages, short reports, meeting summaries</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Brainstorming &amp; thinking out loud</div>
+            <div class="tool-uc-sub">Workshop prep, idea generation, problem framing</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">One-off file analysis</div>
+            <div class="tool-uc-sub">Upload a PDF, image, or CSV and ask questions about it</div>
+          </div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">Not ideal for</div>
+          <div class="tool-not-for-text">Accessing files on your computer, automating recurring tasks, or work that needs memory across sessions</div>
+        </div>
+      </div>
+
+      <div class="tool-col tool-col--cowork">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Desktop App (Mac &nbsp;/&nbsp; Windows)</div>
+          <div class="tool-col-name">Claude Cowork</div>
+          <div class="tool-col-access">Installed locally &nbsp;·&nbsp; Connects your tools</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Reach for it when</div>
+          <div class="tool-trigger-text">You want AI to actually do work inside your tools and files — not just talk about it.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">Good for</div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Multi-step workflows across tools</div>
+            <div class="tool-uc-sub">Read messages, draft replies, update docs — in one go</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Working directly with local files</div>
+            <div class="tool-uc-sub">Build decks, spreadsheets, Word docs from your own folders</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Scheduled &amp; repeating tasks</div>
+            <div class="tool-uc-sub">Morning digest, weekly reports — set once and forget</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Persistent memory &amp; workstations</div>
+            <div class="tool-uc-sub">Claude remembers your context, tone, and rules across sessions</div>
+          </div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">Not ideal for</div>
+          <div class="tool-not-for-text">Writing or modifying code in a codebase, running tests, or engineering workflows needing terminal access</div>
+        </div>
+      </div>
+
+      <div class="tool-col tool-col--code">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Terminal &nbsp;/&nbsp; Command Line (CLI)</div>
+          <div class="tool-col-name">Claude Code</div>
+          <div class="tool-col-access">Developer tool &nbsp;·&nbsp; Requires setup</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Reach for it when</div>
+          <div class="tool-trigger-text">You're building, fixing, or shipping software — AI works alongside your actual codebase.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">Good for</div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Writing &amp; debugging code</div>
+            <div class="tool-uc-sub">Features, bug fixes, refactors across real project files</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Scripting &amp; automation engineering</div>
+            <div class="tool-uc-sub">Python scripts, data pipelines, CLI tools, APIs</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Code review &amp; testing</div>
+            <div class="tool-uc-sub">Run tests, review PRs, catch issues, explain unfamiliar code</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Agent &amp; MCP development</div>
+            <div class="tool-uc-sub">Build custom AI tools, integrations, and Cowork plugins</div>
+          </div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">Not ideal for</div>
+          <div class="tool-not-for-text">Non-technical users, everyday comms tasks, or anything that doesn't involve writing or running actual code</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="r tools-footer">
+      <div class="tools-footer-note">
+        <strong>All three tools run on Claude.</strong> &nbsp;Start with Chat if you're unsure — it's the easiest on-ramp. This deck is about Cowork.
+      </div>
+      <div class="tools-legend">
+        <div class="tools-legend-item"><div class="tools-legend-dot" style="background: #00b4d8;"></div>Claude Chat</div>
+        <div class="tools-legend-item"><div class="tools-legend-dot" style="background: #0077b6;"></div>Cowork</div>
+        <div class="tools-legend-item"><div class="tools-legend-dot" style="background: #E8762C;"></div>Claude Code</div>
+      </div>
+    </div>
+
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 3 — BEFORE / AFTER
+  ══════════════════════════════════════════ -->
+  <section class="slide s-two-col">
+    <div class="r lbl">The Problem</div>
+    <h2 class="r">Claude on its own forgets you. CoworkOS fixes that.</h2>
+    <div class="r two-components">
+
+      <div class="component">
+        <div class="component-tag">Without Cowork OS</div>
+        <h3>A fresh start every time</h3>
+        <p>Every session begins from zero. Claude doesn't know your name, your role, your preferences, or what you were working on yesterday. You spend the first few minutes re-explaining context before any real work happens.</p>
+        <p style="margin-top: 0.8rem; font-size: 0.8rem; color: var(--text-muted);">Generic tone. No memory. No shortcuts. Repeat yourself constantly.</p>
+      </div>
+
+      <div class="component component-featured">
+        <div class="component-tag">With Cowork OS</div>
+        <h3>Claude already knows you</h3>
+        <p>Claude reads your constitution and memory files at the start of every session. It knows your role, your active projects, your preferences, and how you like to write. You jump straight into the work.</p>
+        <p style="margin-top: 0.8rem; font-size: 0.8rem; color: var(--text-mid);">Your voice. Your context. Routes the right tasks to the right workstation automatically.</p>
+      </div>
+
+    </div>
+    <p class="r tools-note">CoworkOS is just a folder on your computer. No external services, no lock-in.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 4 — ARCHITECTURE
+  ══════════════════════════════════════════ -->
+  <section class="slide s-arch">
+    <div class="r lbl">How It Works</div>
+    <h2 class="r">Three layers that power CoworkOS. One folder on your computer.</h2>
+    <div class="r arch-diagram">
+
+      <div class="arch-layer arch-layer--top">
+        <span class="arch-name">You &nbsp;—&nbsp; prompts, questions, and tasks</span>
+      </div>
+
+      <div class="arch-conn"></div>
+
+      <div class="arch-layer arch-layer--mid">
+        <span class="arch-name">CoworkOS</span>
+        <div class="arch-split">
+          <div class="arch-split-item">
+            <div class="arch-split-title">CLAUDE.md + MEMORY.md</div>
+            <div class="arch-split-sub">Global rules, preferences, routing map, and accumulated facts</div>
+          </div>
+          <div class="arch-split-div"></div>
+          <div class="arch-split-item">
+            <div class="arch-split-title">voice-principles.md + Skills</div>
+            <div class="arch-split-sub">Your writing voice and installed capabilities</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-conn"></div>
+
+      <div class="arch-layer arch-layer--bottom">
+        <span class="arch-name">Workstations</span>
+        <div class="arch-pills">
+          <span class="arch-pill">Email Writer</span>
+          <span class="arch-pill">Slide Deck</span>
+          <span class="arch-pill">Research HQ</span>
+          <span class="arch-pill">Content Studio</span>
+          <span class="arch-pill">Project Tracker</span>
+          <span class="arch-pill">+ yours</span>
+        </div>
+      </div>
+
+    </div>
+    <p class="r arch-note">Think of each workstation as a sub-agent dedicated to a specific task. It has its own folder with a local CLAUDE.md, MEMORY.md, and Resources subfolder. The global files apply everywhere; the workstation files layer on top.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 5 — THREE CORE FILES
+  ══════════════════════════════════════════ -->
+  <section class="slide s-build">
+    <div class="r lbl">The Core Files</div>
+    <h2 class="r">Three files power the whole system</h2>
+    <div class="r build-cards">
+
+      <div class="build-card">
+        <div class="build-card-num">File 01</div>
+        <div class="build-card-heading">CLAUDE.md</div>
+        <p>The global constitution. Tells Claude your preferences, rules, folder structure, and routing map. Every session starts by reading this.</p>
+      </div>
+
+      <div class="build-card">
+        <div class="build-card-num">File 02</div>
+        <div class="build-card-heading">MEMORY.md</div>
+        <p>The persistent brain. Claude reads it at session start and writes to it when you say "remember this." It builds up your context over time.</p>
+      </div>
+
+      <div class="build-card">
+        <div class="build-card-num">File 03</div>
+        <div class="build-card-heading">voice-principles.md</div>
+        <p>Your writing voice. Tone, sentence style, words to avoid, signature phrases. Claude reads this before writing any content on your behalf.</p>
+      </div>
+
+    </div>
+    <div class="r" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem;">
+      These three files live in your CoworkOS root folder alongside a <code style="font-family: monospace; background: var(--surface); padding: 0.1em 0.4em; border-radius: 3px;">00_Resources/</code> folder. That's the whole system.
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 6 — SECTION BREAK: PHASE 1
+  ══════════════════════════════════════════ -->
+  <section class="slide s-phase">
+    <div class="r phase-eyebrow">Setup Guide &nbsp;·&nbsp; Three Phases</div>
+    <h2 class="r">Let's get started.</h2>
+    <p class="r phase-sub">You're one afternoon away from a Claude that knows who you are, how you work, and what you're trying to get done.</p>
+    <div class="r phase-flow">
+
+      <div class="phase-step">
+        <div class="phase-step-ico">📁</div>
+        <div class="phase-step-num">Phase 01</div>
+        <div class="phase-step-title">Create your home base</div>
+        <div class="phase-step-sub">Make an empty CoworkOS folder on your computer and run the setup prompt — Claude builds the whole structure for you.</div>
+      </div>
+
+      <div class="phase-arr">→</div>
+
+      <div class="phase-step">
+        <div class="phase-step-ico">🏗️</div>
+        <div class="phase-step-num">Phase 02</div>
+        <div class="phase-step-title">Build your workstations</div>
+        <div class="phase-step-sub">Add a workstation for each recurring task type — emails, decks, research, writing. Each one gets its own rules and memory.</div>
+      </div>
+
+      <div class="phase-arr">→</div>
+
+      <div class="phase-step">
+        <div class="phase-step-ico">🔄</div>
+        <div class="phase-step-num">Phase 03</div>
+        <div class="phase-step-title">Keep it compounding</div>
+        <div class="phase-step-sub">Save insights at the end of every session. Claude gets sharper over time — not because it learned, but because you built the system.</div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 7 — FIRST-TIME SETUP PROMPT
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tmpl">
+    <div class="r lbl lbl--phase">Phase 1 | Getting Started &nbsp;·&nbsp; Prompt Template</div>
+    <h2 class="r">Paste this to build your CoworkOS from scratch</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">First-time setup</div>
+        <h3>One prompt. Five minutes. Done.</h3>
+        <p>Open Cowork with your CoworkOS folder selected, paste this prompt, and let it run. Claude will create all three core files, the folder structure, and then ask you a few questions to personalise everything.</p>
+        <div class="tmpl-hint">
+          <strong>Before you paste:</strong> create an empty folder called CoworkOS somewhere on your computer (Documents is fine), then select it in the Cowork file picker.
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-setup">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-setup">I'm setting up CoworkOS for the first time. Please
+create the following in my CoworkOS root folder:
+
+1. CLAUDE.md — with these sections:
+   Memory System (include memory routing rules:
+   root vs workstation MEMORY.md, and that
+   behavioral rules go to CLAUDE.md not MEMORY.md),
+   Preferences, Rules, Folder Structure, Routing Map
+
+2. MEMORY.md — with these sections:
+   About Me, Active Projects, Key Contacts,
+   Key Decisions, Useful Context
+
+3. 00_Resources/voice-principles.md — with these
+   sections: Tone, Sentence Style, Words to Avoid,
+   Words I Use, Formatting
+
+4. 00_Skills/        (empty folder)
+5. 00_Scheduled/     (empty folder)
+
+Use starter templates with [bracketed placeholders]
+where I need to customise. After creating the files,
+ask me 3 questions to personalise my CLAUDE.md for
+my role and working style.</pre>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 8 — FOLDER REVEAL
+  ══════════════════════════════════════════ -->
+  <section class="slide s-phase s-folder-reveal">
+
+    <div class="r phase-eyebrow">After Running the Setup Prompt</div>
+    <h2 class="r">Let's see what you just created.</h2>
+
+    <div class="r folder-reveal-layout">
+
+      <div class="folder-reveal-desc">
+        <p>That one prompt created your entire CoworkOS skeleton — three files, two empty folders, and a structure Claude will use on every future session.</p>
+        <p>The next three slides walk through each file with a copy-ready template. Customise the bits in <strong style="color: #0077b6;">[brackets]</strong> and you're good to go.</p>
+        <div class="folder-reveal-hint">
+          Once you've filled in the templates, add your first workstation. That's when things start to feel like a real operating system.
+        </div>
+      </div>
+
+      <div class="folder-card">
+        <div class="folder-root">📁 CoworkOS/</div>
+        <div>├── 📄 <span class="folder-file">CLAUDE.md</span> &nbsp;<span class="folder-muted">— global rules &amp; routing</span></div>
+        <div>├── 📄 <span class="folder-file">MEMORY.md</span> &nbsp;<span class="folder-muted">— persistent brain</span></div>
+        <div>├── 📁 <span class="folder-dir">00_Resources/</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;└── 📄 <span class="folder-file">voice-principles.md</span></div>
+        <div>├── 📁 <span class="folder-dir">00_Skills/</span> &nbsp;<span class="folder-muted">empty for now</span></div>
+        <div>└── 📁 <span class="folder-dir">00_Scheduled/</span> &nbsp;<span class="folder-muted">empty for now</span></div>
+        <div class="folder-ws-block">
+          <div style="color: #90e0ef; font-size: 0.62rem; font-style: italic; margin-bottom: 0.3rem;">After adding a workstation:</div>
+          <div>└── 📁 <span class="folder-dir">Email Writer/</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;├── 📄 <span class="folder-file">CLAUDE.md</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;├── 📄 <span class="folder-file">MEMORY.md</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;└── 📁 <span class="folder-dir">Email Writer Resources/</span></div>
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 9 — CLAUDE.md TEMPLATE
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tmpl">
+    <div class="r lbl">File 01 &nbsp;·&nbsp; Starter Template</div>
+    <h2 class="r">CLAUDE.md — the global constitution</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">Copy &amp; customise</div>
+        <h3>Sets the rules for every session</h3>
+        <p>This file is Claude's operating instructions. It loads automatically and governs tone, behaviour, folder structure, and which workstation to use for which task.</p>
+        <div class="tmpl-hint">
+          Replace anything in <strong>[brackets]</strong> with your own preferences. The routing map grows as you add workstations.
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-claude">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-claude"># CLAUDE.md
+
+## Memory System
+Read MEMORY.md at the start of every session.
+Write to MEMORY.md when I say "remember this."
+
+<span class="tmpl-diff-add"><span class="tmpl-diff-badge">+ new</span>
+Memory routing — which MEMORY.md?
+- Cross-cutting (role, people, preferences, projects)
+  → root MEMORY.md
+- Workstation-specific (domain contacts, decisions,
+  output paths, tool configs) → [Workstation]/MEMORY.md
+- Behavioral rules (always/never/before doing X)
+  → CLAUDE.md (root or workstation), not MEMORY.md
+Never duplicate the same fact across both files.
+</span>
+## Preferences
+- Tone: [conversational / professional / casual]
+- Language: [Australian / British / American English]
+- Length: concise by default; expand only when I ask
+- Format: prose first, bullets only when content is
+  genuinely list-like
+
+## Rules
+- Ask clarifying questions before complex tasks
+- Never guess — if unsure, say so
+- Read voice-principles.md before writing any content
+  on my behalf
+
+## Folder Structure
+| Folder              | What lives here                |
+| 00_Resources/       | Reference files (voice, etc.)  |
+| 00_Skills/          | Installed skill archives       |
+| 00_Scheduled/       | Scheduled task outputs         |
+| [Workstation]/      | Workstation + Outputs/ folder  |
+
+## Routing Map
+| Workstation         | Route here when I...           |
+| [Workstation Name]  | [Brief trigger description]    |</pre>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 10 — MEMORY.md TEMPLATE
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tmpl">
+    <div class="r lbl">File 02 &nbsp;·&nbsp; Starter Template</div>
+    <h2 class="r">MEMORY.md — the persistent brain</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">Copy &amp; customise</div>
+        <h3>Claude reads and writes this automatically</h3>
+        <p>Fill in the About Me section yourself — the rest Claude populates over time as you work together. Don't over-engineer this on day one; let it grow.</p>
+        <div class="tmpl-hint">
+          The <strong>Key Decisions</strong> section is intentionally left empty. Claude adds to it whenever it makes a non-obvious choice — handy for future sessions.
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-memory">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-memory"># MEMORY.md
+
+## About Me
+- Name: [Your name]
+- Role: [Job title, team, company]
+- Key priorities: [Your top 2–3 focus areas]
+- Working style: [e.g. async-first, direct comms]
+
+## Active Projects
+| Project  | Status | Notes               |
+| [Name]   | Active | [One sentence]      |
+
+## Key Contacts
+| Name     | Role       | Why they matter    |
+| [Name]   | [Role]     | [Context]          |
+
+## Key Decisions
+(Claude populates this over time as we work —
+don't edit manually)
+
+## Useful Context
+(Claude adds facts here when you say
+"remember this")</pre>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 11 — MEMORY ROUTING
+  ══════════════════════════════════════════ -->
+  <section class="slide s-trust">
+    <div class="r lbl">File 02 &nbsp;·&nbsp; Memory Routing</div>
+    <h2 class="r">Two places memories live. One simple rule.</h2>
+    <p class="r sub">Every workstation has its own MEMORY.md. Knowing which one to write to keeps things clean — and stops your root file from bloating.</p>
+    <div class="r trust-grid">
+
+      <div class="trust">
+        <h3>Root MEMORY.md</h3>
+        <p>Cross-cutting facts that apply everywhere — your role, key people, active projects, toolchain, personal preferences. If it would be useful in three different workstations, it lives here.</p>
+      </div>
+
+      <div class="trust trust--featured">
+        <h3 class="trust-heading--featured">[Workstation]/MEMORY.md</h3>
+        <p>Domain-specific facts only relevant inside that workstation — contacts for that domain, build decisions, output paths, tool configs. If it only matters when you're doing that specific type of work, it goes here.</p>
+      </div>
+
+      <div class="trust">
+        <h3>CLAUDE.md (root or workstation)</h3>
+        <p>Behavioral rules — anything prescriptive: "always read voice-principles.md," "never start with a subject line," "before drafting, check for an existing thread." Rules belong in CLAUDE.md, not MEMORY.md.</p>
+      </div>
+
+      <div class="trust">
+        <h3>The golden rule</h3>
+        <p>When in doubt, write to root MEMORY.md. Never duplicate the same fact across both files. If a memory could plausibly live in either place, root wins — it's always in scope regardless of which workstation you're in.</p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 12 — VOICE-PRINCIPLES.md TEMPLATE
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tmpl">
+    <div class="r lbl">File 03 &nbsp;·&nbsp; Starter Template</div>
+    <h2 class="r">voice-principles.md — your writing voice</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">Copy &amp; customise</div>
+        <h3>Makes Claude sound like you, not a press release</h3>
+        <p>Paste 5–8 of your own emails or messages and ask Claude to extract patterns from them. It'll fill in the signature phrases and tone sections automatically.</p>
+        <div class="tmpl-hint">
+          The more specific you are about what to <em>avoid</em>, the better. "No em dashes" and "never say leverage" are more useful than "be casual."
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-voice">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-voice"># Voice Principles
+
+## Tone
+- Sound like: [smart peer / trusted advisor / warm colleague]
+- More formal with: [senior leaders / new contacts]
+- Avoid sounding: [corporate / over-hedged / AI-flavoured]
+
+## Sentence Style
+- Vary length — mix short punchy beats with longer ones
+- Use contractions: [yes / no]
+- Front-load context, then the ask
+
+## Words to Avoid
+- Never: "leverage," "synergise," "deep dive," "circle back"
+- No em dashes (use commas or parentheses instead)
+- No "I hope this email finds you well" openers
+- No stacked adjectives ("incredibly valuable", "seamless")
+
+## Words I Use
+- [Your signature phrases — add them here]
+- e.g. "heaps", "nerd out", "level up", "if helpful"
+
+## Formatting
+- Short paragraphs (1–2 sentences max)
+- Bold sparingly — key terms and names only
+- [Other formatting preferences]</pre>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 13 — SECTION BREAK: PHASE 2
+  ══════════════════════════════════════════ -->
+  <section class="slide s-phase">
+    <div class="r phase-eyebrow">Phase 02 &nbsp;·&nbsp; Workstations</div>
+    <h2 class="r">Time to build your first workstation.</h2>
+    <p class="r phase-sub">A workstation is Claude with a specific job — its own rules, its own memory, its own lane. Pick the one recurring task that costs you the most time every week. That's where you start.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 14 — WORKSTATION ANATOMY
+  ══════════════════════════════════════════ -->
+  <section class="slide s-trust">
+    <div class="r lbl lbl--phase">Phase 2 | Workstations</div>
+    <h2 class="r">Every workstation has the same four parts</h2>
+    <p class="r sub">A workstation is just a folder with three files. The four sections inside its CLAUDE.md define how Claude behaves when it's routing work there.</p>
+    <div class="r trust-grid">
+
+      <div class="trust trust--featured">
+        <h3 class="trust-heading--featured">Identity</h3>
+        <p>One paragraph. Who Claude is in this workstation, what kinds of tasks route here, and — just as importantly — what doesn't belong here and should go elsewhere.</p>
+      </div>
+
+      <div class="trust">
+        <h3>Resources</h3>
+        <p>A table mapping reference files to "read when" conditions. Claude only loads these files when the trigger is met, keeping context efficient.</p>
+      </div>
+
+      <div class="trust">
+        <h3>Workflow</h3>
+        <p>Numbered steps for the primary task in this workstation. Keep it simple — 5–7 steps. You'll refine it over time as you see what Claude gets right and wrong.</p>
+      </div>
+
+      <div class="trust">
+        <h3>Editorial Rules</h3>
+        <p>Always opens with "Follow voice-principles.md in 00_Resources." Then adds domain-specific rules on top — tone calibration, vocabulary, output formats for this specific domain.</p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 15 — WORKSTATION CREATION PROMPT
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tmpl">
+    <div class="r lbl lbl--phase">Phase 2 | Workstations &nbsp;·&nbsp; Prompt Template</div>
+    <h2 class="r">Paste this to create a new workstation</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">New workstation</div>
+        <h3>30 seconds to a new capability</h3>
+        <p>Pick one recurring task type — emails, slide decks, research, writing. Fill in the two brackets, paste, and Claude scaffolds the whole workstation.</p>
+        <div class="tmpl-hint">
+          Good workstation triggers are specific: "draft, edit, or review any email" rather than "email stuff." The routing map entry is what Claude matches against your request.
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-workstation">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-workstation">Create a new workstation called "[Workstation Name]".
+
+Route here when I: [describe the task type — e.g.
+"draft, edit, or review any email I need to send"]
+
+Create these three items inside the workstation folder:
+
+1. [Name]/CLAUDE.md with sections:
+   - Identity (one paragraph: what routes here,
+     what doesn't)
+   - Resources (empty table: Resource | Read when...)
+   - Workflow (numbered steps for the main task)
+   - Editorial Rules (start with voice-principles.md
+     reference, then add domain-specific rules)
+
+2. [Name]/MEMORY.md with:
+   - Contacts section
+   - Key Decisions section
+
+3. [Name]/[Name] Resources/  (empty folder)
+
+After creating the files, add a new row to the
+Routing Map in root CLAUDE.md.</pre>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 16 — ARCHITECTURE RECAP
+  ══════════════════════════════════════════ -->
+  <section class="slide s-arch">
+    <div class="r lbl">A Quick Recap</div>
+    <h2 class="r">One folder to rule them all. Three layers that power CoworkOS.</h2>
+    <div class="r arch-diagram">
+
+      <div class="arch-layer arch-layer--top">
+        <span class="arch-name">You &nbsp;—&nbsp; prompts, questions, and tasks</span>
+      </div>
+
+      <div class="arch-conn"></div>
+
+      <div class="arch-layer arch-layer--mid">
+        <span class="arch-name">CoworkOS</span>
+        <div class="arch-split">
+          <div class="arch-split-item">
+            <div class="arch-split-title">CLAUDE.md + MEMORY.md</div>
+            <div class="arch-split-sub">Global rules, preferences, routing map, and accumulated facts</div>
+          </div>
+          <div class="arch-split-div"></div>
+          <div class="arch-split-item">
+            <div class="arch-split-title">voice-principles.md + Skills</div>
+            <div class="arch-split-sub">Your writing voice and installed capabilities</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-conn"></div>
+
+      <div class="arch-layer arch-layer--bottom">
+        <span class="arch-name">Workstations</span>
+        <div class="arch-pills">
+          <span class="arch-pill">Email Writer</span>
+          <span class="arch-pill">Slide Deck</span>
+          <span class="arch-pill">Research HQ</span>
+          <span class="arch-pill">Content Studio</span>
+          <span class="arch-pill">Project Tracker</span>
+          <span class="arch-pill">+ yours</span>
+        </div>
+      </div>
+
+    </div>
+    <p class="r arch-note">Think of each workstation as a sub-agent dedicated to a specific task. It has its own folder with a local CLAUDE.md, MEMORY.md, and Resources subfolder. The global files apply everywhere; the workstation files layer on top.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 17 — SECTION BREAK: PHASE 3
+  ══════════════════════════════════════════ -->
+  <section class="slide s-phase">
+    <div class="r phase-eyebrow">Phase 03 &nbsp;·&nbsp; System Maintenance</div>
+    <h2 class="r">Last bit. Make it compound.</h2>
+    <p class="r phase-sub">The system only gets smarter if you save what you learn. One 30-second prompt at the end of each session — that's all it takes to turn CoworkOS from a config file into something that actually grows with you.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 18 — SYSTEM MAINTENANCE
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tmpl">
+    <div class="r lbl lbl--phase">Phase 3 | System Maintenance</div>
+    <h2 class="r">CoworkOS only gets smarter if you save what you learn</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">End of every task</div>
+        <h3>Insights vanish when the session closes</h3>
+        <p>Preferences you mentioned, decisions you made, context Claude picked up on — none of it survives unless it's written to MEMORY.md. The AI resets completely.</p>
+        <p style="margin-top: 0.6rem; font-size: 0.83rem; color: var(--text-mid); line-height: 1.68;">One prompt at the end of every task fixes this permanently. Paste it into Cowork and Claude scans the whole conversation, then writes anything useful to the right place.</p>
+        <div class="tmpl-hint">
+          Done consistently, this is what turns CoworkOS into a system that <strong>compounds</strong> — every session makes the next one sharper.
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <div class="mem-cycle">
+          <div class="mem-step">
+            <span class="mem-step-ico">💬</span>
+            <span class="mem-step-lbl">Work<br>session</span>
+          </div>
+          <span class="mem-arr">→</span>
+          <div class="mem-step">
+            <span class="mem-step-ico">🔍</span>
+            <span class="mem-step-lbl">Scan<br>convo</span>
+          </div>
+          <span class="mem-arr">→</span>
+          <div class="mem-step mem-step--hi">
+            <span class="mem-step-ico">📝</span>
+            <span class="mem-step-lbl">Write to<br>MEMORY.md</span>
+          </div>
+          <span class="mem-arr">→</span>
+          <div class="mem-step">
+            <span class="mem-step-ico">✨</span>
+            <span class="mem-step-lbl">Smarter<br>next time</span>
+          </div>
+        </div>
+
+        <div class="tmpl-code-wrap">
+          <button class="copy-btn" data-target="tmpl-scan">Copy</button>
+          <pre class="tmpl-pre" id="tmpl-scan">Scan this conversation for any unsaved preferences,
+decisions, or useful context. Write anything new
+to MEMORY.md — add to existing sections where
+relevant, and create new ones where needed.
+
+Don't duplicate what's already there. Focus only
+on what's genuinely new from this session.</pre>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 19 — CTA
+  ══════════════════════════════════════════ -->
+  <section class="slide s-cta">
+    <div class="r lbl">Get Started</div>
+    <div class="r cta-layout">
+
+      <div>
+        <p class="cta-q">Pick one task you repeat every week. That's your first workstation.</p>
+        <p class="cta-sub">CoworkOS compounds. The more you use it, the more Claude knows you. Start small — one folder, three files — and add workstations as you go.</p>
+        <p style="margin-top: 1.2rem; font-size: 0.78rem; color: var(--text-muted);">Questions or want to share what you built? Find me at <strong style="color: var(--text-mid);">vnsavitri.github.io</strong></p>
+      </div>
+
+      <div class="inv-list">
+
+        <div class="inv">
+          <span class="inv-n">01</span>
+          <div>
+            <div class="inv-title">Create your CoworkOS folder</div>
+            <div class="inv-desc">Make an empty folder in Documents (or wherever). Select it in the Cowork file picker. That's your workspace.</div>
+          </div>
+        </div>
+
+        <div class="inv">
+          <span class="inv-n">02</span>
+          <div>
+            <div class="inv-title">Paste the first-time setup prompt</div>
+            <div class="inv-desc">Slide 7 has the prompt — hit Copy, open Cowork, paste, let it run. Three files and a folder structure in under a minute.</div>
+          </div>
+        </div>
+
+        <div class="inv">
+          <span class="inv-n">03</span>
+          <div>
+            <div class="inv-title">Customise and add your first workstation</div>
+            <div class="inv-desc">Fill in the brackets in your core files, then use the workstation prompt (Slide 15) to scaffold your first domain.</div>
+          </div>
+        </div>
+
+        <div class="inv">
+          <span class="inv-n">04</span>
+          <div>
+            <div class="inv-title">Share what you build</div>
+            <div class="inv-desc">I'd love to hear what workstation you created and what surprised you. Find me at vnsavitri.github.io or on LinkedIn.</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 20 — EFFICIENCY
+  ══════════════════════════════════════════ -->
+  <section class="slide s-build">
+    <div class="r lbl">Efficiency</div>
+    <h2 class="r">Keep your CoworkOS fast and cheap</h2>
+    <div class="r build-cards">
+
+      <div class="build-card">
+        <div class="build-card-num">Rule 01</div>
+        <div class="build-card-heading">Constrain the Root</div>
+        <p>Keep your master CLAUDE.md under 300 lines. Point to external resource files rather than stuffing everything in one place — this keeps baseline token costs low every single session.</p>
+      </div>
+
+      <div class="build-card">
+        <div class="build-card-num">Rule 02</div>
+        <div class="build-card-heading">Avoid Duplicated Rules</div>
+        <p>Never repeat global rules inside local workstations. If the root already says "no corporate jargon," your Email Writer workstation shouldn't waste tokens restating it. Inheritance is free.</p>
+      </div>
+
+      <div class="build-card build-card--featured">
+        <div class="build-card-badge">Recommended Default</div>
+        <div class="build-card-num">Rule 03</div>
+        <div class="build-card-heading">Default to <strong>Sonnet 5</strong></div>
+        <p><strong>Sonnet 5</strong> handles 80% of daily tasks — it's faster and cheaper. Reserve <strong>Opus 5</strong> for complex workflows with three or more interdependent steps.</p>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);"><strong>Haiku 4.5</strong> for small, lightweight tasks; <strong>Fable 5</strong> only for long-horizon autonomous agents. See the model slide for the full picture.</p>
+      </div>
+
+    </div>
+    <div class="r" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem;">
+      Token efficiency means CoworkOS stays fast. A bloated root file taxes every session — trim it like you'd trim a good document.
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE — MODEL PICKER (which Claude, when)
+  ══════════════════════════════════════════ -->
+  <section class="slide s-models">
+    <div class="r lbl lbl--phase">Reference &nbsp;·&nbsp; Choosing a Model</div>
+    <h2 class="r">Which Claude model, and when</h2>
+    <p class="r models-subtitle-line">Four models, one dial: bigger = smarter and pricier. Match the model to the stakes, not the excitement.</p>
+
+    <div class="r models-columns">
+
+      <!-- Haiku -->
+      <div class="model-col model-col--haiku">
+        <div class="model-col-header">
+          <div class="model-tier">Fastest &amp; cheapest</div>
+          <div class="model-name">Haiku 4.5</div>
+        </div>
+        <div class="model-when">
+          <div class="model-when-label">Reach for it when</div>
+          <div class="model-when-text">The job is small, well-defined, and high-volume.</div>
+        </div>
+        <div class="model-good">
+          <div class="model-good-label">Good for</div>
+          <div class="model-good-item">Classification &amp; data extraction</div>
+          <div class="model-good-item">Quick lookups &amp; short summaries</div>
+          <div class="model-good-item">Routing &amp; triage steps in an agent</div>
+          <div class="model-good-item">Simple transforms &amp; translation</div>
+        </div>
+        <div class="model-cost"><strong>Lowest cost.</strong> Its sweet spot is doing one simple thing thousands of times.</div>
+      </div>
+
+      <!-- Sonnet -->
+      <div class="model-col model-col--sonnet">
+        <div class="model-col-header">
+          <div class="model-tier">The everyday workhorse</div>
+          <div class="model-name">Sonnet 5</div>
+          <span class="model-default-flag">Default</span>
+        </div>
+        <div class="model-when">
+          <div class="model-when-label">Reach for it when</div>
+          <div class="model-when-text">Almost always. It covers ~80% of daily CoworkOS work.</div>
+        </div>
+        <div class="model-good">
+          <div class="model-good-label">Good for</div>
+          <div class="model-good-item">Drafting emails, docs &amp; decks</div>
+          <div class="model-good-item">Research &amp; synthesis</div>
+          <div class="model-good-item">Most coding &amp; code review</div>
+          <div class="model-good-item">Everyday chat &amp; workflows</div>
+        </div>
+        <div class="model-cost"><strong>Fast &amp; well-priced.</strong> Start here — only reach higher when it visibly struggles.</div>
+      </div>
+
+      <!-- Opus -->
+      <div class="model-col model-col--opus">
+        <div class="model-col-header">
+          <div class="model-tier">The heavy thinker</div>
+          <div class="model-name">Opus 5</div>
+        </div>
+        <div class="model-when">
+          <div class="model-when-label">Reach for it when</div>
+          <div class="model-when-text">The task is genuinely complex — 3+ interdependent steps.</div>
+        </div>
+        <div class="model-good">
+          <div class="model-good-label">Good for</div>
+          <div class="model-good-item">Multi-step, high-stakes reasoning</div>
+          <div class="model-good-item">Board-level or important writing</div>
+          <div class="model-good-item">Greenfield architecture &amp; gnarly debugging</div>
+          <div class="model-good-item">Planner role in agentic work</div>
+        </div>
+        <div class="model-cost"><strong>$5 / $25 per M.</strong> Near-frontier quality at half Fable's price — worth it when the stakes are high.</div>
+      </div>
+
+      <!-- Fable -->
+      <div class="model-col model-col--fable">
+        <div class="model-col-header">
+          <div class="model-tier">Mythos-class · above Opus</div>
+          <div class="model-name">Fable 5</div>
+        </div>
+        <div class="model-when">
+          <div class="model-when-label">Reach for it when</div>
+          <div class="model-when-text">Long-horizon autonomous runs — its lead grows with task length.</div>
+        </div>
+        <div class="model-good">
+          <div class="model-good-label">Good for</div>
+          <div class="model-good-item">Agents running unattended for hours</div>
+          <div class="model-good-item">Deep long-context, file-based memory work</div>
+          <div class="model-good-item">State-of-the-art finance &amp; vision tasks</div>
+          <div class="model-good-item">Not everyday human-in-the-loop work</div>
+        </div>
+        <div class="model-cost"><strong>$10 / $50 per M · 30-day data retention.</strong> Overkill for daily work — weigh retention for sensitive data.</div>
+      </div>
+
+    </div>
+
+    <div class="r models-footer">
+      <strong>Rule of thumb:</strong> default to Sonnet 5, drop to Haiku for simple high-volume jobs, step up to Opus for complex reasoning, and reserve Fable 5 for autonomous agents that run for hours. &nbsp;·&nbsp; When in doubt, start on Sonnet and only move if it struggles.
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 21 — GLOSSARY
+  ══════════════════════════════════════════ -->
+  <section class="slide s-glossary">
+    <div class="r lbl">Reference</div>
+    <h2 class="r">Glossary of Terms</h2>
+    <div class="r glossary-grid">
+
+      <div class="glossary-item glossary-item--full">
+        <span class="g-term">Model</span>
+        <span class="g-def">The underlying AI engine. Claude's current lineup: <strong>Haiku 4.5</strong> is fastest and cheapest for lightweight jobs; <strong>Sonnet 5</strong> covers ~80% of daily work; <strong>Opus 5</strong> is for complex, multi-step tasks with many interdependent decisions; <strong>Fable 5</strong> is the Mythos-class model above Opus, reserved for long-horizon autonomous agent runs.</span>
+        <span class="g-note">⚡ Default to Sonnet 5. Reaching for Opus (or Fable) reflexively just burns tokens — and slows you down. Most tasks don't need it. Don't be a #TokkenMaxxer. Think of the environment.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Agent</span>
+        <span class="g-def">An AI model that can take actions — read files, send messages, run tasks — rather than just answer questions. Claude in Cowork mode is an agent.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Workstation</span>
+        <span class="g-def">A CoworkOS folder dedicated to a specific task type. Has its own rules and memory. Claude auto-routes tasks to the right one based on your routing map.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Skill</span>
+        <span class="g-def">A packaged workflow that gives Claude a specialised capability — creating decks, writing Word docs, pulling data. Install once, trigger by name.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Session</span>
+        <span class="g-def">A single conversation with Claude. Context resets when it ends — which is exactly the problem MEMORY.md solves.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">MCP</span>
+        <span class="g-def">Model Context Protocol. The open standard that lets Claude connect to external tools and services — Slack, Jira, email, and so on. Think of it as Claude's plugin API.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Context Window</span>
+        <span class="g-def">The total amount of information Claude can hold in a single session. Larger context = more Claude knows, but also slower and pricier. Keep your root CLAUDE.md lean.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">MCP Server</span>
+        <span class="g-def">A connector that implements MCP for one specific service. The Slack MCP server is what gives Claude read/write access to your Slack workspace.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Token</span>
+        <span class="g-def">The unit any LLM uses to measure text in and out. Longer prompts cost more tokens. The reason Sonnet is faster and cheaper than Opus for everyday tasks.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Plugin</span>
+        <span class="g-def">A bundle of MCP servers and skills packaged together for easy installation. How capabilities are distributed and added to Cowork.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Routine</span>
+        <span class="g-def">A task set to run automatically on a schedule. "Every morning, summarise my unread email." Cowork runs these in the background without you having to ask each time.</span>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 22 — CLOSING
+  ══════════════════════════════════════════ -->
+  <section class="slide s-closing">
+    <div class="r closing-wrap">
+      <div class="closing-h">Thank you.</div>
+      <div class="closing-contact">Built by <strong>Vivid Savitri-Hampton</strong> &nbsp;·&nbsp; AI product builder</div>
+      <div class="closing-links">
+        <a class="closing-link" href="https://vnsavitri.github.io/" target="_blank">vnsavitri.github.io</a>
+        <a class="closing-link" href="https://www.linkedin.com/in/vnsavitri" target="_blank">LinkedIn</a>
+        <a class="closing-link" href="mailto:viv.hampton@icloud.com">viv.hampton@icloud.com</a>
+      </div>
+      <div class="closing-note">I'd love to hear what you build. Drop me a note.</div>
+    </div>
+  </section>
+
+
+</div><!-- /deck -->
+
+<div id="progress-bar"></div>
+<div id="counter">1 / 23</div>
+<div id="kbd-hint">← → to navigate</div>
+
+<div class="nav-wrap is-prev">
+  <button class="nav-btn" id="prevBtn" disabled aria-label="Previous">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <path d="M7.5 2L3.5 6l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+<div class="nav-wrap is-next">
+  <button class="nav-btn" id="nextBtn" aria-label="Next">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <path d="M4.5 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+<script>
+const slides  = document.querySelectorAll('.slide');
+const pb      = document.getElementById('progress-bar');
+const counter = document.getElementById('counter');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+let cur = 0;
+const total = slides.length;
+
+function goTo(n) {
+  if (n < 0 || n >= total) return;
+  slides[cur].classList.remove('is-active');
+  slides[cur].classList.add('is-exit');
+  const leaving = slides[cur];
+  setTimeout(() => leaving.classList.remove('is-exit'), 520);
+  cur = n;
+  slides[cur].classList.add('is-active');
+  pb.style.width = ((cur + 1) / total * 100) + '%';
+  counter.textContent = (cur + 1) + ' / ' + total;
+  prevBtn.disabled = (cur === 0);
+  nextBtn.disabled = (cur === total - 1);
+}
+
+prevBtn.addEventListener('click', () => goTo(cur - 1));
+nextBtn.addEventListener('click', () => goTo(cur + 1));
+
+document.addEventListener('keydown', e => {
+  if (['ArrowRight', ' ', 'ArrowDown'].includes(e.key)) { e.preventDefault(); goTo(cur + 1); }
+  if (['ArrowLeft', 'ArrowUp'].includes(e.key))         { e.preventDefault(); goTo(cur - 1); }
+  if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+  if (e.key === 'End')  { e.preventDefault(); goTo(total - 1); }
+});
+
+document.querySelector('.deck').addEventListener('click', e => {
+  if (e.target.closest('button')) return;
+  if (e.target.closest('.tmpl-pre')) return;
+  goTo(e.clientX > window.innerWidth * 0.6 ? cur + 1 : cur - 1);
+});
+
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text);
+  }
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  return Promise.resolve();
+}
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.copy-btn');
+  if (!btn) return;
+  e.stopPropagation();
+  const pre = document.getElementById(btn.getAttribute('data-target'));
+  if (!pre) return;
+  // Clone and strip diff badges before copying
+  const clone = pre.cloneNode(true);
+  clone.querySelectorAll('.tmpl-diff-badge').forEach(el => el.remove());
+  copyText(clone.textContent.trim()).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+});
+
+slides[0].classList.add('is-active');
+pb.style.width = (1 / total * 100) + '%';
+counter.textContent = '1 / ' + total;
+</script>
+</body>
+</html>

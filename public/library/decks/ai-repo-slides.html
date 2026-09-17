@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12 Next-Gen Open-Source AI Projects You Need to Try</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-cyan: #38bdf8;
+            --accent-purple: #c084fc;
+            --accent-green: #34d399;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 1rem;
+        }
+
+        /* Presentation Wrapper */
+        .deck-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            height: 80vh;
+            max-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: #1e293b;
+            border-radius: 2px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+
+        /* Slides Stack */
+        .slides-viewport {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.95) translateY(15px);
+            pointer-events: none;
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                        transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        /* Slide Structural Layouts */
+        .slide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .project-meta {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-stars { background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); border: 1px solid rgba(56, 189, 248, 0.3); }
+        .badge-time { background: rgba(192, 132, 252, 0.15); color: var(--accent-purple); border: 1px solid rgba(192, 132, 252, 0.3); }
+
+        .slide-number {
+            font-size: 4rem;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.03);
+            line-height: 1;
+            user-select: none;
+        }
+
+        h1 {
+            font-size: 2.75rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 0%, var(--text-muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--accent-cyan);
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        p.desc {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        ul.features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        ul.features li {
+            position: relative;
+            padding-left: 1.75rem;
+            font-size: 1.05rem;
+            color: #e2e8f0;
+            line-height: 1.5;
+        }
+
+        ul.features li::before {
+            content: "✦";
+            position: absolute;
+            left: 0;
+            color: var(--accent-purple);
+            font-weight: bold;
+        }
+
+        /* Controls Footer */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding: 0 0.5rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        button {
+            background: #1e293b;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        button:hover:not(:disabled) {
+            background: #2d3748;
+            border-color: var(--accent-cyan);
+            color: #fff;
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .slide-counter {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .video-link {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-bottom: 1px dashed var(--accent-cyan);
+            transition: opacity 0.2s;
+        }
+        .video-link:hover { opacity: 0.8; }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 640px) {
+            body { padding: 0.5rem; }
+            .deck-container { height: 90vh; max-height: none; }
+            .slide { padding: 1.5rem; justify-content: flex-start; overflow-y: auto; }
+            h1 { font-size: 2rem; }
+            h2 { font-size: 1.5rem; }
+            p.desc { font-size: 1rem; margin-bottom: 1rem; }
+            ul.features li { font-size: 0.95rem; }
+            .slide-number { display: none; }
+            .slide-header { margin-bottom: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="deck-container">
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="slides-viewport">
+
+            <div class="slide active" data-type="title">
+                <h1>12 Open-Source AI Projects You Need to Try</h1>
+                <p class="desc">A curated presentation breaking down the absolute best cutting-edge, open-source artificial intelligence developments breaking out on GitHub right now.</p>
+                <div class="project-meta">
+                    <span class="badge badge-stars">Curated by Matthew Berman</span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2rem;">💡 Tip: Use your keyboard <b>Left / Right Arrows</b> or <b>Spacebar</b> to navigate.</p>
+            </div>
+
+            <div class="slide">
+                <div class="slide-header">
+                    <div>
+                        <div class="project-meta">
+                            <span class="badge badge-stars">⭐ ~15k Stars</span>
+                            <span class="badge badge-time">🕒 [00:00:05]</span>
+                        </div>
+                        <h2>1. Open Montage</h2>
+                        <div class="subtitle">AI-Driven Video Production Studio</div>
+                    </div>
+                    <div class="slide-number">01</div>
+                </div>
+                <p class="desc">Transforms your modular AI agent setup into an end-to-end video production suite from raw, plain-language text prompts.</p>
+                <ul class="features">
+                    <li>Handles complete pipelines: research, writing scripts, asset gathering, voiceover, and editing.</li>
+                    <li>Supports 12 distinct pipeline styles including talking heads, product demos, cinematic trailers, and document montages.</li>
+                    <li>Enables clip-mimicking; feed it an aesthetic style you love, and it replicates the structural layout.</li>
+                </ul>
+            </div>
+
+            <div class="slide">
+                <div class="slide-header">
+                    <div>
+                        <div class="project-meta">
+                            <span class="badge badge-stars">⭐ ~74k Stars</span>
+                            <span class="badge badge-time">🕒 [00:01:21]</span>
+                        </div>
+                        <h2>2. Deerflow</h2>
+                        <div class="subtitle">By ByteDance • Long-Horizon Super Agent Harness</div>
+                    </div>
+                    <div class="slide-number">02</div>
+                </div>
+                <p class="desc">Deep Exploration and Efficient Research Flow orchestrates advanced sub-agents, memory modules, and sandbox architectures.</p>
+                <ul class="features">
+                    <li>Engineered purposefully for long-horizon work meant to execute uninterrupted for hours or days.</li>
+                    <li>Breaks down highly ambiguous, massive tasks by spinning up specialized sub-agents.</li>
+                    <li>Excelled at programmatic data engineering, building comprehensive slidedecks, and dashboard rendering.</li>
+                </ul>
+            </div>
+
+            <div class="slide">
+                <div class="slide-header">
+                    <div>
+                        <div class="project-meta">
+                            <span class="badge badge-stars">⭐ ~20k Stars</span>
+                            <span class="badge badge-time">🕒 [00:02:27]</span>
+                        </div>
+                        <h2>3. Anthropic Cyber Skills</h2>
+                        <div class="subtitle">Codebase Threat Hardening Framework</div>
+                    </div>
+                    <div class="slide-number">03</div>
+                </div>
+                <p class="desc">A skill package injection designed to point any compatible agent directly at code repos to locate and fix infrastructure vulnerabilities.</p>
+                <ul class="features">
+                    <li>Integrates into almost any developer tool surface supporting skills (Claude Code, Cursor, Gemini CLI).</li>
+                    <li>Pre-loaded with 6 enterprise cyber frameworks including MITRE ATT&CK and NIST guidelines.</li>
+                    <li>Easy setup via URL skills copying directly into an agent's orchestration environment.</li>
+                </ul>
+            </div>
+
+            <div class="slide">
+                <div class="slide-header">
+                    <div>
+                        <div class="project-meta">
+                            <span class="badge badge-stars">⭐ ~30k Stars</span>
+                            <span class="badge badge-time">🕒 [00:03:51]</span>
+                        </div>
+                        <h2>4. Hyperframes</h2>
+                        <div class="subtitle">By HeyGen • Code-to-Video Engine</div>
+                    </div>
+                    <div class="slide-number">04</div>
+                </div>
+                <p class="desc">An open-source programmatic framework converting raw HTML, CSS, media elements, and timelines into deterministic MP4 videos.</p>
+                <ul class="features">
+                    <li>Perfect for automating motion graphics, responsive slides, and rapid app production showcases.</li>
+                    <li>Utilizes Headless Chrome rendering paired with FFmpeg compiling for frame-perfect rendering.</li>
+                    <li>Plugs natively into complex web-animation rendering libraries such as Three.js.</li>
+                </ul>
+            </div>
+
+            <div class="slide">
+                <div class="slide-header">
+                    <div>
+                        <div class="project-meta">
+                            <span class="badge badge-stars">⭐ ~12k Stars</span>
+                            <span class="badge badge-time">🕒 [00:06:20]</span>
+                        </div>
+                        <h2>5. Codebase Memory MCP</h2>
+                        <div class="subtitle">By Deus Data • Hyper-Fast Repo Indexer</div>
+                    </div>
+                    <div class="slide-number">05</div>
+                </div>
+                <p class="desc">The fastest and lowest-overhead architectural code intelligence cataloging engine built for autonomous development systems.</p>
+                <ul class="features">
+                    <li>Blazing performance: Full indexing of the Linux Kernel (28 million lines) completes in 3 minutes.</li>
+                    <li>Slashes contextual processing costs up to 120 times fewer tokens consumed per structural file query.</li>
+                    <li>Equipped with structural 3D graph interfaces to visually navigate relationship webs.</li>
+                </ul>
+            </div>
+
+            <div class="slide">
+                <div class="slide-header">
+                    <div>
+                        <div class="project-meta">
+                            <span class="badge badge-stars">⭐ ~143k Stars</span>
+                            <span class="badge badge-time">🕒 [00:07:26]</span>
+                        </div>
+                        <h2>6. Matt Pocock's Skills</h2>
+                        <div class="subtitle">Production-Grade Coding Hardening</div>
+                    </div>
+                    <div class="slide-number">06</div>
+                </div>
+                <p class="desc">Skill modules packed with the lifelong professional engineering philosophies of the creator of Total TypeScript.</p>
+                <ul class="features">
+                    <li>Forces AI agents out of superficial "vibe coding" behaviors into rigorous testing practices.</li>
+                    <li>Features intelligent routing (`ask-matt`) to identify optimal task flows for code design.</li>
+                    <li>Automates code framework interrogation routines to continuously update environment context.</li>
+                </ul>
+            </div>
+
+            <div class="slide">
+                <div class="slide-header">
+                    <div>
+                        <div class="project-meta">
+                            <span class="badge badge-stars">⭐ ~114k Stars</span>
+                            <span class="badge badge-time">🕒 [00:08:31]</span>
+                        </div>
+                        <h2>7. GStack</h2>
+                        <div class="subtitle">By Gary Tan (YC) • Multi-Agent Organization</div>
+                    </div>
+                    <div class="slide-number">07</div>
+                </div>
+                <p class="desc">Codifies core operational and strategic startup philosophies of Y Combinator into an orchestration engine.</p>
+                <ul class="features">
+                    <li>Enforces a rigorous development lifecycle: Think → Plan → Build → Review → Test → Ship → Reflect.</li>
+                    <li>Runs an interactive `/officehours` subroutine to cross-examine target features and architectures.</li>
+                    <li>Assigns custom functional sub-agent roles: CEO Review, Design Review, and Canary Deployments.</li>
+                </ul>
+            </div>
+
+            <div class="slide">
+                <div class="slide-header">
+                    <div>
+                        <div class="project-meta">
+                            <span class="badge badge-stars">⭐ <3k Stars</span>
+                            <span class="badge badge-time">🕒 [00:10:10]</span>
+                        </div>
+                        <h2>8. BYU OCR Model</h2>
+                        <div class="subtitle">Lightweight Ultra-Fast Document Parser</div>
+                    </div>
+                    <div class="slide-number">08</div>
+                </div>
+                <p class="desc">A brand new open-weights vision-language foundation model optimized for ultra-high-speed OCR spatial reading.</p>
+                <ul class="features">
+                    <li>Extremely hardware accessible: Compact file download footprint spanning only ~6.5 GB.</li>
+                    <li>Excels at difficult spatial orientation tasks, like calculating coordinates to highlight text inside PDFs.</li>
+                    <li>Maintains structural data consistency when parsing visually complex scientific research papers.</li>
+                </ul>
+            </div>
+
+            <div class="slide">
+                <div class="slide-header">
+                    <div>
+                        <div class="project-meta">
+                            <span class="badge badge-stars">⭐ <10k Stars</span>
+                            <span class="badge badge-time">🕒 [00:11:15]</span>
+                        </div>
+                        <h2>9. Skillspector</h2>
+                        <div class="subtitle">By Nvidia • Agent Skill Security Scanner</div>
+                    </div>
+                    <div class="slide-number">09</div>
+                </div>
+                <p class="desc">A reliable, institutional-grade scanning utility created to evaluate third-party agent skills before local application.</p>
+                <ul class="features">
+                    <li>Ingests and reviews multiple project variants: GitHub repos, direct URLs, ZIP packages, or flat files.</li>
+                    <li>Scans against 65 active threat signatures distributed across 16 critical vulnerability vectors.</li>
+                    <li>Protects local runtime environments from prompt injections, excessive data output, and supply chain leaks.</li>
+                </ul>
+            </div>
+
+            <div class="slide">
+                <div class="slide-header">
+                    <div>
+                        <div class="project-meta">
+                            <span class="badge badge-stars">⭐ ~8k Stars</span>
+                            <span class="badge badge-time">🕒 [00:12:08]</span>
+                        </div>
+                        <h2>10. Pommeierre Pro</h2>
+                        <div class="subtitle">AI-Native Video Editing Desktop Client</div>
+                    </div>
+                    <div class="slide-number">10</div>
+                </div>
+                <p class="desc">An open-source desktop application (currently macOS exclusive) engineered for collaborative agent-human video editing.</p>
+                <ul class="features">
+                    <li>Features a native Model Context Protocol (MCP) server running out-of-the-box inside the app.</li>
+                    <li>Allows external AI agents (Claude, Cursor) to directly manipulate and cut the editor's live video timeline.</li>
+                    <li>Merges deep generative AI automation inside a responsive native timeline client canvas.</li>
+                </ul>
+            </div>
+
+            <div class="slide">
+                <div class="slide-header">
+                    <div>
+                        <div class="project-meta">
+                            <span class="badge badge-stars">⭐ >200k Stars</span>
+                            <span class="badge badge-time">🕒 [00:12:52]</span>
+                        </div>
+                        <h2>11. Hermes Agent</h2>
+                        <div class="subtitle">Autonomous Self-Healing Architecture</div>
+                    </div>
+                    <div class="slide-number">11</div>
+                </div>
+                <p class="desc">A robust, widely-scaled production alternative to architectures like OpenClaw, built for raw reliability.</p>
+                <ul class="features">
+                    <li>Built completely around self-correction loops; when actions error, the agent runtime-heals its own code.</li>
+                    <li>Features deep continuous self-improvement capabilities to scale past system friction points.</li>
+                    <li>Massive, production-ready developer community backing with deep out-of-the-box feature modularity.</li>
+                </ul>
+            </div>
+
+            <div class="slide">
+                <div class="slide-header">
+                    <div>
+                        <div class="project-meta">
+                            <span class="badge badge-stars">⭐ ~33k Stars</span>
+                            <span class="badge badge-time">🕒 [00:13:38]</span>
+                        </div>
+                        <h2>12. Voice Box</h2>
+                        <div class="subtitle">Local Full Voice Input/Output Stack</div>
+                    </div>
+                    <div class="slide-number">12</div>
+                </div>
+                <p class="desc">An all-in-one private alternative combining voice generation (ElevenLabs) and transcription (Whisper) locally.</p>
+                <ul class="features">
+                    <li>Runs fully offline on consumer hardware, powered internally by a Qwen 1.7B foundation model.</li>
+                    <li>Includes high-fidelity voice cloning alongside multi-track timeline synthesis control.</li>
+                    <li>Features a cohesive "Stories Editor" to build and splice audio assets smoothly inside an integrated UI.</li>
+                </ul>
+            </div>
+
+            <div class="slide" data-type="conclusion">
+                <h2>Which will you build with first?</h2>
+                <p class="desc">These projects highlight how fast the open-source landscape is moving—from self-healing engineering agents to fully localized desktop tools.</p>
+                <div style="margin-top: 1.5rem;">
+                    <a href="https://youtu.be/2lmBj_XQq0I" target="_blank" class="video-link">👉 Watch the full video review on YouTube</a>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="controls">
+            <span class="slide-counter" id="slideCounter">Slide 1 of 14</span>
+            <div class="nav-buttons">
+                <button id="prevBtn" disabled>← Prev</button>
+                <button id="nextBtn">Next →</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const slideCounter = document.getElementById('slideCounter');
+        const progressBar = document.getElementById('progressBar');
+        
+        let currentSlide = 0;
+
+        function updateSlideVisibility() {
+            slides.forEach((slide, index) => {
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+
+            // Handle Buttons disabled states
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === slides.length - 1;
+
+            // Update bottom Counter text
+            slideCounter.textContent = `Slide ${currentSlide + 1} of ${slides.length}`;
+
+            // Adjust Top Progress Bar fill
+            const progressPercent = (currentSlide / (slides.length - 1)) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateSlideVisibility();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlideVisibility();
+            }
+        }
+
+        // Click Event Handlers
+        nextBtn.addEventListener('click', nextSlide);
+        prevBtn.addEventListener('click', prevSlide);
+
+        // Hardware Keyboard Event Handlers
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+
+        // Setup Initial View state on load
+        updateSlideVisibility();
+    </script>
+</body>
+</html>

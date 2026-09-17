@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude CoWork — FAQ | BRG</title>
+<style>
+  :root {
+    --ink: #0f1117;
+    --ink-mid: #2d3142;
+    --ink-soft: #6b7280;
+    --surface: #f5f5f3;
+    --white: #ffffff;
+    --blue: #1a56db;
+    --blue-light: #e8f0fe;
+    --green: #059669;
+    --green-light: #d1fae5;
+    --orange: #d97706;
+    --orange-light: #fff7ed;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --amber: #b45309;
+    --amber-light: #fffbeb;
+    --amber-border: #fcd34d;
+    --gray-border: #e5e7eb;
+    --gray-light: #f3f4f6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  .header {
+    background: #0f1117;
+    color: white;
+    padding: 28px 40px 24px;
+    border-bottom: 3px solid var(--blue);
+  }
+  .header-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #3b82f6;
+    margin-bottom: 6px;
+  }
+  .header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+  .header-sub { font-size: 12px; color: #9ca3af; margin-top: 5px; }
+  .header-row { display: flex; justify-content: space-between; align-items: flex-end; }
+  .version-badge {
+    display: inline-block;
+    background: var(--blue);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+  }
+
+  /* LAYOUT */
+  .main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 32px 32px 56px;
+  }
+
+  /* INTRO */
+  .intro-box {
+    background: var(--blue-light);
+    border: 1px solid #bfdbfe;
+    border-left: 4px solid var(--blue);
+    border-radius: 4px;
+    padding: 14px 18px;
+    margin-bottom: 32px;
+    font-size: 13px;
+    color: #1e3a8a;
+    line-height: 1.55;
+  }
+  .intro-box strong { color: #1a56db; }
+
+  /* SECTION */
+  .section { margin-bottom: 36px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--gray-border);
+  }
+  .section-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .icon-blue { background: var(--blue-light); }
+  .icon-green { background: var(--green-light); }
+  .icon-orange { background: var(--orange-light); }
+  .icon-red { background: var(--red-light); }
+  .icon-amber { background: var(--amber-light); }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  /* FAQ ITEMS */
+  details {
+    background: var(--white);
+    border: 1px solid var(--gray-border);
+    border-radius: 4px;
+    margin-bottom: 6px;
+    overflow: hidden;
+  }
+  details[open] { border-color: #93c5fd; }
+  details[open] summary { background: #f0f7ff; }
+
+  summary {
+    padding: 13px 16px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    user-select: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after {
+    content: '+';
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--ink-soft);
+    flex-shrink: 0;
+    transition: transform 0.15s;
+  }
+  details[open] summary::after { content: '−'; }
+
+  .answer {
+    padding: 0 16px 14px 16px;
+    font-size: 13px;
+    color: var(--ink-mid);
+    line-height: 1.6;
+    border-top: 1px solid var(--gray-border);
+    padding-top: 12px;
+  }
+  .answer p { margin-bottom: 8px; }
+  .answer p:last-child { margin-bottom: 0; }
+  .answer ul { padding-left: 18px; margin: 6px 0; }
+  .answer li { margin-bottom: 4px; }
+
+  /* INLINE CALLOUTS WITHIN ANSWERS */
+  .note {
+    background: var(--amber-light);
+    border: 1px solid var(--amber-border);
+    border-left: 3px solid var(--amber);
+    border-radius: 3px;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: #78350f;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .tip {
+    background: var(--green-light);
+    border: 1px solid #6ee7b7;
+    border-left: 3px solid var(--green);
+    border-radius: 3px;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: #064e3b;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .blocked {
+    background: var(--red-light);
+    border: 1px solid #fca5a5;
+    border-left: 3px solid var(--red);
+    border-radius: 3px;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: #7f1d1d;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  /* COMPARISON TABLE */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 12px;
+  }
+  .compare-table th {
+    background: var(--ink);
+    color: white;
+    padding: 7px 10px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .compare-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--gray-border);
+    vertical-align: top;
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table tr:nth-child(even) td { background: #fafafa; }
+  .yes { color: var(--green); font-weight: 700; }
+  .no { color: var(--red); font-weight: 700; }
+  .partial { color: var(--orange); font-weight: 700; }
+
+  /* ESCALATION */
+  .escalation-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .escalation-step {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    background: var(--gray-light);
+    border-radius: 4px;
+    padding: 8px 10px;
+  }
+  .step-num {
+    width: 22px;
+    height: 22px;
+    background: var(--blue);
+    color: white;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-text { font-size: 12.5px; color: var(--ink-mid); }
+  .step-text strong { color: var(--ink); }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--gray-border);
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <div>
+      <div class="header-eyebrow">Breville Group</div>
+      <h1>Claude CoWork — Frequently Asked Questions</h1>
+      <div class="header-sub">For BRG staff and Workstream Leads · Covers setup, connectors, data, and support</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="intro-box">
+    <strong>Start here if you're new.</strong> Claude CoWork is the desktop app version of Claude — it runs locally on your machine, reads and writes your local files, and keeps memory between sessions. It's different from claude.ai (the browser). If you're unsure whether to use Claude Chat, CoWork, or Claude Code, check the <strong>Chat vs CoWork vs Code 1-pager</strong> first.
+  </div>
+
+  <!-- SECTION 1: GETTING STARTED -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-blue">🚀</div>
+      <div class="section-title">Getting Started</div>
+    </div>
+
+    <details>
+      <summary>What exactly is Claude CoWork?</summary>
+      <div class="answer">
+        <p>Claude CoWork is a desktop app that runs Claude AI locally on your Mac or Windows machine. Unlike Claude Chat (which runs in a browser and has no persistent memory), CoWork:</p>
+        <ul>
+          <li>Reads and writes files directly on your computer — no cloud upload limits</li>
+          <li>Remembers your preferences and context across sessions via a <code>memory.md</code> file</li>
+          <li>Returns ready-to-use files in your local folders, not just text in a chat window</li>
+          <li>Connects to Outlook, Confluence, and Slack via approved connectors</li>
+        </ul>
+        <p>Think of it as Claude that lives on your machine, knows your context, and works in your files.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>What's the difference between Claude Chat, Claude CoWork, and Claude Code?</summary>
+      <div class="answer">
+        <table class="compare-table">
+          <thead>
+            <tr><th>Tool</th><th>Where it runs</th><th>Best for</th><th>Not ideal for</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Claude Chat</strong></td>
+              <td>Browser / mobile / desktop app (claude.ai)</td>
+              <td>Quick questions, drafts, summaries, exploration. No setup needed.</td>
+              <td>Working with large local files; tasks needing memory across sessions</td>
+            </tr>
+            <tr>
+              <td><strong>Claude CoWork</strong></td>
+              <td>Desktop app — installed locally, connects your tools</td>
+              <td>Working with local files, automating recurring tasks, persistent memory, outcome-first prompting (get a finished file, not a chat reply)</td>
+              <td>Real-time sharing or collaboration — each machine is sandboxed</td>
+            </tr>
+            <tr>
+              <td><strong>Claude Code</strong></td>
+              <td>Terminal / CLI — requires technical setup</td>
+              <td>Agentic coding, multi-step technical tasks, developer workflows</td>
+              <td>Non-technical users; everyday work tasks</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="tip">Not sure? Start with Claude Chat. It's the easiest on-ramp and runs in your browser with no setup.</div>
+      </div>
+    </details>
+
+    <details>
+      <summary>How do I install CoWork and set it up for the first time?</summary>
+      <div class="answer">
+        <p><strong>Step 1:</strong> Download and install the Claude desktop app from <strong>BRG Company Portal</strong> (Mac and Windows supported).</p>
+        <p><strong>Step 2:</strong> Open the app and sign in with your BRG login crediential.</p>
+        <p><strong>Step 3:</strong> Create a local folder in your Documents — name it something like <em>CoWork</em> or <em>AI Workspace</em>.</p>
+        <p><strong>Step 4:</strong> In CoWork, click "Choose a folder" and select the folder you created. This is your workspace.</p>
+        <p><strong>Step 5:</strong> Add a <code>claude.md</code> file to that folder (your personal instructions to Claude) and a <code>memory.md</code> file (where Claude stores notes about your preferences).</p>
+        <div class="tip">Vivid has built a pre-made HTML template (CoworkOS setup guide) to shortcut steps 3–5.</div>
+      </div>
+    </details>
+
+    <details>
+      <summary>What is a "Project" in CoWork? Why can't I see my colleague's files?</summary>
+      <div class="answer">
+        <p>In CoWork, a "Project" is a <strong>local folder on your machine</strong>. CoWork is sandboxed — it can only see files inside the folder you've pointed it to. Each user's workspace is separate.</p>
+        <p>This means:</p>
+        <ul>
+          <li>Your CoWork setup doesn't automatically share with anyone else</li>
+          <li>There's no live collaboration or co-editing across machines in CoWork</li>
+          <li>If you want to share output, export the file manually (or put it on OneDrive/SharePoint)</li>
+        </ul>
+        <div class="note">⚠️ Note: "Projects" in CoWork is not the same as "Projects" on claude.ai. They share a name but work differently. CoWork projects are local folders; claude.ai projects are cloud-based conversation buckets.</div>
+        <p>If real-time sharing is your primary need, CoWork may not be the right tool — raise this with your Workstream Lead and check if ChatGPT Workspace Agents (cloud-native, currently under security review) might be a better fit.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>What is CoworkOS? Do I need it?</summary>
+      <div class="answer">
+        <p>CoworkOS is a <strong>setup pattern</strong> developed by Vivid Savitri that turns CoWork into a personalised AI operating system with persistent memory and structured workstations. It's built on top of standard CoWork using markdown files.</p>
+        <p>The pattern uses a single HTML template you copy and customise. Each "workstation" (e.g., Email HQ, Project Hub) has four parts: <em>identity, resources, workflow, editorial role</em>.</p>
+        <p><strong>Do you need it?</strong> Not immediately. Start with basic CoWork first. Once you find yourself repeating the same prompts 2–3 times a week, that's the signal to set up a workstation or skill.</p>
+        <div class="tip">CoworkOS can be mastered in about 20 minutes.</div>
+      </div>
+    </details>
+  </div>
+
+  <!-- SECTION 2: CONNECTORS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-orange">🔌</div>
+      <div class="section-title">Connectors &amp; Integrations</div>
+    </div>
+
+    <details>
+      <summary>Which connectors are available in CoWork at BRG?</summary>
+      <div class="answer">
+        <table class="compare-table">
+          <thead>
+            <tr><th>Connector</th><th>Status</th><th>What it can do</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Outlook</strong></td>
+              <td><span class="partial">Read-only</span></td>
+              <td>Read emails and calendar events; CoWork can summarise your inbox or prep for meetings. Cannot send or draft replies directly from CoWork.</td>
+            </tr>
+            <tr>
+              <td><strong>Confluence</strong></td>
+              <td><span class="partial">Read + write</span></td>
+              <td>Read Confluence pages; write or update pages. Subject to BRG browser/connector policy.</td>
+            </tr>
+            <tr>
+              <td><strong>Slack</strong></td>
+              <td><span class="partial">Approved connectors only</span></td>
+              <td>Read and post to permitted channels. Subject to BRG browser/connector policy.</td>
+            </tr>
+            <tr>
+              <td><strong>SharePoint</strong></td>
+              <td><span class="no">Not directly accessible</span></td>
+              <td>CoWork cannot connect to SharePoint directly. Use the OneDrive sync workaround (see below).</td>
+            </tr>
+            <tr>
+              <td><strong>Local files</strong></td>
+              <td><span class="yes">Full access</span></td>
+              <td>Read, write, and process any file in your CoWork folder — PDFs, Word docs, Excel, text files. This is CoWork's strongest capability.</td>
+            </tr>
+             <tr>
+              <td><strong>Other Connectors</strong></td>
+              <td><span class="yes">Full or partial access</span></td>
+              <td>Zoom, Figma, Mixpanel, Vercel etc. Connectors connecting to other BRG approved platforms are avaliable, amke sure you have the necessary login credientials to those platforms first to ensure a smooth access. </td>
+            </tr>
+          </tbody>
+        </table>
+    </details>
+
+    <details>
+      <summary>Why does CoWork say my connector is "blocked"?</summary>
+      <div class="answer">
+        <p>This might happen due to BRG browser/network policy setting, not necessarily CoWork bug. </p>
+        <p>What to do:</p>
+        <ul>
+          <li>Check the <strong>"What's Allowed at BRG"</strong> page — it lists which connectors are approved and any steps needed to enable them</li>
+          <li>If a connector you need isn't on the approved list, raise it via the <strong>AI tool evaluation form</strong> or the AI Slack channel</li>
+          <li>Contact your <strong>Workstream Lead</strong> if you're unsure — they're the first port of call for function-specific connector questions</li>
+        </ul>
+    </details>
+
+    <details>
+      <summary>CoWork can't read my Outlook drafts or send emails — is that a bug?</summary>
+      <div class="answer">
+        <p>No, this is by design. The Outlook connector in CoWork is currently <strong>read-only</strong>. CoWork can read your inbox and calendar but cannot compose or send emails on your behalf.</p>
+        <p>The workaround most users adopt:</p>
+        <ul>
+          <li>Ask CoWork to draft the email as a text file or copy it to your clipboard</li>
+          <li>Paste manually into Outlook and send from there</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>How do I access files in SharePoint from CoWork?</summary>
+      <div class="answer">
+        <p>CoWork cannot connect to SharePoint directly. The supported workaround is to use <strong>OneDrive sync</strong>:</p>
+        <ul>
+          <li>Sync your SharePoint library to your local machine via OneDrive (right-click the SharePoint library in your browser → "Sync")</li>
+          <li>The synced folder appears in your Windows Explorer / Finder as a local folder</li>
+          <li>Add that folder to your CoWork workspace, or copy files from it into your CoWork folder</li>
+          <li>Changes you save back to the OneDrive-synced folder will sync to SharePoint automatically</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+
+  <!-- SECTION 3: DATA AND SECURITY -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-green">🔒</div>
+      <div class="section-title">Data, Privacy &amp; Security</div>
+    </div>
+
+    <details>
+      <summary>Is it safe to put BRG data into CoWork?</summary>
+      <div class="answer">
+        <p>Claude CoWork is on BRG's approved tool list. Anthropic's enterprise data commitments include:</p>
+        <ul>
+          <li>Conversations and files are not used to train Anthropic's models</li>
+          <li>Data is encrypted in transit and at rest</li>
+          <li>Enterprise accounts are isolated from consumer accounts</li>
+        </ul>
+        <p>General guidelines for what's appropriate:</p>
+        <ul>
+          <li><span class="yes">✓</span> Internal documents, drafts, reports, analysis — fine</li>
+          <li><span class="yes">✓</span> Meeting notes, presentation prep, email drafting — fine</li>
+          <li><span class="partial">~</span> Commercially sensitive strategy documents — use judgement; check with your manager if unsure</li>
+          <li><span class="no">✗</span> Customer personal data (PII) — do not paste raw PII into any AI tool without explicit guidance from Privacy team</li>
+        </ul>
+        <div class="note">If in doubt about a specific data type, ask your Workstream Lead or contact Madison Sertic (Privacy).</div>
+      </div>
+    </details>
+
+    <details>
+      <summary>What about AI-generated images or likenesses?</summary>
+      <div class="answer">
+        <p>AI-generated images that depict real people require <strong>release forms</strong> from those individuals. This applies to any AI image generation tool, not just CoWork.</p>
+        <p>Before using AI-generated images of real people in any production content:</p>
+        <ul>
+          <li>Consult <strong>Annabela Lima</strong> (Privacy/Security) and <strong>Madison Sertic</strong> (Privacy)</li>
+          <li>Confirm: Is the depicted person real or synthetic? Were they consented? Where was the source image from?</li>
+        </ul>
+        <p>This applies to content generation tools broadly (Nano Banana 2, GPT Image 2, etc.).</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Does CoWork use my data to train Claude?</summary>
+      <div class="answer">
+        <p>No. BRG operates under an enterprise Anthropic agreement. The agreement explicitly covers:</p>
+        <ul>
+          <li>BRG will not use customer personal data to train external AI models without explicit consent</li>
+          <li>Data you share in CoWork is not used to train Anthropic's models</li>
+        </ul>
+        <p>This is consistent with BRG's AI Governance Statement (under Board review since Oct 2025).</p>
+      </div>
+    </details>
+  </div>
+
+  <!-- SECTION 4: USING COWORK -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-amber">⚙️</div>
+      <div class="section-title">Using CoWork Day-to-Day</div>
+    </div>
+
+    <details>
+      <summary>What is "outcome-first prompting" and why does it matter?</summary>
+      <div class="answer">
+        <p>Outcome-first prompting means starting with the finished result you want, not a step-by-step instruction set. Instead of "write me a brief about X, then format it, then add a summary," you say: "I need a two-page brief on X saved as brief-X.docx in my Documents folder."</p>
+        <p>CoWork is designed for this. Because it has access to your local files and persistent memory, it can carry out multi-step tasks and produce files directly — not just give you text to copy out of a chat window.</p>
+        <div class="tip">The "walk away" pattern: give CoWork the outcome you need, let it run, come back to a finished file. This is the primary value shift from using Claude Chat.</div>
+      </div>
+    </details>
+
+    <details>
+      <summary>What's the best way to handle large files or multiple documents?</summary>
+      <div class="answer">
+        <p>This is one of CoWork's strongest differentiators. Because it accesses local files directly (no browser upload limit), you can:</p>
+        <ul>
+          <li>Point CoWork at a folder of PDFs and ask it to synthesise across all of them</li>
+          <li>Work with large Excel files without hitting browser upload caps</li>
+          <li>Process multiple documents in a single session</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Can I share my CoWork setup or templates with my team?</summary>
+      <div class="answer">
+        <p>Not automatically — CoWork is sandboxed per machine. But you can share the <em>setup files</em> manually:</p>
+        <ul>
+          <li>Share your <code>claude.md</code> and <code>memory.md</code> templates via Teams/SharePoint</li>
+        </ul>
+        <div class="note">Real-time collaboration (co-editing a live document together) is not supported in CoWork. If that's your primary need, ChatGPT Workspace Agents (currently under BRG security review) may be worth watching — it connects directly to SharePoint and Jira.</div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Which Claude model should I use in CoWork?</summary>
+      <div class="answer">
+        <p>CoWork gives you model options within the app. Vivid's guidance (May 2026):</p>
+        <ul>
+          <li><strong>Claude Opus</strong> — Use for planning and complex reasoning only (it's expensive; ~5× the cost of standard)</li>
+          <li><strong>Claude Sonnet</strong> — Use for execution, drafting, and day-to-day tasks. Best balance of quality and cost.</li>
+          <li><strong>Claude Haiku</strong> — Use for fast, repetitive tasks (e.g., daily briefings, formatting) where speed matters more than depth</li>
+        </ul>
+        <div class="note">Many users default to Opus without realising the cost difference. If you're not doing complex reasoning, switch to Sonnet — same quality for most tasks, significantly cheaper on BRG's usage-based licence.</div>
+      </div>
+    </details>
+
+    <details>
+      <summary>What are "Skills" and how do I use them?</summary>
+      <div class="answer">
+        <p>A Skill is a reusable, multi-step workflow you can trigger with a single click or phrase — essentially a saved prompt sequence. Example skills from the pilot:</p>
+        <ul>
+          <li>Daily briefing: summarise my Outlook inbox and calendar, prioritise by current week's focus</li>
+          <li>Meeting prep: pull the agenda, read relevant Confluence pages, draft talking points</li>
+          <li>Weekly report: pull data from a folder, synthesise into a formatted report</li>
+        </ul>
+        <p><strong>When to build a Skill:</strong> When you find yourself doing the same task 2–3+ times per week. Don't build Skills prematurely — understand the workflow through iteration first.</p>
+        <div class="tip">Vivid's CoworkOS setup guide walks through how to create your first Skill from a recurring task.</div>
+      </div>
+    </details>
+  </div>
+
+  <!-- SECTION 5: GETTING HELP -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon icon-red">🆘</div>
+      <div class="section-title">Getting Help</div>
+    </div>
+
+    <details open>
+      <summary>Who do I go to if I'm stuck?</summary>
+      <div class="answer">
+        <p>Follow this path — in order:</p>
+        <div class="escalation-steps">
+          <div class="escalation-step">
+            <div class="step-num">1</div>
+            <div class="step-text"><strong>Self-serve first</strong> — Anthropic Academy (anthropic.com/learn) and the use-case library in Teams/SharePoint cover most common questions</div>
+          </div>
+          <div class="escalation-step">
+            <div class="step-num">2</div>
+            <div class="step-text"><strong>Community channel</strong> — Post your questions on BRG AI Teams or Slack channel dedicated to your function. Peer answers are fast, visible, and searchable. Likely someone else has had the same issue.</div>
+          </div>
+          <div class="escalation-step">
+            <div class="step-num">3</div>
+            <div class="step-text"><strong>Your AI Workstream Lead</strong> — The first person in your function who knows where answers live. They're your function's first port of call for CoWork questions.</div>
+          </div>
+          <div class="escalation-step">
+            <div class="step-num">4</div>
+            <div class="step-text"><strong>AI CoE Team</strong> — Lilly Liang (lilly.liang@breville.com) and Vivid Savitri for policy issues, platform blockers, or exceptions. Escalate only — not for first-line questions.</div>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Where can I find more training and use cases?</summary>
+      <div class="answer">
+        <ul>
+          <li><strong>Anthropic Academy</strong> — anthropic.com/learn — free, self-paced CoWork training</li>
+          <li><strong>Use-case library</strong> — in Teams/SharePoint; built from Finance and Service Delivery pilot learnings. Add your own use cases as you develop them — the library grows through community contributions.</li>
+          <li><strong>Community channel</strong> — search first; post your own learnings. This is the living knowledge base for CoWork at BRG.</li>
+          <li><strong>CoworkOS setup guide</strong> — covers setup, workstations, and Skills</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+
+  <div class="footer">
+    <div>Claude CoWork FAQ · Jun 2026 · By: Lilly Liang</div>
+  </div>
+
+</div>
+</body>
+</html>

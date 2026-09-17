@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive explainer on knowledge graphs, memory graphs and context graphs for AI systems.">
+  <title>You Probably Don’t Need Three Graph Databases</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+    :root {
+      --ink: #edf1f5;
+      --muted: #9ca8b5;
+      --faint: #687582;
+      --bg: #0b1016;
+      --bg-deep: #070b10;
+      --panel: rgba(21, 29, 38, 0.84);
+      --panel-strong: #151e28;
+      --line: rgba(236, 241, 245, 0.14);
+      --line-strong: rgba(236, 241, 245, 0.25);
+      --coral: #ff907c;
+      --aqua: #83d8cf;
+      --violet: #b4a2ff;
+      --yellow: #f5ce78;
+      --blue: #88b9ff;
+      --green: #99d49c;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      background:
+        radial-gradient(circle at 12% 10%, rgba(255, 144, 124, 0.09), transparent 28rem),
+        radial-gradient(circle at 90% 78%, rgba(131, 216, 207, 0.07), transparent 32rem),
+        var(--bg);
+      color: var(--ink);
+      font-family: 'Manrope', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+
+    button, a { font: inherit; }
+    button { color: inherit; }
+    a { color: inherit; }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 22px clamp(18px, 4vw, 64px) 20px;
+      position: relative;
+    }
+
+    .topbar, .bottombar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .brand, .counter, .mono, .eyebrow, .kicker, .step-label {
+      font-family: 'DM Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .brand { color: var(--coral); font-size: 11px; font-weight: 500; }
+    .counter { color: var(--muted); font-size: 11px; }
+    .progress {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -12px;
+      height: 1px;
+      background: var(--line);
+    }
+    .progress > span {
+      display: block;
+      height: 100%;
+      width: 6.25%;
+      background: var(--coral);
+      transition: width 300ms ease;
+    }
+
+    main {
+      display: grid;
+      place-items: center;
+      min-height: 0;
+      padding: clamp(32px, 7vh, 88px) 0 clamp(30px, 6vh, 70px);
+    }
+
+    .deck { width: min(1120px, 100%); height: min(690px, 74vh); min-height: 520px; position: relative; }
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      align-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(24px);
+      transition: opacity 260ms ease, transform 320ms ease, visibility 260ms ease;
+    }
+    .slide.is-active { opacity: 1; visibility: visible; transform: translateX(0); }
+
+    .slide-inner { width: 100%; }
+    .eyebrow { color: var(--coral); font-size: 11px; margin-bottom: 18px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 900px; font-size: clamp(40px, 7vw, 88px); line-height: 0.98; letter-spacing: -0.065em; margin-bottom: 28px; }
+    h2 { max-width: 860px; font-size: clamp(32px, 5vw, 62px); line-height: 1.03; letter-spacing: -0.055em; margin-bottom: 22px; }
+    h3 { font-size: clamp(18px, 2vw, 25px); line-height: 1.12; letter-spacing: -0.035em; margin-bottom: 10px; }
+    .lede { color: var(--muted); font-size: clamp(17px, 2vw, 23px); line-height: 1.45; max-width: 730px; }
+    .small { color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .faint { color: var(--faint); }
+    .accent { color: var(--coral); }
+    .coral { color: var(--coral); }
+    .aqua { color: var(--aqua); }
+    .violet { color: var(--violet); }
+    .yellow { color: var(--yellow); }
+    .blue { color: var(--blue); }
+
+    .hero-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 48px; align-items: end; }
+    .hero-note { border-left: 1px solid var(--coral); padding: 4px 0 4px 22px; color: var(--muted); max-width: 270px; line-height: 1.5; }
+    .hero-note strong { display: block; color: var(--ink); margin-bottom: 9px; font-size: 18px; }
+    .stamp { margin-top: 36px; color: var(--faint); font: 11px 'DM Mono', monospace; text-transform: uppercase; letter-spacing: .08em; }
+
+    .two-col { display: grid; grid-template-columns: 0.75fr 1.25fr; gap: clamp(28px, 5vw, 72px); align-items: start; }
+    .two-col.equal { grid-template-columns: 1fr 1fr; }
+    .section-intro { color: var(--muted); font-size: 16px; line-height: 1.55; max-width: 360px; }
+
+    .plain-english {
+      background: linear-gradient(135deg, rgba(255, 144, 124, 0.12), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 144, 124, 0.24);
+      border-radius: 18px;
+      padding: 25px 28px;
+      font-size: clamp(19px, 2.4vw, 29px);
+      line-height: 1.25;
+      letter-spacing: -0.035em;
+      margin-bottom: 22px;
+    }
+    .benefit-list { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; }
+    .benefit-list li { display: grid; grid-template-columns: 22px 1fr; gap: 9px; color: var(--muted); line-height: 1.45; }
+    .benefit-list li::before { content: '↗'; color: var(--coral); font-weight: 700; }
+
+    .role-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .role-table th { text-align: left; color: var(--faint); font: 10px 'DM Mono', monospace; text-transform: uppercase; letter-spacing: .08em; padding: 0 14px 13px; }
+    .role-table td { padding: 18px 14px; border-top: 1px solid var(--line); vertical-align: top; line-height: 1.45; color: var(--muted); }
+    .role-table td:first-child { width: 26%; color: var(--ink); font-weight: 700; }
+    .role-table tr:last-child td { border-bottom: 1px solid var(--line); }
+    .role-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 8px; background: currentColor; }
+
+    .trust-ladder { display: grid; gap: 9px; margin-top: 8px; }
+    .trust-step { display: grid; grid-template-columns: 44px 1fr auto; gap: 14px; align-items: center; padding: 15px 17px; border: 1px solid var(--line); border-radius: 13px; background: rgba(21, 29, 38, .54); }
+    .trust-step .number { color: var(--faint); font: 12px 'DM Mono', monospace; }
+    .trust-step strong { font-size: 15px; }
+    .trust-step span:last-child { color: var(--muted); font-size: 12px; text-align: right; }
+    .quote { border-left: 2px solid var(--coral); padding: 8px 0 8px 22px; font-size: clamp(21px, 3vw, 34px); line-height: 1.22; letter-spacing: -0.04em; margin: 30px 0 0; }
+
+    .role-header { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; }
+    .role-chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border-radius: 999px; border: 1px solid currentColor; font: 11px 'DM Mono', monospace; text-transform: uppercase; letter-spacing: .07em; }
+    .role-chip::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .role-copy { max-width: 660px; color: var(--muted); font-size: 17px; line-height: 1.55; }
+    .code-block { margin: 24px 0 0; padding: 20px 22px; border-radius: 14px; background: #080c11; border: 1px solid var(--line); color: #c8d4df; font: 13px/1.75 'DM Mono', monospace; overflow-x: auto; white-space: pre; }
+    .code-block .node { color: var(--aqua); }
+    .code-block .rel { color: var(--coral); }
+    .code-block .type { color: var(--violet); }
+
+    .memory-map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 27px; }
+    .memory-tile { padding: 17px; border: 1px solid var(--line); border-radius: 13px; background: rgba(21, 29, 38, .58); min-height: 112px; }
+    .memory-tile strong { display: block; margin-bottom: 7px; font-size: 14px; }
+    .memory-tile span { color: var(--muted); font-size: 12px; line-height: 1.45; }
+
+    .context-shell { display: grid; grid-template-columns: 0.82fr 1.18fr; gap: 20px; align-items: stretch; }
+    .context-selector { display: grid; gap: 8px; }
+    .context-selector button, .stepper button, .nav-button, .mini-button { cursor: pointer; background: transparent; border: 1px solid var(--line); border-radius: 11px; text-align: left; padding: 14px 15px; transition: border-color 160ms ease, background 160ms ease, transform 160ms ease; }
+    .context-selector button:hover, .stepper button:hover, .nav-button:hover, .mini-button:hover { border-color: var(--line-strong); transform: translateY(-1px); }
+    .context-selector button[aria-pressed="true"] { border-color: var(--coral); background: rgba(255, 144, 124, .09); }
+    .context-selector strong { display: block; font-size: 14px; margin-bottom: 4px; }
+    .context-selector span { color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .context-output { background: linear-gradient(135deg, rgba(131, 216, 207, .11), rgba(180, 162, 255, .08)); border: 1px solid rgba(131, 216, 207, .23); border-radius: 18px; padding: 25px; min-height: 270px; }
+    .context-output .mono { color: var(--aqua); font-size: 10px; margin-bottom: 18px; }
+    .context-output h3 { margin-bottom: 13px; }
+    .context-output p { color: var(--muted); line-height: 1.55; margin-bottom: 14px; }
+    .context-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+    .context-tags span { color: var(--ink); border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; font: 11px 'DM Mono', monospace; }
+
+    .loop { position: relative; min-height: 355px; border: 1px solid var(--line); border-radius: 20px; background: rgba(12, 18, 25, .55); overflow: hidden; }
+    .loop::before, .loop::after { content: ''; position: absolute; border: 1px dashed rgba(255, 255, 255, .13); border-radius: 50%; pointer-events: none; }
+    .loop::before { width: 300px; height: 300px; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+    .loop::after { width: 190px; height: 190px; left: 50%; top: 50%; transform: translate(-50%, -50%); border-color: rgba(255, 144, 124, .23); }
+    .loop-node { position: absolute; width: 160px; padding: 15px; border: 1px solid var(--line-strong); border-radius: 13px; background: var(--panel-strong); z-index: 1; }
+    .loop-node strong { display: block; font-size: 14px; margin-bottom: 5px; }
+    .loop-node span { display: block; color: var(--muted); font-size: 11px; line-height: 1.35; }
+    .loop-node.knowledge { left: 8%; top: 12%; border-color: rgba(180, 162, 255, .6); }
+    .loop-node.memory { right: 8%; top: 12%; border-color: rgba(131, 216, 207, .6); }
+    .loop-node.context { left: 50%; bottom: 11%; transform: translateX(-50%); border-color: rgba(255, 144, 124, .7); }
+    .loop-arrow { position: absolute; color: var(--faint); font: 18px 'DM Mono', monospace; z-index: 2; }
+    .loop-arrow.a { left: 43%; top: 18%; }
+    .loop-arrow.b { right: 47%; top: 56%; transform: rotate(135deg); }
+    .loop-arrow.c { left: 36%; top: 57%; transform: rotate(45deg); }
+    .loop-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--faint); font: 10px 'DM Mono', monospace; letter-spacing: .08em; text-transform: uppercase; text-align: center; z-index: 1; }
+
+    .use-cases { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
+    .use-case { border: 1px solid var(--line); border-radius: 16px; padding: 19px; background: rgba(21, 29, 38, .62); min-height: 215px; }
+    .use-case .case-no { color: var(--faint); font: 11px 'DM Mono', monospace; margin-bottom: 28px; }
+    .use-case h3 { font-size: 19px; }
+    .use-case p { color: var(--muted); font-size: 13px; line-height: 1.52; }
+    .use-case em { color: var(--ink); font-style: normal; }
+
+    .checklist { display: grid; gap: 10px; }
+    .check { display: grid; grid-template-columns: 30px 1fr; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+    .check input { appearance: none; width: 22px; height: 22px; border: 1px solid var(--line-strong); border-radius: 7px; margin: 0; cursor: pointer; position: relative; }
+    .check input:checked { background: var(--coral); border-color: var(--coral); }
+    .check input:checked::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; color: var(--bg); font-weight: 800; font-size: 14px; }
+    .check label { cursor: pointer; }
+    .check strong { display: block; font-size: 14px; margin-bottom: 4px; }
+    .check span { color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .decision-box { padding: 21px; border-radius: 17px; border: 1px solid rgba(245, 206, 120, .3); background: rgba(245, 206, 120, .08); }
+    .decision-box .mono { color: var(--yellow); font-size: 10px; margin-bottom: 15px; }
+    .decision-box p { font-size: 20px; line-height: 1.25; letter-spacing: -.03em; margin-bottom: 0; }
+
+    .step-layout { display: grid; grid-template-columns: 0.68fr 1.32fr; gap: 30px; align-items: stretch; }
+    .step-list { display: grid; gap: 7px; align-content: start; }
+    .stepper button { display: grid; grid-template-columns: 32px 1fr; gap: 8px; align-items: center; }
+    .stepper button[aria-pressed="true"] { border-color: var(--coral); background: rgba(255, 144, 124, .09); }
+    .stepper .step-no { color: var(--coral); font: 11px 'DM Mono', monospace; }
+    .stepper .step-title { font-size: 13px; font-weight: 700; }
+    .guide-card { background: linear-gradient(135deg, rgba(180, 162, 255, .1), rgba(131, 216, 207, .06)); border: 1px solid rgba(180, 162, 255, .25); border-radius: 18px; padding: 27px; min-height: 340px; display: grid; align-content: start; }
+    .guide-card .step-label { color: var(--violet); font-size: 10px; margin-bottom: 19px; }
+    .guide-card h3 { font-size: 28px; margin-bottom: 13px; }
+    .guide-card p { color: var(--muted); line-height: 1.55; max-width: 560px; }
+    .done-line { display: flex; align-items: baseline; gap: 9px; margin-top: 13px; padding-top: 17px; border-top: 1px solid var(--line); }
+    .done-line strong { color: var(--green); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+    .done-line span { color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .guide-nav { display: flex; justify-content: space-between; margin-top: 22px; gap: 10px; }
+    .mini-button { color: var(--muted); font-size: 12px; padding: 10px 12px; }
+    .mini-button:disabled { opacity: .35; cursor: not-allowed; transform: none; }
+
+    .final-box { max-width: 740px; padding: 27px 31px; border: 1px solid var(--line); border-radius: 18px; background: rgba(21, 29, 38, .63); margin-top: 30px; }
+    .final-box p { font-size: clamp(20px, 3vw, 31px); line-height: 1.2; letter-spacing: -.04em; margin-bottom: 0; }
+    .source-link { display: inline-block; margin-top: 26px; color: var(--muted); font-size: 12px; text-decoration-color: var(--coral); text-underline-offset: 4px; }
+
+    .bottombar { color: var(--faint); font-size: 11px; }
+    .keyboard-hint { font: 10px 'DM Mono', monospace; text-transform: uppercase; letter-spacing: .06em; }
+    .nav { display: flex; gap: 8px; }
+    .nav-button { width: 42px; height: 36px; padding: 0; display: grid; place-items: center; font-size: 17px; }
+    .dots { display: flex; gap: 5px; align-items: center; max-width: 300px; overflow: hidden; }
+    .dot { width: 5px; height: 5px; padding: 0; border: 0; border-radius: 50%; background: var(--faint); opacity: .55; cursor: pointer; transition: all 180ms ease; }
+    .dot[aria-current="true"] { width: 18px; border-radius: 999px; background: var(--coral); opacity: 1; }
+
+    @media (max-width: 800px) {
+      body { overflow: auto; }
+      .app { min-height: 100svh; padding: 17px 17px 15px; }
+      main { padding: 46px 0 35px; }
+      .deck { height: auto; min-height: 0; }
+      .slide { position: relative; display: none; transform: none; }
+      .slide.is-active { display: block; }
+      .hero-grid, .two-col, .two-col.equal, .context-shell, .step-layout { grid-template-columns: 1fr; gap: 25px; }
+      h1 { font-size: clamp(42px, 14vw, 70px); }
+      h2 { font-size: clamp(34px, 10vw, 53px); }
+      .hero-note { max-width: none; }
+      .role-table { font-size: 12px; }
+      .role-table th, .role-table td { padding: 13px 8px; }
+      .role-table th:nth-child(3), .role-table td:nth-child(3) { display: none; }
+      .role-table td:first-child { width: 32%; }
+      .memory-map, .use-cases { grid-template-columns: 1fr; }
+      .use-case { min-height: auto; }
+      .loop { min-height: 330px; }
+      .loop-node { width: 133px; padding: 12px; }
+      .loop-node.knowledge { left: 4%; }
+      .loop-node.memory { right: 4%; }
+      .loop-node.context { bottom: 8%; }
+      .loop-arrow { display: none; }
+      .bottombar { align-items: flex-end; }
+      .keyboard-hint { display: none; }
+      .dots { max-width: 190px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behaviour: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="deck-app">
+    <header class="topbar">
+      <div class="brand">GRAPH ROLES / AI ARCHITECTURE</div>
+      <div class="counter" id="slide-counter" aria-live="polite">01 / 18</div>
+      <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+    </header>
+
+    <main>
+      <div class="deck" id="slides" aria-live="polite">
+        <section class="slide is-active" data-title="Start here">
+          <div class="slide-inner hero-grid">
+            <div>
+              <div class="eyebrow">A beginner-friendly explainer</div>
+              <h1>You probably don’t need <span class="accent">three</span> graph databases.</h1>
+              <p class="lede">Knowledge graphs, memory graphs and context graphs are usually three architectural jobs, not three procurement decisions.</p>
+              <div class="stamp">Knowledge · experience · runtime context</div>
+            </div>
+            <div class="hero-note"><strong>The useful question</strong>What should be trusted, what should be remembered, and what should the agent use right now?</div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="TL;DR">
+          <div class="slide-inner two-col">
+            <div>
+              <div class="eyebrow">01 / TL;DR</div>
+              <h2>Three names. Three jobs.</h2>
+              <p class="section-intro">Think of the system as an organisation that knows things, remembers what happened, then prepares a small brief for the decision in front of it.</p>
+            </div>
+            <div>
+              <div class="plain-english">The <strong>knowledge graph</strong> holds accepted meaning. The <strong>memory graph</strong> holds experience. The <strong>context graph</strong> holds the evidence selected for this task.</div>
+              <ul class="benefit-list">
+                <li>Less accidental promotion of an AI guess into an official fact.</li>
+                <li>Better retrieval when identity, relationships, time or provenance matter.</li>
+                <li>A clearer path from one assistant’s memory to a governed enterprise capability.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Roles at a glance">
+          <div class="slide-inner">
+            <div class="eyebrow">02 / The mental model</div>
+            <h2>Same connected world. Different authority.</h2>
+            <table class="role-table" aria-label="Comparison of graph roles">
+              <thead><tr><th>Role</th><th>Represents</th><th>Question</th></tr></thead>
+              <tbody>
+                <tr><td class="violet"><span class="role-dot"></span>Knowledge graph</td><td>Governed meaning the organisation has accepted for reuse.</td><td>What do we treat as true or applicable?</td></tr>
+                <tr><td class="aqua"><span class="role-dot"></span>Memory graph</td><td>Retained experience from interactions, claims, actions and outcomes.</td><td>What happened before, and what did we learn?</td></tr>
+                <tr><td class="accent"><span class="role-dot"></span>Context graph</td><td>Information selected for one task, actor, purpose and point in time.</td><td>What should this agent use right now?</td></tr>
+              </tbody>
+            </table>
+            <p class="quote">Connected doesn’t mean equivalent.</p>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Trust boundary">
+          <div class="slide-inner two-col equal">
+            <div>
+              <div class="eyebrow">03 / The trust boundary</div>
+              <h2>A graph is not automatically a source of truth.</h2>
+              <p class="section-intro">Nodes and relationships tell us how information connects. They don’t tell us whether the organisation accepts it, whether it is current, or whether an agent may use it.</p>
+            </div>
+            <div>
+              <div class="trust-ladder">
+                <div class="trust-step"><span class="number">01</span><strong>Observation</strong><span>What a source presented</span></div>
+                <div class="trust-step"><span class="number">02</span><strong>Claim</strong><span>What a model extracted or inferred</span></div>
+                <div class="trust-step"><span class="number">03</span><strong>Decision</strong><span>What a reviewer or process accepted</span></div>
+                <div class="trust-step"><span class="number">04</span><strong>Governed assertion</strong><span>What is safe to reuse</span></div>
+              </div>
+              <p class="quote">AI proposes. Systems validate. The graph records what happened.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Knowledge graph">
+          <div class="slide-inner">
+            <div class="role-header"><span class="role-chip violet">Knowledge graph</span><span class="small">The organisation’s accepted meaning</span></div>
+            <h2>Institutional memory, with rules around it.</h2>
+            <p class="role-copy">A knowledge graph can hold canonical entities, accepted definitions, approved relationships, domain rules and obligations that multiple workflows are allowed to reuse.</p>
+            <pre class="code-block"><span class="node">(:LegalEntity)</span><span class="rel">-[:REGISTERED_IN]-&gt;</span><span class="node">(:Jurisdiction)</span>
+<span class="node">(:LegalEntity)</span><span class="rel">-[:HAS_BENEFICIAL_OWNER]-&gt;</span><span class="node">(:Person)</span>
+<span class="node">(:EntityType)</span><span class="rel">-[:SUBJECT_TO]-&gt;</span><span class="node">(:ComplianceObligation)</span></pre>
+            <p class="small" style="margin-top:18px;">The value is not “we turned a document into a node”. The value is connecting identity, relationships, evidence and rules in a reusable form.</p>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Memory graph">
+          <div class="slide-inner">
+            <div class="role-header"><span class="role-chip aqua">Memory graph</span><span class="small">Experience, not truth</span></div>
+            <h2>Remember what happened without pretending every memory is a fact.</h2>
+            <p class="role-copy">Memory connects episodes, observations, claims, retrievals, tool calls, decisions, actions, outcomes and feedback. It gives an agent continuity, but it must preserve uncertainty and rejection too.</p>
+            <div class="memory-map">
+              <div class="memory-tile"><strong class="aqua">Source event</strong><span>What the agent received, what a tool returned, and what action was requested.</span></div>
+              <div class="memory-tile"><strong class="violet">Derived memory</strong><span>Claims, decisions and outcomes linked to canonical identities.</span></div>
+              <div class="memory-tile"><strong class="yellow">Negative knowledge</strong><span>Claims rejected, sources superseded, or actions prohibited for a purpose.</span></div>
+            </div>
+            <p class="quote">Repeated retrieval does not turn uncertainty into truth. It just gives the uncertainty better distribution.</p>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Context graph">
+          <div class="slide-inner">
+            <div class="role-header"><span class="role-chip accent">Context graph</span><span class="small">What the agent is allowed to see now</span></div>
+            <h2>The runtime brief, not another permanent source of truth.</h2>
+            <div class="context-shell">
+              <div class="context-selector" aria-label="Context inputs">
+                <button type="button" aria-pressed="true" data-context="knowledge"><strong class="violet">Governed knowledge</strong><span>Accepted entities, rules and relationships.</span></button>
+                <button type="button" aria-pressed="false" data-context="memory"><strong class="aqua">Retained experience</strong><span>Previous claims, decisions and outcomes.</span></button>
+                <button type="button" aria-pressed="false" data-context="live"><strong class="yellow">Live state + policy</strong><span>What is current, permitted and relevant.</span></button>
+              </div>
+              <div class="context-output" id="context-output">
+                <div class="mono">CURRENT CONTEXT / 01</div>
+                <h3 id="context-title">Start with accepted meaning.</h3>
+                <p id="context-copy">Select the canonical entity, relationship and rule that anchor the task. Don’t begin with the entire enterprise graph.</p>
+                <div class="context-tags" id="context-tags"><span>canonical identity</span><span>accepted relationship</span><span>applicable rule</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="The loop">
+          <div class="slide-inner">
+            <div class="eyebrow">06 / How they work together</div>
+            <h2>It’s a lifecycle, not a hierarchy.</h2>
+            <div class="loop" aria-label="Architecture loop showing knowledge, memory and context">
+              <div class="loop-node knowledge"><strong class="violet">Governed knowledge</strong><span>Accepted meaning and rules.</span></div>
+              <div class="loop-node memory"><strong class="aqua">Retained experience</strong><span>Claims, actions and outcomes.</span></div>
+              <div class="loop-node context"><strong class="accent">Context assembly</strong><span>The evidence selected for one decision.</span></div>
+              <div class="loop-arrow a">→</div><div class="loop-arrow b">→</div><div class="loop-arrow c">→</div>
+              <div class="loop-center">task / policy / time</div>
+            </div>
+            <p class="small" style="margin-top:17px;">Most experience stays memory. Repeated, validated patterns may eventually change governed knowledge.</p>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Use cases">
+          <div class="slide-inner">
+            <div class="eyebrow">07 / Where this becomes useful</div>
+            <h2>Use the pattern when relationships change the answer.</h2>
+            <div class="use-cases">
+              <article class="use-case"><div class="case-no">CASE 01 / COMPLIANCE</div><h3>Ownership review</h3><p><em>Knowledge:</em> accepted entities and obligations. <em>Memory:</em> previous claims and analyst decisions. <em>Context:</em> the evidence permitted for this review.</p></article>
+              <article class="use-case"><div class="case-no">CASE 02 / LAB NOTEBOOK</div><h3>Experiment continuity</h3><p><em>Knowledge:</em> approved methods and instrument definitions. <em>Memory:</em> prior runs, anomalies and corrections. <em>Context:</em> the evidence relevant to today’s experiment.</p></article>
+              <article class="use-case"><div class="case-no">CASE 03 / SERVICE AGENT</div><h3>Product support</h3><p><em>Knowledge:</em> product facts and safe procedures. <em>Memory:</em> previous troubleshooting attempts. <em>Context:</em> the customer’s device, symptoms and current policy.</p></article>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Do you need a graph?">
+          <div class="slide-inner two-col equal">
+            <div>
+              <div class="eyebrow">08 / Architecture decision</div>
+              <h2>Don’t graph a problem just because an agent is involved.</h2>
+              <p class="section-intro">A profile record, transaction table, versioned document, event stream, lexical index or vector store may be the right answer.</p>
+              <div class="decision-box" style="margin-top:25px;"><div class="mono">THE ECONOMIC QUESTION</div><p>Does the improvement justify identity resolution, modelling, governance, security and reprocessing cost?</p></div>
+            </div>
+            <div class="checklist" aria-label="Graph suitability checklist">
+              <div class="check"><input type="checkbox" id="c1"><label for="c1"><strong>Multi-hop relationships matter</strong><span>Correct retrieval requires traversing connected facts, not just matching text.</span></label></div>
+              <div class="check"><input type="checkbox" id="c2"><label for="c2"><strong>Identity varies across systems</strong><span>The same entity appears under different IDs, names or sessions.</span></label></div>
+              <div class="check"><input type="checkbox" id="c3"><label for="c3"><strong>Time changes meaning</strong><span>The relationship was valid then, but not necessarily now.</span></label></div>
+              <div class="check"><input type="checkbox" id="c4"><label for="c4"><strong>Provenance affects trust</strong><span>Where the information came from changes whether it can be used.</span></label></div>
+              <div class="check"><input type="checkbox" id="c5"><label for="c5"><strong>Past outcomes alter the next decision</strong><span>Previous actions, corrections or failures change what should happen next.</span></label></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="How to implement">
+          <div class="slide-inner">
+            <div class="eyebrow">09 / Implementation guide</div>
+            <h2>Build the smallest trustworthy version first.</h2>
+            <p class="lede">Use the six steps below as a design review. Select a step to see its done condition.</p>
+            <div class="step-layout" style="margin-top:28px;">
+              <div class="step-list stepper" aria-label="Implementation steps">
+                <button type="button" aria-pressed="true" data-step="0"><span class="step-no">01</span><span class="step-title">Frame the roles</span></button>
+                <button type="button" aria-pressed="false" data-step="1"><span class="step-no">02</span><span class="step-title">Model identity + provenance</span></button>
+                <button type="button" aria-pressed="false" data-step="2"><span class="step-no">03</span><span class="step-title">Control the write path</span></button>
+                <button type="button" aria-pressed="false" data-step="3"><span class="step-no">04</span><span class="step-title">Assemble task context</span></button>
+                <button type="button" aria-pressed="false" data-step="4"><span class="step-no">05</span><span class="step-title">Snapshot + evaluate</span></button>
+                <button type="button" aria-pressed="false" data-step="5"><span class="step-no">06</span><span class="step-title">Choose the physical shape</span></button>
+              </div>
+              <div class="guide-card">
+                <div class="step-label" id="guide-label">STEP 01 / BOUNDARIES</div>
+                <h3 id="guide-title">Frame the three roles.</h3>
+                <p id="guide-copy">Write down what counts as governed knowledge, what counts as experience, and what is assembled only for the current task. Put authority and lifecycle next to every category.</p>
+                <div class="done-line"><strong>Done when</strong><span id="guide-done">A reviewer can classify any new record without guessing where it belongs.</span></div>
+                <div class="guide-nav"><button type="button" class="mini-button" id="guide-prev" disabled>← Previous</button><button type="button" class="mini-button" id="guide-next">Next step →</button></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Step 2">
+          <div class="slide-inner two-col equal">
+            <div><div class="eyebrow">10 / Implementation guide</div><h2>Give every durable memory a reliable identity.</h2><p class="section-intro">Link memory to canonical entities instead of creating a second, competing version of the business world.</p></div>
+            <div><div class="trust-ladder"><div class="trust-step"><span class="number">01</span><strong>Stable ID</strong><span>Which entity, case or run?</span></div><div class="trust-step"><span class="number">02</span><strong>Source</strong><span>Where did this come from?</span></div><div class="trust-step"><span class="number">03</span><strong>Time</strong><span>When was it valid and recorded?</span></div><div class="trust-step"><span class="number">04</span><strong>Scope</strong><span>Who, which tenant or purpose?</span></div><div class="trust-step"><span class="number">05</span><strong>Lifecycle</strong><span>Current, rejected or superseded?</span></div></div><p class="small" style="margin-top:17px;">Keep the original source event available so derived graphs can be rebuilt when your extraction logic changes.</p></div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Step 3">
+          <div class="slide-inner two-col equal">
+            <div><div class="eyebrow">11 / Implementation guide</div><h2>Make the write path harder than the read path.</h2><p class="section-intro">An agent should be able to suggest a claim quickly. It should not be able to silently promote that claim into governed knowledge.</p></div>
+            <div><div class="plain-english"><strong>Separate:</strong><br>observation → claim → evidence → review → accepted assertion</div><ul class="benefit-list"><li>Authenticate who or what wrote the memory.</li><li>Quarantine unreviewed claims.</li><li>Record rejected claims and why they were rejected.</li><li>Keep access control separate from domain rules and runtime policy.</li></ul></div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Step 4">
+          <div class="slide-inner two-col equal">
+            <div><div class="eyebrow">12 / Implementation guide</div><h2>Assemble a brief for the task, not the whole graph.</h2><p class="section-intro">Select what is relevant, valid for the date, applicable to the entity and permitted for the stated purpose.</p></div>
+            <div><div class="context-output"><div class="mono">CONTEXT SNAPSHOT / REQUIRED FOR REPLAY</div><h3>Capture the decision environment.</h3><p>Record the selected source versions, graph assertions, times, policy versions, access decisions, retrieval parameters, actor and task.</p><div class="context-tags"><span>evidence</span><span>time</span><span>policy</span><span>actor</span><span>purpose</span></div></div><p class="small" style="margin-top:17px;">A list of mutable node IDs is not enough to reconstruct historical context.</p></div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Step 5">
+          <div class="slide-inner two-col equal">
+            <div><div class="eyebrow">13 / Implementation guide</div><h2>Evaluate retrieval and memory together.</h2><p class="section-intro">A memory system can preserve history perfectly and still make the agent worse if retrieval keeps serving stale or rejected experience.</p></div>
+            <div><div class="trust-ladder"><div class="trust-step"><span class="number">01</span><strong>Golden cases</strong><span>Known answers and evidence</span></div><div class="trust-step"><span class="number">02</span><strong>Failure modes</strong><span>Wrong doc, stale claim, missing provenance</span></div><div class="trust-step"><span class="number">03</span><strong>Policy tests</strong><span>What must not be retrieved or used</span></div><div class="trust-step"><span class="number">04</span><strong>Replay tests</strong><span>Can the decision be reconstructed?</span></div></div><p class="quote">The graph should help explain the decision, not just decorate the architecture diagram.</p></div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Step 6">
+          <div class="slide-inner two-col equal">
+            <div><div class="eyebrow">14 / Implementation guide</div><h2>Choose one database or several based on operating needs.</h2><p class="section-intro">Shared identity matters either way. Physical separation is justified by security, workload, retention, availability or ownership differences.</p></div>
+            <div><div class="memory-map" style="grid-template-columns:1fr;"><div class="memory-tile"><strong class="violet">One graph database</strong><span>Useful when identity, access, availability and lifecycle requirements are compatible.</span></div><div class="memory-tile"><strong class="aqua">Separate stores</strong><span>Useful when memory has higher write volume, shorter retention, stronger isolation or quarantine needs.</span></div><div class="memory-tile"><strong class="coral">No graph database</strong><span>Right when a profile record, table, document, event stream or vector index solves the actual problem.</span></div></div></div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Final takeaways">
+          <div class="slide-inner">
+            <div class="eyebrow">15 / The practical version</div>
+            <h2>Make the distinction before you make the diagram.</h2>
+            <div class="final-box"><p><span class="violet">Knowledge</span> is what the organisation accepts.<br><span class="aqua">Memory</span> is what the system experienced.<br><span class="accent">Context</span> is what this task is allowed to use.</p></div>
+            <p class="lede" style="margin-top:27px;">Most organisations don’t need three new graph platforms. They need a context assembly process that understands the difference between “this happened”, “this may be true”, and “this is safe to use right now”.</p>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Source">
+          <div class="slide-inner">
+            <div class="eyebrow">16 / Keep exploring</div>
+            <h2>That distinction is the architecture.</h2>
+            <p class="lede">This deck is a visual adaptation of Sergey Vasiliev’s article on knowledge graphs, memory graphs and context graphs. The article contains the full bibliography and deeper technical discussion.</p>
+            <a class="source-link" href="https://sergeyvasiliev.substack.com/p/knowledge-graph-memory-graph-and" target="_blank" rel="noreferrer">Read the original article ↗</a>
+            <p class="small" style="margin-top:55px;">Use ← → or the buttons below to move through the deck. Press Home or End to jump.</p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="bottombar">
+      <div class="keyboard-hint">← → navigate · home / end jump</div>
+      <div class="dots" id="dots" aria-label="Slide navigation"></div>
+      <div class="nav"><button type="button" class="nav-button" id="prev" aria-label="Previous slide">←</button><button type="button" class="nav-button" id="next" aria-label="Next slide">→</button></div>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      const slides = Array.from(document.querySelectorAll('.slide'));
+      const counter = document.getElementById('slide-counter');
+      const progress = document.getElementById('progress-bar');
+      const dots = document.getElementById('dots');
+      const prev = document.getElementById('prev');
+      const next = document.getElementById('next');
+      let current = 0;
+
+      slides.forEach((slide, index) => {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'dot';
+        dot.setAttribute('aria-label', `Go to slide ${index + 1}: ${slide.dataset.title}`);
+        dot.setAttribute('aria-current', index === 0 ? 'true' : 'false');
+        dot.addEventListener('click', () => goTo(index));
+        dots.appendChild(dot);
+      });
+
+      function goTo(index) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((slide, i) => slide.classList.toggle('is-active', i === current));
+        Array.from(dots.children).forEach((dot, i) => dot.setAttribute('aria-current', i === current ? 'true' : 'false'));
+        counter.textContent = `${String(current + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        prev.disabled = current === 0;
+        next.disabled = current === slides.length - 1;
+        window.location.hash = `slide-${current + 1}`;
+      }
+
+      function step(direction) { goTo(current + direction); }
+      prev.addEventListener('click', () => step(-1));
+      next.addEventListener('click', () => step(1));
+      document.addEventListener('keydown', (event) => {
+        if (event.target.matches('input, textarea, select, button') && !['ArrowLeft', 'ArrowRight', 'Home', 'End', ' '].includes(event.key)) return;
+        if (event.key === 'ArrowLeft') step(-1);
+        if (event.key === 'ArrowRight' || event.key === ' ') { event.preventDefault(); step(1); }
+        if (event.key === 'Home') goTo(0);
+        if (event.key === 'End') goTo(slides.length - 1);
+      });
+
+      const initialHash = Number(window.location.hash.replace('#slide-', ''));
+      if (Number.isInteger(initialHash) && initialHash > 0 && initialHash <= slides.length) goTo(initialHash - 1);
+      else goTo(0);
+
+      const contextData = {
+        knowledge: { title: 'Start with accepted meaning.', copy: 'Select the canonical entity, relationship and rule that anchor the task. Don’t begin with the entire enterprise graph.', tags: ['canonical identity', 'accepted relationship', 'applicable rule'] },
+        memory: { title: 'Add relevant experience.', copy: 'Bring in previous claims, decisions and outcomes, including rejected inferences that should not be repeated.', tags: ['previous claim', 'review outcome', 'negative knowledge'] },
+        live: { title: 'Filter for this moment.', copy: 'Apply current state, time, access and purpose. The context graph is the evidence this actor is permitted to use now.', tags: ['valid time', 'purpose', 'access policy'] }
+      };
+      const contextTitle = document.getElementById('context-title');
+      const contextCopy = document.getElementById('context-copy');
+      const contextTags = document.getElementById('context-tags');
+      document.querySelectorAll('[data-context]').forEach((button) => {
+        button.addEventListener('click', () => {
+          document.querySelectorAll('[data-context]').forEach((item) => item.setAttribute('aria-pressed', item === button ? 'true' : 'false'));
+          const item = contextData[button.dataset.context];
+          contextTitle.textContent = item.title;
+          contextCopy.textContent = item.copy;
+          contextTags.innerHTML = item.tags.map((tag) => `<span>${tag}</span>`).join('');
+        });
+      });
+
+      const guideData = [
+        ['STEP 01 / BOUNDARIES', 'Frame the three roles.', 'Write down what counts as governed knowledge, what counts as experience, and what is assembled only for the current task. Put authority and lifecycle next to every category.', 'A reviewer can classify any new record without guessing where it belongs.'],
+        ['STEP 02 / IDENTITY', 'Model identity and provenance.', 'Give durable memories stable identifiers, authenticated origin, source references, time, scope, lifecycle and the contract version under which they were created.', 'You can trace a memory back to the source and canonical entity that produced it.'],
+        ['STEP 03 / WRITE PATH', 'Control how claims become facts.', 'Separate observation, claim, evidence, review and accepted assertion. Quarantine unreviewed claims and preserve rejected ones as negative knowledge.', 'An agent cannot promote its own inference into governed knowledge with one write.'],
+        ['STEP 04 / CONTEXT', 'Assemble the smallest useful brief.', 'Select evidence that is relevant, valid for the date, applicable to the entity, available to the actor and permitted for the purpose.', 'The agent receives a defensible task context instead of an undifferentiated graph dump.'],
+        ['STEP 05 / REPLAY', 'Snapshot and evaluate.', 'Capture source versions, assertions, times, policy versions, access decisions, retrieval parameters, actor and task. Test retrieval against golden cases and failure modes.', 'You can explain why the agent saw what it saw and whether it should have used it.'],
+        ['STEP 06 / OPERATIONS', 'Choose the physical shape.', 'Use one database or several based on security, workload, retention, availability and ownership. Don’t create a graph when a simpler store meets the requirement.', 'The architecture earns its operational cost and has a clear reason to exist.']
+      ];
+      const guideLabel = document.getElementById('guide-label');
+      const guideTitle = document.getElementById('guide-title');
+      const guideCopy = document.getElementById('guide-copy');
+      const guideDone = document.getElementById('guide-done');
+      const guidePrev = document.getElementById('guide-prev');
+      const guideNext = document.getElementById('guide-next');
+      const stepButtons = Array.from(document.querySelectorAll('[data-step]'));
+      let guideIndex = 0;
+
+      function showGuide(index) {
+        guideIndex = Math.max(0, Math.min(guideData.length - 1, index));
+        const item = guideData[guideIndex];
+        guideLabel.textContent = item[0];
+        guideTitle.textContent = item[1];
+        guideCopy.textContent = item[2];
+        guideDone.textContent = item[3];
+        stepButtons.forEach((button, i) => button.setAttribute('aria-pressed', i === guideIndex ? 'true' : 'false'));
+        guidePrev.disabled = guideIndex === 0;
+        guideNext.disabled = guideIndex === guideData.length - 1;
+      }
+      stepButtons.forEach((button) => button.addEventListener('click', () => showGuide(Number(button.dataset.step))));
+      guidePrev.addEventListener('click', () => showGuide(guideIndex - 1));
+      guideNext.addEventListener('click', () => showGuide(guideIndex + 1));
+      showGuide(0);
+    })();
+  </script>
+</body>
+</html>

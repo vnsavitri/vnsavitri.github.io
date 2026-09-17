@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="A decision-focused comparison of VoiceBox, GPT-Realtime-2, ElevenLabs and Wispr Flow for AI product builders.">
+  <meta name="theme-color" content="#0b1110">
+  <title>Voice Stack Field Guide</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b1110'/%3E%3Cpath d='M10 32h8l4-13 8 28 7-22 5 14 4-7h8' fill='none' stroke='%23d9ff57' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <style>
+    :root{
+      --paper:#f6f8f7;--ink:#0b1110;--muted:#5b6763;--line:#cdd5d1;
+      --acid:#d9ff57;--aqua:#62e8d0;--blue:#8bb7ff;--violet:#b39cff;--coral:#ff9d78;
+      --display:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+      --sans:"Avenir Next",Avenir,"Segoe UI",Helvetica,Arial,sans-serif;
+      --mono:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+      --ease:cubic-bezier(.16,1,.3,1);--pad:clamp(1.2rem,3vw,3.5rem);--rail:4.1rem;
+    }
+    *{box-sizing:border-box}
+    html{background:var(--ink);color-scheme:light}
+    body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--paper);font-size:16px;line-height:1.45;overflow:hidden}
+    ::selection{background:var(--acid);color:var(--ink)}
+    button,a{font:inherit}
+    a{color:inherit;text-underline-offset:.2em}
+    a:hover{text-decoration-thickness:2px}
+    :focus-visible{outline:3px solid var(--blue);outline-offset:4px}
+    .deck{height:100svh;overflow-y:auto;scroll-snap-type:y mandatory;scroll-behavior:smooth;overscroll-behavior-y:contain;scrollbar-width:thin;scrollbar-color:var(--acid) var(--ink)}
+    .deck::-webkit-scrollbar{width:10px}.deck::-webkit-scrollbar-track{background:var(--ink)}.deck::-webkit-scrollbar-thumb{background:var(--acid);border:3px solid var(--ink);border-radius:20px}
+    .slide{position:relative;min-height:100svh;scroll-snap-align:start;scroll-snap-stop:always;padding:clamp(4.8rem,8vh,7rem) max(var(--pad),env(safe-area-inset-right)) clamp(5.8rem,9vh,7.5rem) max(var(--pad),env(safe-area-inset-left));overflow:hidden;background:var(--paper);isolation:isolate}
+    .slide[data-tone="dark"]{background:var(--ink);color:#eef5f2;--muted:#a8b5b0;--line:#35413d}
+    .slide[data-tone="acid"]{background:var(--acid);color:var(--ink);--muted:#3b4433;--line:#92ad36}
+    .inner{width:min(1220px,100%);min-height:calc(100svh - 12rem);margin:auto;display:flex;flex-direction:column;justify-content:center}
+    .topline{position:absolute;top:1.3rem;left:var(--pad);right:var(--pad);display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:.75rem;letter-spacing:.035em;color:var(--muted);z-index:3}
+    .topline strong{color:currentColor;font-weight:500}.topline .status{display:flex;align-items:center;gap:.55rem}
+    h1,h2,h3,p{margin-top:0}h1,h2{font-family:var(--display);font-weight:500;letter-spacing:-.025em;line-height:.94;text-wrap:balance}
+    h1{font-size:clamp(3.6rem,9vw,8.5rem);max-width:11ch;margin-bottom:1.3rem}
+    h2{font-size:clamp(2.65rem,6vw,6rem);max-width:14ch;margin-bottom:1.2rem}
+    h3{font-size:clamp(1.05rem,1.8vw,1.35rem);line-height:1.15;margin-bottom:.55rem}
+    .lede{font-size:clamp(1.05rem,1.7vw,1.35rem);line-height:1.38;max-width:60ch;color:var(--muted)}
+    .bigline{font-family:var(--display);font-size:clamp(2rem,4.2vw,4.3rem);font-weight:500;line-height:1.12;letter-spacing:-.025em;max-width:19ch;margin-top:0;text-wrap:balance}
+    .kicker{display:none}
+    .meta{font-family:var(--mono);font-size:.72rem;color:var(--muted)}
+    .source{font-family:var(--mono);font-size:.75rem;vertical-align:super;text-decoration:none;border-bottom:1px solid currentColor;margin-left:.1rem}
+    .source:hover{background:var(--acid);color:var(--ink)}
+    .grid{display:grid;gap:clamp(1.2rem,2.4vw,2.4rem)}
+    .cols-2{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)}.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .rule{border-top:1px solid var(--line);padding-top:1rem}
+    .signal-cover{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);gap:clamp(2rem,6vw,7rem);align-items:center}
+    .wave-panel{height:min(58vh,560px);position:relative;display:grid;place-items:center}
+    .wave-panel:before,.wave-panel:after{content:"";position:absolute;inset:8% 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+    .wave-panel:after{inset:28% 0}
+    .wave{width:100%;height:70%;overflow:visible}.wave path{fill:none;stroke:var(--ink);stroke-width:2;vector-effect:non-scaling-stroke}.wave .hot{stroke:var(--acid);stroke-width:8;stroke-linecap:round;filter:drop-shadow(0 8px 18px rgba(117,141,37,.18))}.wave circle{fill:var(--paper);stroke:var(--ink);stroke-width:2}.wave text{font:500 12px var(--mono);fill:var(--ink);letter-spacing:.02em}
+    .product-strip{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:2rem}
+    .product-strip>div{padding:1rem;border-right:1px solid var(--line)}.product-strip>div:last-child{border-right:0}.product-strip b{display:block;font-size:.9rem}.product-strip span{font-size:.75rem;color:var(--muted)}
+    .verdicts{border-top:1px solid var(--line);margin-top:2rem}
+    .verdict{display:grid;grid-template-columns:minmax(120px,.8fr) minmax(150px,1fr) minmax(0,2.2fr);gap:1.4rem;align-items:baseline;padding:1rem 0;border-bottom:1px solid var(--line)}
+    .verdict strong{font-size:1.05rem}.verdict .job{font-family:var(--mono);font-size:.76rem;color:var(--muted)}.verdict p{margin:0;color:var(--muted)}
+    .mark{display:inline-block;width:.65rem;height:.65rem;border-radius:50%;margin-right:.55rem;background:var(--accent,var(--acid))}
+    .voicebox{--accent:var(--coral)}.realtime{--accent:var(--acid)}.eleven{--accent:var(--blue)}.wispr{--accent:var(--violet)}
+    .axis{position:relative;min-height:58vh;border:1px solid var(--line);background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:25% 25%}
+    .axis:before,.axis:after{position:absolute;font:500 .75rem var(--mono);color:var(--muted);letter-spacing:.03em}
+    .axis:before{content:"Personal tool  →  Embedded product";bottom:-2rem;left:0;right:0;text-align:center}.axis:after{content:"Output craft  →  Live reasoning";left:-5.3rem;top:50%;transform:rotate(-90deg)}
+    .node{position:absolute;width:clamp(9rem,17vw,13rem);padding:.9rem 1rem;background:var(--paper);border:1px solid var(--ink);box-shadow:0 12px 30px rgba(11,17,16,.08);transform:translate(-50%,-50%)}
+    .node b{display:block}.node small{color:var(--muted)}.node:before{content:"";display:block;width:.55rem;height:.55rem;border-radius:50%;background:var(--accent);margin-bottom:.7rem}
+    .node.vb{left:34%;top:41%;--accent:var(--coral)}.node.rt{left:79%;top:22%;--accent:var(--acid)}.node.el{left:72%;top:69%;--accent:var(--blue)}.node.wf{left:17%;top:78%;--accent:var(--violet)}
+    .chooser{display:grid;grid-template-columns:minmax(220px,.72fr) minmax(0,1.28fr);gap:clamp(2rem,5vw,5rem);align-items:start;margin-top:1.7rem}
+    .choice-list{display:flex;flex-direction:column;border-top:1px solid var(--line)}.choice-list button{appearance:none;background:transparent;color:inherit;border:0;border-bottom:1px solid var(--line);text-align:left;padding:1rem .2rem;cursor:pointer;display:flex;justify-content:space-between;gap:1rem}.choice-list button:hover,.choice-list button[aria-pressed="true"]{background:var(--acid);color:var(--ink);padding-left:.8rem;padding-right:.8rem}.choice-list button span:last-child{font-family:var(--mono);font-size:.72rem}
+    .answer-panel{min-height:25rem;background:var(--ink);color:#edf5f1;padding:2rem;padding:clamp(1.5rem,4vw,3.2rem);display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 20px 50px rgba(11,17,16,.15)}.answer-panel .bigline{max-width:16ch}.answer-panel .why{color:#afbbb6;max-width:54ch}.answer-panel .stack{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:1.2rem}.chip{display:inline-flex;align-items:center;padding:.45rem .7rem;border:1px solid currentColor;border-radius:999px;font-family:var(--mono);font-size:.75rem}
+    .stack-map{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:2rem}.stack-map>div{padding:1.2rem;border-right:1px solid var(--line);min-height:11rem}.stack-map>div:last-child{border-right:0}.stack-map .phase{font-family:var(--mono);font-size:.75rem;color:var(--muted)}.stack-map strong{display:block;font-family:var(--display);font-size:clamp(1.35rem,2.3vw,2rem);font-weight:500;margin:.6rem 0}.stack-map p{font-size:.86rem;color:var(--muted)}
+    .section-mark{display:flex;align-items:center;gap:2rem}.section-mark .line{height:1px;background:currentColor;flex:1;opacity:.35}.section-mark .count{font:500 clamp(5rem,18vw,14rem)/.8 var(--display);letter-spacing:-.04em}.section-mark .title{font:500 clamp(2.2rem,5vw,5rem)/.95 var(--display);max-width:8ch}
+    .matrix-wrap{overflow:auto;margin-top:1.2rem;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+    table{border-collapse:collapse;width:100%;min-width:860px;font-size:.82rem}th,td{text-align:left;padding:.85rem .75rem;border-bottom:1px solid var(--line);vertical-align:top}th{font:500 .75rem var(--mono);letter-spacing:.03em;color:var(--muted);position:sticky;top:0;background:var(--paper);z-index:1}td:first-child{font-weight:600}.yes{font-weight:600}.soft{color:var(--muted)}
+    .product-hero{display:grid;grid-template-columns:minmax(0,.72fr) minmax(0,1.28fr);gap:clamp(2rem,6vw,7rem);align-items:center}.product-id{position:relative;min-height:55vh;display:flex;flex-direction:column;justify-content:space-between;border-top:1px solid var(--line);padding-top:1.45rem}.product-id:before{content:"";position:absolute;top:-1px;left:0;width:5rem;height:.45rem;background:var(--accent)}.product-id h2{max-width:8ch}.product-id .tag{font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+    .fact-list{border-top:1px solid var(--line)}.fact{display:grid;grid-template-columns:minmax(90px,.62fr) minmax(0,1.38fr);gap:1.2rem;padding:1rem 0;border-bottom:1px solid var(--line)}.fact dt{font:500 .75rem var(--mono);color:var(--muted)}.fact dd{margin:0}.fact dd small{display:block;color:var(--muted);margin-top:.25rem}
+    .truth-box{margin-top:1.3rem;padding:1rem 1.15rem;background:color-mix(in srgb,var(--accent) 24%,transparent);border-top:1px solid var(--accent);font-size:.92rem}
+    .cost-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:clamp(2rem,5vw,5rem);align-items:center}.cost-map{position:relative;height:54vh;min-height:360px;border-left:1px solid var(--line);border-bottom:1px solid var(--line)}.cost-map:before{content:"Higher marginal cost →";position:absolute;transform:rotate(-90deg);left:-6rem;top:45%;font:.75rem var(--mono);color:var(--muted)}.cost-map:after{content:"Less setup → more setup";position:absolute;left:35%;bottom:-2rem;font:.75rem var(--mono);color:var(--muted)}.bubble{position:absolute;display:grid;place-items:center;text-align:center;border-radius:50%;font-weight:600;line-height:1.2;border:1px solid var(--ink);box-shadow:0 12px 30px rgba(11,17,16,.08)}.bubble small{display:block;font-weight:400;font-size:.75rem;margin-top:.25rem}.bubble.b1{width:8.5rem;height:8.5rem;left:48%;top:44%;background:var(--blue)}.bubble.b2{width:7.5rem;height:7.5rem;left:72%;top:14%;background:var(--acid)}.bubble.b3{width:7rem;height:7rem;left:8%;top:22%;background:var(--violet)}.bubble.b4{width:8rem;height:8rem;left:24%;top:62%;background:var(--coral)}
+    .privacy-lanes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border:1px solid var(--line);margin-top:2rem}.lane{padding:1.4rem;min-height:26rem;border-right:1px solid var(--line);display:flex;flex-direction:column}.lane:last-child{border-right:0}.lane .tier{font:500 .75rem var(--mono);color:var(--muted)}.lane h3{font-family:var(--display);font-size:2rem;font-weight:500;margin-top:1rem}.lane ul{padding-left:1.1rem;color:var(--muted)}.lane .bottom{margin-top:auto;font-size:.82rem}
+    .flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:stretch;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:2rem}.flow-step{padding:1rem;min-height:10rem;border-right:1px solid var(--line);position:relative}.flow-step:last-child{border-right:0}.flow-step b{display:block;margin-bottom:.55rem}.flow-step small{color:var(--muted)}.flow-step:after{content:"→";position:absolute;right:-.55rem;top:1rem;background:var(--paper);padding:.1rem;z-index:2}.flow-step:last-child:after{display:none}
+    .project-lab{display:grid;grid-template-columns:minmax(210px,.7fr) minmax(0,1.3fr);gap:clamp(2rem,5vw,5rem);margin-top:1.5rem}.project-tabs{display:flex;flex-direction:column;gap:.45rem}.project-tabs button{border:1px solid var(--line);background:transparent;color:inherit;padding:.9rem 1rem;text-align:left;cursor:pointer}.project-tabs button:hover,.project-tabs button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}.project-result{position:relative;border-top:1px solid var(--line);padding-top:1.55rem}.project-result:before{content:"";position:absolute;top:-1px;left:0;width:5rem;height:.45rem;background:var(--acid)}.project-result h3{font-family:var(--display);font-size:clamp(2rem,4vw,3.6rem);font-weight:500;max-width:14ch}.architecture{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem;margin:1.2rem 0}.architecture span{padding:.55rem .8rem;border:1px solid var(--ink);font-family:var(--mono);font-size:.75rem}.architecture i{font-style:normal;color:var(--muted)}
+    .recipe{display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr);gap:clamp(2rem,6vw,6rem);align-items:start}.steps{counter-reset:step;border-top:1px solid var(--line)}.step{counter-increment:step;display:grid;grid-template-columns:2.2rem 1fr;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--line)}.step:before{content:counter(step,decimal-leading-zero);font:.75rem var(--mono);color:var(--muted)}.step b{display:block;margin-bottom:.25rem}.step p{margin:0;color:var(--muted);font-size:.9rem}.done{margin-top:1.2rem;background:var(--acid);padding:1rem 1.1rem}.done b{font-family:var(--mono);font-size:.75rem}.done p{margin:.35rem 0 0}
+    pre{margin:0;background:var(--ink);color:#eef5f2;padding:1.2rem;overflow:auto;font:400 .75rem/1.65 var(--mono);tab-size:2;box-shadow:0 16px 36px rgba(11,17,16,.13)}code .comment{color:#8ca097}code .hot{color:var(--acid)}code .blue{color:#8bb7ff}
+    .eval-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:1.5rem}.eval-grid>div{padding:1.1rem;border-right:1px solid var(--line)}.eval-grid>div:last-child{border-right:0}.eval-grid strong{display:block;font-family:var(--display);font-size:1.5rem;font-weight:500}.eval-grid p{font-size:.84rem;color:var(--muted)}
+    .decision-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;border-top:1px solid var(--line);margin-top:1.5rem}.decision-row{display:grid;grid-template-columns:1.1fr .9fr;gap:1rem;padding:1rem;border-bottom:1px solid var(--line)}.decision-row:nth-child(odd){border-right:1px solid var(--line)}.decision-row b{font-size:.9rem}.decision-row span{font:500 .75rem var(--mono);text-align:right;color:var(--muted)}
+    .closing{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(240px,.8fr);gap:clamp(2rem,6vw,7rem);align-items:end}.closing .stack-poster{border:1px solid currentColor;padding:1.2rem}.stack-poster>div{display:flex;justify-content:space-between;gap:1rem;padding:1rem 0;border-bottom:1px solid currentColor}.stack-poster>div:last-child{border-bottom:0}.stack-poster span{font-family:var(--mono);font-size:.72rem;opacity:.65}
+    .sources{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;border-top:1px solid var(--line);margin-top:1.5rem}.source-item{padding:1rem 1.2rem 1rem 0;border-bottom:1px solid var(--line)}.source-item:nth-child(odd){border-right:1px solid var(--line);padding-right:1.2rem}.source-item:nth-child(even){padding-left:1.2rem}.source-item a{font-weight:600}.source-item blockquote{margin:.45rem 0 0;color:var(--muted);font-size:.82rem}.source-item blockquote:before{content:'“'}.source-item blockquote:after{content:'”'}
+    .nav{position:fixed;right:max(.7rem,env(safe-area-inset-right));top:50%;transform:translateY(-50%);z-index:20;display:flex;flex-direction:column;gap:.38rem}.nav button{width:.58rem;height:.58rem;border:1px solid rgba(80,95,89,.6);background:rgba(246,248,247,.55);padding:0;border-radius:50%;cursor:pointer;backdrop-filter:blur(8px);transition:transform .25s var(--ease),background .25s var(--ease)}.nav button[aria-current="true"]{background:var(--acid);border-color:var(--ink);transform:scale(1.45)}
+    .controls{position:fixed;left:50%;bottom:max(.75rem,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:.45rem;background:rgba(11,17,16,.9);color:#f5faf8;padding:.42rem;border-radius:999px;box-shadow:0 10px 28px rgba(0,0,0,.18);backdrop-filter:blur(10px)}.controls button{width:2.75rem;height:2.75rem;border:0;border-radius:50%;background:transparent;color:inherit;cursor:pointer;display:grid;place-items:center}.controls button:hover{background:#26322e}.controls .counter{font:500 .75rem var(--mono);min-width:4.2rem;text-align:center}.controls svg{width:1rem;height:1rem;fill:none;stroke:currentColor;stroke-width:1.8}
+    .progress{position:fixed;top:0;left:0;width:100%;height:4px;background:var(--acid);z-index:30;transform:scaleX(0);transform-origin:left;transition:transform .35s var(--ease)}
+    .swipe-hint{position:absolute;bottom:1.3rem;right:var(--pad);font:.75rem var(--mono);color:var(--muted)}
+    .reveal{opacity:1;transform:none}.slide.is-active .reveal{animation:enter .75s var(--ease) both}.slide.is-active .reveal.delay{animation-delay:.1s}@keyframes enter{from{opacity:.001;transform:translateY(18px);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+    @media(max-width:820px){
+      :root{--pad:1.15rem}.slide{overflow-y:auto;padding-top:4.4rem;padding-bottom:5.8rem}.inner{min-height:auto;justify-content:flex-start}.topline{left:var(--pad);right:var(--pad)}.topline .status{display:none}
+      h1{font-size:clamp(3.2rem,16vw,5.5rem)}h2{font-size:clamp(2.55rem,12vw,4.5rem)}.signal-cover,.cols-2,.cols-3,.cols-4,.product-hero,.cost-grid,.recipe,.closing{grid-template-columns:1fr}.wave-panel{height:37vh;min-height:250px}.product-strip{grid-template-columns:repeat(2,1fr)}.product-strip>div:nth-child(2){border-right:0}.product-strip>div:nth-child(-n+2){border-bottom:1px solid var(--line)}
+      .verdict{grid-template-columns:1fr;gap:.25rem}.axis{min-height:55vh;margin-left:1.2rem}.node{width:8.5rem;padding:.65rem}.node small{font-size:.75rem}.axis:after{left:-4.7rem}
+      .chooser,.project-lab{grid-template-columns:1fr}.answer-panel{min-height:22rem}.stack-map{grid-template-columns:1fr 1fr}.stack-map>div:nth-child(2){border-right:0}.stack-map>div:nth-child(-n+2){border-bottom:1px solid var(--line)}
+      .section-mark{flex-direction:column;align-items:flex-start;gap:1.3rem}.section-mark .line{width:100%}.section-mark .count{font-size:8rem}.section-mark .title{max-width:11ch}
+      .product-id{min-height:auto}.privacy-lanes{grid-template-columns:1fr}.lane{min-height:auto;border-right:0;border-bottom:1px solid var(--line)}.lane:last-child{border-bottom:0}.lane .bottom{margin-top:1rem}
+      .flow{grid-template-columns:1fr}.flow-step{min-height:auto;border-right:0;border-bottom:1px solid var(--line)}.flow-step:after{content:"↓";right:1rem;top:auto;bottom:-.65rem}.eval-grid{grid-template-columns:1fr 1fr}.eval-grid>div:nth-child(2){border-right:0}.eval-grid>div:nth-child(-n+2){border-bottom:1px solid var(--line)}
+      .decision-grid,.sources{grid-template-columns:1fr}.decision-row:nth-child(odd),.source-item:nth-child(odd){border-right:0}.source-item:nth-child(even){padding-left:0}.cost-map{height:48vh}.bubble{transform:scale(.8)}.nav{display:none}.swipe-hint{display:none}
+    }
+    @media(max-width:460px){.stack-map,.eval-grid{grid-template-columns:1fr}.stack-map>div,.eval-grid>div{border-right:0;border-bottom:1px solid var(--line)}.decision-row{grid-template-columns:1fr}.decision-row span{text-align:left}.controls{bottom:.55rem}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+    @media print{body{overflow:visible}.deck{height:auto;overflow:visible}.slide{min-height:100vh;break-after:page}.nav,.controls,.progress,.swipe-hint{display:none}}
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+  <main class="deck" id="deck" aria-label="Voice stack comparison slide deck">
+
+    <section class="slide" id="s1" data-title="Cover">
+      <div class="topline"><strong>Voice stack field guide</strong><span class="status">15 September 2026</span></div>
+      <div class="inner signal-cover">
+        <div class="reveal">
+          <h1>Voice is not one product.</h1>
+          <p class="lede">A decision guide to VoiceBox, GPT‑Realtime‑2, ElevenLabs and Wispr Flow — and where each belongs in Koinaku, FlavourMind and your wider project stack.</p>
+          <div class="product-strip">
+            <div><b>VoiceBox</b><span>local voice I/O</span></div><div><b>GPT‑Realtime‑2</b><span>live reasoning</span></div><div><b>ElevenLabs</b><span>voice production</span></div><div><b>Wispr Flow</b><span>personal capture</span></div>
+          </div>
+        </div>
+        <div class="wave-panel reveal delay" aria-hidden="true">
+          <svg class="wave" viewBox="0 0 520 300" role="img">
+            <path d="M10 150 C40 150 40 72 70 72 S100 234 130 234 160 38 190 38 220 205 250 205 280 102 310 102 340 175 370 175 400 122 430 122 460 150 510 150"/>
+            <path class="hot" d="M156 158 C170 112 176 38 190 38 204 38 213 150 226 188"/>
+            <circle cx="70" cy="72" r="7"/><circle cx="190" cy="38" r="7"/><circle cx="310" cy="102" r="7"/><circle cx="430" cy="122" r="7"/>
+            <text x="48" y="48">CAPTURE</text><text x="164" y="18">REASON</text><text x="286" y="82">SPEAK</text><text x="402" y="102">SHIP</text>
+          </svg>
+        </div>
+      </div>
+      <span class="swipe-hint">Swipe or use ↓</span>
+    </section>
+
+    <section class="slide" id="s2" data-title="TL;DR">
+      <div class="topline"><strong>TL;DR</strong><span>Plain English first</span></div>
+      <div class="inner">
+        <div class="reveal"><p class="kicker">The 30-second answer</p><h2>Choose by job, not by brand.</h2><p class="lede">These tools overlap, but their centres of gravity are different. Treating them as direct substitutes creates the wrong architecture.</p></div>
+        <div class="verdicts reveal delay">
+          <div class="verdict realtime"><strong><i class="mark"></i>GPT‑Realtime‑2</strong><span class="job">Live product brain</span><p>Best when a user should talk naturally, interrupt, see or hear context, and trigger tools during the conversation.<a class="source" href="https://developers.openai.com/api/docs/models/gpt-realtime-2" target="_blank" rel="noreferrer">4</a></p></div>
+          <div class="verdict eleven"><strong><i class="mark"></i>ElevenLabs</strong><span class="job">Production voice layer</span><p>Best for polished voice generation, cloning, dubbing and managed voice agents across web, mobile and telephony.<a class="source" href="https://elevenlabs.io/docs/overview/intro" target="_blank" rel="noreferrer">6</a></p></div>
+          <div class="verdict voicebox"><strong><i class="mark"></i>VoiceBox</strong><span class="job">Local voice studio</span><p>Best for private, low-cost prototyping: local dictation, cloning, TTS and MCP/REST output on your own machine.<a class="source" href="https://github.com/jamiepine/voicebox" target="_blank" rel="noreferrer">1</a></p></div>
+          <div class="verdict wispr"><strong><i class="mark"></i>Wispr Flow</strong><span class="job">Personal input tool</span><p>Best for getting your spoken thoughts into any app quickly. It is a productivity product, not your application’s embedded voice runtime.<a class="source" href="https://wisprflow.ai/pricing" target="_blank" rel="noreferrer">10</a></p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="s3" data-title="Landscape">
+      <div class="topline"><strong>Mental model</strong><span>Different layers</span></div>
+      <div class="inner cols-2">
+        <div class="reveal"><p class="kicker">Why the comparison feels confusing</p><h2>They meet at “voice”. They diverge everywhere else.</h2><p class="lede">One is a local studio, one is a realtime reasoning model, one is a cloud voice platform, and one is an end-user dictation app.</p><p class="meta">Placement is analytical: it reflects product centre of gravity, not an objective benchmark.</p></div>
+        <div class="axis reveal delay" role="img" aria-label="A two-dimensional map from personal tool to embedded product and output craft to live reasoning">
+          <div class="node vb"><b>VoiceBox</b><small>local studio + API</small></div>
+          <div class="node rt"><b>GPT‑Realtime‑2</b><small>live agent reasoning</small></div>
+          <div class="node el"><b>ElevenLabs</b><small>voice platform + agents</small></div>
+          <div class="node wf"><b>Wispr Flow</b><small>dictation + notes</small></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="s4" data-title="Chooser">
+      <div class="topline"><strong>Interactive chooser</strong><span>Select a primary job</span></div>
+      <div class="inner">
+        <div class="reveal"><p class="kicker">Start here</p><h2>What are you actually trying to build?</h2></div>
+        <div class="chooser reveal delay">
+          <div class="choice-list" role="group" aria-label="Choose a voice job">
+            <button type="button" data-choice="conversation" aria-pressed="true"><span>Live AI conversation</span><span>01</span></button>
+            <button type="button" data-choice="production" aria-pressed="false"><span>Polished character or narration</span><span>02</span></button>
+            <button type="button" data-choice="dictation" aria-pressed="false"><span>Speak instead of type</span><span>03</span></button>
+            <button type="button" data-choice="private" aria-pressed="false"><span>Keep voice local</span><span>04</span></button>
+            <button type="button" data-choice="hybrid" aria-pressed="false"><span>Build a serious product</span><span>05</span></button>
+          </div>
+          <div class="answer-panel" aria-live="polite">
+            <div><p class="kicker" style="color:#afbbb6">Recommended route</p><h3 class="bigline" id="choiceTitle">GPT‑Realtime‑2</h3><p class="why" id="choiceWhy">Use it as the conversation engine when turn-taking, reasoning and tool calls matter more than voice cloning.</p></div>
+            <div class="stack" id="choiceStack"><span class="chip">GPT‑Realtime‑2</span><span class="chip">WebRTC</span><span class="chip">your tools</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="s5" data-title="Recommendation">
+      <div class="topline"><strong>My recommendation</strong><span>For Vivid’s portfolio</span></div>
+      <div class="inner">
+        <div class="reveal"><p class="kicker">One coherent stack</p><h2>Use all four — but never in the same role.</h2><p class="lede">The highest-leverage setup is a layered portfolio: prototype locally, reason in realtime, ship polished voices, and capture your own thoughts with a personal dictation tool.</p></div>
+        <div class="stack-map reveal delay">
+          <div><span class="phase">Capture</span><strong>Wispr Flow</strong><p>Your cross-app thinking and coding input. Keep it outside the product runtime.</p></div>
+          <div><span class="phase">Prototype</span><strong>VoiceBox</strong><p>Local voices, private experiments, MCP agent notifications, placeholder character audio.</p></div>
+          <div><span class="phase">Interact</span><strong>GPT‑Realtime‑2</strong><p>The low-latency conversational brain that sees context and calls product tools.</p></div>
+          <div><span class="phase">Publish</span><strong>ElevenLabs</strong><p>Brand voice, high-fidelity characters, dubbing, telephony and production governance.</p></div>
+        </div>
+        <p class="meta" style="margin-top:1rem">This is a recommendation based on your project needs, not a vendor claim.</p>
+      </div>
+    </section>
+
+    <section class="slide" id="s6" data-tone="dark" data-title="Deep dive">
+      <div class="topline"><strong>Section break</strong><span>Deep dive</span></div>
+      <div class="inner section-mark"><span class="count">I</span><span class="line"></span><span class="title">How the stack really differs</span></div>
+    </section>
+
+    <section class="slide" id="s7" data-title="Scorecard">
+      <div class="topline"><strong>Capability scorecard</strong><span>Vendor-documented features</span></div>
+      <div class="inner">
+        <div class="reveal"><p class="kicker">A fair comparison</p><h2>Separate capability from convenience.</h2><p class="lede">“Yes” means the capability is part of the documented product. It does not imply equal quality, latency or maturity.</p></div>
+        <div class="matrix-wrap reveal delay" tabindex="0" aria-label="Scrollable capability comparison">
+          <table>
+            <thead><tr><th>Capability</th><th>VoiceBox</th><th>GPT‑Realtime‑2</th><th>ElevenLabs</th><th>Wispr Flow</th></tr></thead>
+            <tbody>
+              <tr><td>Primary form</td><td>Desktop studio + local API</td><td>Cloud model/API</td><td>Cloud platform + APIs</td><td>Desktop/mobile app</td></tr>
+              <tr><td>Speech input</td><td class="yes">Yes — Whisper dictation<a class="source" href="https://github.com/jamiepine/voicebox" target="_blank" rel="noreferrer">1</a></td><td class="yes">Yes — realtime audio<a class="source" href="https://developers.openai.com/api/docs/models/gpt-realtime-2" target="_blank" rel="noreferrer">4</a></td><td class="yes">Yes — Scribe + agents<a class="source" href="https://elevenlabs.io/docs/overview/intro" target="_blank" rel="noreferrer">6</a></td><td class="yes">Yes — its core job<a class="source" href="https://wisprflow.ai/pricing" target="_blank" rel="noreferrer">10</a></td></tr>
+              <tr><td>Speech output</td><td class="yes">7 local TTS engines<a class="source" href="https://github.com/jamiepine/voicebox" target="_blank" rel="noreferrer">1</a></td><td class="yes">Native audio output<a class="source" href="https://developers.openai.com/api/docs/models/gpt-realtime-2" target="_blank" rel="noreferrer">4</a></td><td class="yes">Core platform capability<a class="source" href="https://elevenlabs.io/docs/overview/intro" target="_blank" rel="noreferrer">6</a></td><td class="soft">No — text output product</td></tr>
+              <tr><td>Voice cloning</td><td class="yes">Local zero-shot cloning<a class="source" href="https://github.com/jamiepine/voicebox" target="_blank" rel="noreferrer">1</a></td><td class="soft">Not the core proposition</td><td class="yes">Instant + professional<a class="source" href="https://elevenlabs.io/docs/eleven-creative/voices/voice-cloning" target="_blank" rel="noreferrer">7</a></td><td class="soft">No</td></tr>
+              <tr><td>Tool calling</td><td>MCP exposes voice tools</td><td class="yes">Native function calling<a class="source" href="https://developers.openai.com/api/docs/models/gpt-realtime-2" target="_blank" rel="noreferrer">4</a></td><td class="yes">Agent tools + MCP<a class="source" href="https://elevenlabs.io/docs/eleven-agents/overview" target="_blank" rel="noreferrer">8</a></td><td>MCP exports meeting notes</td></tr>
+              <tr><td>Runs fully local</td><td class="yes">Yes<a class="source" href="https://github.com/jamiepine/voicebox" target="_blank" rel="noreferrer">1</a></td><td class="soft">No</td><td>Enterprise private deployment<a class="source" href="https://elevenlabs.io/docs/overview/capabilities/private-deployment" target="_blank" rel="noreferrer">9</a></td><td class="soft">No — cloud transcription<a class="source" href="https://wisprflow.ai/data-controls" target="_blank" rel="noreferrer">11</a></td></tr>
+              <tr><td>Best fit</td><td>Local prototyping</td><td>Interactive agents</td><td>Production voice</td><td>Personal productivity</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide voicebox" id="s8" data-title="VoiceBox">
+      <div class="topline"><strong>Product deep dive</strong><span>VoiceBox</span></div>
+      <div class="inner product-hero">
+        <div class="product-id reveal"><div><p class="tag">Local · open source · voice I/O</p><h2>VoiceBox</h2></div><h3 class="bigline">A workshop bench for voice.</h3></div>
+        <div class="reveal delay">
+          <dl class="fact-list">
+            <div class="fact"><dt>What it is</dt><dd>A free, open-source local voice studio with cloning, TTS, Whisper dictation, REST and MCP.<a class="source" href="https://github.com/jamiepine/voicebox" target="_blank" rel="noreferrer">1</a></dd></div>
+            <div class="fact"><dt>Strength</dt><dd>Privacy and iteration economics.<small>Models, voice data and captures are documented as staying on your machine.</small></dd></div>
+            <div class="fact"><dt>Developer fit</dt><dd>REST endpoints for generation/transcription plus MCP tools for agent speech.<a class="source" href="https://github.com/jamiepine/voicebox#api" target="_blank" rel="noreferrer">2</a></dd></div>
+            <div class="fact"><dt>Trade-off</dt><dd>You own setup, model downloads, hardware limits and quality variation across engines.</dd></div>
+            <div class="fact"><dt>Important gap</dt><dd>Streaming transcription and end-to-end speech LLMs are on the roadmap, not documented as shipped.<a class="source" href="https://github.com/jamiepine/voicebox#roadmap" target="_blank" rel="noreferrer">3</a></dd></div>
+          </dl>
+          <div class="truth-box"><strong>Use it for:</strong> KoH character prototyping, private FlavourMind narration experiments, and spoken Hermes Agent notifications.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide realtime" id="s9" data-title="GPT-Realtime-2">
+      <div class="topline"><strong>Product deep dive</strong><span>GPT‑Realtime‑2</span></div>
+      <div class="inner product-hero">
+        <div class="product-id reveal"><div><p class="tag">Realtime · multimodal · tool-using</p><h2>GPT‑Realtime‑2</h2></div><h3 class="bigline">The conversational brain.</h3></div>
+        <div class="reveal delay">
+          <dl class="fact-list">
+            <div class="fact"><dt>What it is</dt><dd>OpenAI’s most capable realtime voice model, with configurable reasoning and tool use.<a class="source" href="https://developers.openai.com/api/docs/models/gpt-realtime-2" target="_blank" rel="noreferrer">4</a></dd></div>
+            <div class="fact"><dt>Modalities</dt><dd>Text and audio input/output; image input; no video input.<a class="source" href="https://developers.openai.com/api/docs/models/gpt-realtime-2" target="_blank" rel="noreferrer">4</a></dd></div>
+            <div class="fact"><dt>Transport</dt><dd>Realtime endpoint with WebRTC, WebSocket and SIP guidance in the platform docs.</dd></div>
+            <div class="fact"><dt>Context</dt><dd>128,000-token context window; 32,000 max output tokens.<a class="source" href="https://developers.openai.com/api/docs/models/gpt-realtime-2" target="_blank" rel="noreferrer">4</a></dd></div>
+            <div class="fact"><dt>Trade-off</dt><dd>Cloud dependency, token-metered audio, orchestration work and higher reasoning effort can increase latency and output usage.</dd></div>
+          </dl>
+          <div class="truth-box"><strong>Use it for:</strong> Koinaku coaching conversations, a FlavourMind research guide, or Otto’s hands-busy cooking dialogue.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide eleven" id="s10" data-title="ElevenLabs">
+      <div class="topline"><strong>Product deep dive</strong><span>ElevenLabs</span></div>
+      <div class="inner product-hero">
+        <div class="product-id reveal"><div><p class="tag">Voice craft · agents · distribution</p><h2>ElevenLabs</h2></div><h3 class="bigline">The production soundstage.</h3></div>
+        <div class="reveal delay">
+          <dl class="fact-list">
+            <div class="fact"><dt>What it is</dt><dd>A broad AI voice platform spanning TTS, STT, cloning, agents and generative audio.<a class="source" href="https://elevenlabs.io/docs/overview/intro" target="_blank" rel="noreferrer">6</a></dd></div>
+            <div class="fact"><dt>Strength</dt><dd>Expressive output, mature voice workflows, SDKs, telephony, dubbing and agent operations.</dd></div>
+            <div class="fact"><dt>Realtime</dt><dd>Flash v2.5 is documented at roughly 75 ms model latency; Scribe v2 Realtime at roughly 150 ms, excluding app/network latency.<a class="source" href="https://elevenlabs.io/docs/overview/intro" target="_blank" rel="noreferrer">6</a></dd></div>
+            <div class="fact"><dt>Agents</dt><dd>Visual workflow builder, tools, knowledge base, tests, evals, analytics and web/mobile/telephony deployment.<a class="source" href="https://elevenlabs.io/docs/eleven-agents/overview" target="_blank" rel="noreferrer">8</a></dd></div>
+            <div class="fact"><dt>Trade-off</dt><dd>Credits, subscription tiers, vendor-hosted voice assets and feature complexity. Voice clones cannot be exported as standalone models.<a class="source" href="https://elevenlabs.io/docs/eleven-creative/voices/voice-cloning" target="_blank" rel="noreferrer">7</a></dd></div>
+          </dl>
+          <div class="truth-box"><strong>Use it for:</strong> production KoH characters, Koinaku’s branded guide, multilingual public demos and polished FlavourMind explainers.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide wispr" id="s11" data-title="Wispr Flow">
+      <div class="topline"><strong>Product deep dive</strong><span>Wispr Flow</span></div>
+      <div class="inner product-hero">
+        <div class="product-id reveal"><div><p class="tag">Dictation · notes · personal workflow</p><h2>Wispr Flow</h2></div><h3 class="bigline">The fastest front door.</h3></div>
+        <div class="reveal delay">
+          <dl class="fact-list">
+            <div class="fact"><dt>What it is</dt><dd>A voice-to-text app across Mac, Windows, iOS and Android, plus a meeting notetaker.<a class="source" href="https://wisprflow.ai/pricing" target="_blank" rel="noreferrer">10</a></dd></div>
+            <div class="fact"><dt>Strength</dt><dd>Low-friction dictation across apps, personal dictionary, formatting, snippets and 100+ languages.</dd></div>
+            <div class="fact"><dt>AI bridge</dt><dd>Meeting notes can be used in Claude, ChatGPT and other AI tools through MCP.<a class="source" href="https://wisprflow.ai/pricing" target="_blank" rel="noreferrer">10</a></dd></div>
+            <div class="fact"><dt>Privacy fact</dt><dd>Transcription always occurs in the cloud; data sharing, storage, context awareness and dictionary monitoring have separate controls.<a class="source" href="https://wisprflow.ai/data-controls" target="_blank" rel="noreferrer">11</a></dd></div>
+            <div class="fact"><dt>Boundary</dt><dd>The published product is for human dictation and notes. Treating it as an embeddable product voice API would be an inference, not a documented capability.</dd></div>
+          </dl>
+          <div class="truth-box"><strong>Use it for:</strong> dictating PRDs, research notes, prompts and code comments — not as Koinaku’s or FlavourMind’s runtime.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="s12" data-title="Cost">
+      <div class="topline"><strong>Economics</strong><span>Snapshot: 15 Sep 2026</span></div>
+      <div class="inner cost-grid">
+        <div class="reveal"><p class="kicker">Cost is shaped differently</p><h2>Subscription, tokens, credits or your own hardware.</h2><p class="lede">There is no single “cost per minute” that remains fair across all four. Compare the billing model to the workload.</p>
+          <div class="rule"><p><strong>VoiceBox:</strong> no vendor usage fee; you pay in setup, compute and maintenance.</p><p><strong>GPT‑Realtime‑2:</strong> audio tokens are listed at $32 input / $64 output per 1M; text at $4 / $24.<a class="source" href="https://developers.openai.com/api/docs/models/gpt-realtime-2" target="_blank" rel="noreferrer">4</a></p><p><strong>ElevenLabs:</strong> free tier plus subscriptions from $6/month on the published page; products draw from shared credits.<a class="source" href="https://elevenlabs.io/pricing" target="_blank" rel="noreferrer">12</a></p><p><strong>Wispr Flow:</strong> free tier; Pro is shown as $15 monthly or $12 on annual billing per user.<a class="source" href="https://wisprflow.ai/pricing" target="_blank" rel="noreferrer">10</a></p></div>
+          <p class="meta">Dollar symbols reproduced as published. Taxes, region and negotiated terms may differ.</p>
+        </div>
+        <div class="cost-map reveal delay" role="img" aria-label="Conceptual map of setup effort and marginal cost">
+          <div class="bubble b1">ElevenLabs<small>managed breadth</small></div><div class="bubble b2">GPT‑RT‑2<small>token metered</small></div><div class="bubble b3">Wispr<small>seat subscription</small></div><div class="bubble b4">VoiceBox<small>local compute</small></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="s13" data-title="Privacy">
+      <div class="topline"><strong>Privacy & deployment</strong><span>Architecture, not a badge</span></div>
+      <div class="inner">
+        <div class="reveal"><p class="kicker">Three trust models</p><h2>Where audio travels matters more than the logo.</h2></div>
+        <div class="privacy-lanes reveal delay">
+          <div class="lane"><span class="tier">Local by design</span><h3>VoiceBox</h3><p>Vendor documentation says models, voice data and captures stay on-device.</p><ul><li>Strongest default for sensitive prototypes</li><li>No external inference dependency</li><li>You own endpoint security and backups</li></ul><p class="bottom"><a href="https://github.com/jamiepine/voicebox" target="_blank" rel="noreferrer">Source [1]</a></p></div>
+          <div class="lane"><span class="tier">Cloud with controls</span><h3>OpenAI + Wispr</h3><p>OpenAI API data is not used for training unless opted in; default abuse logs may retain content up to 30 days, with approved ZDR controls.<a class="source" href="https://developers.openai.com/api/docs/guides/your-data" target="_blank" rel="noreferrer">5</a></p><p>Wispr says transcription always occurs in the cloud and offers separate sharing/storage controls.<a class="source" href="https://wisprflow.ai/data-controls" target="_blank" rel="noreferrer">11</a></p><p class="bottom"><strong>Design implication:</strong> classify data before routing it.</p></div>
+          <div class="lane"><span class="tier">Cloud → private enterprise</span><h3>ElevenLabs</h3><p>Standard data is documented as hosted in the US; Enterprise residency exists in the EU, India and Singapore.<a class="source" href="https://elevenlabs.io/docs/overview/administration/data-residency" target="_blank" rel="noreferrer">13</a></p><p>Private deployments can run in an organisation’s cloud or hardware so content stays within its network.<a class="source" href="https://elevenlabs.io/docs/overview/capabilities/private-deployment" target="_blank" rel="noreferrer">9</a></p><p class="bottom"><strong>Design implication:</strong> excellent option when procurement can fund the control plane.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="s14" data-title="Patterns">
+      <div class="topline"><strong>Architecture patterns</strong><span>Compose the layers</span></div>
+      <div class="inner">
+        <div class="reveal"><p class="kicker">Pattern A — live product conversation</p><h2>Audio in. Reason. Act. Voice out.</h2></div>
+        <div class="flow reveal delay"><div class="flow-step"><b>User audio</b><small>Browser or app microphone</small></div><div class="flow-step"><b>Realtime session</b><small>Turn detection, context, instructions</small></div><div class="flow-step"><b>Domain tools</b><small>Koinaku plan, pantry, research corpus</small></div><div class="flow-step"><b>Voice choice</b><small>Native output or ElevenLabs</small></div><div class="flow-step"><b>Telemetry</b><small>Latency, task success, safety</small></div></div>
+        <div class="grid cols-2" style="margin-top:2.2rem"><div class="rule"><h3>Use native GPT audio when</h3><p class="soft">Turn-taking and reasoning are the experience. It reduces orchestration and preserves conversational timing.</p></div><div class="rule"><h3>Add ElevenLabs when</h3><p class="soft">A distinctive branded or character voice is strategically important enough to justify a second realtime hop.</p></div></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s15" data-title="Project lab">
+      <div class="topline"><strong>Interactive project lab</strong><span>Your portfolio</span></div>
+      <div class="inner">
+        <div class="reveal"><p class="kicker">Choose a project</p><h2>See the smallest sensible voice stack.</h2></div>
+        <div class="project-lab reveal delay">
+          <div class="project-tabs" role="group" aria-label="Choose a project">
+            <button type="button" data-project="koinaku" aria-pressed="true">Koinaku</button><button type="button" data-project="flavourmind" aria-pressed="false">FlavourMind</button><button type="button" data-project="koh" aria-pressed="false">Kingdom of Hype</button><button type="button" data-project="hermes" aria-pressed="false">Hermes Agent</button><button type="button" data-project="otto" aria-pressed="false">Otto Sous‑Chef</button>
+          </div>
+          <div class="project-result" aria-live="polite"><h3 id="projectTitle">A bilingual financial coach that can act.</h3><div class="architecture" id="projectArch"><span>GPT‑Realtime‑2</span><i>→</i><span>Koinaku tools</span><i>→</i><span>native voice</span></div><p class="lede" id="projectWhy">Start with one spoken coaching flow in Indonesian and English. Let the model call read-only budget and learning tools; keep transactions out of scope until the evals are strong.</p><div class="done"><b>First experiment</b><p id="projectDone">A five-minute “explain my spending pattern” conversation with interruption handling, citations to the user’s own data and a post-call summary.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="s16" data-title="Koinaku">
+      <div class="topline"><strong>Project recipe</strong><span>Koinaku</span></div>
+      <div class="inner cols-2">
+        <div class="reveal"><p class="kicker">Recommended stack</p><h2>Realtime first. Branded voice later.</h2><h3 class="bigline">The value is trustworthy dialogue, not a celebrity voice.</h3></div>
+        <div class="reveal delay"><div class="rule"><h3>Use GPT‑Realtime‑2 for</h3><p>Conversational financial education, code-switching, interruptions, visual context and calls to read-only Koinaku tools.</p></div><div class="rule"><h3>Add ElevenLabs only when</h3><p>A distinctive “Koinaku guide” voice improves trust in user tests and the extra latency/cost is acceptable.</p></div><div class="rule"><h3>Use Wispr Flow outside the app</h3><p>Dictate PRDs, user-test notes and Indonesian terminology into your design and coding tools.</p></div><div class="truth-box"><strong>Safety boundary:</strong> the voice agent should explain and rehearse decisions, not silently execute financial actions.</div></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s17" data-title="FlavourMind">
+      <div class="topline"><strong>Project recipe</strong><span>FlavourMind</span></div>
+      <div class="inner cols-2">
+        <div class="reveal"><p class="kicker">Recommended stack</p><h2>Separate private capture from public explanation.</h2><h3 class="bigline">Research voice data has a different risk profile from a narrated demo.</h3></div>
+        <div class="reveal delay"><div class="rule"><h3>Private working mode</h3><p>Use VoiceBox for sensitive local dictation or private synthetic narration experiments. Keep raw research audio and transcripts local by default.</p></div><div class="rule"><h3>Interactive exploration</h3><p>Use GPT‑Realtime‑2 for a conversational guide over a deliberately scoped, provenance-aware research corpus.</p></div><div class="rule"><h3>Public communication</h3><p>Use ElevenLabs for polished multilingual explainers once the script is approved and contains no sensitive research material.</p></div><div class="truth-box"><strong>Governance boundary:</strong> route data by sensitivity before choosing the voice vendor.</div></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s18" data-title="Other projects">
+      <div class="topline"><strong>Project recipes</strong><span>KoH · Hermes · Otto</span></div>
+      <div class="inner">
+        <div class="reveal"><p class="kicker">Three more fits</p><h2>Different prototypes deserve different defaults.</h2></div>
+        <div class="grid cols-3 reveal delay" style="margin-top:1.8rem">
+          <div class="rule"><h3>Kingdom of Hype</h3><h4 class="bigline" style="font-size:2rem">Prototype local. Perform in production.</h4><p class="soft">VoiceBox for cheap NPC line exploration; GPT‑Realtime‑2 for live character intent and game-state tools; ElevenLabs for hero characters and trailers.</p></div>
+          <div class="rule"><h3>Hermes Agent</h3><h4 class="bigline" style="font-size:2rem">Let local agents speak.</h4><p class="soft">VoiceBox’s MCP tool is the cleanest fit for spoken completion alerts and per-agent voices on the older MacBook.<a class="source" href="https://github.com/jamiepine/voicebox#agent-voice-output" target="_blank" rel="noreferrer">2</a></p></div>
+          <div class="rule"><h3>Otto Sous‑Chef</h3><h4 class="bigline" style="font-size:2rem">Optimise for hands-busy dialogue.</h4><p class="soft">GPT‑Realtime‑2 for interruptions and appliance/recipe tools; use native audio until a branded voice proves product value.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="s19" data-tone="acid" data-title="How to">
+      <div class="topline"><strong>Section break</strong><span>Implementation guide</span></div>
+      <div class="inner section-mark"><span class="count">II</span><span class="line"></span><span class="title">Build the smallest useful slice</span></div>
+    </section>
+
+    <section class="slide" id="s20" data-title="Realtime guide">
+      <div class="topline"><strong>How to implement</strong><span>Live conversation</span></div>
+      <div class="inner recipe">
+        <div class="reveal"><p class="kicker">Path A</p><h2>Ship one safe realtime conversation.</h2><div class="steps"><div class="step"><div><b>Define one job</b><p>Example: “Explain my spending pattern”, not “be my financial adviser”.</p></div></div><div class="step"><div><b>Create an ephemeral session</b><p>Mint client credentials on your server; never expose the standard API key in the browser.</p></div></div><div class="step"><div><b>Connect audio</b><p>Use WebRTC in the client and keep privileged tool execution server-side.</p></div></div><div class="step"><div><b>Add two read-only tools</b><p>Retrieve a budget summary and a cited learning explanation.</p></div></div><div class="step"><div><b>Log the right signals</b><p>First-audio latency, interruptions, tool success and unsupported claims.</p></div></div></div></div>
+        <div class="reveal delay"><pre><code><span class="comment">// Browser-side sketch — keep the real key server-side</span>
+const pc = new RTCPeerConnection();
+const stream = await navigator.mediaDevices
+  .getUserMedia({ audio: true });
+
+stream.getTracks().forEach(track =&gt;
+  pc.addTrack(track, stream)
+);
+
+const offer = await pc.createOffer();
+await pc.setLocalDescription(offer);
+
+<span class="comment">// Your server exchanges the SDP with OpenAI</span>
+const answer = await fetch(<span class="hot">"/api/realtime/session"</span>, {
+  method: <span class="blue">"POST"</span>,
+  body: offer.sdp
+}).then(r =&gt; r.json());
+
+await pc.setRemoteDescription({
+  type: "answer", sdp: answer.sdp
+});</code></pre><div class="done"><b>Done means</b><p>A user can interrupt naturally, the agent calls only approved tools, and every financial claim is grounded or explicitly uncertain.</p></div><p class="meta" style="margin-top:1rem"><a href="https://developers.openai.com/api/docs/guides/voice-webrtc" target="_blank" rel="noreferrer">OpenAI WebRTC guide</a></p></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s21" data-title="VoiceBox guide">
+      <div class="topline"><strong>How to implement</strong><span>Local voice layer</span></div>
+      <div class="inner recipe">
+        <div class="reveal"><p class="kicker">Path B</p><h2>Add local voice to Hermes or KoH.</h2><div class="steps"><div class="step"><div><b>Install the desktop app</b><p>Choose the build for Apple Silicon, Intel or Windows; Docker is also documented.</p></div></div><div class="step"><div><b>Start with a preset</b><p>Validate the workflow before creating any cloned voice.</p></div></div><div class="step"><div><b>Create one consented profile</b><p>Keep the reference recording and provenance with the project.</p></div></div><div class="step"><div><b>Connect MCP</b><p>Bind a recognisable voice per agent so spoken output is attributable.</p></div></div><div class="step"><div><b>Prototype the loop</b><p>Agent completes a task, calls <code>voicebox.speak</code>, and the system shows the speaking state.</p></div></div></div></div>
+        <div class="reveal delay"><pre><code><span class="comment">// MCP client configuration</span>
+{
+  <span class="blue">"mcpServers"</span>: {
+    <span class="hot">"voicebox"</span>: {
+      "url": "http://127.0.0.1:17493/mcp",
+      "headers": {
+        "X-Voicebox-Client-Id": "hermes-agent"
+      }
+    }
+  }
+}
+
+<span class="comment">// Agent tool call</span>
+await voicebox.speak({
+  text: "Prototype complete.",
+  profile: "Guide"
+});</code></pre><div class="done"><b>Done means</b><p>Hermes announces one completion locally, with no cloud voice dependency and a visible speaking indicator.</p></div><p class="meta" style="margin-top:1rem"><a href="https://github.com/jamiepine/voicebox#agent-voice-output" target="_blank" rel="noreferrer">VoiceBox MCP documentation</a></p></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s22" data-title="ElevenLabs guide">
+      <div class="topline"><strong>How to implement</strong><span>Production voice</span></div>
+      <div class="inner recipe">
+        <div class="reveal"><p class="kicker">Path C</p><h2>Promote a proven voice to production.</h2><div class="steps"><div class="step"><div><b>Prove the character in text</b><p>Voice quality cannot rescue unclear dialogue or weak interaction design.</p></div></div><div class="step"><div><b>Choose TTS or ElevenAgents</b><p>Use TTS for controlled lines; an agent when it must listen, reason and act.</p></div></div><div class="step"><div><b>Get explicit voice consent</b><p>Record who owns the source audio, allowed uses and deletion path.</p></div></div><div class="step"><div><b>Evaluate two voices</b><p>Blind-test comprehension, trust, character fit and pronunciation.</p></div></div><div class="step"><div><b>Add operational controls</b><p>Version prompts, monitor conversations and set spend/concurrency limits.</p></div></div></div></div>
+        <div class="reveal delay"><pre><code><span class="comment"># Minimal Python TTS sketch</span>
+from elevenlabs.client import ElevenLabs
+
+client = ElevenLabs(api_key=os.environ[
+    <span class="hot">"ELEVENLABS_API_KEY"</span>
+])
+
+audio = client.text_to_speech.convert(
+    voice_id=<span class="blue">VOICE_ID</span>,
+    model_id="eleven_flash_v2_5",
+    text="Welcome back. Shall we continue?"
+)
+
+with open("guide.mp3", "wb") as f:
+    for chunk in audio:
+        f.write(chunk)</code></pre><div class="done"><b>Done means</b><p>The voice wins a blinded user test and the production pipeline records consent, model, voice ID, script and generation version.</p></div><p class="meta" style="margin-top:1rem"><a href="https://elevenlabs.io/docs/api-reference/text-to-speech/convert" target="_blank" rel="noreferrer">ElevenLabs API reference</a></p></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s23" data-title="Wispr guide">
+      <div class="topline"><strong>How to implement</strong><span>Personal capture</span></div>
+      <div class="inner recipe">
+        <div class="reveal"><p class="kicker">Path D</p><h2>Make dictation part of your daily harness.</h2><p class="lede">Wispr Flow belongs in your creation workflow, not inside the customer-facing architecture.</p></div>
+        <div class="reveal delay"><div class="steps"><div class="step"><div><b>Create project dictionaries</b><p>Add Koinaku, FlavourMind, Gaggiuino and recurring Indonesian terms.</p></div></div><div class="step"><div><b>Define two snippets</b><p>One for structured bug reports and one for experiment notes.</p></div></div><div class="step"><div><b>Set privacy controls</b><p>Review model-improvement sharing, cloud storage, context awareness and auto-dictionary behaviour.</p></div></div><div class="step"><div><b>Use it in Cursor and docs</b><p>Dictate intent and acceptance criteria before asking an agent to code.</p></div></div><div class="step"><div><b>Review weekly</b><p>Track whether dictation reduces friction without making briefs less precise.</p></div></div></div><div class="done"><b>Done means</b><p>You can dictate a structured experiment brief in under two minutes and the domain terms arrive correctly.</p></div><p class="meta" style="margin-top:1rem"><a href="https://docs.wisprflow.ai/" target="_blank" rel="noreferrer">Wispr Flow help centre</a></p></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s24" data-title="Evals">
+      <div class="topline"><strong>Evaluation</strong><span>The missing implementation step</span></div>
+      <div class="inner">
+        <div class="reveal"><p class="kicker">Before scaling</p><h2>Measure the conversation, not just the voice.</h2><p class="lede">A beautiful voice can still be slow, ungrounded, interruptible in the wrong way or unsafe.</p></div>
+        <div class="eval-grid reveal delay"><div><strong>Latency</strong><p>Time to first audible response; interruption recovery; tool round-trip.</p></div><div><strong>Understanding</strong><p>Word error rate on names, Indonesian terms, accents and noisy rooms.</p></div><div><strong>Task success</strong><p>Correct tool, correct arguments, grounded answer, clear next action.</p></div><div><strong>Safety</strong><p>No unauthorised action; disclosure; uncertainty; voice consent and provenance.</p></div></div>
+        <div class="grid cols-2" style="margin-top:2rem"><div class="rule"><h3>Golden set</h3><p class="soft">30–50 short conversations spanning clean speech, interruptions, code-switching, jargon, ambiguous intent and refusal cases.</p></div><div class="rule"><h3>Ship gate</h3><p class="soft">Define thresholds per project. A Koinaku mistake and a KoH character mismatch do not carry the same risk.</p></div></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s25" data-title="Checklist">
+      <div class="topline"><strong>Decision checklist</strong><span>Use before procurement</span></div>
+      <div class="inner">
+        <div class="reveal"><p class="kicker">Eight questions</p><h2>The vendor choice falls out of the answers.</h2></div>
+        <div class="decision-grid reveal delay"><div class="decision-row"><b>Is this for me or my customer?</b><span>Wispr ↔ API</span></div><div class="decision-row"><b>Must it reason live?</b><span>GPT‑RT‑2 / Agents</span></div><div class="decision-row"><b>Must audio stay local?</b><span>VoiceBox</span></div><div class="decision-row"><b>Is voice identity strategic?</b><span>ElevenLabs</span></div><div class="decision-row"><b>Does it call tools?</b><span>Realtime / Agents</span></div><div class="decision-row"><b>Is telephony required?</b><span>ElevenLabs / SIP</span></div><div class="decision-row"><b>What is the sensitive-data class?</b><span>Route before inference</span></div><div class="decision-row"><b>What failure is unacceptable?</b><span>Design the eval first</span></div></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s26" data-tone="dark" data-title="Final recommendation">
+      <div class="topline"><strong>Final recommendation</strong><span>Start small, preserve options</span></div>
+      <div class="inner closing">
+        <div class="reveal"><p class="kicker">If I were sequencing this for you</p><h2>Build Koinaku’s live voice slice first.</h2><p class="lede">It demonstrates the most valuable capability — reasoning through voice with tools — while creating an evaluation harness you can reuse for FlavourMind, Otto and KoH.</p><h3 class="bigline" style="margin-top:2rem">Prototype with native GPT audio. Add ElevenLabs only when voice identity proves its value.</h3></div>
+        <div class="stack-poster reveal delay"><div><strong>Now</strong><span>GPT‑Realtime‑2</span></div><div><strong>Alongside</strong><span>Wispr Flow</span></div><div><strong>Local lab</strong><span>VoiceBox</span></div><div><strong>Production upgrade</strong><span>ElevenLabs</span></div></div>
+      </div>
+    </section>
+
+    <section class="slide" id="s27" data-title="Sources">
+      <div class="topline"><strong>Sources</strong><span>Primary sources · accessed 15 Sep 2026</span></div>
+      <div class="inner">
+        <div class="reveal"><p class="kicker">Evidence ledger</p><h2>Claims you can inspect.</h2><p class="lede">Short excerpts identify the supporting passage; links open the underlying vendor or repository page.</p></div>
+        <div class="sources reveal delay">
+          <div class="source-item"><a href="https://github.com/jamiepine/voicebox" target="_blank" rel="noreferrer">[1] VoiceBox repository</a><blockquote>The full voice I/O stack, running locally on your machine.</blockquote></div>
+          <div class="source-item"><a href="https://github.com/jamiepine/voicebox#api" target="_blank" rel="noreferrer">[2] VoiceBox API & MCP</a><blockquote>REST API plus a built-in MCP server.</blockquote></div>
+          <div class="source-item"><a href="https://github.com/jamiepine/voicebox#roadmap" target="_blank" rel="noreferrer">[3] VoiceBox roadmap</a><blockquote>Streaming transcription.</blockquote></div>
+          <div class="source-item"><a href="https://developers.openai.com/api/docs/models/gpt-realtime-2" target="_blank" rel="noreferrer">[4] GPT‑Realtime‑2 model</a><blockquote>Our most capable realtime voice model.</blockquote></div>
+          <div class="source-item"><a href="https://developers.openai.com/api/docs/guides/your-data" target="_blank" rel="noreferrer">[5] OpenAI data controls</a><blockquote>Data sent to the OpenAI API is not used to train.</blockquote></div>
+          <div class="source-item"><a href="https://elevenlabs.io/docs/overview/intro" target="_blank" rel="noreferrer">[6] ElevenLabs overview</a><blockquote>AI voice infrastructure: text-to-speech, speech-to-text, voice cloning, conversational agents.</blockquote></div>
+          <div class="source-item"><a href="https://elevenlabs.io/docs/eleven-creative/voices/voice-cloning" target="_blank" rel="noreferrer">[7] ElevenLabs voice cloning</a><blockquote>Instant Voice Cloning and Professional Voice Cloning.</blockquote></div>
+          <div class="source-item"><a href="https://elevenlabs.io/docs/eleven-agents/overview" target="_blank" rel="noreferrer">[8] ElevenAgents</a><blockquote>Build, launch, and scale agents with ElevenLabs.</blockquote></div>
+          <div class="source-item"><a href="https://elevenlabs.io/docs/overview/capabilities/private-deployment" target="_blank" rel="noreferrer">[9] ElevenLabs private deployment</a><blockquote>Text, audio and transcripts never leave your network.</blockquote></div>
+          <div class="source-item"><a href="https://wisprflow.ai/pricing" target="_blank" rel="noreferrer">[10] Wispr Flow pricing</a><blockquote>Speech-to-text across all your apps in 100+ languages.</blockquote></div>
+          <div class="source-item"><a href="https://wisprflow.ai/data-controls" target="_blank" rel="noreferrer">[11] Wispr Flow data controls</a><blockquote>Transcription always occurs on the cloud.</blockquote></div>
+          <div class="source-item"><a href="https://elevenlabs.io/pricing" target="_blank" rel="noreferrer">[12] ElevenLabs pricing</a><blockquote>Credits are shared across every product.</blockquote></div>
+          <div class="source-item"><a href="https://elevenlabs.io/docs/overview/administration/data-residency" target="_blank" rel="noreferrer">[13] ElevenLabs data residency</a><blockquote>Data residency is an Enterprise feature.</blockquote></div>
+          <div class="source-item"><a href="https://developers.openai.com/api/docs/guides/voice-webrtc" target="_blank" rel="noreferrer">[14] OpenAI WebRTC guide</a><blockquote>Connect browser voice applications with WebRTC.</blockquote></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="nav" id="nav" aria-label="Slide navigation"></nav>
+  <div class="controls" aria-label="Presentation controls">
+    <button type="button" id="prev" aria-label="Previous slide"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+    <span class="counter" id="counter" aria-live="polite">1 / 27</span>
+    <button type="button" id="next" aria-label="Next slide"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></button>
+    <button type="button" id="full" aria-label="Enter full screen"><svg viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/></svg></button>
+  </div>
+
+  <script>
+    (() => {
+      const deck = document.getElementById('deck');
+      const slides = [...document.querySelectorAll('.slide')];
+      const nav = document.getElementById('nav');
+      const counter = document.getElementById('counter');
+      const progress = document.getElementById('progress');
+      let current = 0;
+
+      slides.forEach((slide, i) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.setAttribute('aria-label', `Go to slide ${i + 1}: ${slide.dataset.title}`);
+        button.addEventListener('click', () => go(i));
+        nav.appendChild(button);
+      });
+      const dots = [...nav.children];
+
+      function update(i) {
+        current = Math.max(0, Math.min(slides.length - 1, i));
+        slides.forEach((s, n) => s.classList.toggle('is-active', n === current));
+        dots.forEach((d, n) => d.setAttribute('aria-current', n === current ? 'true' : 'false'));
+        counter.textContent = `${current + 1} / ${slides.length}`;
+        progress.style.transform = `scaleX(${(current + 1) / slides.length})`;
+        history.replaceState(null, '', `#${slides[current].id}`);
+      }
+      function go(i) { slides[Math.max(0, Math.min(slides.length - 1, i))].scrollIntoView({behavior:'smooth'}); }
+
+      const observer = new IntersectionObserver(entries => {
+        const visible = entries.filter(e => e.isIntersecting).sort((a,b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) update(slides.indexOf(visible.target));
+      }, {root: deck, threshold:[.55,.72]});
+      slides.forEach(s => observer.observe(s));
+
+      document.getElementById('prev').addEventListener('click', () => go(current - 1));
+      document.getElementById('next').addEventListener('click', () => go(current + 1));
+      document.getElementById('full').addEventListener('click', async () => {
+        if (!document.fullscreenElement) await document.documentElement.requestFullscreen?.();
+        else await document.exitFullscreen?.();
+      });
+      document.addEventListener('keydown', e => {
+        if (e.target.matches('button,a,input,textarea,select')) return;
+        if (['ArrowDown','ArrowRight','PageDown',' '].includes(e.key)) { e.preventDefault(); go(current + 1); }
+        if (['ArrowUp','ArrowLeft','PageUp'].includes(e.key)) { e.preventDefault(); go(current - 1); }
+        if (e.key === 'Home') { e.preventDefault(); go(0); }
+        if (e.key === 'End') { e.preventDefault(); go(slides.length - 1); }
+      });
+
+      const choices = {
+        conversation:{title:'GPT‑Realtime‑2',why:'Use it as the conversation engine when turn-taking, reasoning and tool calls matter more than voice cloning.',stack:['GPT‑Realtime‑2','WebRTC','your tools']},
+        production:{title:'ElevenLabs',why:'Use it when expressive voice quality, cloning, multilingual output, dubbing or telephony is the product requirement.',stack:['ElevenLabs','voice governance','delivery channel']},
+        dictation:{title:'Wispr Flow',why:'Use it when the user is you: speak naturally and place polished text into the apps where you already work.',stack:['Wispr Flow','dictionary','snippets']},
+        private:{title:'VoiceBox',why:'Use it when audio, transcripts and voice profiles should stay local and you can own the hardware and setup.',stack:['VoiceBox','local models','REST or MCP']},
+        hybrid:{title:'GPT‑Realtime‑2 + ElevenLabs',why:'Use GPT for live reasoning and tools; add ElevenLabs only when branded voice quality or distribution justifies the extra hop.',stack:['GPT‑Realtime‑2','domain tools','ElevenLabs']}
+      };
+      document.querySelectorAll('[data-choice]').forEach(button => button.addEventListener('click', () => {
+        document.querySelectorAll('[data-choice]').forEach(b => b.setAttribute('aria-pressed','false'));
+        button.setAttribute('aria-pressed','true');
+        const choice = choices[button.dataset.choice];
+        document.getElementById('choiceTitle').textContent = choice.title;
+        document.getElementById('choiceWhy').textContent = choice.why;
+        document.getElementById('choiceStack').innerHTML = choice.stack.map(x => `<span class="chip">${x}</span>`).join('');
+      }));
+
+      const projects = {
+        koinaku:{title:'A bilingual financial coach that can act.',arch:['GPT‑Realtime‑2','Koinaku tools','native voice'],why:'Start with one spoken coaching flow in Indonesian and English. Let the model call read-only budget and learning tools; keep transactions out of scope until the evals are strong.',done:'A five-minute “explain my spending pattern” conversation with interruption handling, citations to the user’s own data and a post-call summary.'},
+        flavourmind:{title:'A provenance-aware research guide.',arch:['local capture','GPT‑Realtime‑2','scoped research tools'],why:'Keep sensitive capture local, then expose only approved, cited research context to the conversational guide. Produce public explainers as a separate publishing pipeline.',done:'A user asks one research question by voice, receives an answer with source provenance, and can inspect the supporting passage.'},
+        koh:{title:'NPCs that think and voices that perform.',arch:['game state','GPT‑Realtime‑2','VoiceBox → ElevenLabs'],why:'Use realtime reasoning for NPC intent and game-state tools. Use VoiceBox for rapid placeholder dialogue, then promote only hero voices to ElevenLabs after playtests.',done:'One NPC reacts to a crisis-state change, stays in character for three turns, and produces a traceable tool/action log.'},
+        hermes:{title:'A local agent you can hear.',arch:['Hermes Agent','VoiceBox MCP','local speaker'],why:'Bind one local VoiceBox profile to Hermes so completions and questions are audible without sending the generated voice to a cloud service.',done:'Hermes speaks a completion and a clarification request with a visible speaking indicator and no cloud voice call.'},
+        otto:{title:'A hands-busy kitchen conversation.',arch:['microphone','GPT‑Realtime‑2','recipe + appliance tools'],why:'Prioritise interruption handling, short responses and grounded recipe/appliance actions. Native model audio is sufficient until a brand voice proves measurable value.',done:'Otto handles “pause, what temperature?” mid-step, retrieves the correct recipe state and resumes without repeating the entire instruction.'}
+      };
+      document.querySelectorAll('[data-project]').forEach(button => button.addEventListener('click', () => {
+        document.querySelectorAll('[data-project]').forEach(b => b.setAttribute('aria-pressed','false'));
+        button.setAttribute('aria-pressed','true');
+        const p = projects[button.dataset.project];
+        document.getElementById('projectTitle').textContent = p.title;
+        document.getElementById('projectArch').innerHTML = p.arch.map((x,i) => `${i ? '<i>→</i>' : ''}<span>${x}</span>`).join('');
+        document.getElementById('projectWhy').textContent = p.why;
+        document.getElementById('projectDone').textContent = p.done;
+      }));
+
+      const hashIndex = slides.findIndex(s => `#${s.id}` === location.hash);
+      update(hashIndex >= 0 ? hashIndex : 0);
+      if (hashIndex >= 0) requestAnimationFrame(() => slides[hashIndex].scrollIntoView());
+    })();
+  </script>
+</body>
+</html>

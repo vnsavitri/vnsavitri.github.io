@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive beginner-friendly guide to DeepSeek Harness, the everything-is-a-plugin agent harness.">
+  <title>DeepSeek Harness: Everything is a Plugin</title>
+  <style>
+    :root {
+      --paper: #f5f6f8;
+      --paper-2: #eceff4;
+      --ink: #111820;
+      --muted: #63707d;
+      --line: #d6dce3;
+      --blue: #4d6bfe;
+      --blue-deep: #2444ca;
+      --blue-soft: #e5eaff;
+      --orange: #ee7654;
+      --green: #2c9b7a;
+      --white: #ffffff;
+      --shadow: 0 24px 80px rgba(26, 38, 55, .12);
+      --radius: 22px;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--paper); color: var(--ink); font-family: var(--sans); }
+    body { overflow: hidden; }
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+
+    .deck {
+      height: 100svh;
+      min-height: 560px;
+      display: grid;
+      grid-template-rows: 58px 1fr 64px;
+      background:
+        radial-gradient(circle at 88% 8%, rgba(77, 107, 254, .11), transparent 28%),
+        linear-gradient(135deg, rgba(255,255,255,.46), transparent 40%),
+        var(--paper);
+    }
+
+    .topbar, .bottombar { display: flex; align-items: center; justify-content: space-between; padding: 0 4vw; z-index: 5; }
+    .topbar { border-bottom: 1px solid rgba(214,220,227,.82); }
+    .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-size: 13px; letter-spacing: .02em; font-weight: 600; }
+    .brand-mark { width: 18px; height: 18px; border-radius: 50%; display: inline-block; background: conic-gradient(from 210deg, var(--blue), var(--orange), var(--blue)); box-shadow: 0 0 0 5px rgba(77,107,254,.10); }
+    .top-actions { display: flex; gap: 8px; align-items: center; }
+    .icon-btn, .text-btn { border: 1px solid var(--line); background: rgba(255,255,255,.72); color: var(--ink); border-radius: 999px; padding: 8px 12px; font-size: 12px; transition: .2s ease; }
+    .icon-btn:hover, .text-btn:hover { transform: translateY(-1px); border-color: var(--blue); color: var(--blue-deep); }
+    .icon-btn { width: 34px; height: 34px; padding: 0; display: grid; place-items: center; }
+
+    .stage-wrap { display: grid; place-items: center; min-height: 0; padding: 1.3vh 4vw; }
+    .stage { width: min(1180px, 100%); height: min(76vh, 690px); min-height: 460px; position: relative; }
+    .slide { position: absolute; inset: 0; opacity: 0; pointer-events: none; transform: translateX(22px) scale(.985); transition: opacity .34s ease, transform .34s ease; overflow: hidden; padding: clamp(30px, 4.5vw, 64px); display: flex; flex-direction: column; justify-content: center; background: rgba(255,255,255,.86); border: 1px solid rgba(214,220,227,.92); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .slide.active { opacity: 1; pointer-events: auto; transform: none; }
+    .slide.prev { transform: translateX(-22px) scale(.985); }
+    .eyebrow { margin: 0 0 18px; color: var(--blue-deep); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; font-weight: 700; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 850px; font-size: clamp(42px, 7vw, 88px); line-height: .94; letter-spacing: -.07em; margin-bottom: 24px; font-weight: 650; }
+    h2 { max-width: 820px; font-size: clamp(31px, 4.6vw, 58px); line-height: .98; letter-spacing: -.055em; margin-bottom: 18px; font-weight: 650; }
+    h3 { font-size: 17px; line-height: 1.1; letter-spacing: -.02em; margin-bottom: 9px; }
+    p { color: var(--muted); line-height: 1.55; }
+    .lede { font-size: clamp(16px, 1.65vw, 21px); max-width: 720px; line-height: 1.42; }
+    .fine { font-size: 12px; color: var(--muted); line-height: 1.45; }
+    .mono { font-family: var(--mono); }
+    .accent { color: var(--blue-deep); }
+    .orange { color: var(--orange); }
+    .green { color: var(--green); }
+    .source { position: absolute; right: clamp(30px, 4.5vw, 64px); bottom: 20px; font-size: 10px; color: #8a96a3; letter-spacing: .04em; }
+    .source a { text-decoration: none; border-bottom: 1px solid #c4ccd5; }
+
+    .hero { justify-content: space-between; }
+    .hero-copy { position: relative; z-index: 2; margin-top: 2vh; }
+    .hero-copy .lede { max-width: 610px; }
+    .hero-footer { display: flex; align-items: center; gap: 14px; margin-top: 32px; }
+    .hero-chip { display: inline-flex; align-items: center; padding: 9px 12px; border-radius: 999px; background: var(--blue-soft); color: var(--blue-deep); font-size: 12px; font-weight: 650; }
+    .orbital { position: absolute; right: -6%; bottom: -19%; width: min(48vw, 545px); aspect-ratio: 1; border-radius: 50%; border: 1px solid rgba(77,107,254,.28); background: radial-gradient(circle at 50% 50%, rgba(77,107,254,.16), transparent 36%), radial-gradient(circle at 70% 28%, rgba(238,118,84,.18), transparent 10%), radial-gradient(circle, transparent 62%, rgba(77,107,254,.10) 63%, transparent 63.5%); box-shadow: inset 0 0 80px rgba(77,107,254,.05); }
+    .orbital::before, .orbital::after { content: ""; position: absolute; inset: 11%; border-radius: 50%; border: 1px dashed rgba(77,107,254,.24); transform: rotate(32deg) scaleY(.44); }
+    .orbital::after { inset: 24%; transform: rotate(-38deg) scaleY(.62); border-style: solid; border-color: rgba(238,118,84,.35); }
+    .orbit-dot { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 7px rgba(77,107,254,.12); }
+    .orbit-dot.one { top: 10%; left: 25%; } .orbit-dot.two { top: 34%; right: 5%; background: var(--orange); box-shadow: 0 0 0 7px rgba(238,118,84,.12); } .orbit-dot.three { bottom: 8%; left: 22%; background: var(--green); box-shadow: 0 0 0 7px rgba(44,155,122,.12); }
+
+    .grid-2 { display: grid; grid-template-columns: 1.05fr .95fr; gap: clamp(22px, 4vw, 60px); align-items: center; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .benefit-list { display: grid; gap: 14px; margin-top: 22px; }
+    .benefit { display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: start; }
+    .number { color: var(--blue-deep); font-family: var(--mono); font-size: 13px; padding-top: 3px; }
+    .benefit p { margin: 0; font-size: 14px; line-height: 1.42; }
+    .benefit strong { color: var(--ink); font-weight: 650; }
+    .use-case-stack { display: grid; gap: 10px; }
+    .use-case { padding: 18px 18px 17px; border: 1px solid var(--line); border-radius: 16px; background: rgba(245,246,248,.72); }
+    .use-case span { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; line-height: 1.4; }
+
+    .architecture { min-height: 290px; position: relative; display: grid; place-items: center; }
+    .context-node { width: 150px; height: 150px; border-radius: 50%; display: grid; place-items: center; text-align: center; background: var(--ink); color: var(--white); box-shadow: 0 0 0 18px rgba(17,24,32,.045), 0 0 0 40px rgba(17,24,32,.025); z-index: 2; }
+    .context-node strong { font-size: 21px; letter-spacing: -.04em; }
+    .context-node small { display: block; margin-top: 4px; color: #b8c0ca; font-family: var(--mono); font-size: 10px; }
+    .plugin { position: absolute; min-width: 104px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--white); font-size: 12px; box-shadow: 0 8px 22px rgba(26,38,55,.08); }
+    .plugin::after { content: ""; position: absolute; height: 1px; width: 80px; background: var(--line); top: 50%; z-index: -1; }
+    .plugin small { display: block; color: var(--muted); font-size: 10px; margin-top: 3px; }
+    .plugin.a { top: 3%; left: 8%; } .plugin.a::after { right: -80px; transform: rotate(20deg); }
+    .plugin.b { top: 8%; right: 7%; } .plugin.b::after { left: -80px; transform: rotate(-18deg); }
+    .plugin.c { bottom: 5%; left: 13%; } .plugin.c::after { right: -80px; transform: rotate(-18deg); }
+    .plugin.d { bottom: 3%; right: 12%; } .plugin.d::after { left: -80px; transform: rotate(19deg); }
+    .architecture-note { padding: 14px 16px; margin-top: 18px; border-left: 3px solid var(--orange); background: rgba(238,118,84,.08); font-size: 13px; color: var(--ink); line-height: 1.42; }
+
+    .layers { display: grid; gap: 9px; margin-top: 12px; }
+    .layer { padding: 17px 19px; border-radius: 14px; border: 1px solid var(--line); display: grid; grid-template-columns: 120px 1fr; gap: 17px; align-items: center; background: rgba(245,246,248,.78); }
+    .layer:nth-child(1) { margin-left: 0; background: rgba(229,234,255,.75); border-color: #c8d1ff; } .layer:nth-child(2) { margin-left: 34px; } .layer:nth-child(3) { margin-left: 68px; background: rgba(238,118,84,.07); }
+    .layer-label { font-family: var(--mono); font-size: 12px; color: var(--blue-deep); } .layer p { margin: 0; font-size: 13px; }
+    .layer p strong { color: var(--ink); }
+    .callout { margin-top: 20px; padding: 15px 17px; border: 1px dashed #aeb8c4; border-radius: 14px; font-size: 13px; color: var(--muted); line-height: 1.45; }
+
+    .tabs { display: flex; flex-wrap: wrap; gap: 7px; margin: 17px 0 18px; }
+    .tab { border: 1px solid var(--line); background: var(--paper); color: var(--muted); border-radius: 999px; padding: 10px 14px; font-size: 12px; font-weight: 650; transition: .2s ease; }
+    .tab:hover, .tab.active { color: var(--white); background: var(--ink); border-color: var(--ink); }
+    .surface-copy { padding: 21px; border-radius: 18px; background: var(--ink); color: var(--white); min-height: 170px; }
+    .surface-copy h3 { color: var(--white); font-size: 25px; margin-bottom: 9px; }
+    .surface-copy p { color: #c1c9d2; font-size: 14px; margin-bottom: 14px; }
+    .surface-code { color: #aebaff; font-family: var(--mono); font-size: 12px; white-space: pre-wrap; }
+    .surface-meta { display: grid; gap: 10px; align-content: center; }
+    .meta-line { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 9px; font-size: 13px; } .meta-line span:first-child { color: var(--muted); } .meta-line span:last-child { text-align: right; font-weight: 650; }
+
+    .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin: 25px 0 18px; position: relative; }
+    .flow::before { content: ""; position: absolute; top: 25px; left: 8%; right: 8%; height: 1px; background: var(--line); }
+    .flow-step { position: relative; text-align: center; cursor: pointer; }
+    .flow-dot { width: 50px; height: 50px; display: grid; place-items: center; margin: 0 auto 12px; border-radius: 50%; background: var(--paper-2); border: 1px solid var(--line); color: var(--muted); font-family: var(--mono); font-size: 12px; transition: .2s ease; position: relative; }
+    .flow-step:hover .flow-dot, .flow-step.active .flow-dot { color: var(--white); background: var(--blue); border-color: var(--blue); box-shadow: 0 0 0 7px rgba(77,107,254,.12); }
+    .flow-step strong { font-size: 12px; display: block; } .flow-step span { display: block; font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .flow-detail { min-height: 74px; padding: 15px 17px; border-left: 3px solid var(--blue); background: var(--blue-soft); font-size: 13px; line-height: 1.42; }
+    .flow-detail strong { color: var(--blue-deep); }
+
+    .scenario-layout { display: grid; grid-template-columns: .8fr 1.2fr; gap: 24px; align-items: stretch; margin-top: 22px; }
+    .scenario-list { display: grid; gap: 8px; align-content: start; }
+    .scenario-btn { text-align: left; border: 1px solid var(--line); background: var(--paper); border-radius: 13px; padding: 13px 14px; color: var(--ink); transition: .2s ease; }
+    .scenario-btn:hover, .scenario-btn.active { border-color: var(--blue); background: var(--blue-soft); transform: translateX(3px); }
+    .scenario-btn strong { display: block; font-size: 13px; } .scenario-btn span { color: var(--muted); display: block; font-size: 11px; margin-top: 4px; }
+    .scenario-detail { padding: 22px; border-radius: 18px; background: linear-gradient(135deg, var(--ink), #293747); color: var(--white); display: flex; flex-direction: column; justify-content: space-between; min-height: 220px; }
+    .scenario-detail h3 { font-size: 28px; letter-spacing: -.045em; } .scenario-detail p { color: #c2cad4; font-size: 14px; max-width: 520px; } .scenario-detail .route { font-family: var(--mono); color: #aebaff; font-size: 12px; line-height: 1.7; }
+
+    .code-layout { display: grid; grid-template-columns: 1.1fr .9fr; gap: 22px; align-items: stretch; margin-top: 18px; }
+    .code-shell { background: #121a23; color: #d8e0e8; border-radius: 17px; overflow: hidden; border: 1px solid #263442; box-shadow: 0 18px 35px rgba(17,24,32,.14); }
+    .code-head { display: flex; justify-content: space-between; align-items: center; padding: 11px 14px; color: #9aa8b6; font-size: 11px; border-bottom: 1px solid #263442; font-family: var(--mono); }
+    .copy { border: 1px solid #405061; background: transparent; color: #cbd5df; border-radius: 999px; padding: 5px 9px; font-size: 10px; }
+    pre { margin: 0; padding: 18px; overflow: auto; font-family: var(--mono); font-size: 12px; line-height: 1.65; white-space: pre-wrap; }
+    .tok-key { color: #9eb0ff; } .tok-name { color: #f0a58f; } .tok-str { color: #9fd9c1; } .tok-comment { color: #7b8a98; }
+    .code-notes { display: grid; gap: 10px; align-content: center; } .code-note { padding: 15px 16px; border: 1px solid var(--line); border-radius: 14px; font-size: 13px; line-height: 1.42; } .code-note strong { color: var(--blue-deep); }
+
+    .safety { border: 1px solid #f0c4b7; background: linear-gradient(135deg, rgba(255,244,240,.9), rgba(255,255,255,.8)); }
+    .safety h2 { max-width: 680px; } .safety-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; } .safety-box { padding: 16px; border-top: 3px solid var(--orange); background: rgba(255,255,255,.78); border-radius: 12px; } .safety-box strong { font-size: 13px; display: block; margin-bottom: 6px; } .safety-box p { font-size: 12px; margin: 0; }
+
+    .steps { display: grid; grid-template-columns: 52px 1fr; gap: 15px; margin-top: 18px; }
+    .step-rail { position: relative; display: grid; align-content: start; gap: 0; } .step-rail::before { content: ""; position: absolute; top: 26px; bottom: 26px; left: 25px; width: 1px; background: var(--line); } .step-num { width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; background: var(--paper-2); border: 1px solid var(--line); color: var(--blue-deep); font-family: var(--mono); font-size: 13px; position: relative; z-index: 1; } .step-num.active { background: var(--blue); color: var(--white); border-color: var(--blue); }
+    .step-panel { min-height: 210px; } .step-kicker { color: var(--blue-deep); font-family: var(--mono); font-size: 11px; margin-bottom: 9px; } .step-panel h3 { font-size: 28px; letter-spacing: -.04em; } .step-panel p { max-width: 720px; font-size: 14px; } .step-panel pre { margin-top: 15px; border-radius: 13px; background: #121a23; color: #d8e0e8; padding: 15px; }
+    .step-controls { display: flex; gap: 8px; margin-top: 18px; } .step-controls button { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 9px 13px; font-size: 12px; } .step-controls button:hover { border-color: var(--blue); color: var(--blue-deep); }
+
+    .closing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 22px; } .closing-box { border: 1px solid var(--line); border-radius: 15px; padding: 18px; background: rgba(245,246,248,.72); } .closing-box h3 { font-size: 15px; } .closing-box p { font-size: 13px; margin: 0; } .link-list { display: grid; gap: 8px; } .link-list a { font-size: 12px; color: var(--blue-deep); text-decoration: none; } .link-list a:hover { text-decoration: underline; }
+
+    .bottombar { border-top: 1px solid rgba(214,220,227,.82); }
+    .progress-wrap { display: flex; align-items: center; gap: 11px; min-width: 180px; } .progress { height: 3px; width: 120px; background: var(--line); border-radius: 99px; overflow: hidden; } .progress span { display: block; width: 0; height: 100%; background: var(--blue); transition: width .3s ease; } .counter { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+    .nav-controls { display: flex; gap: 7px; } .nav-btn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: rgba(255,255,255,.78); color: var(--ink); } .nav-btn:hover { border-color: var(--blue); color: var(--blue-deep); }
+    .dots { display: flex; gap: 5px; align-items: center; } .dot { border: 0; padding: 0; width: 5px; height: 5px; background: #c8d0d9; border-radius: 50%; } .dot.active { width: 18px; border-radius: 999px; background: var(--blue); }
+    .help { position: fixed; inset: 0; display: none; place-items: center; background: rgba(17,24,32,.36); z-index: 20; padding: 22px; } .help.open { display: grid; } .help-card { max-width: 390px; padding: 24px; background: var(--white); border-radius: 19px; box-shadow: var(--shadow); } .help-card h3 { font-size: 22px; } .help-card p { font-size: 13px; } .help-card kbd { padding: 3px 7px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; font-family: var(--mono); font-size: 11px; background: var(--paper); }
+    .toast { position: fixed; left: 50%; bottom: 88px; transform: translate(-50%, 14px); opacity: 0; padding: 8px 12px; background: var(--ink); color: var(--white); border-radius: 999px; font-size: 12px; pointer-events: none; transition: .22s ease; z-index: 12; } .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 860px) {
+      body { overflow: auto; }
+      .deck { min-height: 100svh; height: auto; grid-template-rows: 54px auto 60px; }
+      .stage-wrap { padding: 14px; min-height: calc(100svh - 114px); align-items: start; }
+      .stage { height: auto; min-height: 0; display: grid; }
+      .slide { position: relative; grid-area: 1 / 1; min-height: calc(100svh - 150px); max-height: none; overflow: visible; padding: 30px 24px 58px; transform: translateX(16px) scale(.99); }
+      .slide.prev { transform: translateX(-16px) scale(.99); }
+      .slide.active { transform: none; }
+      .grid-2, .code-layout, .scenario-layout { grid-template-columns: 1fr; gap: 22px; }
+      .grid-3, .safety-grid { grid-template-columns: 1fr; }
+      .orbital { right: -22%; bottom: -8%; width: 65vw; opacity: .65; }
+      .architecture { min-height: 320px; transform: scale(.9); margin: -12px 0; }
+      .plugin.a { left: 0; } .plugin.b { right: 0; } .plugin.c { left: 2%; } .plugin.d { right: 2%; }
+      .layer { grid-template-columns: 86px 1fr; } .layer:nth-child(2) { margin-left: 18px; } .layer:nth-child(3) { margin-left: 36px; }
+      .flow { gap: 4px; } .flow::before { left: 5%; right: 5%; } .flow-dot { width: 40px; height: 40px; font-size: 10px; } .flow-step strong { font-size: 11px; } .flow-step span { font-size: 10px; }
+      .bottombar { padding: 0 18px; } .dots { display: none; } .progress-wrap { min-width: auto; } .progress { width: 80px; }
+      .source { bottom: 16px; left: 24px; right: auto; }
+    }
+    @media (max-width: 480px) {
+      .topbar { padding: 0 18px; } .top-actions .text-btn { display: none; }
+      h1 { font-size: 45px; } h2 { font-size: 34px; } .lede { font-size: 16px; }
+      .architecture { transform: scale(.76); margin: -38px -35px; min-height: 275px; }
+      .flow { margin-left: -10px; margin-right: -10px; } .flow-step span { display: none; }
+      .flow-detail { margin-top: 9px; } .scenario-detail h3 { font-size: 24px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-label="DeepSeek Harness interactive slide deck">
+    <header class="topbar">
+      <a class="brand" href="https://github.com/deepseek-ai/deepseek-harness" target="_blank" rel="noreferrer"><span class="brand-mark" aria-hidden="true"></span>deepseek-harness</a>
+      <div class="top-actions">
+        <button class="text-btn" id="fullscreenBtn" type="button">Full screen</button>
+        <button class="icon-btn" id="helpBtn" type="button" aria-label="Show keyboard shortcuts">?</button>
+      </div>
+    </header>
+
+    <section class="stage-wrap">
+      <div class="stage">
+        <article class="slide active hero" data-title="Start here">
+          <div class="hero-copy">
+            <p class="eyebrow">A beginner’s field guide · 2026</p>
+            <h1>Everything<br>is a plugin.</h1>
+            <p class="lede">DeepSeek Harness is an open-source runtime for building and running coding agents. Its defining idea is simple: the model, tools, session log, agent loop and user interface are all replaceable parts.</p>
+            <div class="hero-footer"><span class="hero-chip">DeepSeek Harness · dsh</span><span class="fine">Use ← → or swipe to move through the story</span></div>
+          </div>
+          <div class="orbital" aria-hidden="true"><span class="orbit-dot one"></span><span class="orbit-dot two"></span><span class="orbit-dot three"></span></div>
+          <div class="source">Source: <a href="https://github.com/deepseek-ai/deepseek-harness#readme" target="_blank" rel="noreferrer">repository README</a></div>
+        </article>
+
+        <article class="slide" data-title="TL;DR">
+          <p class="eyebrow">01 · TL;DR</p>
+          <div class="grid-2">
+            <div>
+              <h2>Think of it as Lego for agent workflows.</h2>
+              <p class="lede">You get a working agent, then swap or add the pieces you care about: models, tools, memory, approval rules, interfaces, and automation triggers.</p>
+              <div class="benefit-list">
+                <div class="benefit"><span class="number">01</span><p><strong>Compose instead of fork.</strong> Add behaviour beside the existing system through plugins and patch layers.</p></div>
+                <div class="benefit"><span class="number">02</span><p><strong>Keep the same core across surfaces.</strong> Use a browser, a one-shot CLI, a Python/TypeScript client, or ACP automation.</p></div>
+                <div class="benefit"><span class="number">03</span><p><strong>Make work inspectable.</strong> Sessions are durable event streams that power replay, UI history and downstream consumers.</p></div>
+              </div>
+            </div>
+            <div class="use-case-stack">
+              <div class="use-case"><strong>Local coding cockpit</strong><span>Chat with an agent over a selected workspace in the Web UI.</span></div>
+              <div class="use-case"><strong>CI and batch jobs</strong><span>Run one task headlessly and use the exit code in a script.</span></div>
+              <div class="use-case"><strong>Product integration</strong><span>Drive a persistent harness from Python or TypeScript over JSON-RPC.</span></div>
+              <div class="use-case"><strong>Event-driven workflows</strong><span>Use patches for MCP memory, scheduled reminders or GitHub review sessions.</span></div>
+            </div>
+          </div>
+          <div class="source">Sources: <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/architecture.md" target="_blank" rel="noreferrer">architecture</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/index.md" target="_blank" rel="noreferrer">Web UI guide</a></div>
+        </article>
+
+        <article class="slide" data-title="Mental model">
+          <p class="eyebrow">02 · Mental model</p>
+          <div class="grid-2">
+            <div>
+              <h2>One shared context. Many replaceable capabilities.</h2>
+              <p class="lede">Cordis is the plugin framework underneath dsh. Plugins contribute services, typed events and reversible effects to a shared context.</p>
+              <div class="architecture-note"><strong>The important shift:</strong> there is no privileged “core feature” you have to patch. You mount a plugin beside the others, and its registrations unwind when it unloads.</div>
+            </div>
+            <div class="architecture" aria-label="Plugins contributing to a shared context">
+              <div class="context-node"><div><strong>shared<br>context</strong><small>ctx</small></div></div>
+              <div class="plugin a">model adapter<small>ctx.llm</small></div>
+              <div class="plugin b">tool registry<small>ctx.tools</small></div>
+              <div class="plugin c">session log<small>ctx.sessions</small></div>
+              <div class="plugin d">agent loop<small>ctx.agentLoop</small></div>
+            </div>
+          </div>
+          <div class="source">Source: <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/architecture.md" target="_blank" rel="noreferrer">DeepSeek Harness architecture</a></div>
+        </article>
+
+        <article class="slide" data-title="Profiles and patches">
+          <p class="eyebrow">03 · How composition works</p>
+          <div class="grid-2">
+            <div>
+              <h2>The composition is the product.</h2>
+              <p class="lede">A running dsh process is a plugin tree assembled from ordered layers. You can see the tree, patch it, and reuse the same composition across launch surfaces.</p>
+              <div class="callout"><strong>Rule to remember:</strong> a patch replaces a row’s whole config. Later layers win, so restate the settings you want to keep.</div>
+            </div>
+            <div class="layers">
+              <div class="layer"><span class="layer-label">bundle</span><p><strong>Reusable distribution layer.</strong> A package of Cordis config rows plus the code they mount.</p></div>
+              <div class="layer"><span class="layer-label">profile</span><p><strong>Named application recipe.</strong> For example: <span class="mono">web</span>, <span class="mono">headless</span>, <span class="mono">sdk</span>, or <span class="mono">acp</span>.</p></div>
+              <div class="layer"><span class="layer-label">patch</span><p><strong>Your overlay.</strong> Insert a plugin, replace a provider, or change a policy without editing the core.</p></div>
+            </div>
+          </div>
+          <div class="source">Source: <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/architecture.md" target="_blank" rel="noreferrer">profiles and bundles</a></div>
+        </article>
+
+        <article class="slide" data-title="Four surfaces">
+          <p class="eyebrow">04 · Choose your surface</p>
+          <h2>Same harness. Different way in.</h2>
+          <div class="tabs" role="tablist" aria-label="DeepSeek Harness launch surfaces">
+            <button class="tab active" type="button" role="tab" aria-selected="true" data-surface="web">Web UI</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-surface="headless">Headless</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-surface="sdk">SDK</button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-surface="acp">ACP</button>
+          </div>
+          <div class="grid-2">
+            <div class="surface-copy" id="surfaceCopy" aria-live="polite"><div><h3>Web UI</h3><p>Interactive, multi-turn work in a browser. Select a workspace, configure a model, and chat with the agent.</p></div><div class="surface-code">dsh web</div></div>
+            <div class="surface-meta" id="surfaceMeta"><div class="meta-line"><span>Best for</span><span>Interactive exploration</span></div><div class="meta-line"><span>Starts</span><span class="mono">http://127.0.0.1:3080</span></div><div class="meta-line"><span>Key boundary</span><span>Workspace must be selected</span></div></div>
+          </div>
+          <div class="source">Source: <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/architecture.md" target="_blank" rel="noreferrer">application launch</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/bundle/headless/README.md" target="_blank" rel="noreferrer">headless profile</a></div>
+        </article>
+
+        <article class="slide" data-title="Task flow">
+          <p class="eyebrow">05 · Under the hood</p>
+          <h2>One user request becomes a durable, observable turn.</h2>
+          <p class="lede">Click a stage to see what the harness is doing. A <span class="mono">step</span> is one model request plus its tools; a <span class="mono">turn</span> can contain multiple steps.</p>
+          <div class="flow" role="list" aria-label="Task flow stages">
+            <button class="flow-step active" type="button" data-flow="turn" role="listitem"><span class="flow-dot">01</span><strong>turn</strong><span>open</span></button>
+            <button class="flow-step" type="button" data-flow="prompt" role="listitem"><span class="flow-dot">02</span><strong>prompt</strong><span>assemble</span></button>
+            <button class="flow-step" type="button" data-flow="model" role="listitem"><span class="flow-dot">03</span><strong>model</strong><span>stream</span></button>
+            <button class="flow-step" type="button" data-flow="tools" role="listitem"><span class="flow-dot">04</span><strong>tools</strong><span>execute</span></button>
+            <button class="flow-step" type="button" data-flow="log" role="listitem"><span class="flow-dot">05</span><strong>session log</strong><span>persist</span></button>
+          </div>
+          <div class="flow-detail" id="flowDetail" aria-live="polite"><strong>Turn starts.</strong> The harness claims the next input, opens a turn, and prepares to run one or more steps.</div>
+          <div class="source">Source: <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/architecture.md" target="_blank" rel="noreferrer">turn flow and session log</a></div>
+        </article>
+
+        <article class="slide" data-title="Use cases">
+          <p class="eyebrow">06 · Use cases</p>
+          <h2>Pick the job. Pick the surface.</h2>
+          <div class="scenario-layout">
+            <div class="scenario-list" role="tablist" aria-label="DeepSeek Harness use cases">
+              <button class="scenario-btn active" type="button" data-scenario="coding"><strong>Local coding cockpit</strong><span>Web UI · multi-turn</span></button>
+              <button class="scenario-btn" type="button" data-scenario="ci"><strong>CI / batch automation</strong><span>Headless · one-shot</span></button>
+              <button class="scenario-btn" type="button" data-scenario="product"><strong>Agent inside a product</strong><span>SDK · JSON-RPC</span></button>
+              <button class="scenario-btn" type="button" data-scenario="events"><strong>Memory or PR reviews</strong><span>Patch overlays · events</span></button>
+            </div>
+            <div class="scenario-detail" id="scenarioDetail" aria-live="polite"><div><h3>Local coding cockpit</h3><p>Launch the Web UI, choose a project directory, and ask the agent to inspect, edit, test or explain the workspace. Approval prompts sit in the workflow when an operation needs permission.</p></div><div class="route">dsh web<br>→ Settings → Models<br>→ Choose workspace → send a task</div></div>
+          </div>
+          <div class="source">Sources: <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/index.md" target="_blank" rel="noreferrer">Web UI</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/mcp-memory.md" target="_blank" rel="noreferrer">MCP memory</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/github-review.md" target="_blank" rel="noreferrer">GitHub review</a></div>
+        </article>
+
+        <article class="slide" data-title="First plugin">
+          <p class="eyebrow">07 · The extension model</p>
+          <div class="grid-2">
+            <div>
+              <h2>Plugins stay small because the harness supplies the seams.</h2>
+              <p class="lede">A plugin declares what it needs, then contributes one focused capability. Here, the plugin asks for the <span class="mono">tools</span> service and registers a model-callable greeting tool.</p>
+              <div class="code-notes">
+                <div class="code-note"><strong><span class="mono">inject</span></strong> keeps the plugin pending until the required service exists.</div>
+                <div class="code-note"><strong><span class="mono">defineTool</span></strong> gives the model a schema, validates arguments, and separates the returned value from rendered result content.</div>
+                <div class="code-note"><strong>Unload is reversible.</strong> The registration disposer is attached to the plugin lifecycle.</div>
+              </div>
+            </div>
+            <div class="code-shell"><div class="code-head"><span>greet-tool.ts</span><button class="copy" type="button" data-copy="pluginCode">Copy</button></div><pre id="pluginCode"><span class="tok-key">import</span> <span class="tok-str">type</span> { Context } <span class="tok-key">from</span> <span class="tok-str">'@deepseek-ai/cordis'</span>
+<span class="tok-key">import</span> { defineTool } <span class="tok-key">from</span> <span class="tok-str">'@deepseek-ai/dsh-tools'</span>
+
+<span class="tok-key">export const</span> name = <span class="tok-str">'greet-tool'</span>
+<span class="tok-key">export const</span> inject = [<span class="tok-str">'tools'</span>]
+
+<span class="tok-key">export function</span> apply(ctx: Context) {
+  ctx.tools.register(defineTool({
+    name: <span class="tok-str">'greet'</span>,
+    description: <span class="tok-str">'Greet the named person.'</span>,
+    parameters: {
+      name: { type: <span class="tok-str">'string'</span>, required: <span class="tok-key">true</span> }
+    },
+    output: { schema: { type: <span class="tok-str">'string'</span> } },
+    <span class="tok-key">async</span> execute(args) {
+      <span class="tok-key">return</span> <span class="tok-str">\`Hello, ${args.name}!\`</span>
+    }
+  }))
+}</pre></div>
+          </div>
+          <div class="source">Source: <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/cordis-tutorial/07-into-the-harness.md" target="_blank" rel="noreferrer">Cordis tutorial · Into the harness</a></div>
+        </article>
+
+        <article class="slide safety" data-title="Safety boundary">
+          <p class="eyebrow">08 · Read this before running it</p>
+          <h2>Experimental means experimental.</h2>
+          <p class="lede">The repository says DeepSeek Harness is a developer preview, has not undergone a security audit, and must not be treated as production-ready.</p>
+          <div class="safety-grid">
+            <div class="safety-box"><strong>What it can touch</strong><p>Model-generated code and commands, third-party plugins, network access, processes, credentials and files made available to it.</p></div>
+            <div class="safety-box"><strong>What can go wrong</strong><p>Incorrect output, defects, misconfiguration, malicious input or an untrusted plugin may modify files or disclose data.</p></div>
+            <div class="safety-box"><strong>Responsible baseline</strong><p>Use least privilege, a disposable VM/container or dedicated environment, backups, and reviewed plugins and commands.</p></div>
+          </div>
+          <div class="callout"><strong>Practical read:</strong> treat the harness as powerful developer tooling with a clear blast radius, not as a security boundary for untrusted workloads.</div>
+          <div class="source">Source: <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/SAFETY.md" target="_blank" rel="noreferrer">SAFETY.md</a></div>
+        </article>
+
+        <article class="slide" data-title="How-to: Web UI">
+          <p class="eyebrow">09 · How-to guide · 1 of 3</p>
+          <h2>Get to your first useful session.</h2>
+          <div class="steps">
+            <div class="step-rail" aria-hidden="true"><span class="step-num active" data-step-num="0">01</span><span class="step-num" data-step-num="1">02</span><span class="step-num" data-step-num="2">03</span><span class="step-num" data-step-num="3">04</span><span class="step-num" data-step-num="4">05</span></div>
+            <div class="step-panel" id="webStepPanel" aria-live="polite"><div class="step-kicker">STEP 01 / 05</div><h3>Install and launch</h3><p>For a quick trial, use Node.js and run the published launcher. The default Web UI listens on loopback.</p><pre id="webStepCode">npx @deepseek-ai/dsh web</pre></div>
+          </div>
+          <div class="step-controls"><button type="button" id="stepPrev">← Previous</button><button type="button" id="stepNext">Next →</button><button class="copy" type="button" data-copy="webStepCode">Copy command</button></div>
+          <div class="source">Sources: <a href="https://github.com/deepseek-ai/deepseek-harness#run" target="_blank" rel="noreferrer">README · Run</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/index.md" target="_blank" rel="noreferrer">Web UI guide</a></div>
+        </article>
+
+        <article class="slide" data-title="How-to: plugin">
+          <p class="eyebrow">10 · How-to guide · 2 of 3</p>
+          <h2>Add one capability through a patch.</h2>
+          <p class="lede">Start from the repository’s Cordis tutorial. It demonstrates the smallest useful path: a TypeScript plugin, a composition file, and the real harness tool pipeline.</p>
+          <div class="code-layout">
+            <div class="code-shell"><div class="code-head"><span>cordis.yml</span><button class="copy" type="button" data-copy="patchCode">Copy</button></div><pre id="patchCode"><span class="tok-comment"># Compose the dependencies first</span>
+- name: <span class="tok-str">'@deepseek-ai/dsh-system-prompt'</span>
+- name: <span class="tok-str">'@deepseek-ai/dsh-tools'</span>
+- name: <span class="tok-str">'./tool-logger.ts'</span>
+- name: <span class="tok-str">'./greet-tool.ts'</span></pre></div>
+            <div class="code-notes"><div class="code-note"><strong>1. Create</strong> <span class="mono">greet-tool.ts</span> and register <span class="mono">greet</span>.</div><div class="code-note"><strong>2. Compose</strong> the system-prompt and tools providers plus your plugin.</div><div class="code-note"><strong>3. Run</strong> the Cordis tutorial launcher, then observe the tool result event.</div><div class="code-note"><strong>4. Graduate</strong> the plugin into a dsh patch overlay once the behaviour is useful.</div></div>
+          </div>
+          <div class="source">Source: <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/cordis-tutorial/07-into-the-harness.md" target="_blank" rel="noreferrer">Cordis tutorial · Into the harness</a></div>
+        </article>
+
+        <article class="slide" data-title="How-to: source setup">
+          <p class="eyebrow">11 · How-to guide · 3 of 3</p>
+          <h2>Move from trial to a repeatable local setup.</h2>
+          <div class="grid-2">
+            <div>
+              <h3>From a repository checkout</h3>
+              <div class="code-shell"><div class="code-head"><span>terminal</span><button class="copy" type="button" data-copy="sourceCode">Copy</button></div><pre id="sourceCode">git clone https://github.com/deepseek-ai/deepseek-harness.git
+cd deepseek-harness
+pnpm install
+pnpm run build
+pnpm dsh web</pre></div>
+              <p class="fine" style="margin-top:12px">The development guide currently calls for Node.js 22.19+ or 24+, Corepack-enabled pnpm, and Git 2.26+.</p>
+            </div>
+            <div>
+              <h3>Then customise deliberately</h3>
+              <div class="benefit-list">
+                <div class="benefit"><span class="number">01</span><p><strong>Inspect the boot tree.</strong><br><span class="mono">dsh --profile web --dump-config</span></p></div>
+                <div class="benefit"><span class="number">02</span><p><strong>Keep credentials out of code.</strong><br>Use the settings flow or environment variables such as <span class="mono">DEEPSEEK_API_KEY</span>.</p></div>
+                <div class="benefit"><span class="number">03</span><p><strong>Add an overlay.</strong><br>Try a shipped example with <span class="mono">--patch</span>, or install an external bundle with <span class="mono">dsh plugin</span>.</p></div>
+                <div class="benefit"><span class="number">04</span><p><strong>Verify the boundary.</strong><br>Use a disposable workspace and read the safety notice before granting access.</p></div>
+              </div>
+            </div>
+          </div>
+          <div class="source">Sources: <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/development.md" target="_blank" rel="noreferrer">development guide</a> · <a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/providers.md" target="_blank" rel="noreferrer">model providers</a></div>
+        </article>
+
+        <article class="slide" data-title="Takeaway">
+          <p class="eyebrow">12 · Takeaway</p>
+          <h2>Use it when you want the agent to be a system, not a chat box.</h2>
+          <p class="lede">DeepSeek Harness gives you a composable runtime: choose a surface, keep a durable session stream, and extend the system through explicit seams.</p>
+          <div class="closing-grid">
+            <div class="closing-box"><h3>Good fit</h3><p>Developer tools, local coding workflows, CI agents, product integrations, event-triggered reviews, and experiments where you want to swap parts without rewriting the whole harness.</p></div>
+            <div class="closing-box"><h3>Be cautious</h3><p>Untrusted workloads, sensitive credentials, production-critical automation, or any environment where the current developer-preview status and sandbox limits are unacceptable.</p></div>
+          </div>
+          <div class="closing-box" style="margin-top:14px"><h3>Continue reading</h3><div class="link-list"><a href="https://github.com/deepseek-ai/deepseek-harness" target="_blank" rel="noreferrer">GitHub repository →</a><a href="https://deepseek-harness.github.io/deepseek-harness/" target="_blank" rel="noreferrer">Official documentation →</a><a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/cordis-tutorial/index.md" target="_blank" rel="noreferrer">Cordis tutorial →</a><a href="https://github.com/deepseek-ai/deepseek-harness/blob/master/SAFETY.md" target="_blank" rel="noreferrer">Safety notice →</a></div></div>
+          <div class="source">Built from repository documentation · links open in a new tab</div>
+        </article>
+      </div>
+    </section>
+
+    <footer class="bottombar">
+      <div class="progress-wrap"><div class="progress" aria-hidden="true"><span id="progressBar"></span></div><span class="counter" id="counter">01 / 13</span></div>
+      <div class="dots" id="dots" aria-label="Slide navigation"></div>
+      <div class="nav-controls"><button class="nav-btn" id="prevBtn" type="button" aria-label="Previous slide">←</button><button class="nav-btn" id="nextBtn" type="button" aria-label="Next slide">→</button></div>
+    </footer>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">Copied</div>
+  <div class="help" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><div class="help-card"><h3 id="helpTitle">Navigate the deck</h3><p><kbd>←</kbd> <kbd>→</kbd> move between slides</p><p><kbd>Home</kbd> / <kbd>End</kbd> jump to the beginning or end</p><p><kbd>F</kbd> toggle full screen · <kbd>?</kbd> show this panel</p><p><kbd>Esc</kbd> close this panel</p><button class="text-btn" id="closeHelp" type="button">Close</button></div></div>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const dots = document.getElementById('dots');
+      const counter = document.getElementById('counter');
+      const progressBar = document.getElementById('progressBar');
+      let index = 0;
+      let previous = 0;
+
+      slides.forEach((slide, i) => {
+        const dot = document.createElement('button');
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.type = 'button';
+        dot.setAttribute('aria-label', 'Go to slide ' + (i + 1) + ': ' + slide.dataset.title);
+        dot.addEventListener('click', () => goTo(i));
+        dots.appendChild(dot);
+      });
+
+      function goTo(next) {
+        const target = Math.max(0, Math.min(slides.length - 1, next));
+        previous = index;
+        index = target;
+        slides.forEach((slide, i) => {
+          slide.classList.toggle('active', i === index);
+          slide.classList.toggle('prev', i === index && index < previous);
+        });
+        [...dots.children].forEach((dot, i) => dot.classList.toggle('active', i === index));
+        counter.textContent = String(index + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+        progressBar.style.width = (((index + 1) / slides.length) * 100) + '%';
+        history.replaceState(null, '', '#' + (index + 1));
+        document.title = 'DeepSeek Harness: ' + slides[index].dataset.title;
+      }
+
+      function fromHash() {
+        const n = Number(location.hash.slice(1));
+        if (Number.isInteger(n) && n > 0 && n <= slides.length) index = n - 1;
+      }
+      fromHash();
+      goTo(index);
+
+      document.getElementById('prevBtn').addEventListener('click', () => goTo(index - 1));
+      document.getElementById('nextBtn').addEventListener('click', () => goTo(index + 1));
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowRight' || event.key === 'PageDown') goTo(index + 1);
+        if (event.key === 'ArrowLeft' || event.key === 'PageUp') goTo(index - 1);
+        if (event.key === 'Home') goTo(0);
+        if (event.key === 'End') goTo(slides.length - 1);
+        if (event.key.toLowerCase() === 'f') toggleFullscreen();
+        if (event.key === '?' || (event.shiftKey && event.key === '/')) openHelp();
+        if (event.key === 'Escape') closeHelp();
+      });
+
+      let touchStart = 0;
+      document.addEventListener('touchstart', (event) => { touchStart = event.changedTouches[0].screenX; }, {passive:true});
+      document.addEventListener('touchend', (event) => { const delta = event.changedTouches[0].screenX - touchStart; if (Math.abs(delta) > 55) goTo(index + (delta < 0 ? 1 : -1)); }, {passive:true});
+
+      const surfaces = {
+        web: {title:'Web UI', text:'Interactive, multi-turn work in a browser. Select a workspace, configure a model, and chat with the agent.', code:'dsh web', best:'Interactive exploration', starts:'http://127.0.0.1:3080', boundary:'Workspace must be selected'},
+        headless: {title:'Headless', text:'One task from the command line, final answer on stdout, exit code for the outcome. No GUI, server or browser.', code:'dsh --profile headless "run the tests"', best:'CI, scripts and batch jobs', starts:'One process per task', boundary:'No interactive follow-up'},
+        sdk: {title:'SDK', text:'A Python or TypeScript program drives a complete harness runtime through the JSON-RPC protocol over a named profile.', code:'python -m pip install deepseek-harness-sdk', best:'Agent inside a product', starts:'stdio JSON-RPC', boundary:'Server profile must exist'},
+        acp: {title:'ACP', text:'An automation-only stdio surface for persistent agents, designed for clients that speak the Agent Client Protocol.', code:'dsh --profile acp', best:'Automation clients', starts:'ACP JSON-RPC over stdio', boundary:'Configuration applies at startup'}
+      };
+      document.querySelectorAll('[data-surface]').forEach(button => button.addEventListener('click', () => {
+        const item = surfaces[button.dataset.surface];
+        document.querySelectorAll('[data-surface]').forEach(b => { b.classList.toggle('active', b === button); b.setAttribute('aria-selected', b === button ? 'true' : 'false'); });
+        document.getElementById('surfaceCopy').innerHTML = '<div><h3>' + item.title + '</h3><p>' + item.text + '</p></div><div class="surface-code">' + item.code + '</div>';
+        document.getElementById('surfaceMeta').innerHTML = '<div class="meta-line"><span>Best for</span><span>' + item.best + '</span></div><div class="meta-line"><span>Starts</span><span class="mono">' + item.starts + '</span></div><div class="meta-line"><span>Key boundary</span><span>' + item.boundary + '</span></div>';
+      }));
+
+      const flow = {
+        turn:'<strong>Turn starts.</strong> The harness claims the next input, opens a turn, and prepares to run one or more steps.',
+        prompt:'<strong>Prompt assembles.</strong> Plugins contribute prompt sections and tool schemas; a pre-step extension point can rewrite or reject the input.',
+        model:'<strong>The model streams.</strong> An adapter turns the request into model output, which arrives as assistant chunks and a durable assistant message.',
+        tools:'<strong>Tools execute through a guarded pipeline.</strong> Pre-execute, execute, post-execute and result events give plugins places to observe or intercept work.',
+        log:'<strong>The session log persists.</strong> Durable events support replay, history, transcripts, telemetry and projections for other consumers.'
+      };
+      document.querySelectorAll('[data-flow]').forEach(button => button.addEventListener('click', () => { document.querySelectorAll('[data-flow]').forEach(b => b.classList.toggle('active', b === button)); document.getElementById('flowDetail').innerHTML = flow[button.dataset.flow]; }));
+
+      const scenarios = {
+        coding:{title:'Local coding cockpit', text:'Launch the Web UI, choose a project directory, and ask the agent to inspect, edit, test or explain the workspace. Approval prompts sit in the workflow when an operation needs permission.', route:'dsh web\n→ Settings → Models\n→ Choose workspace → send a task'},
+        ci:{title:'CI / batch automation', text:'Use the headless profile when the task should be a single process: print the final response, emit reasoning to stderr when supplied, and return 0 only for a completed turn.', route:'dsh --profile headless "run the tests"\n→ stdout: final answer\n→ exit code: outcome'},
+        product:{title:'Agent inside a product', text:'The Python and TypeScript SDKs launch a named harness profile and drive sessions over JSON-RPC. Your product can observe agent status, session events and subagent completions.', route:'DeepSeekHarness(...)\n→ profile: sdk-minimal\n→ harness.run(task, session_id=...)'},
+        events:{title:'Memory or PR reviews', text:'Keep optional integrations out of the default composition. Add an overlay for an MCP memory bridge, or use a signed GitHub webhook rule to create a read-only review session.', route:'dsh web --patch memory.cordis.yml\ndsh web --patch github-review.cordis.yml'}
+      };
+      document.querySelectorAll('[data-scenario]').forEach(button => button.addEventListener('click', () => { const item = scenarios[button.dataset.scenario]; document.querySelectorAll('[data-scenario]').forEach(b => b.classList.toggle('active', b === button)); document.getElementById('scenarioDetail').innerHTML = '<div><h3>' + item.title + '</h3><p>' + item.text + '</p></div><div class="route">' + item.route.replaceAll('\n','<br>') + '</div>'; }));
+
+      const webSteps = [
+        {title:'Install and launch', text:'For a quick trial, use Node.js and run the published launcher. The default Web UI listens on loopback.', code:'npx @deepseek-ai/dsh web'},
+        {title:'Configure a model', text:'Open Settings → Models, enter a DeepSeek API key, and save it. The route becomes usable without restarting the server.', code:'Settings → Models\nDEEPSEEK_API_KEY = write-only credential'},
+        {title:'Choose a workspace', text:'Click Choose workspace, add the project directory where you started dsh, and select it. The composer is unavailable until this is done.', code:'Choose workspace\n→ /absolute/path/to/project'},
+        {title:'Run a task', text:'Start a session and send a concrete prompt. The agent can read and edit files, run commands, delegate work and maintain a plan.', code:'Summarise this repository and identify its main packages.'},
+        {title:'Review approvals', text:'The Web UI asks before operations that require approval under the active permission policy. Keep the workspace disposable while you learn the boundaries.', code:'Least privilege\n+ disposable workspace\n+ reviewed commands'}
+      ];
+      let webStep = 0;
+      function renderWebStep() { const item = webSteps[webStep]; document.querySelectorAll('[data-step-num]').forEach((n,i) => n.classList.toggle('active', i === webStep)); document.getElementById('webStepPanel').innerHTML = '<div class="step-kicker">STEP ' + String(webStep+1).padStart(2,'0') + ' / 05</div><h3>' + item.title + '</h3><p>' + item.text + '</p><pre id="webStepCode">' + item.code + '</pre>'; }
+      document.getElementById('stepPrev').addEventListener('click', () => { webStep = Math.max(0, webStep - 1); renderWebStep(); });
+      document.getElementById('stepNext').addEventListener('click', () => { webStep = Math.min(webSteps.length - 1, webStep + 1); renderWebStep(); });
+      document.querySelectorAll('[data-step-num]').forEach((n,i) => n.addEventListener('click', () => { webStep = i; renderWebStep(); }));
+
+      const toast = document.getElementById('toast');
+      document.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', async () => {
+        const target = document.getElementById(button.dataset.copy);
+        const text = target.innerText;
+        let copied = false;
+        try {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            copied = true;
+          }
+        } catch {}
+        if (!copied) {
+          const helper = document.createElement('textarea');
+          helper.value = text;
+          helper.setAttribute('readonly', '');
+          helper.style.position = 'fixed';
+          helper.style.opacity = '0';
+          document.body.appendChild(helper);
+          helper.select();
+          copied = document.execCommand('copy');
+          helper.remove();
+        }
+        toast.textContent = copied ? 'Copied' : 'Select and copy';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 1400);
+      }));
+
+      function toggleFullscreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
+      document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+      const help = document.getElementById('help');
+      function openHelp() { help.classList.add('open'); document.getElementById('closeHelp').focus(); }
+      function closeHelp() { help.classList.remove('open'); }
+      document.getElementById('helpBtn').addEventListener('click', openHelp); document.getElementById('closeHelp').addEventListener('click', closeHelp); help.addEventListener('click', e => { if (e.target === help) closeHelp(); });
+    })();
+  </script>
+</body>
+</html>

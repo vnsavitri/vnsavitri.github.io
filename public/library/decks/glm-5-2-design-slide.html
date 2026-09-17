@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLM-5.2 + Open Design Workflow</title>
+    <style>
+        :root {
+            --bg-color: #0b0c10;
+            --slide-bg: #12131c;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent: #ff5a1f; /* Electric Orange */
+            --accent-dim: rgba(255, 90, 31, 0.1);
+            --border-color: #222533;
+            --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background-color: var(--border-color);
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--accent);
+            transition: width 0.3s ease;
+        }
+
+        /* Slide Deck Workspace */
+        .deck-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide {
+            position: absolute;
+            width: calc(100% - 4rem);
+            height: 80vh;
+            max-height: 650px;
+            background-color: var(--slide-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 3.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.98);
+            transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s ease;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+            z-index: 2;
+        }
+
+        /* Slide Content Typography */
+        .slide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+        }
+
+        .slide-title {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            line-height: 1.2;
+        }
+
+        .slide-title span {
+            color: var(--accent);
+        }
+
+        .timestamp {
+            font-family: monospace;
+            background-color: var(--accent-dim);
+            color: var(--accent);
+            padding: 0.25rem 0.7rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 90, 31, 0.2);
+        }
+
+        .slide-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+
+        .slide-body ul {
+            list-style: none;
+        }
+
+        .slide-body li {
+            font-size: 1.25rem;
+            line-height: 1.6;
+            margin-bottom: 1.25rem;
+            color: var(--text-main);
+            position: relative;
+            padding-left: 1.75rem;
+        }
+
+        .slide-body li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .slide-body li strong {
+            color: #fff;
+        }
+
+        .slide-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+        }
+
+        /* Cover Slide Specifics */
+        .slide.cover {
+            justify-content: center;
+            text-align: center;
+            align-items: center;
+        }
+
+        .slide.cover .slide-title {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .slide.cover .subtitle {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            max-width: 700px;
+            line-height: 1.4;
+            margin-bottom: 2.5rem;
+        }
+
+        .slide.cover .badge {
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Interactive Controls */
+        .controls-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem 2rem 2rem;
+            z-index: 5;
+        }
+
+        .slide-counter {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .nav-btn {
+            background-color: var(--slide-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .nav-btn:hover {
+            border-color: var(--accent);
+            background-color: var(--accent-dim);
+            color: #fff;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            border-color: var(--border-color);
+            background-color: transparent;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 768px) {
+            .slide {
+                padding: 2rem;
+                height: 75vh;
+            }
+            .slide-title {
+                font-size: 1.6rem;
+            }
+            .slide.cover .slide-title {
+                font-size: 2.2rem;
+            }
+            .slide-body li {
+                font-size: 1.05rem;
+                margin-bottom: 0.85rem;
+            }
+            .controls-container {
+                padding: 0 1rem 1rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="deck-container">
+        
+        <div class="slide cover active">
+            <div class="badge">Workflow Breakdown</div>
+            <h1 class="slide-title">GLM-5.2 + Open Design</h1>
+            <p class="subtitle">Building a State-of-the-Art, Local-First AI Design System Workspace</p>
+            <div style="color: var(--text-muted); font-size: 0.95rem;">
+                Based on the presentation by <strong>AICodeKing</strong>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-header">
+                <h2 class="slide-title">Meet <span>GLM-5.2</span></h2>
+                <span class="timestamp">[00:00:34]</span>
+            </div>
+            <div class="slide-body">
+                <ul>
+                    <li><strong>Next-Gen Specifications:</strong> Text model developed by ZAI featuring a massive 1 Million token context window and up to 128,000 output tokens.</li>
+                    <li><strong>Advanced Architecture:</strong> Equipped natively for deep thinking, complex tool calling, and pristine structured output execution.</li>
+                    <li><strong>The UI Advantage:</strong> Uniquely strong at long, heavily constrained coding assignments.</li>
+                    <li><strong>Style Preservation:</strong> Retains strict instructions for spacing, typography, component styling, and layout rhythm without degrading into messy gradients or generic boxes.</li>
+                </ul>
+            </div>
+            <div class="slide-footer">
+                <span>GLM-5.2 + Open Design Presentation</span>
+                <span>Slide 2 / 8</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-header">
+                <h2 class="slide-title">What is <span>Open Design?</span></h2>
+                <span class="timestamp">[00:01:23]</span>
+            </div>
+            <div class="slide-body">
+                <ul>
+                    <li><strong>Open-Source Alternative:</strong> A free, local-first workspace alternative to tools like Claude Design, licensed under Apache 2.0.</li>
+                    <li><strong>Extensive Framework:</strong> Ships standard with over 100 specialized design skills and 150+ design systems modeled after leading tech layouts (Stripe, Linear, Apple, Notion).</li>
+                    <li><strong>Real Code Output:</strong> Creates responsive, live HTML/CSS prototypes rather than flat, static image mockups.</li>
+                    <li><strong>Model Agnostic:</strong> Integrates seamlessly with your own choice of APIs including Claude, Gemini, Qwen, or GLM-5.2.</li>
+                </ul>
+            </div>
+            <div class="slide-footer">
+                <span>GLM-5.2 + Open Design Presentation</span>
+                <span>Slide 3 / 8</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-header">
+                <h2 class="slide-title">Setting Up the <span>Workspace</span></h2>
+                <span class="timestamp">[00:02:12]</span>
+            </div>
+            <div class="slide-body">
+                <ul>
+                    <li><strong>1. Obtain a ZAI API Key:</strong> Secure an access token directly from ZAI for the coding layout plan of your choice.</li>
+                    <li><strong>2. Desktop App Installation:</strong> Head to <code>open-design.ai</code> or pull the build assets from the official releases section on GitHub.</li>
+                    <li><strong>3. Connect the Coding Agent:</strong> Open Design automatically registers existing tools like Cursor, Claude Code, or Open Code.</li>
+                    <li><strong>4. Complete Configuration:</strong> Select Open Code, link the ZAI platform credentials, target GLM-5.2, and deploy the workspace.</li>
+                </ul>
+            </div>
+            <div class="slide-footer">
+                <span>GLM-5.2 + Open Design Presentation</span>
+                <span>Slide 4 / 8</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-header">
+                <h2 class="slide-title">Crafting the Perfect <span>Prompt</span></h2>
+                <span class="timestamp">[00:03:08]</span>
+            </div>
+            <div class="slide-body">
+                <ul>
+                    <li><strong>Establish a Visual Contract:</strong> Avoid vague prompts like <em>"make it look modern."</em> Bind the AI to structural system parameters instead.</li>
+                    <li><strong>Core Prompting Blueprint:</strong> Clearly define the exact product background, target audience demographic, vital user flows, visual tone, and layout requirements.</li>
+                    <li><strong>The Power of Negative Constraints:</strong> Explicitly state elements the model must omit (e.g., <em>"avoid excessive cards, glassmorphism, or promotional generic AI art"</em>).</li>
+                </ul>
+            </div>
+            <div class="slide-footer">
+                <span>GLM-5.2 + Open Design Presentation</span>
+                <span>Slide 5 / 8</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-header">
+                <h2 class="slide-title">Workspace <span>UI Showcase</span></h2>
+                <span class="timestamp">[00:03:26]</span>
+            </div>
+            <div class="slide-body">
+                <ul>
+                    <li><strong>Demo A: Northstar Landing Page —</strong> Built using a clean, editorial aesthetic system with a highly disciplined color scheme (black, warm white, electric orange). It maintains typographic hierarchy without scattering generic UI components.</li>
+                    <li><strong>Demo B: Gridwatch Operational Dashboard <span class="timestamp">[00:05:22]</span> —</strong> A high-density dark UI layout engineered to manage renewable infrastructure energy grids. Prioritizes raw data density, crisp status indicators, and immediate informational scannability.</li>
+                </ul>
+            </div>
+            <div class="slide-footer">
+                <span>GLM-5.2 + Open Design Presentation</span>
+                <span>Slide 6 / 8</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-header">
+                <h2 class="slide-title">The Critique Loop & <span>Handoff</span></h2>
+                <span class="timestamp">[00:04:35]</span>
+            </div>
+            <div class="slide-body">
+                <ul>
+                    <li><strong>Never Re-prompt From Scratch:</strong> Run follow-up interactions exactly like a live human design critique (e.g., <em>"Keep the style direction, but trim hero by 15% and densify navigation metrics"</em>).</li>
+                    <li><strong>Robust Export Formats:</strong> Seamlessly package and download your layouts as clean standalone HTML/CSS, ZIP wrappers, PowerPoint decks, PDFs, or MP4 motion graphics.</li>
+                    <li><strong>Production Integration:</strong> Hand the raw HTML off directly to terminal coding tools like Claude Code or Cursor to integrate cleanly into React, Next.js, or Vue files.</li>
+                </ul>
+            </div>
+            <div class="slide-footer">
+                <span>GLM-5.2 + Open Design Presentation</span>
+                <span>Slide 7 / 8</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-header">
+                <h2 class="slide-title">Limitations & <span>Best Practices</span></h2>
+                <span class="timestamp">[00:07:43]</span>
+            </div>
+            <div class="slide-body">
+                <ul>
+                    <li><strong>Workspace Direct Mode Scope:</strong> Engineered specifically for rapid visual prototyping and modular component creation. It cannot read, write, or alter files inside a production codebase.</li>
+                    <li><strong>Codebase Alterations:</strong> Transition to local CLI modes to configure system agents if you want the setup to actively change local project folders.</li>
+                    <li><strong>Human QA Audit Checklist:</strong> AI generation is incredibly fast, but human checks are mandatory for component responsiveness, keyboard accessibility, contrast control, and core layout logic.</li>
+                </ul>
+            </div>
+            <div class="slide-footer">
+                <span>GLM-5.2 + Open Design Presentation</span>
+                <span>Slide 8 / 8</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="controls-container">
+        <div class="slide-counter" id="slideCounter">Slide 1 of 8</div>
+        <div class="btn-group">
+            <button class="nav-btn" id="prevBtn" disabled>Previous</button>
+            <button class="nav-btn" id="nextBtn">Next</button>
+        </div>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progressBar');
+        const slideCounter = document.getElementById('slideCounter');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        let currentSlideIndex = 0;
+        const totalSlides = slides.length;
+
+        function updateSlideDeck() {
+            // Update slide visibility
+            slides.forEach((slide, index) => {
+                if (index === currentSlideIndex) {
+                    slide.classList.add('active');
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+
+            // Update progress bar
+            const progressPercentage = (currentSlideIndex / (totalSlides - 1)) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+
+            // Update counter text
+            slideCounter.textContent = `Slide ${currentSlideIndex + 1} of ${totalSlides}`;
+
+            // Update navigation buttons status
+            prevBtn.disabled = currentSlideIndex === 0;
+            nextBtn.disabled = currentSlideIndex === totalSlides - 1;
+        }
+
+        function nextSlide() {
+            if (currentSlideIndex < totalSlides - 1) {
+                currentSlideIndex++;
+                updateSlideDeck();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlideIndex > 0) {
+                currentSlideIndex--;
+                updateSlideDeck();
+            }
+        }
+
+        // Click Events
+        nextBtn.addEventListener('click', nextSlide);
+        prevBtn.addEventListener('click', prevSlide);
+
+        // Keyboard Navigation Events
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+
+        // Initialize display state
+        updateSlideDeck();
+    </script>
+</body>
+</html>

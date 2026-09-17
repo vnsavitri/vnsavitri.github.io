@@ -1,0 +1,303 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { getCollection } from "astro:content";
+import LibraryCard from "../components/LibraryCard.astro";
+
+const decks = (await getCollection("library")).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+const recentDecks = decks.slice(0, 8);
+
+const CATEGORY_LABELS: Record<string, string> = {
+  slides: "Slide Decks",
+  guides: "Claude & AI Guides",
+  architecture: "Architecture & Tech",
+  books: "Book Notes",
+};
+---
+
+<Layout
+  title="Library | Vivid Savitri-Hampton"
+  description="Slide decks, guides and research notes built with AI, shared for anyone who finds them useful."
+  pathname="/library"
+>
+  <section class="container-wide library-header">
+    <p class="small-caps">Library</p>
+    <h1>Slides, guides and field notes</h1>
+    <p class="lede">
+      {decks.length} AI-built decks and guides on agent systems, model research and how I
+      work. Built as I go, shared in case they save you time.
+    </p>
+  </section>
+
+  <section class="container-wide library-recent">
+    <p class="small-caps lib-recent-heading">Recently added</p>
+    <div class="lib-grid">
+      {recentDecks.map((deck) => (
+        <LibraryCard
+          slug={deck.data.slug}
+          title={deck.data.title}
+          file={deck.data.file}
+          thumb={deck.data.thumb}
+          categoryLabel={CATEGORY_LABELS[deck.data.category]}
+          badge
+        />
+      ))}
+    </div>
+  </section>
+
+  <div class="container-wide" style="border-top: 1px solid var(--color-rule);"></div>
+
+  <section class="container-wide library-controls">
+    <input
+      type="text"
+      id="lib-search"
+      class="lib-search"
+      placeholder="Search the library…"
+      autocomplete="off"
+    />
+    <div class="lib-filters" id="lib-filters">
+      <button class="lib-filter-btn active" data-cat="all">All</button>
+      {Object.entries(CATEGORY_LABELS).map(([cat, label]) => (
+        <button class="lib-filter-btn" data-cat={cat}>{label}</button>
+      ))}
+    </div>
+  </section>
+
+  <section class="container-wide">
+    <p class="small-caps lib-summary" id="lib-summary">Showing all {decks.length}</p>
+    <p class="lib-no-results" id="lib-no-results">Nothing matches that search.</p>
+
+    <div class="lib-grid" id="lib-grid">
+      {decks.map((deck) => (
+        <LibraryCard
+          id={deck.data.slug}
+          slug={deck.data.slug}
+          title={deck.data.title}
+          file={deck.data.file}
+          thumb={deck.data.thumb}
+          categoryLabel={CATEGORY_LABELS[deck.data.category]}
+          category={deck.data.category}
+        />
+      ))}
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .library-header {
+    padding-top: 3rem;
+  }
+
+  .library-header .lede {
+    margin-top: 1rem;
+  }
+
+  .library-recent {
+    padding-top: 2.5rem;
+  }
+
+  .lib-recent-heading {
+    margin-bottom: 1.25rem;
+  }
+
+  .library-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 2.5rem;
+  }
+
+  .lib-search {
+    flex: 1;
+    min-width: 220px;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--color-ink);
+    background: var(--color-cream-deep);
+    border: 1px solid var(--color-rule);
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    outline: none;
+  }
+
+  .lib-search:focus {
+    border-color: var(--color-ink-soft);
+  }
+
+  .lib-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .lib-filter-btn {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--color-ink-soft);
+    background: transparent;
+    border: 1px solid var(--color-rule);
+    border-radius: 9999px;
+    padding: 0.4rem 0.9rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+
+  .lib-filter-btn:hover,
+  .lib-filter-btn.active {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: var(--color-cream);
+  }
+
+  .lib-summary {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .lib-no-results {
+    display: none;
+    color: var(--color-ink-muted);
+    padding: 2rem 0;
+  }
+
+  .lib-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.75rem;
+    padding-bottom: 5rem;
+  }
+</style>
+
+<script>
+  // ponytail: counts come from a free, keyless counter API (countapi.xyz).
+  // No auth, no SLA — if it's down or rate-limited, counts just stay blank.
+  // Upgrade path if that ever matters: swap for an authenticated counter
+  // service and gate likes server-side instead of via localStorage.
+  const NAMESPACE = "veryvivid-library";
+  const countApi = (action: "get" | "hit", key: string) =>
+    `https://api.countapi.xyz/${action}/${NAMESPACE}/${key}`;
+
+  const likedKey = (slug: string) => `lib-liked:${slug}`;
+
+  async function loadCounts() {
+    const cards = document.querySelectorAll<HTMLElement>(".lib-card");
+    await Promise.all(
+      Array.from(cards).map(async (card) => {
+        const slug = card.querySelector<HTMLElement>("[data-slug]")?.dataset.slug;
+        if (!slug) return;
+
+        const viewsEl = card.querySelector<HTMLElement>(".lib-views");
+        const likeBtn = card.querySelector<HTMLButtonElement>(".lib-like");
+        const likeCountEl = card.querySelector<HTMLElement>(".lib-like-count");
+
+        try {
+          const res = await fetch(countApi("get", `${slug}-views`));
+          if (res.ok && viewsEl) {
+            const { value } = await res.json();
+            viewsEl.textContent = `${value} views`;
+          } else if (viewsEl) {
+            viewsEl.textContent = "";
+          }
+        } catch {
+          if (viewsEl) viewsEl.textContent = "";
+        }
+
+        try {
+          const res = await fetch(countApi("get", `${slug}-likes`));
+          if (res.ok && likeCountEl) {
+            const { value } = await res.json();
+            likeCountEl.textContent = String(value);
+          }
+        } catch {
+          // leave default 0
+        }
+
+        if (likeBtn && localStorage.getItem(likedKey(slug))) {
+          likeBtn.setAttribute("aria-pressed", "true");
+          const icon = likeBtn.querySelector<HTMLElement>(".lib-like-icon");
+          if (icon) icon.textContent = "♥";
+        }
+      })
+    );
+  }
+
+  function wireViewTracking() {
+    document.querySelectorAll<HTMLAnchorElement>("[data-slug].lib-thumb-link, [data-slug].lib-title-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        const slug = link.dataset.slug;
+        if (!slug) return;
+        fetch(countApi("hit", `${slug}-views`)).catch(() => {});
+      });
+    });
+  }
+
+  function wireLikeButtons() {
+    document.querySelectorAll<HTMLButtonElement>(".lib-like").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const slug = btn.dataset.slug;
+        if (!slug || localStorage.getItem(likedKey(slug))) return;
+
+        btn.disabled = true;
+        try {
+          const res = await fetch(countApi("hit", `${slug}-likes`));
+          if (res.ok) {
+            const { value } = await res.json();
+            const countEl = btn.querySelector<HTMLElement>(".lib-like-count");
+            if (countEl) countEl.textContent = String(value);
+            btn.setAttribute("aria-pressed", "true");
+            const icon = btn.querySelector<HTMLElement>(".lib-like-icon");
+            if (icon) icon.textContent = "♥";
+            localStorage.setItem(likedKey(slug), "1");
+          }
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    });
+  }
+
+  function wireSearchAndFilters() {
+    const search = document.getElementById("lib-search") as HTMLInputElement;
+    const filterBtns = document.querySelectorAll<HTMLButtonElement>(".lib-filter-btn");
+    // Scoped to the full grid only — the "Recently added" row above stays
+    // put regardless of search/filter state.
+    const cards = document.querySelectorAll<HTMLElement>("#lib-grid .lib-card");
+    const summary = document.getElementById("lib-summary")!;
+    const noResults = document.getElementById("lib-no-results")!;
+    const total = cards.length;
+    let activeCat = "all";
+
+    function apply() {
+      const q = search.value.toLowerCase().trim();
+      let visible = 0;
+      cards.forEach((card) => {
+        const catMatch = activeCat === "all" || card.dataset.category === activeCat;
+        const textMatch = !q || card.dataset.title?.includes(q);
+        const show = catMatch && textMatch;
+        card.classList.toggle("hidden", !show);
+        if (show) visible++;
+      });
+      summary.textContent = visible === total ? `Showing all ${total}` : `Showing ${visible} of ${total}`;
+      noResults.style.display = visible === 0 ? "block" : "none";
+    }
+
+    search.addEventListener("input", apply);
+    filterBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeCat = btn.dataset.cat ?? "all";
+        filterBtns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        apply();
+      });
+    });
+  }
+
+  loadCounts();
+  wireViewTracking();
+  wireLikeButtons();
+  wireSearchAndFilters();
+</script>

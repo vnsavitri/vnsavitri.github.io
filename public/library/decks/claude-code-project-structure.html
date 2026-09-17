@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code Project Structure</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Fira+Code:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e0f13;
+  --surface: #14161c;
+  --surface2: #1a1d26;
+  --surface3: #1f2231;
+  --border: #252839;
+  --border2: #2e3347;
+  --violet: #7c6df0;
+  --violet-dim: #4a3fad;
+  --violet-pale: rgba(124,109,240,0.1);
+  --cyan: #3dd9c5;
+  --cyan-dim: #27998a;
+  --cyan-pale: rgba(61,217,197,0.08);
+  --amber: #f0b23d;
+  --amber-pale: rgba(240,178,61,0.08);
+  --rose: #f06080;
+  --rose-pale: rgba(240,96,128,0.08);
+  --sage: #6db87a;
+  --sage-pale: rgba(109,184,122,0.08);
+  --text: #d4d8f0;
+  --text-mid: #8890b8;
+  --text-dim: #4a5070;
+  --mono: 'Fira Code', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --serif: 'DM Serif Display', serif;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.6;
+  background-image:
+    radial-gradient(ellipse 70% 40% at 15% 0%, rgba(124,109,240,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 30% at 85% 100%, rgba(61,217,197,0.08) 0%, transparent 50%);
+}
+
+/* ── HEADER ── */
+header {
+  padding: 2.5rem 2.5rem 2rem;
+  border-bottom: 1px solid var(--border2);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: linear-gradient(180deg, rgba(124,109,240,0.05) 0%, transparent 100%);
+}
+
+.header-left {}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  color: var(--violet);
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+h1 {
+  font-family: var(--serif);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 400;
+  line-height: 1.05;
+  color: #fff;
+}
+
+h1 em {
+  font-style: italic;
+  color: var(--violet);
+  background: linear-gradient(135deg, var(--violet), var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.byline {
+  margin-top: 0.4rem;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-family: var(--mono);
+}
+
+.toolbar {
+  display: flex; gap: 0.5rem; flex-wrap: wrap;
+}
+.btn {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  color: var(--text-mid);
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+}
+.btn:hover { border-color: var(--violet); color: var(--violet); background: var(--violet-pale); }
+
+/* ── LAYOUT ── */
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr 1fr;
+  gap: 0;
+  min-height: calc(100vh - 120px);
+}
+
+@media (max-width: 1100px) { .layout { grid-template-columns: 220px 1fr; } .col-right { display: none; } }
+@media (max-width: 720px)  { .layout { grid-template-columns: 1fr; } .col-left { display: none; } }
+
+/* ── COLUMNS ── */
+.col-left {
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  padding: 1.25rem 0;
+  overflow: hidden;
+}
+
+.col-mid {
+  border-right: 1px solid var(--border);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.col-right {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ── FILE TREE ── */
+.tree-heading {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 0 1rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.5rem;
+}
+
+.tree {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  line-height: 1.75;
+  padding: 0 0.75rem;
+  overflow-x: auto;
+}
+
+.tree .root  { color: var(--violet); font-weight: 600; }
+.tree .dir   { color: var(--cyan); }
+.tree .file  { color: var(--text-mid); }
+.tree .key   { color: var(--amber); }
+.tree .special { color: var(--rose); }
+.tree-line { display: block; white-space: nowrap; padding: 0.05rem 0.25rem; border-radius: 2px; cursor: default; transition: background 0.1s; }
+.tree-line:hover { background: var(--surface2); }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: var(--border2); }
+
+.card-header {
+  padding: 0.6rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+
+.card-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.dot-violet { background: var(--violet); box-shadow: 0 0 6px rgba(124,109,240,0.5); }
+.dot-cyan   { background: var(--cyan);   box-shadow: 0 0 6px rgba(61,217,197,0.4); }
+.dot-amber  { background: var(--amber);  box-shadow: 0 0 6px rgba(240,178,61,0.4); }
+.dot-rose   { background: var(--rose);   box-shadow: 0 0 6px rgba(240,96,128,0.4); }
+.dot-sage   { background: var(--sage);   box-shadow: 0 0 6px rgba(109,184,122,0.4); }
+
+.card-title {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cv { color: var(--violet); }
+.cc { color: var(--cyan); }
+.ca { color: var(--amber); }
+.cr { color: var(--rose); }
+.cs { color: var(--sage); }
+
+.card-body { padding: 0.75rem 0.85rem; }
+
+/* ── LISTS ── */
+ul.items { list-style: none; }
+ul.items li {
+  display: flex; gap: 0.5rem; align-items: baseline;
+  padding: 0.22rem 0;
+  font-size: 0.72rem;
+  color: var(--text-mid);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+ul.items li:last-child { border-bottom: none; }
+ul.items li::before {
+  content: '▸';
+  font-size: 0.55rem;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+ul.items.v li::before { color: var(--violet); }
+ul.items.c li::before { color: var(--cyan); }
+ul.items.a li::before { color: var(--amber); }
+ul.items.r li::before { color: var(--rose); }
+ul.items.s li::before { color: var(--sage); }
+
+ul.items li strong { color: var(--text); font-weight: 500; }
+
+/* numbered */
+ol.steps { list-style: none; counter-reset: step; }
+ol.steps li {
+  counter-increment: step;
+  display: flex; gap: 0.6rem; align-items: baseline;
+  padding: 0.25rem 0;
+  font-size: 0.72rem;
+  color: var(--text-mid);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+ol.steps li:last-child { border-bottom: none; }
+ol.steps li::before {
+  content: counter(step);
+  min-width: 18px; height: 18px;
+  background: var(--violet-pale);
+  color: var(--violet);
+  border: 1px solid var(--violet-dim);
+  border-radius: 50%;
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── CODE BLOCK ── */
+.code-block {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  line-height: 1.7;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  padding: 0.65rem 0.75rem;
+  overflow-x: auto;
+  white-space: pre;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  color: var(--text-mid);
+}
+.code-block:hover { border-color: var(--cyan-dim); background: var(--cyan-pale); color: var(--text); }
+.code-block .k { color: var(--violet); }
+.code-block .s { color: var(--cyan); }
+.code-block .p { color: var(--amber); }
+.code-block .c { color: var(--text-dim); }
+
+/* ── TWO-COL GRID IN CARD ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1rem; }
+.kv-row { display: flex; gap: 0.5rem; font-size: 0.72rem; align-items: baseline; }
+.kv-key { color: var(--cyan); font-family: var(--mono); font-size: 0.65rem; white-space: nowrap; flex-shrink: 0; }
+.kv-val { color: var(--text-mid); }
+
+/* ── CONTEXT BAR ── */
+.ctx-bars { display: flex; flex-direction: column; gap: 0.4rem; }
+.ctx-row { display: flex; align-items: center; gap: 0.6rem; font-size: 0.68rem; }
+.ctx-label { color: var(--text-dim); font-family: var(--mono); width: 60px; flex-shrink: 0; font-size: 0.6rem; }
+.ctx-bar { flex: 1; height: 5px; background: var(--surface2); border-radius: 10px; overflow: hidden; }
+.ctx-fill { height: 100%; border-radius: 10px; }
+.ctx-desc { color: var(--text-mid); font-size: 0.65rem; }
+.fill-s { background: var(--sage); }
+.fill-a { background: var(--amber); }
+.fill-r { background: var(--rose); }
+.fill-v { background: var(--violet); }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 1.5rem; left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: var(--violet); color: #fff;
+  font-family: var(--mono); font-size: 0.65rem;
+  padding: 0.4rem 1rem; border-radius: 3px;
+  opacity: 0; transition: all 0.2s; pointer-events: none; z-index: 999;
+  box-shadow: 0 4px 20px rgba(124,109,240,0.4);
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+footer {
+  border-top: 1px solid var(--border);
+  padding: 1rem 2.5rem;
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--mono); font-size: 0.6rem;
+  color: var(--text-dim);
+  flex-wrap: wrap; gap: 0.5rem;
+}
+footer span { color: var(--violet); }
+
+/* ── SECTION DIVIDER ── */
+.sec-label {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.6rem;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="eyebrow">Reference · Production AI Development</div>
+    <h1>Claude Code <em>Project Structure</em></h1>
+    <div class="byline">// By: Brij Kishore Pandey &nbsp;·&nbsp; Complete workspace reference</div>
+  </div>
+  <div class="toolbar">
+    <button class="btn" onclick="copyTree()">⎘ Copy File Tree</button>
+    <button class="btn" onclick="copyCode('.mcp-json')">⎘ mcp.json</button>
+    <button class="btn" onclick="copyCode('.settings-json')">⎘ settings.json</button>
+    <button class="btn" onclick="copyCode('.claude-md')">⎘ CLAUDE.md</button>
+    <button class="btn" onclick="copyAll()">⎘ Copy All Text</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ── LEFT: FILE TREE ── -->
+  <div class="col-left">
+    <div class="tree-heading">// Project Tree</div>
+    <div class="tree" id="tree-content">
+<span class="tree-line"><span class="root">my_project/</span></span>
+<span class="tree-line"><span class="file">├── </span><span class="key">CLAUDE.md</span></span>
+<span class="tree-line"><span class="file">├── </span><span class="dir">.claude/</span></span>
+<span class="tree-line"><span class="file">│   ├── settings.json</span></span>
+<span class="tree-line"><span class="file">│   ├── settings.local.json</span></span>
+<span class="tree-line"><span class="file">│   ├── </span><span class="dir">commands/</span></span>
+<span class="tree-line"><span class="file">│   │   ├── review.md</span></span>
+<span class="tree-line"><span class="file">│   │   ├── deploy.md</span></span>
+<span class="tree-line"><span class="file">│   │   ├── test-sll.md</span></span>
+<span class="tree-line"><span class="file">│   │   └── heststrap.md</span></span>
+<span class="tree-line"><span class="file">│   └── </span><span class="dir">skills/</span></span>
+<span class="tree-line"><span class="file">│       ├── </span><span class="dir">code-review/</span></span>
+<span class="tree-line"><span class="file">│       │   ├── </span><span class="special">SKILL.md</span></span>
+<span class="tree-line"><span class="file">│       │   ├── scripts/</span></span>
+<span class="tree-line"><span class="file">│       │   ├── references/</span></span>
+<span class="tree-line"><span class="file">│       │   └── assets/</span></span>
+<span class="tree-line"><span class="file">│       ├── </span><span class="dir">text-writer/</span></span>
+<span class="tree-line"><span class="file">│       │   └── </span><span class="special">SKILL.md</span></span>
+<span class="tree-line"><span class="file">│       ├── </span><span class="dir">security-audit/</span></span>
+<span class="tree-line"><span class="file">│       │   └── </span><span class="special">SKILL.md</span></span>
+<span class="tree-line"><span class="file">│       └── </span><span class="dir">refactor/</span></span>
+<span class="tree-line"><span class="file">│           └── </span><span class="special">SKILL.md</span></span>
+<span class="tree-line"><span class="file">├── </span><span class="dir">agentx/</span></span>
+<span class="tree-line"><span class="file">│   ├── code-reviewer.yml</span></span>
+<span class="tree-line"><span class="file">│   ├── test-writer.yml</span></span>
+<span class="tree-line"><span class="file">│   ├── security-auditor.yml</span></span>
+<span class="tree-line"><span class="file">│   └── shopps-sre.yml</span></span>
+<span class="tree-line"><span class="file">└── </span><span class="dir">plugins/</span></span>
+<span class="tree-line"><span class="file">    ├── manifest.json</span></span>
+<span class="tree-line"><span class="file">    └── my-plugin/</span></span>
+<span class="tree-line"></span>
+<span class="tree-line"><span class="key">├── .mcp.json</span></span>
+<span class="tree-line"><span class="file">├── </span><span class="dir">arc/</span></span>
+<span class="tree-line"><span class="file">│   ├── </span><span class="dir">components/</span></span>
+<span class="tree-line"><span class="file">│   │   ├── auth/</span></span>
+<span class="tree-line"><span class="file">│   │   ├── dashboard/</span></span>
+<span class="tree-line"><span class="file">│   │   └── sharch/</span></span>
+<span class="tree-line"><span class="file">│   ├── </span><span class="dir">services/</span></span>
+<span class="tree-line"><span class="file">│   │   ├── api.ts</span></span>
+<span class="tree-line"><span class="file">│   │   ├── auth.ts</span></span>
+<span class="tree-line"><span class="file">│   │   └── database.ts</span></span>
+<span class="tree-line"><span class="file">│   ├── </span><span class="dir">utils/</span></span>
+<span class="tree-line"><span class="file">│   │   ├── logger.ts</span></span>
+<span class="tree-line"><span class="file">│   │   ├── validators.ts</span></span>
+<span class="tree-line"><span class="file">│   │   └── helpers.ts</span></span>
+<span class="tree-line"><span class="file">│   ├── </span><span class="dir">types/</span></span>
+<span class="tree-line"><span class="file">│   │   └── index.ts</span></span>
+<span class="tree-line"><span class="file">│   └── index.ts</span></span>
+<span class="tree-line"><span class="file">├── </span><span class="dir">tests/</span></span>
+<span class="tree-line"><span class="file">│   ├── unit/</span></span>
+<span class="tree-line"><span class="file">│   ├── integration/</span></span>
+<span class="tree-line"><span class="file">│   └── e2e/</span></span>
+<span class="tree-line"><span class="file">├── </span><span class="dir">docs/</span></span>
+<span class="tree-line"><span class="file">│   ├── architecture.md</span></span>
+<span class="tree-line"><span class="file">│   ├── api-reference.md</span></span>
+<span class="tree-line"><span class="file">│   └── onboarding.md</span></span>
+<span class="tree-line"><span class="file">├── </span><span class="dir">scripts/</span></span>
+<span class="tree-line"><span class="file">│   ├── setup.sh</span></span>
+<span class="tree-line"><span class="file">│   ├── deploy.sh</span></span>
+<span class="tree-line"><span class="file">│   └── seed.db.sh</span></span>
+<span class="tree-line"><span class="file">├── package.json</span></span>
+<span class="tree-line"><span class="file">├── tsconfig.json</span></span>
+<span class="tree-line"><span class="file">├── .env.example</span></span>
+<span class="tree-line"><span class="file">├── .gitignore</span></span>
+<span class="tree-line"><span class="file">├── dockerfile</span></span>
+<span class="tree-line"><span class="file">└── README.md</span></span>
+    </div>
+  </div>
+
+  <!-- ── MIDDLE COLUMN ── -->
+  <div class="col-mid">
+
+    <!-- Project Overview -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-dot dot-violet"></div>
+        <div class="card-title cv">Project Overview</div>
+      </div>
+      <div class="card-body">
+        <p style="font-size:0.72rem; color:var(--text-mid); line-height:1.6;">Complete Claude Code workspace with hooks, MCP servers, subagents, and plugins designed for production AI-assisted development.</p>
+        <hr style="border:none; border-top:1px solid var(--border); margin:0.65rem 0;">
+        <div class="sec-label">Key Components</div>
+        <div style="display:flex; flex-direction:column; gap:0.25rem;">
+          <div class="kv-row"><span class="kv-key">CLAUDE.md</span><span class="kv-val">Project memory</span></div>
+          <div class="kv-row"><span class="kv-key">.claude/</span><span class="kv-val">Config &amp; extensions</span></div>
+          <div class="kv-row"><span class="kv-key">commands/</span><span class="kv-val">Slash commands</span></div>
+          <div class="kv-row"><span class="kv-key">skills/</span><span class="kv-val">Auto-activated skills</span></div>
+          <div class="kv-row"><span class="kv-key">.mcp.json</span><span class="kv-val">MCP server config</span></div>
+          <div class="kv-row"><span class="kv-key">agents/</span><span class="kv-val">Subagent definitions</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLAUDE.md Essentials -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-dot dot-cyan"></div>
+        <div class="card-title cc">CLAUDE.md Essentials</div>
+      </div>
+      <div class="card-body">
+        <ol class="steps">
+          <li>Project conventions &amp; style guide</li>
+          <li>Tech stack &amp; architecture overview</li>
+          <li>Testing requirements &amp; patterns</li>
+          <li>Git workflow &amp; branch strategy</li>
+          <li>Security &amp; compliance rules</li>
+          <li>File naming &amp; folder conventions</li>
+          <li>Review checklist before commits</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Extension Types -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-dot dot-amber"></div>
+        <div class="card-title ca">Extension Types</div>
+      </div>
+      <div class="card-body">
+        <ul class="items a">
+          <li><strong>Skills</strong> — Auto-activate on task match</li>
+          <li><strong>Hooks</strong> — Lifecycle event scripts</li>
+          <li><strong>MCP</strong> — External tool connections</li>
+          <li><strong>Subagents</strong> — Installed parallel work</li>
+          <li><strong>Agent Teams</strong> — Multi-agent coordination</li>
+          <li><strong>Plugins</strong> — Bundled distributable setups</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Hook Events -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-dot dot-rose"></div>
+        <div class="card-title cr">Hook Events</div>
+      </div>
+      <div class="card-body">
+        <ul class="items r">
+          <li><strong>PreToolUse</strong> — Block before execution</li>
+          <li><strong>PostToolUse</strong> — Auto laft after writes</li>
+          <li><strong>SessionStmt (load)</strong> — Load content on launch</li>
+          <li><strong>SessionStmt (save)</strong> — Save session summaries</li>
+          <li><strong>PreCommit</strong> — Secret detection</li>
+          <li><strong>Notification</strong> — Slack/webhook alerts</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Skill Structure -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-dot dot-sage"></div>
+        <div class="card-title cs">Skill Structure</div>
+      </div>
+      <div class="card-body">
+        <ul class="items s">
+          <li><strong>SKILL.md</strong> — Instructions &amp; metadata</li>
+          <li><strong>scripts/</strong> — Executable automation</li>
+          <li><strong>references/</strong> — Docs loaded on demand</li>
+          <li><strong>assets/</strong> — Templates &amp; static files</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Popular MCP Servers -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-dot dot-violet"></div>
+        <div class="card-title cv">Popular MCP Servers</div>
+      </div>
+      <div class="card-body">
+        <ul class="items v">
+          <li><strong>GitHub</strong> — PRs, issues, repos</li>
+          <li><strong>JIRA/Linear</strong> — Ticket workflows</li>
+          <li><strong>Slack</strong> — Notifications &amp; search</li>
+          <li><strong>PostgresGB</strong> — Direct queries</li>
+          <li><strong>Playwright</strong> — Browser automation</li>
+          <li><strong>Filesystem</strong> — Scoped file access</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Getting Started -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-dot dot-cyan"></div>
+        <div class="card-title cc">Getting Started</div>
+      </div>
+      <div class="card-body">
+        <ol class="steps">
+          <li>npm i -g @anthropic-ai/claude-code</li>
+          <li>cd your-project &amp;&amp; claude</li>
+          <li>Create CLAUDE.md with commands</li>
+          <li>Add slash commands in .claude/commands/</li>
+          <li>Configure MCP in .mcp.json</li>
+          <li>Add skills as workflows grow</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Context Management -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-dot dot-amber"></div>
+        <div class="card-title ca">Context Management</div>
+      </div>
+      <div class="card-body">
+        <div class="ctx-bars">
+          <div class="ctx-row">
+            <span class="ctx-label">0–60%</span>
+            <div class="ctx-bar"><div class="ctx-fill fill-s" style="width:60%"></div></div>
+            <span class="ctx-desc">Work freely</span>
+          </div>
+          <div class="ctx-row">
+            <span class="ctx-label">50–70%</span>
+            <div class="ctx-bar"><div class="ctx-fill fill-a" style="width:70%"></div></div>
+            <span class="ctx-desc">Monitor usage</span>
+          </div>
+          <div class="ctx-row">
+            <span class="ctx-label">70–80%</span>
+            <div class="ctx-bar"><div class="ctx-fill fill-r" style="width:80%"></div></div>
+            <span class="ctx-desc">Run /compact</span>
+          </div>
+          <div class="ctx-row">
+            <span class="ctx-label">80%+</span>
+            <div class="ctx-bar"><div class="ctx-fill fill-v" style="width:95%"></div></div>
+            <span class="ctx-desc">/clear mandatory</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── RIGHT COLUMN ── -->
+  <div class="col-right">
+
+    <!-- Best Practices -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-dot dot-violet"></div>
+        <div class="card-title cv">Best Practices for Claude Code</div>
+      </div>
+      <div class="card-body">
+        <ul class="items v">
+          <li><strong>Iterative Development</strong> — Start small, test frequently</li>
+          <li><strong>Clear Skill Documentation</strong> — Describe skill purpose &amp; usage</li>
+          <li><strong>Modular Skill Design</strong> — Break down complex tasks</li>
+          <li><strong>Secure Secret Handling</strong> — Use environment variables, not code</li>
+          <li><strong>Regular Testing &amp; Auditing</strong> — Ensure skills remain reliable</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- settings.json -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-dot dot-rose"></div>
+        <div class="card-title cr">settings.json Structure</div>
+      </div>
+      <div class="card-body">
+        <div class="code-block settings-json" onclick="cp(this)">{
+  <span class="k">"permissions"</span>: {
+    <span class="s">"allow"</span>: [...],
+    <span class="s">"deny"</span>: [...]
+  },
+  <span class="k">"hooks"</span>: {
+    <span class="s">"PreToolUse"</span>: [{
+      <span class="s">"matcher"</span>: <span class="p">"Bash"</span>,
+      <span class="s">"hooks"</span>: [{
+        <span class="s">"type"</span>: <span class="p">"command"</span>,
+        <span class="s">"command"</span>: <span class="p">"sbeck-safety.sh"</span>
+      }]
+    }],
+    <span class="s">"PostToolUse"</span>: [{
+      <span class="s">"matcher"</span>: <span class="p">"Write"</span>,
+      <span class="s">"hooks"</span>: [{
+        <span class="s">"type"</span>: <span class="p">"command"</span>,
+        <span class="s">"command"</span>: <span class="p">"npm run lint"</span>
+      }]
+    }]
+  },
+  <span class="k">"env"</span>: {
+    <span class="s">"MAX_THINKING_TOKENS"</span>: <span class="p">"10000"</span>,
+    <span class="s">"CLAUDE_AUTOCOMPACT_PCT_OVERRIDE"</span>: <span class="p">"50"</span>
+  }
+}</div>
+      </div>
+    </div>
+
+    <!-- mcp.json -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-dot dot-cyan"></div>
+        <div class="card-title cc">.mcp.json Structure</div>
+      </div>
+      <div class="card-body">
+        <div class="code-block mcp-json" onclick="cp(this)">{
+  <span class="k">"mcpServers"</span>: {
+    <span class="s">"github"</span>: {
+      <span class="s">"type"</span>: <span class="p">"stdio"</span>,
+      <span class="s">"command"</span>: <span class="p">"npx"</span>,
+      <span class="s">"args"</span>: [
+        <span class="p">"-y"</span>,
+        <span class="p">"@anthropic/mcp-github"</span>
+      ],
+      <span class="s">"env"</span>: {
+        <span class="s">"GITHUB_TOKEN"</span>: <span class="p">"${GITHUB_TOKEN}"</span>
+      }
+    },
+    <span class="s">"postgres"</span>: {
+      <span class="s">"type"</span>: <span class="p">"stdio"</span>,
+      <span class="s">"command"</span>: <span class="p">"npx"</span>,
+      <span class="s">"args"</span>: [
+        <span class="p">"-y"</span>,
+        <span class="p">"@anthropic/mcp-postgres"</span>
+      ],
+      <span class="s">"env"</span>: {
+        <span class="s">"DATABASE_URL"</span>: <span class="p">"${DATABASE_URL}"</span>
+      }
+    }
+  }
+}</div>
+      </div>
+    </div>
+
+    <!-- CLAUDE.md Template -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-dot dot-amber"></div>
+        <div class="card-title ca">CLAUDE.md Template</div>
+      </div>
+      <div class="card-body">
+        <div class="code-block claude-md" onclick="cp(this)"><span class="k"># Project: My App</span>
+
+<span class="p">## Tech Stack</span>
+- Next.js 14, TypeScript, Tailwind
+- Supabase for auth &amp; database
+- Prisma ORM, TRPC API layer
+
+<span class="p">## Conventions</span>
+- Always write tests before code
+- Use conventional commits
+- Never commit directly to main
+- Run lint + typecheck before PR
+
+<span class="p">## Architecture</span>
+- src/components  → React components
+- src/services    → Business logic
+- src/utils       → Shared helpers
+
+<span class="p">## Security</span>
+- No secrets in code or logs
+- Validate all user inputs
+- Use parameterised queries only</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>Claude Code Project Structure</span> &nbsp;·&nbsp; By Brij Kishore Pandey &nbsp;·&nbsp; Click any code block to copy it
+  <div>Made prettier by Claude Sonnet 4.6</div>
+</footer>
+
+<div id="toast"></div>
+
+<script>
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._t);
+    t._t = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  function cp(el) {
+    const text = el.innerText.trim();
+    navigator.clipboard.writeText(text).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); ta.remove();
+    });
+    showToast('Copied!');
+  }
+
+  function copyTree() {
+    const text = document.getElementById('tree-content').innerText;
+    navigator.clipboard.writeText(text);
+    showToast('File tree copied!');
+  }
+
+  function copyCode(cls) {
+    const el = document.querySelector(cls);
+    if (el) { cp(el); }
+  }
+
+  function copyAll() {
+    const lines = [];
+    document.querySelectorAll('h1, .card-title, ul.items li, ol.steps li, .code-block, .kv-row, .ctx-row').forEach(el => {
+      lines.push(el.innerText.trim());
+    });
+    navigator.clipboard.writeText(lines.join('\n'));
+    showToast('All content copied!');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Where the AI dividend actually goes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1F2A24;
+    --ink-soft:#5C6862;
+    --paper:#FAFAF7;
+    --card:#FFFFFF;
+    --rule:#E4E1D8;
+    --inc-lg:#2F7D5A; --inc-lg-tx:#FFFFFF;
+    --inc-sm:#B7DFC6; --inc-sm-tx:#1F2A24;
+    --neutral:#EAE7DE; --neutral-tx:#5C6862;
+    --dec-sm:#EFC49E; --dec-sm-tx:#1F2A24;
+    --dec-lg:#C1613A; --dec-lg-tx:#FFFFFF;
+    --gold:#B8935A;
+    --shadow:0 1px 2px rgba(31,42,36,.05), 0 10px 26px rgba(31,42,36,.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;
+    line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){ *{transition-duration:.001ms !important; animation-duration:.001ms !important;} }
+  ::selection{background:#DCE9E0; color:var(--ink);}
+  a{color:var(--ink);}
+  [contenteditable="true"]{outline:none; border-radius:6px; padding:1px 3px; margin:-1px -3px;}
+  [contenteditable="true"]:hover{background:rgba(31,42,36,.05);}
+  [contenteditable="true"]:focus{background:rgba(184,147,90,.16); box-shadow:0 0 0 2px var(--gold);}
+  :focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
+
+  .wrap{max-width:1100px; margin:0 auto; padding:0 22px 90px;}
+
+  .hero{padding:50px 0 22px;}
+  .kicker{
+    display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:600;
+    letter-spacing:.05em; text-transform:uppercase; color:var(--inc-lg);
+    background:var(--inc-sm); padding:6px 14px; border-radius:999px; margin-bottom:20px;
+  }
+  h1{font-family:'Newsreader'; font-style:italic; font-weight:700; font-size:clamp(30px,4.6vw,48px); line-height:1.12; margin:0 0 16px; max-width:16ch;}
+  .sub{font-size:16.5px; color:var(--ink-soft); max-width:64ch; margin:0 0 14px;}
+  .source-note{
+    font-size:12.5px; color:var(--ink-soft); border-left:2px solid var(--gold); padding-left:12px; max-width:60ch;
+  }
+  .source-note a{border-bottom:1px solid var(--gold); text-decoration:none;}
+
+  section.block{margin-top:52px;}
+  .block-head{margin-bottom:22px;}
+  .block-head h2{font-family:'Newsreader'; font-style:italic; font-weight:700; font-size:26px; margin:0 0 8px;}
+  .block-head p{font-size:14px; color:var(--ink-soft); margin:0; max-width:60ch;}
+
+  /* ---------- matrix ---------- */
+  .matrix-scroll{overflow-x:auto; padding-bottom:6px;}
+  .matrix{border-collapse:separate; border-spacing:4px; min-width:920px;}
+  .matrix th, .matrix td{padding:0; text-align:center;}
+  .row-label{
+    text-align:left !important; font-size:13px; font-weight:600; color:var(--ink);
+    padding-right:14px !important; white-space:nowrap; position:sticky; left:0; background:var(--paper);
+  }
+  .sector-head{
+    cursor:pointer; padding:8px 4px !important; vertical-align:bottom; border-radius:8px;
+  }
+  .sector-head-inner{
+    writing-mode:vertical-rl; transform:rotate(180deg); font-size:12.5px; font-weight:600; color:var(--ink-soft);
+    padding:6px 4px; border-radius:6px; height:118px; display:flex; align-items:flex-end; justify-content:center;
+  }
+  .sector-head.active .sector-head-inner{color:var(--ink); background:#F0ECDF;}
+  .cell{
+    width:56px; height:44px; border-radius:8px; font-size:13px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .sector-col.active .cell{box-shadow:0 0 0 2px var(--gold) inset;}
+  .legend{display:flex; flex-wrap:wrap; gap:18px; margin-top:18px; font-size:12.5px; color:var(--ink-soft);}
+  .legend span{display:inline-flex; align-items:center; gap:8px;}
+  .legend i{width:26px; height:22px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex:none;}
+
+  .detail-panel{
+    display:none; margin-top:22px; background:var(--card); border:1px solid var(--rule); border-radius:16px;
+    padding:20px 22px; box-shadow:var(--shadow); scroll-margin-top:20px;
+  }
+  .detail-panel.open{display:block;}
+  .detail-panel h3{font-family:'Newsreader'; font-style:italic; font-size:19px; margin:0 0 8px;}
+  .detail-panel p{font-size:14px; margin:0 0 10px; color:var(--ink);}
+  .detail-panel .cite{font-size:11.5px; color:var(--ink-soft);}
+  .detail-close{float:right; background:none; border:none; color:var(--ink-soft); cursor:pointer; font-size:13px;}
+
+  /* ---------- scatter ---------- */
+  .scatter-wrap{position:relative; border:1px solid var(--rule); border-radius:16px; overflow:hidden; background:var(--card);}
+  .scatter{position:relative; width:100%; aspect-ratio:16/10; min-height:340px;}
+  .quad{position:absolute; width:50%; height:50%; display:flex; align-items:flex-start; padding:12px 16px;}
+  .quad span{font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft);}
+  .quad.q-tl{top:0; left:0; background:#FBF6EC;}
+  .quad.q-tr{top:0; left:50%; background:#EEF6F0; align-items:flex-start; justify-content:flex-end;}
+  .quad.q-bl{top:50%; left:0; background:#FBEDE6; align-items:flex-end;}
+  .quad.q-br{top:50%; left:50%; background:#FBF6EC; align-items:flex-end; justify-content:flex-end;}
+  .axis-label{position:absolute; font-size:11.5px; color:var(--ink-soft); font-weight:600;}
+  .dot{
+    position:absolute; width:12px; height:12px; border-radius:50%; background:var(--gold);
+    border:2px solid #fff; box-shadow:0 1px 4px rgba(31,42,36,.3); cursor:pointer; transform:translate(-50%,-50%);
+  }
+  .dot:hover, .dot.active{transform:translate(-50%,-50%) scale(1.3);}
+  .dot-label{
+    position:absolute; font-size:11px; font-weight:600; color:var(--ink); white-space:nowrap;
+    transform:translate(-50%, -160%); pointer-events:none;
+  }
+
+  footer{margin-top:56px; border-top:1px solid var(--rule); padding-top:22px; font-size:12.5px; color:var(--ink-soft);}
+  footer p{max-width:660px; margin:0 0 8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section class="hero">
+    <div class="kicker">Sourced &amp; interactive</div>
+    <h1 contenteditable="true" spellcheck="false">Where the AI dividend actually goes</h1>
+    <p class="sub" contenteditable="true" spellcheck="false">Two charts recreated from a BCG analysis of how AI's profits split across sectors and which competitive advantages actually survive it. Click a sector or a dot for the reasoning behind it.</p>
+    <p class="source-note">Adapted from BCG, <a href="https://www.bcg.com/publications/2026/which-companies-capture-value-from-ai" target="_blank" rel="noopener">&ldquo;Who Will Win as AI Rewrites Competitive Advantage?&rdquo;</a> by Jesper Nielsen, Rahul Khubchandani, James Tucker, Ketil Gjerstad, Gerry Hansell and Hans Roedahl, published 13 August 2026. Descriptions below are paraphrased, not quoted, from that article. This page isn't a BCG product.</p>
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <h2>The AI dividend flows differently by sector</h2>
+      <p>How the profit pool shifts for five groups, across thirteen sectors. Click a sector name to see the reasoning where BCG gives it, or the general read where it doesn't.</p>
+    </div>
+    <div class="matrix-scroll">
+      <table class="matrix" id="matrixTable"></table>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--dec-lg); color:var(--dec-lg-tx)">&darr;&darr;</i>large decrease</span>
+      <span><i style="background:var(--dec-sm); color:var(--dec-sm-tx)">&darr;</i>small decrease</span>
+      <span><i style="background:var(--neutral); color:var(--neutral-tx)">&mdash;</i>no material change</span>
+      <span><i style="background:var(--inc-sm); color:var(--inc-sm-tx)">&uarr;</i>small increase</span>
+      <span><i style="background:var(--inc-lg); color:var(--inc-lg-tx)">&uarr;&uarr;</i>large increase</span>
+    </div>
+    <div class="detail-panel" id="sectorDetail">
+      <button class="detail-close" id="sectorDetailClose">Close &times;</button>
+      <h3 id="sectorDetailTitle"></h3>
+      <p id="sectorDetailBody"></p>
+      <div class="cite" id="sectorDetailCite"></div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="block-head">
+      <h2>AI is redrawing the map of competitive advantage</h2>
+      <p>Durability under AI, plotted against depth of protective moat. Click any point for the example behind it.</p>
+    </div>
+    <div class="scatter-wrap">
+      <div class="scatter" id="scatter">
+        <div class="quad q-tl"><span>Durable &middot; shallow</span></div>
+        <div class="quad q-tr"><span>Durable &middot; deep</span></div>
+        <div class="quad q-bl"><span>Fragile &middot; shallow</span></div>
+        <div class="quad q-br"><span>Fragile &middot; deep</span></div>
+      </div>
+    </div>
+    <div class="detail-panel" id="moatDetail">
+      <button class="detail-close" id="moatDetailClose">Close &times;</button>
+      <h3 id="moatDetailTitle"></h3>
+      <p id="moatDetailBody"></p>
+      <div class="cite" id="moatDetailCite"></div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Cell values and dot positions are redrawn by eye from the published exhibits to build this interactive version; treat them as a faithful approximation, not a pixel-exact copy, and check the original article for anything you plan to cite further.</p>
+    <p>Click any heading or description above to edit the wording before you send this on.</p>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  const CITE = 'BCG, "Who Will Win as AI Rewrites Competitive Advantage?", 13 Aug 2026';
+
+  const rows = ['Consumers','Employees','Shareholders','Compute/AI','Market size'];
+
+  // codes: LD = large decrease, SD = small decrease, N = none, SI = small increase, LI = large increase
+  const sectors = [
+    { name:'Automotive', vals:['SI','SD','SD','SI','SD'],
+      detail:'BCG doesn\u2019t call this sector out specifically. Reading the row: consumers and compute/AI see small gains, while employees, shareholders, and overall market size all soften a little, consistent with a sector facing slow-growing demand even as AI trims costs.', cited:false },
+    { name:'Mobility', vals:['SI','LD','LI','LI','SI'],
+      detail:'Not named individually in the article. The pattern points to a sector where shareholders and the compute/AI layer capture most of the upside, while the workforce absorbs a large hit.', cited:false },
+    { name:'Financial services', vals:['SI','LD','LI','SI','SI'],
+      detail:'BCG\u2019s own example: oligopoly and regulation have let shareholders keep most of the AI-driven surplus in banking and financial services, at least for now. The article notes that stronghold narrows as the regulatory moat itself narrows.', cited:true },
+    { name:'Pharmaceuticals/medtech', vals:['LI','N','LI','SI','LI'],
+      detail:'BCG\u2019s example: in pharma, value reaches both consumers and shareholders, because AI is cutting the cost of drug discovery itself, a rare case where two groups both win clearly.', cited:true },
+    { name:'Health care providers and services', vals:['LI','N','SI','SI','SI'],
+      detail:'BCG\u2019s example: in health care delivery, the report sees value landing mostly with consumers rather than with providers or shareholders.', cited:true },
+    { name:'Media and entertainment', vals:['LI','LD','N','LI','LD'],
+      detail:'Not named individually. The row shows a sector being squeezed: consumers and the compute/AI layer gain, but employees and overall market size both take a large hit, a classic disruption signature.', cited:false },
+    { name:'Consumer goods', vals:['SI','LD','SD','LI','SD'],
+      detail:'Not named individually. Compute/AI captures the largest gain here of any group in the row, while shareholders and market size both soften slightly.', cited:false },
+    { name:'Retail', vals:['LI','LD','N','SI','N'],
+      detail:'BCG\u2019s example: hypercompetition in retail pushes almost all of the AI dividend straight through to consumers within just a few years, which matches the large consumer gain and flat-to-negative result everywhere else in this column.', cited:true },
+    { name:'Industrials', vals:['LI','SD','SI','SI','SI'],
+      detail:'Not named individually. A broadly positive column: consumers, shareholders, compute/AI, and market size all tick up, with only a small cost to employees.', cited:false },
+    { name:'Technology', vals:['SI','N','LI','N','LI'],
+      detail:'Not named individually, though the wider article argues technology and IT services face some of the sharpest AI-driven repricing as legacy software moats compress. Shareholders and market size still show large gains here, while compute/AI itself shows no material change, the software layer, not the compute layer, is what\u2019s under pressure.', cited:false },
+    { name:'Professional services', vals:['LI','LD','SD','LI','LD'],
+      detail:'Not named individually. A sector under real pressure: consumers and compute/AI gain, but employees and market size both fall sharply, echoing the article\u2019s broader warning about AI-native attackers unbundling advisory margin from client relationships.', cited:false },
+    { name:'Power and utilities', vals:['N','N','LI','SI','LI'],
+      detail:'Not named individually, though the article separately singles out power and utilities as early winners from AI\u2019s physical build-out. Shareholders and market size both show large gains here.', cited:false },
+    { name:'Resources and energy', vals:['N','N','LI','SI','LI'],
+      detail:'Not named individually. The pattern mirrors power and utilities: shareholders and market size gain strongly as AI\u2019s infrastructure build-out pulls in capital.', cited:false },
+  ];
+
+  const codeMeta = {
+    LD:{ arrow:'\u2193\u2193', bg:'var(--dec-lg)', tx:'var(--dec-lg-tx)' },
+    SD:{ arrow:'\u2193', bg:'var(--dec-sm)', tx:'var(--dec-sm-tx)' },
+    N:{ arrow:'\u2014', bg:'var(--neutral)', tx:'var(--neutral-tx)' },
+    SI:{ arrow:'\u2191', bg:'var(--inc-sm)', tx:'var(--inc-sm-tx)' },
+    LI:{ arrow:'\u2191\u2191', bg:'var(--inc-lg)', tx:'var(--inc-lg-tx)' },
+  };
+
+  const table = document.getElementById('matrixTable');
+  let html = '<thead><tr><th class="row-label"></th>';
+  sectors.forEach((s,i) => {
+    html += `<th class="sector-head" data-i="${i}"><div class="sector-head-inner">${s.name}</div></th>`;
+  });
+  html += '</tr></thead><tbody>';
+  rows.forEach((r, ri) => {
+    html += `<tr><td class="row-label">${r}</td>`;
+    sectors.forEach((s, si) => {
+      const c = codeMeta[s.vals[ri]];
+      html += `<td class="sector-col" data-i="${si}"><div class="cell" style="background:${c.bg}; color:${c.tx}">${c.arrow}</div></td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  table.innerHTML = html;
+
+  const sectorDetail = document.getElementById('sectorDetail');
+  const sectorTitle = document.getElementById('sectorDetailTitle');
+  const sectorBody = document.getElementById('sectorDetailBody');
+  const sectorCite = document.getElementById('sectorDetailCite');
+  let activeSector = null;
+
+  function openSector(i){
+    const s = sectors[i];
+    sectorTitle.textContent = s.name;
+    sectorBody.textContent = s.detail;
+    sectorCite.textContent = s.cited ? CITE : 'General reading of the chart; not a sector BCG discusses by name in the article.';
+    sectorDetail.classList.add('open');
+    document.querySelectorAll('.sector-head, .sector-col').forEach(el => el.classList.toggle('active', el.dataset.i === String(i)));
+    activeSector = i;
+    sectorDetail.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+  table.addEventListener('click', (e) => {
+    const th = e.target.closest('.sector-head');
+    if (!th) return;
+    const i = th.dataset.i;
+    if (String(activeSector) === i) {
+      sectorDetail.classList.remove('open');
+      document.querySelectorAll('.sector-head, .sector-col').forEach(el => el.classList.remove('active'));
+      activeSector = null;
+      return;
+    }
+    openSector(i);
+  });
+  document.getElementById('sectorDetailClose').addEventListener('click', () => {
+    sectorDetail.classList.remove('open');
+    document.querySelectorAll('.sector-head, .sector-col').forEach(el => el.classList.remove('active'));
+    activeSector = null;
+  });
+
+  // ---------- scatter ----------
+  const moatItems = [
+    { name:'Flow data', x:62, y:88,
+      detail:'Data a product keeps generating and feeding straight back into its own AI compounds in a way a static dataset can\u2019t. BCG\u2019s example: Visa\u2019s network processes more than 257 billion transactions a year, and every one sharpens its fraud and authorisation models.' },
+    { name:'Physical assets', x:88, y:92,
+      detail:'Scarce physical infrastructure is hard for an AI-native challenger to route around. BCG points to Caterpillar\u2019s autonomous mining fleet, running on its own software, as an asset AI reinforces rather than erodes.' },
+    { name:'System-level integration', x:66, y:70,
+      detail:'Turning a single tool every competitor can buy into a proprietary end-to-end workflow is its own moat. BCG\u2019s example is BlackRock\u2019s Aladdin platform, already dominant before AI, and deepened further by it.' },
+    { name:'Network scale', x:85, y:80,
+      detail:'Networks that get more valuable as they get bigger are hard to disrupt from outside. BCG cites Amazon\u2019s million-robot fulfilment network as scale AI makes more valuable, not less.' },
+    { name:'Deep relationships and trust', x:78, y:66,
+      detail:'As AI commoditises analysis, the trust wrapped around a relationship becomes the scarce part. BCG\u2019s example is Mayo Clinic Platform\u2019s independent validation of clinical AI models, a kind of verified trust plain compliance can\u2019t buy.' },
+    { name:'Regulatory position', x:50, y:50,
+      detail:'Sits right on the boundary in BCG\u2019s map: a real advantage today, meaningful but, in the report\u2019s words, narrowing.' },
+    { name:'Capital', x:22, y:68,
+      detail:'Still durable in BCG\u2019s telling, but it protects less than it used to, now that AI lowers how much capital it takes to compete in a growing number of areas.' },
+    { name:'Headcount scale', x:25, y:25,
+      detail:'Once read as a proxy for capability, BCG now places headcount scale as fragile and shallow, one of the advantages AI erodes fastest.' },
+    { name:'Operational excellence', x:58, y:22,
+      detail:'Part of what BCG calls the most precarious quadrant: an advantage that was deep enough to feel permanent, but that can look intact from the inside while eroding from the outside.' },
+    { name:'Stock data', x:70, y:18,
+      detail:'Grouped with operational excellence and expertise in BCG\u2019s fragile-deep quadrant: a static dataset, however large, doesn\u2019t compound the way flow data does, and AI narrows its edge over time.' },
+    { name:'Knowledge and expertise', x:82, y:30,
+      detail:'The report\u2019s clearest warning: deep expertise can look intact on every dashboard while AI quietly closes the gap between an expert and a well-prompted model.' },
+  ];
+
+  const scatter = document.getElementById('scatter');
+  moatItems.forEach((m, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.style.left = m.x + '%';
+    dot.style.top = (100 - m.y) + '%';
+    dot.dataset.i = i;
+    scatter.appendChild(dot);
+    const label = document.createElement('div');
+    label.className = 'dot-label';
+    label.style.left = m.x + '%';
+    label.style.top = (100 - m.y) + '%';
+    label.textContent = m.name;
+    scatter.appendChild(label);
+  });
+
+  const axisY = document.createElement('div');
+  axisY.className = 'axis-label';
+  axisY.style.left = '6px'; axisY.style.top = '6px';
+  axisY.textContent = 'High \u2191 durability';
+  scatter.appendChild(axisY);
+  const axisY2 = document.createElement('div');
+  axisY2.className = 'axis-label';
+  axisY2.style.left = '6px'; axisY2.style.bottom = '6px';
+  axisY2.textContent = 'Low';
+  scatter.appendChild(axisY2);
+  const axisX2 = document.createElement('div');
+  axisX2.className = 'axis-label';
+  axisX2.style.right = '10px'; axisX2.style.bottom = '6px';
+  axisX2.textContent = 'Deep moat \u2192';
+  scatter.appendChild(axisX2);
+
+  const moatDetail = document.getElementById('moatDetail');
+  const moatTitle = document.getElementById('moatDetailTitle');
+  const moatBody = document.getElementById('moatDetailBody');
+  const moatCite = document.getElementById('moatDetailCite');
+
+  scatter.addEventListener('click', (e) => {
+    const dot = e.target.closest('.dot');
+    if (!dot) return;
+    const m = moatItems[dot.dataset.i];
+    document.querySelectorAll('.dot').forEach(d => d.classList.toggle('active', d === dot));
+    moatTitle.textContent = m.name;
+    moatBody.textContent = m.detail;
+    moatCite.textContent = CITE;
+    moatDetail.classList.add('open');
+    moatDetail.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  });
+  document.getElementById('moatDetailClose').addEventListener('click', () => {
+    moatDetail.classList.remove('open');
+    document.querySelectorAll('.dot').forEach(d => d.classList.remove('active'));
+  });
+})();
+</script>
+</body>
+</html>

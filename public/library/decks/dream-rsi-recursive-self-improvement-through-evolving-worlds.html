@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0a0c10" />
+  <title>Dream-RSI | Recursive Self-Improvement through Evolving Worlds</title>
+  <style>
+    :root {
+      --bg: #0a0c10;
+      --bg-2: #10141c;
+      --panel: rgba(18, 23, 33, .82);
+      --panel-solid: #141a24;
+      --ink: #f4f7fb;
+      --muted: #a9b4c4;
+      --faint: #69778b;
+      --line: rgba(198, 215, 236, .16);
+      --cyan: #68e1e8;
+      --blue: #8aa7ff;
+      --lime: #b7ed82;
+      --amber: #ffc979;
+      --rose: #ff9ab6;
+      --shadow: 0 24px 80px rgba(0, 0, 0, .28);
+      --radius: 22px;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+    body { overflow: hidden; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .deck { min-height: 100vh; position: relative; isolation: isolate; }
+    .deck::before {
+      content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(104,225,232,.10), transparent 30%),
+        radial-gradient(circle at 85% 75%, rgba(138,167,255,.10), transparent 30%),
+        linear-gradient(130deg, #0a0c10, #0d1118 55%, #0a0c10);
+    }
+    .grain { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .08; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.34'/%3E%3C/svg%3E"); mix-blend-mode: screen; }
+
+    .topbar { position: fixed; left: 0; right: 0; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 18px 28px 13px; background: linear-gradient(180deg, rgba(10,12,16,.96), rgba(10,12,16,.62), transparent); }
+    .brand { display: flex; align-items: center; gap: .65rem; color: var(--muted); font-size: .77rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; }
+    .brand-mark { width: 21px; height: 21px; border: 1px solid var(--cyan); border-radius: 50%; position: relative; box-shadow: 0 0 20px rgba(104,225,232,.35); }
+    .brand-mark::after { content: ""; width: 7px; height: 7px; background: var(--cyan); border-radius: 50%; position: absolute; left: 6px; top: 6px; }
+    .top-actions { display: flex; align-items: center; gap: .65rem; }
+    .counter { color: var(--muted); font-variant-numeric: tabular-nums; font-size: .82rem; }
+    .icon-btn, .pill-btn { color: var(--ink); border: 1px solid var(--line); background: rgba(255,255,255,.04); border-radius: 999px; padding: .55rem .75rem; transition: .2s ease; }
+    .icon-btn { width: 38px; height: 34px; padding: 0; }
+    .top-control { padding: .48rem .72rem; font-size: .72rem; font-weight: 750; }
+    .icon-btn:hover, .pill-btn:hover { border-color: rgba(104,225,232,.65); background: rgba(104,225,232,.08); }
+
+    .progress { position: fixed; z-index: 21; top: 0; left: 0; height: 3px; width: 100%; background: rgba(255,255,255,.08); }
+    .progress > span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--cyan), var(--blue), var(--lime)); transition: width .35s ease; }
+
+    main { height: 100vh; position: relative; }
+    .slide { position: absolute; inset: 0; padding: 92px 7vw 74px; overflow: auto; opacity: 0; pointer-events: none; transform: translateX(22px); transition: opacity .35s ease, transform .35s ease; }
+    .slide.active { opacity: 1; pointer-events: auto; transform: translateX(0); }
+    .slide.prev { transform: translateX(-22px); }
+    .slide-inner { width: min(1180px, 100%); min-height: 100%; margin: 0 auto; display: flex; flex-direction: column; justify-content: center; }
+    .slide-number { color: var(--faint); font: 700 .72rem var(--mono); letter-spacing: .16em; text-transform: uppercase; margin-bottom: 1rem; }
+    .eyebrow { color: var(--cyan); letter-spacing: .15em; text-transform: uppercase; font-size: .74rem; font-weight: 800; margin-bottom: 1rem; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 960px; font-size: clamp(3.1rem, 8vw, 7.2rem); line-height: .93; letter-spacing: -.075em; margin-bottom: 1.25rem; }
+    h2 { max-width: 890px; font-size: clamp(2.3rem, 5vw, 5rem); line-height: .98; letter-spacing: -.065em; margin-bottom: 1rem; }
+    h3 { font-size: 1.1rem; line-height: 1.15; letter-spacing: -.02em; margin-bottom: .55rem; }
+    p { color: var(--muted); line-height: 1.56; max-width: 72ch; }
+    .lede { font-size: clamp(1.05rem, 1.8vw, 1.42rem); color: #d7e0ec; max-width: 65ch; line-height: 1.42; }
+    .micro { color: var(--faint); font-size: .77rem; line-height: 1.4; }
+    .source { margin-top: auto; padding-top: 1.2rem; font-size: .68rem; line-height: 1.4; color: var(--faint); border-top: 1px solid rgba(198,215,236,.10); }
+    .source strong { color: var(--muted); }
+
+    .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, .74fr); align-items: center; gap: clamp(2rem, 6vw, 7rem); }
+    .hero-copy { position: relative; }
+    .hero-copy::before { content: ""; position: absolute; width: 240px; height: 240px; border-radius: 50%; background: rgba(104,225,232,.09); filter: blur(35px); z-index: -1; left: -40px; top: 20px; }
+    .kicker { display: inline-flex; align-items: center; gap: .55rem; padding: .45rem .7rem; border-radius: 999px; border: 1px solid rgba(104,225,232,.28); background: rgba(104,225,232,.06); color: #bfeef2; font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 800; margin-bottom: 1.35rem; }
+    .hero-sub { color: var(--muted); font-size: 1.05rem; max-width: 53ch; }
+    .hero-visual { min-height: 360px; position: relative; border: 1px solid var(--line); border-radius: 30px; background: linear-gradient(145deg, rgba(18,23,33,.88), rgba(9,12,17,.66)); box-shadow: var(--shadow); overflow: hidden; }
+    .hero-visual::before { content: ""; position: absolute; inset: 12% 15%; border: 1px dashed rgba(104,225,232,.32); border-radius: 50%; transform: rotate(-16deg); }
+    .hero-node { position: absolute; width: 128px; min-height: 76px; padding: .75rem; border: 1px solid var(--line); border-radius: 17px; background: rgba(20,26,36,.92); box-shadow: 0 16px 35px rgba(0,0,0,.25); font-size: .78rem; font-weight: 750; }
+    .hero-node span { display: block; color: var(--faint); font-size: .62rem; font-weight: 600; margin-top: .35rem; }
+    .hero-node.n1 { top: 13%; left: 8%; border-color: rgba(104,225,232,.45); }
+    .hero-node.n2 { top: 57%; left: 8%; border-color: rgba(138,167,255,.45); }
+    .hero-node.n3 { top: 35%; right: 8%; border-color: rgba(183,237,130,.48); }
+    .hero-arrow { position: absolute; color: var(--cyan); font-size: 1.6rem; }
+    .hero-arrow.a1 { left: 39%; top: 26%; transform: rotate(28deg); }
+    .hero-arrow.a2 { left: 39%; top: 64%; transform: rotate(-27deg); }
+    .hero-arrow.a3 { right: 38%; top: 43%; transform: rotate(3deg); color: var(--lime); }
+    .orbit-dot { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 18px var(--cyan); animation: drift 5s ease-in-out infinite; }
+    .orbit-dot.d1 { left: 30%; top: 18%; } .orbit-dot.d2 { left: 68%; top: 75%; animation-delay: 1.3s; background: var(--lime); box-shadow: 0 0 18px var(--lime); } .orbit-dot.d3 { left: 78%; top: 19%; animation-delay: 2.3s; background: var(--blue); box-shadow: 0 0 18px var(--blue); }
+    @keyframes drift { 50% { transform: translate(18px, -12px); opacity: .45; } }
+
+    .section-break { justify-content: center; }
+    .section-break .slide-inner { min-height: 70%; justify-content: center; }
+    .section-break h2 { font-size: clamp(3.5rem, 10vw, 9rem); max-width: 850px; }
+    .section-rule { width: min(440px, 58vw); height: 1px; background: linear-gradient(90deg, var(--cyan), transparent); margin: 1.4rem 0; }
+    .section-index { color: var(--faint); font: .78rem var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .card { border: 1px solid var(--line); background: linear-gradient(145deg, rgba(21,27,38,.88), rgba(13,17,24,.76)); border-radius: var(--radius); padding: 1.2rem; box-shadow: 0 14px 44px rgba(0,0,0,.12); }
+    .card p { font-size: .91rem; margin-bottom: 0; }
+    .card .label { color: var(--cyan); font: 700 .68rem var(--mono); letter-spacing: .12em; text-transform: uppercase; margin-bottom: .8rem; }
+    .stat { font-size: clamp(1.9rem, 4vw, 3.4rem); line-height: 1; font-weight: 800; letter-spacing: -.07em; color: var(--ink); margin: .4rem 0 .45rem; }
+    .stat small { font-size: .45em; letter-spacing: -.02em; color: var(--muted); }
+    .accent-cyan { color: var(--cyan); } .accent-blue { color: var(--blue); } .accent-lime { color: var(--lime); } .accent-amber { color: var(--amber); } .accent-rose { color: var(--rose); }
+    .tag { display: inline-block; padding: .3rem .5rem; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); font-size: .68rem; margin: .2rem .2rem 0 0; }
+    .callout { border-left: 3px solid var(--cyan); padding: .85rem 1rem; background: rgba(104,225,232,.06); color: #d7e0ec; border-radius: 0 14px 14px 0; }
+    .callout p { margin: 0; color: #d7e0ec; }
+    .note { color: var(--faint); font-size: .76rem; }
+
+    .tabs { display: flex; gap: .45rem; flex-wrap: wrap; margin: 1.2rem 0; }
+    .tab { border: 1px solid var(--line); color: var(--muted); background: rgba(255,255,255,.03); border-radius: 999px; padding: .55rem .8rem; font-size: .76rem; transition: .2s ease; }
+    .tab.active, .tab:hover { color: var(--ink); border-color: rgba(104,225,232,.65); background: rgba(104,225,232,.09); }
+    .toggle-content { display: none; }
+    .toggle-content.active { display: block; animation: fadeIn .3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .replay-layout { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: 1rem; }
+    .tree-panel { min-height: 350px; border: 1px solid var(--line); border-radius: var(--radius); background: rgba(6,10,15,.44); padding: 1rem; position: relative; overflow: hidden; }
+    .tree-panel svg { width: 100%; height: 330px; display: block; }
+    .tree-panel .edge { stroke: rgba(198,215,236,.25); stroke-width: 2; }
+    .tree-panel .edge.highlight { stroke: var(--cyan); stroke-width: 3; stroke-dasharray: 8 7; animation: dash 1.4s linear infinite; }
+    @keyframes dash { to { stroke-dashoffset: -30; } }
+    .tree-panel .node { fill: #17202c; stroke: rgba(198,215,236,.36); stroke-width: 2; }
+    .tree-panel .node.good { fill: rgba(183,237,130,.17); stroke: var(--lime); }
+    .tree-panel .node.reveal { fill: rgba(104,225,232,.18); stroke: var(--cyan); }
+    .tree-panel text { fill: #c9d5e5; font-family: var(--sans); font-size: 12px; font-weight: 700; }
+    .tree-caption { position: absolute; left: 1rem; right: 1rem; bottom: .85rem; color: var(--faint); font-size: .72rem; }
+
+    .loop { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; position: relative; margin-top: 1.5rem; }
+    .loop::before { content: ""; position: absolute; left: 12%; right: 12%; top: 39px; border-top: 1px dashed rgba(104,225,232,.44); z-index: -1; }
+    .loop-card { position: relative; border: 1px solid var(--line); border-radius: 18px; padding: 1rem; background: rgba(17,22,31,.93); min-height: 165px; cursor: pointer; transition: .2s ease; }
+    .loop-card:hover, .loop-card.active { border-color: var(--cyan); transform: translateY(-3px); box-shadow: 0 12px 36px rgba(104,225,232,.08); }
+    .loop-num { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--cyan); color: #081013; font: 800 .76rem var(--mono); margin-bottom: .9rem; }
+    .loop-card p { font-size: .82rem; }
+    .loop-detail { margin-top: 1rem; border: 1px solid rgba(104,225,232,.22); border-radius: 16px; padding: .9rem 1rem; background: rgba(104,225,232,.05); min-height: 56px; color: #d7e0ec; }
+
+    .formula { display: grid; grid-template-columns: minmax(0, 1fr) minmax(270px, .72fr); gap: 1rem; align-items: center; }
+    .equation { padding: 1.4rem 1.5rem; border: 1px solid rgba(138,167,255,.35); border-radius: 20px; background: linear-gradient(135deg, rgba(138,167,255,.10), rgba(104,225,232,.04)); font: 700 clamp(1.2rem, 2.7vw, 2.1rem) var(--mono); letter-spacing: -.06em; line-height: 1.4; }
+    .equation .q { color: var(--lime); } .equation .c { color: var(--rose); } .equation .p { color: var(--amber); }
+    .slider-box { border: 1px solid var(--line); border-radius: 20px; padding: 1.1rem; background: rgba(18,23,33,.76); }
+    .slider-row { margin-bottom: 1.1rem; }
+    .slider-row:last-child { margin-bottom: 0; }
+    .slider-row label { display: flex; justify-content: space-between; color: var(--muted); font-size: .77rem; margin-bottom: .5rem; }
+    input[type=range] { width: 100%; accent-color: var(--cyan); }
+    .toy-score { margin-top: 1rem; display: flex; justify-content: space-between; gap: .7rem; align-items: baseline; border-top: 1px solid var(--line); padding-top: .8rem; }
+    .toy-score strong { font: 800 1.55rem var(--mono); color: var(--cyan); }
+
+    .bars { display: grid; gap: .8rem; }
+    .bar-row { display: grid; grid-template-columns: 150px 1fr 70px; gap: .75rem; align-items: center; font-size: .75rem; }
+    .bar-label { color: var(--muted); }
+    .bar-track { height: 12px; background: rgba(255,255,255,.08); border-radius: 999px; overflow: hidden; }
+    .bar { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--blue), var(--cyan)); }
+    .bar.dashed { background: repeating-linear-gradient(90deg, rgba(169,180,196,.9) 0 8px, transparent 8px 14px); }
+    .bar-value { color: var(--ink); text-align: right; font: 700 .75rem var(--mono); }
+    .mini-legend { display: flex; gap: 1rem; flex-wrap: wrap; color: var(--muted); font-size: .73rem; margin-top: .9rem; }
+    .legend-dot { width: 9px; height: 9px; display: inline-block; border-radius: 50%; margin-right: .3rem; background: var(--cyan); }
+    .legend-dot.grey { background: #778498; }
+
+    .domain-map { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1.4rem; }
+    .domain { min-height: 220px; padding: 1.2rem; border: 1px solid var(--line); border-radius: 20px; background: rgba(18,23,33,.75); position: relative; overflow: hidden; }
+    .domain::after { content: ""; position: absolute; width: 130px; height: 130px; right: -40px; bottom: -40px; border-radius: 50%; background: var(--domain-colour); opacity: .12; filter: blur(3px); }
+    .domain:nth-child(1) { --domain-colour: var(--cyan); } .domain:nth-child(2) { --domain-colour: var(--amber); } .domain:nth-child(3) { --domain-colour: var(--lime); }
+    .domain h3 { color: var(--domain-colour); }
+    .domain .count { font: 800 2.8rem var(--mono); letter-spacing: -.1em; }
+    .domain p { font-size: .84rem; }
+
+    .result-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .result-card { padding: 1.15rem; border: 1px solid var(--line); border-radius: 20px; background: rgba(18,23,33,.76); }
+    .result-card h3 { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
+    .result-card h3 span { color: var(--faint); font: .66rem var(--mono); }
+    .result-line { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-top: 1px solid rgba(198,215,236,.10); }
+    .result-line:first-of-type { border-top: 0; }
+    .result-line label { color: var(--muted); font-size: .78rem; }
+    .result-line strong { color: var(--ink); font: 800 1rem var(--mono); }
+    .result-line strong.good { color: var(--lime); }
+
+    .stepper { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 1rem; margin-top: 1.4rem; }
+    .step-list { display: grid; gap: .45rem; align-content: start; }
+    .step-btn { text-align: left; padding: .8rem .9rem; border: 1px solid var(--line); background: rgba(255,255,255,.03); color: var(--muted); border-radius: 14px; transition: .2s ease; }
+    .step-btn:hover, .step-btn.active { color: var(--ink); border-color: rgba(104,225,232,.6); background: rgba(104,225,232,.08); }
+    .step-btn b { color: var(--cyan); font: .72rem var(--mono); margin-right: .45rem; }
+    .step-view { min-height: 310px; border: 1px solid var(--line); border-radius: 22px; background: rgba(18,23,33,.77); padding: 1.3rem; }
+    .step-view h3 { font-size: 1.5rem; }
+    .step-view ul { color: var(--muted); line-height: 1.7; padding-left: 1.2rem; }
+    .step-view li { margin-bottom: .35rem; }
+    code, pre { font-family: var(--mono); }
+    pre { margin: 1rem 0 0; white-space: pre-wrap; color: #c7f2f3; font-size: .73rem; line-height: 1.58; background: #0a0f15; border: 1px solid rgba(104,225,232,.14); padding: 1rem; border-radius: 14px; overflow: auto; }
+    .code-key { color: var(--blue); } .code-fn { color: var(--lime); } .code-comment { color: #6d7d91; }
+
+    .checklist { display: grid; grid-template-columns: repeat(2, 1fr); gap: .65rem; }
+    .check { display: flex; gap: .7rem; align-items: flex-start; border: 1px solid var(--line); border-radius: 15px; padding: .8rem; background: rgba(255,255,255,.025); color: var(--muted); font-size: .83rem; line-height: 1.4; }
+    .check input { margin-top: .15rem; accent-color: var(--cyan); }
+    .takeaway { display: flex; gap: 1rem; align-items: flex-start; padding: 1rem; border: 1px solid var(--line); border-radius: 18px; background: rgba(18,23,33,.7); }
+    .takeaway .num { color: var(--cyan); font: 800 1rem var(--mono); }
+    .takeaway p { margin: 0; font-size: .9rem; }
+
+    .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; justify-content: center; gap: .6rem; padding: 12px 20px 17px; background: linear-gradient(0deg, rgba(10,12,16,.97), rgba(10,12,16,.70), transparent); }
+    .nav-btn { border: 1px solid var(--line); color: var(--ink); background: rgba(18,23,33,.75); border-radius: 999px; padding: .65rem 1rem; min-width: 74px; transition: .2s ease; }
+    .nav-btn:hover { border-color: rgba(104,225,232,.65); background: rgba(104,225,232,.09); }
+    .dots { display: flex; align-items: center; gap: 5px; max-width: 38vw; overflow: hidden; padding: 0 .4rem; }
+    .dot { width: 6px; height: 6px; flex: 0 0 auto; background: #485466; border: 0; border-radius: 50%; padding: 0; transition: .2s ease; }
+    .dot.active { width: 21px; border-radius: 999px; background: var(--cyan); }
+
+    .overview-dialog { width: min(980px, calc(100vw - 32px)); max-width: 980px; max-height: min(82vh, 760px); border: 1px solid rgba(104,225,232,.34); border-radius: 24px; background: rgba(15,20,29,.98); color: var(--ink); padding: 1.25rem; box-shadow: 0 30px 100px rgba(0,0,0,.55); }
+    .overview-dialog::backdrop { background: rgba(3,6,10,.76); backdrop-filter: blur(7px); }
+    .overview-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+    .overview-head h3 { margin-bottom: .25rem; font-size: 1.35rem; }
+    .overview-head p { margin: 0; font-size: .82rem; }
+    .overview-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .65rem; padding: 1rem 0; overflow: auto; max-height: 58vh; }
+    .overview-item { min-height: 86px; text-align: left; border: 1px solid var(--line); border-radius: 15px; background: rgba(255,255,255,.035); color: var(--muted); padding: .78rem; transition: .2s ease; }
+    .overview-item:hover, .overview-item.active { color: var(--ink); border-color: rgba(104,225,232,.72); background: rgba(104,225,232,.09); transform: translateY(-2px); }
+    .overview-item.section { border-color: rgba(183,237,130,.3); background: rgba(183,237,130,.055); }
+    .overview-item.section:hover, .overview-item.section.active { border-color: rgba(183,237,130,.72); background: rgba(183,237,130,.10); }
+    .overview-num { display: block; color: var(--cyan); font: 700 .68rem var(--mono); margin-bottom: .55rem; }
+    .overview-item.section .overview-num { color: var(--lime); }
+    .overview-title { display: block; font-size: .78rem; font-weight: 750; line-height: 1.25; }
+    .overview-close { display: flex; justify-content: flex-end; }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 860px) {
+      body { overflow: auto; }
+      .topbar { padding: 15px 16px 10px; }
+      .brand { font-size: .65rem; }
+      .slide { position: relative; min-height: 100svh; height: auto; padding: 78px 19px 74px; display: none; overflow: visible; transform: none; }
+      .slide.active { display: block; opacity: 1; }
+      .slide-inner { min-height: calc(100svh - 152px); justify-content: flex-start; padding-top: 1.5rem; }
+      .hero-grid, .replay-layout, .formula, .stepper { grid-template-columns: 1fr; }
+      .hero-visual { min-height: 300px; }
+      .grid-3, .domain-map, .result-grid { grid-template-columns: 1fr; }
+      .grid-2, .checklist { grid-template-columns: 1fr; }
+      .loop { grid-template-columns: 1fr; }
+      .loop::before { display: none; }
+      .loop-card { min-height: auto; }
+      .step-list { grid-template-columns: repeat(3, 1fr); }
+      .step-btn { font-size: .73rem; padding: .65rem; }
+      .step-btn b { display: block; margin-bottom: .2rem; }
+      .bar-row { grid-template-columns: 100px 1fr 62px; gap: .5rem; }
+      .dots { max-width: 48vw; }
+      .source { margin-top: 2rem; }
+      .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 62vh; }
+    }
+    @media (max-width: 520px) {
+      h1 { font-size: 3.2rem; }
+      h2 { font-size: 2.7rem; }
+      .hero-visual { min-height: 260px; }
+      .hero-node { width: 102px; font-size: .69rem; }
+      .hero-node span { font-size: .56rem; }
+      .step-list { grid-template-columns: repeat(2, 1fr); }
+      .bottom-nav { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+      .top-control { width: 34px; height: 34px; padding: 0; font-size: 0; }
+      .top-control::before { content: attr(data-icon); font-size: 1rem; line-height: 1; }
+      .overview-dialog { padding: .9rem; }
+      .overview-grid { gap: .45rem; }
+      .overview-item { min-height: 74px; padding: .65rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behaviour: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+    <div class="grain"></div>
+    <div class="progress"><span id="progressBar"></span></div>
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span> Dream-RSI</div>
+      <div class="top-actions"><button class="pill-btn top-control" id="overviewBtn" data-icon="▦" aria-label="Open slide overview">Overview</button><button class="pill-btn top-control" id="fullscreenBtn" data-icon="⛶" aria-label="Enter fullscreen presentation">Fullscreen</button><span class="counter" id="counter">01 / 22</span><button class="icon-btn" id="helpBtn" aria-label="Show navigation help">?</button></div>
+    </header>
+
+    <main aria-live="polite">
+      <section class="slide active" data-title="Cover">
+        <div class="slide-inner hero-grid">
+          <div class="hero-copy">
+            <div class="kicker">Research explainer · 2026</div>
+            <h1>Dream-RSI</h1>
+            <p class="lede">Recursive self-improvement through evolving worlds.</p>
+            <p class="hero-sub">A framework that lets an AI agent improve how it explores by replaying its own past discovery histories before spending more compute in the real search.</p>
+            <div style="margin-top:1.6rem"><span class="tag">Beginner → builder</span><span class="tag">20 slides</span><span class="tag">Self-contained HTML</span></div>
+          </div>
+          <div class="hero-visual" aria-label="A visual loop showing online exploration, replay simulation and policy improvement">
+            <div class="hero-node n1">Online explore<span>collect new discovery traces</span></div>
+            <div class="hero-node n2">Replay simulator<span>reuse observed outcomes</span></div>
+            <div class="hero-node n3">Dream policy<span>test and refine orchestration</span></div>
+            <div class="hero-arrow a1">↘</div><div class="hero-arrow a2">↗</div><div class="hero-arrow a3">→</div>
+            <span class="orbit-dot d1"></span><span class="orbit-dot d2"></span><span class="orbit-dot d3"></span>
+          </div>
+          <div class="source"><strong>Source:</strong> Zheng et al., “Dream-RSI: Recursive Self-Improvement through Evolving Worlds”, arXiv:2609.14858v1, abstract and Figure 1, pp. 1–2. <a href="https://arxiv.org/abs/2609.14858" target="_blank" rel="noreferrer">Paper link</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="TL;DR">
+        <div class="slide-inner">
+          <div class="slide-number">01 · Plain-English TL;DR</div>
+          <div class="eyebrow">The one-minute version</div>
+          <h2>Let the agent practise its search strategy before it searches again.</h2>
+          <p class="lede">Dream-RSI turns old discovery runs into replayable worlds. A controller can try thousands of alternative ways to branch, refine, parallelise, and stop, using outcomes that have already been recorded.</p>
+          <div class="grid-3" style="margin-top:1.7rem">
+            <article class="card"><div class="label">The problem</div><h3>Exploration is expensive</h3><p>In long-horizon discovery, a poor search strategy can waste many agent calls before its weaknesses become visible.</p></article>
+            <article class="card"><div class="label">The idea</div><h3>History becomes a simulator</h3><p>Recorded branches and their outcomes can be replayed without rerunning the coding agent or evaluator.</p></article>
+            <article class="card"><div class="label">The payoff</div><h3>Improve orchestration cheaply</h3><p>Use low-cost offline replay to choose a better exploration policy, then redeploy it online.</p></article>
+          </div>
+          <div class="callout" style="margin-top:1.1rem"><p><strong>Plain-English analogy:</strong> it’s like learning a better route through a city by replaying a GPS log, rather than driving every possible route again.</p></div>
+          <div class="source"><strong>Source:</strong> Paper pp. 1–4. The analogy above is an explanatory interpretation of the paper’s replay-simulator framing.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Why it matters">
+        <div class="slide-inner">
+          <div class="slide-number">02 · Why it matters</div>
+          <div class="eyebrow">A meta-level bottleneck</div>
+          <h2>The agent may be capable. Its search controller may still be wasteful.</h2>
+          <p class="lede">Dream-RSI targets the layer that decides where discovery effort goes. It doesn’t change the underlying coding agent, evaluator, or execution interface.</p>
+          <div class="grid-3" style="margin-top:1.55rem">
+            <article class="card"><div class="label">Long horizon</div><div class="stat accent-cyan">late</div><p>Feedback about a strategy often arrives only after many proposal–evaluation cycles.</p></article>
+            <article class="card"><div class="label">Huge policy space</div><div class="stat accent-blue">wide</div><p>There are many choices: open new branches, deepen existing ones, batch workers, or stop.</p></article>
+            <article class="card"><div class="label">Delayed signal</div><div class="stat accent-amber">costly</div><p>Testing one new meta-policy online can require another expensive rollout.</p></article>
+          </div>
+          <div class="grid-2" style="margin-top:1rem">
+            <div class="card"><div class="label">Potential adaptations</div><p><strong>Koinaku:</strong> decide which memory branches to consolidate or revisit.<br><strong>FlavourMind:</strong> prioritise which hypotheses deserve another modelling cycle.<br><strong>AI R&amp;D:</strong> choose which experiment families to parallelise.</p><p class="note" style="margin-top:.7rem">These are plausible adaptations, not tasks evaluated in the paper.</p></div>
+            <div class="card"><div class="label">Where it helps most</div><p>Problems with an executable evaluator, repeated search cycles, branching work, and enough historical traces to replay.</p></div>
+          </div>
+          <div class="source"><strong>Source:</strong> Paper pp. 1–4. Use-case adaptations are recommendations derived from the paper’s mechanism, not reported results.</div>
+        </div>
+      </section>
+
+      <section class="slide section-break" data-title="Mechanism">
+        <div class="slide-inner">
+          <div class="section-index">Section I</div><div class="section-rule"></div>
+          <h2>The mechanism</h2>
+          <p class="lede">From static history to an evolving world the controller can explore.</p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="History becomes a world">
+        <div class="slide-inner">
+          <div class="slide-number">03 · The core insight</div>
+          <div class="eyebrow">History is more than context</div>
+          <h2>A completed discovery tree can act like a replay simulator.</h2>
+          <div class="tabs" role="tablist" aria-label="Compare uses of history">
+            <button class="tab active" data-tab="context" role="tab">History as context</button>
+            <button class="tab" data-tab="world" role="tab">History as a world</button>
+          </div>
+          <div class="toggle-content active" data-panel="context"><div class="grid-2"><div class="card"><div class="label">Common pattern</div><h3>Summarise the past</h3><p>Give the next agent a set of previous attempts, lessons, or directions to read before making its next move.</p></div><div class="card"><div class="label">Risk</div><h3>Over-constrain exploration</h3><p>The history becomes a strong semantic nudge. In the paper’s ConvDiv analysis, adding explicit directional guidance underperformed unguided exploration.</p></div></div></div>
+          <div class="toggle-content" data-panel="world"><div class="replay-layout"><div class="tree-panel"><svg viewBox="0 0 600 330" role="img" aria-label="A discovery tree with branches that can be replayed"><line class="edge" x1="82" y1="165" x2="216" y2="88"/><line class="edge" x1="82" y1="165" x2="216" y2="242"/><line class="edge highlight" x1="216" y1="88" x2="365" y2="54"/><line class="edge highlight" x1="216" y1="88" x2="365" y2="125"/><line class="edge" x1="216" y1="242" x2="365" y2="207"/><line class="edge" x1="216" y1="242" x2="365" y2="286"/><circle class="node reveal" cx="82" cy="165" r="30"/><circle class="node good" cx="216" cy="88" r="25"/><circle class="node" cx="216" cy="242" r="25"/><circle class="node reveal" cx="365" cy="54" r="22"/><circle class="node reveal" cx="365" cy="125" r="22"/><circle class="node" cx="365" cy="207" r="22"/><circle class="node" cx="365" cy="286" r="22"/><text x="72" y="169">root</text><text x="205" y="92">A</text><text x="205" y="246">B</text><text x="360" y="58">A1</text><text x="360" y="129">A2</text><text x="360" y="211">B1</text><text x="360" y="290">B2</text></svg><div class="tree-caption">Highlighted nodes are revealed by one replay trajectory. No new agent call is needed.</div></div><div class="card"><div class="label">The shift</div><h3>Replay decisions, not just text</h3><p>An alternative policy can choose a different subset of branches, a different order, different parallel groupings, and an earlier or later stopping point.</p><p class="note" style="margin-top:.75rem">The replay is grounded in realised outcomes, so it can compare controllers against the same frozen history.</p></div></div></div>
+          <div class="source"><strong>Source:</strong> Paper pp. 2–5 and Figure 2. The visual tree is a simplified representation of the paper’s discovery-tree model.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Three-stage loop">
+        <div class="slide-inner">
+          <div class="slide-number">04 · The loop</div>
+          <div class="eyebrow">Online → offline → online</div>
+          <h2>Three stages close the self-improvement loop.</h2>
+          <div class="loop" id="loopCards">
+            <article class="loop-card active" data-loop="0"><div class="loop-num">1</div><h3>Online explore</h3><p>The current policy guides a fixed discovery agent. New attempts and evaluator outcomes are recorded into a tree.</p></article>
+            <article class="loop-card" data-loop="1"><div class="loop-num">2</div><h3>Construct replay simulator</h3><p>Historical trees become frozen worlds. Replay reveals recorded children without generating new candidates.</p></article>
+            <article class="loop-card" data-loop="2"><div class="loop-num">3</div><h3>Dream policy improvement</h3><p>Candidate policy versions are evaluated on the replay worlds. The best version is redeployed online.</p></article>
+          </div>
+          <div class="loop-detail" id="loopDetail">Stage 1 detail: this is the only phase that invokes the underlying discovery agent and evaluator to create new evidence.</div>
+          <div class="callout" style="margin-top:1.1rem"><p><strong>Important boundary:</strong> the paper changes the exploration-policy code. The discovery model, evaluator, and execution interface remain fixed.</p></div>
+          <div class="source"><strong>Source:</strong> Paper pp. 1–2 and 4–6, Figure 1. “Dream” means offline replay-based evaluation, not an ungrounded free-form simulation.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Decision interface">
+        <div class="slide-inner">
+          <div class="slide-number">05 · Decision interface</div>
+          <div class="eyebrow">What the policy controls</div>
+          <h2>At each round, choose a legal batch of frontier nodes.</h2>
+          <div class="replay-layout" style="margin-top:1.4rem"><div class="tree-panel"><svg viewBox="0 0 600 330" role="img" aria-label="Discovery tree showing roots, leaves and a selected parallel batch"><line class="edge" x1="82" y1="165" x2="215" y2="85"/><line class="edge" x1="82" y1="165" x2="215" y2="245"/><line class="edge" x1="215" y1="85" x2="365" y2="53"/><line class="edge" x1="215" y1="85" x2="365" y2="120"/><line class="edge" x1="215" y1="245" x2="365" y2="210"/><line class="edge" x1="215" y1="245" x2="365" y2="285"/><circle class="node" cx="82" cy="165" r="30"/><circle class="node good" cx="215" cy="85" r="25"/><circle class="node reveal" cx="215" cy="245" r="25"/><circle class="node good" cx="365" cy="53" r="22"/><circle class="node reveal" cx="365" cy="120" r="22"/><circle class="node good" cx="365" cy="210" r="22"/><circle class="node" cx="365" cy="285" r="22"/><text x="72" y="169">root</text><text x="204" y="89">A</text><text x="204" y="249">B</text><text x="360" y="57">A1</text><text x="360" y="124">A2</text><text x="360" y="214">B1</text><text x="360" y="289">B2</text></svg><div class="tree-caption">One possible batch: A1 + B1. They are independent frontiers and can use two workers.</div></div><div><div class="grid-2"><div class="card"><div class="label">Branching</div><h3>Open a new root</h3><p>Explore a direction that hasn’t been tried in the current tree.</p></div><div class="card"><div class="label">Refinement</div><h3>Continue a leaf</h3><p>Push further along an existing branch using its saved workspace.</p></div><div class="card"><div class="label">Parallelism</div><h3>Batch independent work</h3><p>Schedule up to <code>W</code> legal nodes in one decision round.</p></div><div class="card"><div class="label">Stopping</div><h3>End with an empty batch</h3><p>Stop when the evidence says more probing is unlikely to pay.</p></div></div></div></div>
+          <div class="source"><strong>Source:</strong> Paper pp. 4–6 and Appendix B. The selected batch is illustrative; the paper defines legal actions as subsets of roots and leaves up to worker capacity.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Replay objective">
+        <div class="slide-inner">
+          <div class="slide-number">06 · Replay objective</div>
+          <div class="eyebrow">Quality, cost, parallelism</div>
+          <h2>The score rewards useful outcomes without pretending compute is free.</h2>
+          <div class="formula" style="margin-top:1.5rem"><div><div class="equation"><span class="q">quality</span> − <span class="c">β₁ × attempts</span> + <span class="p">β₂ × parallelism</span></div><p style="margin-top:1rem">In the paper, quality is the best score reached in the replay trajectory. Cost penalises the number of revealed attempts. Parallelism rewards getting more useful work done per decision round.</p><p class="note">The equation above is a readable rendering of Equation (1), not a replacement for its exact notation.</p></div><div class="slider-box"><div class="slider-row"><label><span>Cost penalty β₁</span><strong id="beta1Value">0.20</strong></label><input id="beta1" type="range" min="0" max="1" step=".01" value=".20" /></div><div class="slider-row"><label><span>Parallelism bonus β₂</span><strong id="beta2Value">0.35</strong></label><input id="beta2" type="range" min="0" max="1" step=".01" value=".35" /></div><div class="toy-score"><span class="micro">Illustrative toy score</span><strong id="toyScore">8.68</strong></div></div></div>
+          <div class="callout" style="margin-top:1.15rem"><p><strong>Why this matters:</strong> a controller that reaches a good result only by probing everything may be less useful than one that reaches a similar result with fewer, better-batched attempts.</p></div>
+          <div class="source"><strong>Source:</strong> Paper pp. 5–6, Equation (1). The interactive score uses illustrative fixed values for quality, attempts, and rounds to make the trade-off tangible.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Why replay is cheaper">
+        <div class="slide-inner">
+          <div class="slide-number">07 · Why replay is cheaper</div>
+          <div class="eyebrow">Off-policy evaluation</div>
+          <h2>One costly online run can support many cheap policy comparisons.</h2>
+          <div class="grid-2" style="margin-top:1.5rem"><div class="card"><div class="label">Online</div><div class="bars"><div class="bar-row"><span class="bar-label">Agent call</span><span class="bar-track"><span class="bar" style="width:100%"></span></span><span class="bar-value">new</span></div><div class="bar-row"><span class="bar-label">Evaluator</span><span class="bar-track"><span class="bar" style="width:100%"></span></span><span class="bar-value">new</span></div><div class="bar-row"><span class="bar-label">Policy test</span><span class="bar-track"><span class="bar" style="width:100%"></span></span><span class="bar-value">slow</span></div></div><p style="margin-top:1rem">A selected batch creates new candidates and new measured outcomes.</p></div><div class="card"><div class="label">Replay</div><div class="bars"><div class="bar-row"><span class="bar-label">Agent call</span><span class="bar-track"><span class="bar dashed" style="width:12%"></span></span><span class="bar-value">none</span></div><div class="bar-row"><span class="bar-label">Evaluator</span><span class="bar-track"><span class="bar dashed" style="width:12%"></span></span><span class="bar-value">none</span></div><div class="bar-row"><span class="bar-label">Policy test</span><span class="bar-track"><span class="bar" style="width:27%"></span></span><span class="bar-value">fast</span></div></div><p style="margin-top:1rem">The policy follows recorded paths and reads stored outcomes.</p></div></div>
+          <div class="mini-legend"><span><span class="legend-dot"></span>relative effort shown conceptually</span><span><span class="legend-dot grey"></span>no new discovery execution</span></div>
+          <div class="callout" style="margin-top:1.2rem"><p><strong>What replay cannot do:</strong> it can’t reveal a branch that was never explored in the historical tree. Online exploration still supplies the coverage that future dreaming depends on.</p></div>
+          <div class="source"><strong>Source:</strong> Paper pp. 2–5. The cost comparison is a conceptual rendering of the paper’s claim that replay avoids rerunning the discovery agent and evaluator.</div>
+        </div>
+      </section>
+
+      <section class="slide section-break" data-title="Evidence">
+        <div class="slide-inner">
+          <div class="section-index">Section II</div><div class="section-rule"></div>
+          <h2>The evidence</h2>
+          <p class="lede">What the paper tested, where it helped, and what remains unproven.</p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Experimental map">
+        <div class="slide-inner">
+          <div class="slide-number">08 · Experimental map</div>
+          <div class="eyebrow">Eight tasks · three domains</div>
+          <h2>The same meta-idea travels across different discovery settings.</h2>
+          <div class="domain-map"><article class="domain"><div class="count">01</div><h3>Algorithm engineering</h3><p>Lasso regularisation-path discovery, evaluated on 17 synthetic instances plus six held-out datasets.</p><span class="tag">correctness</span><span class="tag">runtime</span></article><article class="domain"><div class="count">03</div><h3>Mathematical optimisation</h3><p>Sum–Difference, Autocorrelation Inequalities, and Circle Packing.</p><span class="tag">quality</span><span class="tag">constraints</span></article><article class="domain"><div class="count">04</div><h3>GPU kernel engineering</h3><p>VGG16, LayerNorm, ConvDiv, and ConvMax from KernelBench.</p><span class="tag">correctness</span><span class="tag">hardware</span></article></div>
+          <div class="grid-2" style="margin-top:1rem"><div class="card"><div class="label">Controlled baseline</div><p>Recursive Fixed Exploration uses the same discovery agent, evaluator, initialisation, and resource constraints, but keeps the exploration policy static.</p></div><div class="card"><div class="label">Compute measure</div><p>The paper quantifies discovery cost using the cumulative number of discovery-agent calls.</p></div></div>
+          <div class="source"><strong>Source:</strong> Paper pp. 6–10. “Eight tasks” is the paper’s count across one Lasso task, three mathematical tasks, and four GPU kernel tasks.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Lasso results">
+        <div class="slide-inner">
+          <div class="slide-number">09 · Result spotlight</div>
+          <div class="eyebrow">Algorithm engineering</div>
+          <h2>On Lasso path discovery, Dream-RSI used less discovery compute and reached lower average runtime.</h2>
+          <div class="result-grid" style="margin-top:1.45rem"><article class="result-card"><h3>Gemini-3.1 Pro <span>six held-out datasets</span></h3><div class="result-line"><label>Dream-RSI calls</label><strong class="good">317</strong></div><div class="result-line"><label>Fixed exploration calls</label><strong>550</strong></div><div class="result-line"><label>Average runtime</label><strong class="good">2,931.0 ms</strong></div><div class="result-line"><label>Fixed average runtime</label><strong>3,587.1 ms</strong></div></article><article class="result-card"><h3>Gemini-3.7 Flash <span>six held-out datasets</span></h3><div class="result-line"><label>Dream-RSI calls</label><strong class="good">1,879</strong></div><div class="result-line"><label>Fixed exploration calls</label><strong>3,200</strong></div><div class="result-line"><label>Average runtime</label><strong class="good">2,350.6 ms</strong></div><div class="result-line"><label>Fixed average runtime</label><strong>2,516.7 ms</strong></div></article></div>
+          <div class="grid-2" style="margin-top:1rem"><div class="card"><div class="label">Compared with SimpleTES</div><p>SimpleTES is reported with a 51,200-generation budget. Dream-RSI reached lower average runtime with roughly two orders of magnitude fewer discovery-agent calls in this comparison.</p></div><div class="card"><div class="label">Read carefully</div><p>These are benchmark results under the paper’s setup. They don’t establish that Dream-RSI will improve every agent workflow or every evaluator.</p></div></div>
+          <div class="source"><strong>Source:</strong> Paper pp. 7–8 and Figure 3. Metrics are transcribed from Table 1 in the paper; lower runtime is better.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Maths and GPU results">
+        <div class="slide-inner">
+          <div class="slide-number">10 · Result spotlight</div>
+          <div class="eyebrow">Mathematical and GPU discovery</div>
+          <h2>Across other domains, the gains show up as either better quality or fewer generations.</h2>
+          <div class="grid-2" style="margin-top:1.45rem"><article class="card"><div class="label">Mathematical optimisation</div><div class="result-line"><label>Sum–Difference</label><strong class="good">1.145427</strong></div><div class="result-line"><label>Circle Packing</label><strong class="good">2.635983</strong></div><div class="result-line"><label>Autocorrelation</label><strong>1.456375</strong></div><p class="note" style="margin-top:.7rem">The paper reports a best or competitive result depending on task. SimpleTES remains stronger on Autocorrelation, but uses 51,200 generations.</p></article><article class="card"><div class="label">GPU kernel engineering</div><div class="result-line"><label>VGG16</label><strong class="good">2.43× fewer generations</strong></div><div class="result-line"><label>LayerNorm</label><strong class="good">1.79× fewer generations</strong></div><div class="result-line"><label>ConvDiv</label><strong class="good">2.09× higher score</strong></div><div class="result-line"><label>ConvMax</label><strong class="good">1.44× higher score</strong></div><p class="note" style="margin-top:.7rem">For VGG16 and LayerNorm, final performance was comparable. For ConvDiv and ConvMax, performance was higher at similar budgets.</p></article></div>
+          <div class="source"><strong>Source:</strong> Paper pp. 9–10, Table 1 and Figure 4. “Higher” and “lower” depend on each task’s objective, as specified in the paper.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="What the analysis suggests">
+        <div class="slide-inner">
+          <div class="slide-number">11 · Further analysis</div>
+          <div class="eyebrow">The interesting part</div>
+          <h2>Interactive history beat high-level advice.</h2>
+          <div class="grid-2" style="margin-top:1.4rem"><div class="card"><div class="label">History as guidance</div><h3>“Try this direction next.”</h3><p>Explicit semantic guidance was injected into prompts for both fixed exploration and Dream-RSI. In the ConvDiv analysis, both guided variants underperformed their unguided counterparts under equivalent budgets.</p><div class="bars" style="margin-top:1rem"><div class="bar-row"><span class="bar-label">Replay</span><span class="bar-track"><span class="bar" style="width:88%"></span></span><span class="bar-value">higher</span></div><div class="bar-row"><span class="bar-label">Guidance</span><span class="bar-track"><span class="bar dashed" style="width:66%"></span></span><span class="bar-value">lower</span></div></div></div><div class="card"><div class="label">Policy behaviour</div><h3>Spend less, then spend more</h3><p>On ConvDiv, the learned policy initially reduced evaluated attempts as performance improved, then increased exploration when progress plateaued and performance rose again.</p><div class="grid-2" style="margin-top:1rem"><div><div class="stat accent-lime">110 → 50</div><p class="note">attempts in an early shift described by the paper</p></div><div><div class="stat accent-cyan">plateau</div><p class="note">trigger for renewed exploration effort</p></div></div></div></div>
+          <div class="callout" style="margin-top:1rem"><p><strong>Interpretation:</strong> replay preserves diversity by letting a policy interact with the branching record, rather than collapsing the record into one prescriptive narrative.</p></div>
+          <div class="source"><strong>Source:</strong> Paper pp. 11–12, Figure 5 and Figure 6. The final interpretation is labelled as an inference from those analyses.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Limits and guardrails">
+        <div class="slide-inner">
+          <div class="slide-number">12 · Limits and guardrails</div>
+          <div class="eyebrow">What Dream-RSI doesn’t prove</div>
+          <h2>A replay world is useful, but it isn’t the whole environment.</h2>
+          <div class="grid-2" style="margin-top:1.45rem"><article class="card"><div class="label accent-rose">Method boundary</div><h3>Replay is bounded by coverage</h3><p>Unexplored branches cannot be discovered offline. You still need online exploration to expand the simulator pool.</p><span class="tag">inference from replay design</span></article><article class="card"><div class="label accent-amber">Evaluation boundary</div><h3>Replay improvement is not live improvement</h3><p>The paper’s no-worse property applies to average replay score on the fixed historical set, not automatically to the next online rollout.</p><span class="tag">paper pp. 5–6</span></article><article class="card"><div class="label accent-blue">Quality boundary</div><h3>The evaluator remains the judge</h3><p>If the evaluator is noisy, narrow, or misaligned with the real objective, the controller can become better at optimising the wrong signal.</p><span class="tag">general systems risk</span></article><article class="card"><div class="label accent-cyan">Generalisability boundary</div><h3>The evidence is benchmarked</h3><p>The reported results cover eight discovery tasks. They don’t establish performance in production workflows, safety-critical domains, or changing environments.</p><span class="tag">evidence scope</span></article></div>
+          <div class="source"><strong>Source:</strong> Paper pp. 4–10. The distinction between replay guarantees and live outcomes follows the paper’s fixed-history selection procedure. The evaluator and deployment risks are general implementation cautions.</div>
+        </div>
+      </section>
+
+      <section class="slide section-break" data-title="Build it">
+        <div class="slide-inner">
+          <div class="section-index">Section III</div><div class="section-rule"></div>
+          <h2>Build it</h2>
+          <p class="lede">A practical path from an ordinary discovery loop to replay-based policy improvement.</p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Implementation guide">
+        <div class="slide-inner">
+          <div class="slide-number">13 · Implementation guide</div>
+          <div class="eyebrow">A staged build plan</div>
+          <h2>Start with the evaluator and the trace format. Add dreaming after the loop is observable.</h2>
+          <div class="stepper"><div class="step-list" role="tablist" aria-label="Implementation steps"><button class="step-btn active" data-step="0"><b>01</b>Define the task</button><button class="step-btn" data-step="1"><b>02</b>Record the tree</button><button class="step-btn" data-step="2"><b>03</b>Implement policy</button><button class="step-btn" data-step="3"><b>04</b>Replay safely</button><button class="step-btn" data-step="4"><b>05</b>Improve offline</button><button class="step-btn" data-step="5"><b>06</b>Redeploy and validate</button></div><div class="step-view" id="stepView"></div></div>
+          <div class="card" style="margin-top:1rem"><div class="label">Repository companion</div><h3>Use the official Dream-RSI repo as your source map</h3><p>Start with the paper, then use the repository for the project README, paper assets, citation metadata, release status, and links to the project page. The README currently says the full codebase and reproduction scripts are still being prepared, so treat it as a companion reference until those artefacts are released.</p><p style="margin:.8rem 0 0"><a href="https://github.com/zhengkid/Dream-RSI" target="_blank" rel="noreferrer">Open github.com/zhengkid/Dream-RSI ↗</a><br><a href="https://dream-rsi.com" target="_blank" rel="noreferrer">Open the project walkthrough ↗</a></p></div>
+          <div class="source"><strong>Source:</strong> Implementation sequence adapted from the paper’s online rollout, replay, objective, policy-improvement, and redeployment stages, pp. 4–6 and Appendix B. Repository status and links: <a href="https://github.com/zhengkid/Dream-RSI" target="_blank" rel="noreferrer">official Dream-RSI GitHub README</a>, accessed 16 September 2026. This is a practical recommendation, not a verbatim implementation prescription.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Minimal architecture">
+        <div class="slide-inner">
+          <div class="slide-number">14 · Minimal architecture</div>
+          <div class="eyebrow">Keep the first version small</div>
+          <h2>You need five pieces before you need a sophisticated controller.</h2>
+          <div class="grid-3" style="margin-top:1.4rem"><article class="card"><div class="label">1 · Discovery agent</div><p>Produces a candidate from a saved workspace and available context.</p></article><article class="card"><div class="label">2 · Evaluator</div><p>Returns a score plus diagnostics, validity, and failure information.</p></article><article class="card"><div class="label">3 · Trace store</div><p>Persists parent, child, workspace snapshot, candidate, score, errors, and cost.</p></article><article class="card"><div class="label">4 · Policy interface</div><p>Reads only revealed observations and returns a legal batch of frontier nodes.</p></article><article class="card"><div class="label">5 · Replay runner</div><p>Reveals stored children deterministically and records the replay trajectory.</p></article><article class="card"><div class="label">6 · Selector</div><p>Scores policy versions across historical worlds and retains the best evaluated version.</p></article></div>
+          <div class="callout" style="margin-top:1.2rem"><p><strong>Design rule:</strong> keep the discovery agent and evaluator stable while you iterate on the orchestration layer. That makes the effect of policy changes easier to measure.</p></div>
+          <div class="source"><strong>Source:</strong> Paper pp. 4–6. The six-part decomposition is a practical implementation mapping of the paper’s components.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Policy skeleton">
+        <div class="slide-inner">
+          <div class="slide-number">15 · Policy skeleton</div>
+          <div class="eyebrow">Prefix-only decisions</div>
+          <h2>Make every decision explainable from what the policy has actually seen.</h2>
+          <div class="grid-2" style="margin-top:1.35rem"><div class="card"><div class="label">Controller contract</div><pre><span class="code-key">def</span> <span class="code-fn">solve</span>(question, budget=None):
+  question.reset()
+  result = SimResult()
+  closed = set()
+
+  <span class="code-key">while</span> <span class="code-fn">not_done</span>(question, budget):
+    observed = question.observed()
+    update_closed(closed, observed)
+    batch = select_batch(observed, question, closed)
+    <span class="code-key">if not</span> batch:
+      <span class="code-key">break</span>
+    question.probe_batch(batch)
+
+  <span class="code-key">return</span> finalise(question, result)</pre></div><div class="card"><div class="label">Do not leak the future</div><ul style="color:var(--muted);line-height:1.7;padding-left:1.1rem"><li>Use revealed observations, legal actions, structural metadata, and measured history.</li><li>Don’t use unrevealed scores, hidden trace data, or hard-coded winning cell IDs.</li><li>Keep batches legal, distinct, and within worker capacity.</li><li>Classify failures before closing a branch. A repairable implementation error isn’t proof that the direction is bad.</li></ul></div></div>
+          <div class="source"><strong>Source:</strong> Paper Appendix B.2, pp. 19–22. Code is a compact illustrative skeleton inspired by the paper’s required loop and constraints, not a drop-in implementation.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Validation plan">
+        <div class="slide-inner">
+          <div class="slide-number">16 · Validation plan</div>
+          <div class="eyebrow">How to know it’s working</div>
+          <h2>Compare discovery quality and discovery cost, not just the final winner.</h2>
+          <div class="checklist" style="margin-top:1.4rem"><label class="check"><input type="checkbox" /> Establish a fixed-policy baseline with identical agent, evaluator, initialisation, and budgets.</label><label class="check"><input type="checkbox" /> Hold out downstream tasks or datasets to test whether improvements generalise.</label><label class="check"><input type="checkbox" /> Log every decision, batch, revealed node, score, error, and cost.</label><label class="check"><input type="checkbox" /> Measure the quality–work–parallelism frontier across a fixed parameter sweep.</label><label class="check"><input type="checkbox" /> Run shadow replay before allowing a revised policy to control live work.</label><label class="check"><input type="checkbox" /> Keep a rollback policy and cap online spend while the simulator is still sparse.</label></div>
+          <div class="grid-2" style="margin-top:1rem"><div class="card"><div class="label">Success criteria</div><p>At comparable quality, fewer discovery-agent calls. Or, at comparable cost, better downstream quality. Also check that batching is real and that failure recovery doesn’t hide wasted work.</p></div><div class="card"><div class="label">Red flags</div><p>Replay score rises while live score falls; the policy overfits one tree; branch diversity collapses; the evaluator’s signal changes; or the controller exploits bookkeeping artefacts.</p></div></div>
+          <div class="source"><strong>Source:</strong> Paper pp. 6–12 and Appendix B. Validation recommendations extend the paper’s controlled comparisons and prefix-only constraints.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Takeaways">
+        <div class="slide-inner">
+          <div class="slide-number">17 · Takeaways</div>
+          <div class="eyebrow">The durable idea</div>
+          <h2>Don’t throw away the search tree after the result is found.</h2>
+          <div style="display:grid;gap:.7rem;margin-top:1.25rem"><div class="takeaway"><div class="num">01</div><p><strong>History can be executable.</strong> A discovery trace becomes more valuable when a policy can traverse it and receive grounded feedback.</p></div><div class="takeaway"><div class="num">02</div><p><strong>Meta-exploration is a first-class optimisation target.</strong> Better branching, batching, and stopping can improve what the underlying agent discovers.</p></div><div class="takeaway"><div class="num">03</div><p><strong>Replay is a complement to online search.</strong> It lowers the cost of policy evaluation, but it can’t replace new exploration or protect you from a weak evaluator.</p></div><div class="takeaway"><div class="num">04</div><p><strong>Keep the loop measurable.</strong> Trace decisions, outcomes, cost, and failure types so every policy revision has an evidence trail.</p></div></div>
+          <div class="source"><strong>Source:</strong> Paper pp. 1–12. Takeaways synthesise the paper’s mechanism, experiments, analysis, and conclusion.</div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Sources and open questions">
+        <div class="slide-inner">
+          <div class="slide-number">18 · Sources and open questions</div>
+          <div class="eyebrow">Read, test, extend</div>
+          <h2>The paper is a strong mechanism paper. The next question is where it earns its keep in your workflow.</h2>
+          <div class="grid-2" style="margin-top:1.35rem"><div class="card"><div class="label">Open questions</div><p>How much history is enough? How should replay worlds be refreshed when the environment changes? How should policy improvement handle distribution shift? What safeguards are needed when evaluator errors are costly?</p></div><div class="card"><div class="label">Primary sources</div><p><a href="https://arxiv.org/abs/2609.14858" target="_blank" rel="noreferrer">Dream-RSI paper on arXiv</a><br><a href="https://github.com/zhengkid/Dream-RSI" target="_blank" rel="noreferrer">Dream-RSI GitHub repository</a><br><a href="https://dream-rsi.com" target="_blank" rel="noreferrer">Dream-RSI project site</a></p></div></div>
+          <div class="card" style="margin-top:1rem"><div class="label">Citation</div><p>Zheng, Tong, et al. “Dream-RSI: Recursive Self-Improvement through Evolving Worlds.” arXiv:2609.14858v1, 14 September 2026. Google, University of Maryland, Google DeepMind, and University of Virginia.</p></div>
+          <div class="source"><strong>Deck note:</strong> Claims are grounded in the supplied PDF. Where a slide makes an adaptation or implementation recommendation, it is labelled as an inference or recommendation.</div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Deck navigation"><button class="nav-btn" id="prevBtn">← Prev</button><div class="dots" id="dots"></div><button class="nav-btn" id="nextBtn">Next →</button></nav>
+  </div>
+
+  <dialog id="overviewDialog" class="overview-dialog" aria-labelledby="overviewTitle"><div class="overview-head"><div><h3 id="overviewTitle">Slide overview</h3><p>Jump to any page, including the section breaks.</p></div><button class="icon-btn" id="closeOverview" aria-label="Close slide overview">×</button></div><div class="overview-grid" id="overviewGrid"></div><div class="overview-close"><button class="pill-btn" id="closeOverviewBottom">Close</button></div></dialog>
+  <dialog id="helpDialog" style="border:1px solid rgba(104,225,232,.35);border-radius:20px;background:#141a24;color:#f4f7fb;max-width:420px;padding:1.3rem;box-shadow:0 24px 80px rgba(0,0,0,.5)"><h3>Navigate the deck</h3><p style="color:#a9b4c4;line-height:1.6">Use the arrow keys, spacebar, the Prev/Next buttons, or swipe left and right on touch devices. Use <strong>Overview</strong> to jump to any slide and <strong>Fullscreen</strong> or press <code>F</code> for presentation mode. Press <code>O</code> for the overview or <code>Esc</code> to close a dialog.</p><button class="pill-btn" id="closeHelp">Got it</button></dialog>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const dots = document.getElementById('dots');
+      const counter = document.getElementById('counter');
+      const progress = document.getElementById('progressBar');
+      let current = 0;
+
+      slides.forEach((slide, index) => {
+        const dot = document.createElement('button');
+        dot.className = 'dot' + (index === 0 ? ' active' : '');
+        dot.setAttribute('aria-label', `Go to slide ${index + 1}: ${slide.dataset.title}`);
+        dot.addEventListener('click', () => go(index));
+        dots.appendChild(dot);
+      });
+      const dotEls = [...dots.children];
+      const overviewDialog = document.getElementById('overviewDialog');
+      const overviewGrid = document.getElementById('overviewGrid');
+      const overviewItems = [];
+      slides.forEach((slide, index) => {
+        const item = document.createElement('button');
+        item.className = 'overview-item' + (slide.classList.contains('section-break') ? ' section' : '');
+        item.setAttribute('aria-label', `Go to slide ${index + 1}: ${slide.dataset.title}`);
+        const number = document.createElement('span');
+        number.className = 'overview-num';
+        number.textContent = String(index + 1).padStart(2, '0');
+        const title = document.createElement('span');
+        title.className = 'overview-title';
+        title.textContent = slide.dataset.title;
+        item.append(number, title);
+        item.addEventListener('click', () => { overviewDialog.close(); go(index); });
+        overviewGrid.appendChild(item);
+        overviewItems.push(item);
+      });
+
+      function go(index) {
+        const next = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((s, i) => {
+          s.classList.toggle('active', i === next);
+          s.classList.toggle('prev', i < next);
+        });
+        dotEls.forEach((d, i) => d.classList.toggle('active', i === next));
+        overviewItems.forEach((item, i) => item.classList.toggle('active', i === next));
+        current = next;
+        counter.textContent = `${String(current + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        window.location.hash = `slide-${current + 1}`;
+        if (window.innerWidth <= 860) slides[current].scrollIntoView({behavior: 'smooth', block: 'start'});
+      }
+      document.getElementById('prevBtn').addEventListener('click', () => go(current - 1));
+      document.getElementById('nextBtn').addEventListener('click', () => go(current + 1));
+
+      function fullscreenElement() {
+        return document.fullscreenElement || document.webkitFullscreenElement || null;
+      }
+      function updateFullscreenButton() {
+        const active = Boolean(fullscreenElement());
+        const button = document.getElementById('fullscreenBtn');
+        button.textContent = active ? 'Exit' : 'Fullscreen';
+        button.dataset.icon = active ? '×' : '⛶';
+        button.setAttribute('aria-label', active ? 'Exit fullscreen presentation' : 'Enter fullscreen presentation');
+      }
+      async function toggleFullscreen() {
+        try {
+          if (fullscreenElement()) {
+            const exit = document.exitFullscreen || document.webkitExitFullscreen;
+            if (exit) await exit.call(document);
+          } else {
+            const root = document.documentElement;
+            const enter = root.requestFullscreen || root.webkitRequestFullscreen;
+            if (!enter) throw new Error('Fullscreen is not supported by this browser.');
+            await enter.call(root);
+          }
+        } catch (error) {
+          window.alert('Fullscreen presentation is not available in this browser or document context.');
+        }
+      }
+      document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+      document.addEventListener('fullscreenchange', updateFullscreenButton);
+      document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+      updateFullscreenButton();
+
+      document.addEventListener('keydown', (event) => {
+        const key = event.key.toLowerCase();
+        if (key === 'o') { event.preventDefault(); overviewDialog.open ? overviewDialog.close() : overviewDialog.showModal(); return; }
+        if (key === 'f') { event.preventDefault(); toggleFullscreen(); return; }
+        if (overviewDialog.open || document.getElementById('helpDialog').open) return;
+        if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') { event.preventDefault(); go(current + 1); }
+        if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); go(current - 1); }
+        if (event.key === 'Home') go(0);
+        if (event.key === 'End') go(slides.length - 1);
+      });
+      let touchX = null;
+      document.addEventListener('touchstart', e => { touchX = e.changedTouches[0].screenX; }, {passive:true});
+      document.addEventListener('touchend', e => { if (touchX === null) return; const dx = e.changedTouches[0].screenX - touchX; if (Math.abs(dx) > 50) go(current + (dx < 0 ? 1 : -1)); touchX = null; }, {passive:true});
+
+      const hashMatch = window.location.hash.match(/slide-(\d+)/);
+      if (hashMatch) go(Number(hashMatch[1]) - 1);
+
+      document.getElementById('overviewBtn').addEventListener('click', () => overviewDialog.showModal());
+      document.getElementById('closeOverview').addEventListener('click', () => overviewDialog.close());
+      document.getElementById('closeOverviewBottom').addEventListener('click', () => overviewDialog.close());
+      overviewDialog.addEventListener('click', event => { if (event.target === overviewDialog) overviewDialog.close(); });
+      document.getElementById('helpBtn').addEventListener('click', () => document.getElementById('helpDialog').showModal());
+      document.getElementById('closeHelp').addEventListener('click', () => document.getElementById('helpDialog').close());
+
+      document.querySelectorAll('[data-tab]').forEach(button => {
+        button.addEventListener('click', () => {
+          const target = button.dataset.tab;
+          const slide = button.closest('.slide');
+          slide.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b === button));
+          slide.querySelectorAll('[data-panel]').forEach(panel => panel.classList.toggle('active', panel.dataset.panel === target));
+        });
+      });
+
+      const loopDetails = [
+        'Stage 1 detail: this is the only phase that invokes the underlying discovery agent and evaluator to create new evidence.',
+        'Stage 2 detail: each historical tree is frozen for replay; only the portion revealed by a candidate policy changes.',
+        'Stage 3 detail: the policy-development agent revises executable policy code between replay evaluations, then the best evaluated version is selected.'
+      ];
+      document.querySelectorAll('.loop-card').forEach(card => card.addEventListener('click', () => {
+        document.querySelectorAll('.loop-card').forEach(c => c.classList.toggle('active', c === card));
+        document.getElementById('loopDetail').textContent = loopDetails[Number(card.dataset.loop)];
+      }));
+
+      const stepData = [
+        ['Define the task', ['Choose a repeated discovery problem with a measurable evaluator.', 'Specify what “better” means: quality, cost, latency, correctness, or a weighted objective.', 'Freeze the first baseline so improvements are attributable.']],
+        ['Record the tree', ['Give every attempt a stable ID and a parent.', 'Persist the workspace snapshot, proposal, evaluator output, score, diagnostics, and cost.', 'Record enough metadata to reconstruct legal frontiers and branch trajectories.']],
+        ['Implement policy', ['Expose only prefix-safe observations and legal actions.', 'Let the policy select a batch up to worker capacity.', 'Make stop, branch, refine, recover, and batch decisions explainable from the prefix.']],
+        ['Replay safely', ['Reset policy state for each policy–world pair.', 'Reveal recorded children deterministically, respecting parent–child order.', 'Stop when the policy selects an empty batch, reaches the replay limit, or exhausts the world.']],
+        ['Improve offline', ['Evaluate the current policy, then propose a bounded number of revisions.', 'Score quality, work, and parallelism across the historical worlds.', 'Select from evaluated versions, including the current policy, so replay score cannot regress on the fixed history.']],
+        ['Redeploy and validate', ['Deploy the selected policy under an online spend cap and rollback path.', 'Add new trees to the simulator pool.', 'Track replay score versus live score and test on held-out tasks.']]
+      ];
+      const stepView = document.getElementById('stepView');
+      function renderStep(index) {
+        const [title, bullets] = stepData[index];
+        stepView.innerHTML = `<h3>${String(index + 1).padStart(2, '0')} · ${title}</h3><ul>${bullets.map(b => `<li>${b}</li>`).join('')}</ul><div class="callout"><p><strong>Done when:</strong> ${index === 0 ? 'you can run the baseline twice and get comparable measurements.' : index === 1 ? 'a replay runner can reconstruct one historical tree from disk.' : index === 2 ? 'the controller can choose a legal batch without seeing hidden outcomes.' : index === 3 ? 'the same frozen tree yields deterministic policy–world trajectories.' : index === 4 ? 'a revised policy beats or matches the current one on replay without extra live calls.' : 'the live loop improves a held-out metric without exceeding the spend cap.'}</p></div>`;
+        document.querySelectorAll('.step-btn').forEach((b, i) => b.classList.toggle('active', i === index));
+      }
+      document.querySelectorAll('.step-btn').forEach(button => button.addEventListener('click', () => renderStep(Number(button.dataset.step))));
+      renderStep(0);
+
+      const beta1 = document.getElementById('beta1');
+      const beta2 = document.getElementById('beta2');
+      const beta1Value = document.getElementById('beta1Value');
+      const beta2Value = document.getElementById('beta2Value');
+      const toyScore = document.getElementById('toyScore');
+      function updateToyScore() {
+        const b1 = Number(beta1.value), b2 = Number(beta2.value);
+        beta1Value.textContent = b1.toFixed(2); beta2Value.textContent = b2.toFixed(2);
+        const score = 9.4 - (b1 * 10) + (b2 * 2.2);
+        toyScore.textContent = score.toFixed(2);
+      }
+      beta1.addEventListener('input', updateToyScore); beta2.addEventListener('input', updateToyScore); updateToyScore();
+      go(0);
+    })();
+  </script>
+</body>
+</html>

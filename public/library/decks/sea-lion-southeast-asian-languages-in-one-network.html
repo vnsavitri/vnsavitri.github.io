@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="An interactive deep dive into SEA-LION: Southeast Asian Languages in One Network." />
+  <title>SEA-LION | Southeast Asian Languages in One Network</title>
+  <style>
+    :root {
+      --ink: #17191d;
+      --muted: #69717b;
+      --paper: #f4f0e8;
+      --paper-2: #ebe5d8;
+      --white: #fffdf8;
+      --amber: #d98b32;
+      --amber-2: #f0b763;
+      --teal: #176b6b;
+      --coral: #b64f42;
+      --line: rgba(23,25,29,.14);
+      --shadow: 0 18px 50px rgba(23,25,29,.13);
+      --radius: 24px;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --serif: Georgia, "Times New Roman", serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: #d9d1c2; color: var(--ink); font-family: var(--sans); }
+    body { overflow: hidden; }
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+
+    .app { height: 100vh; display: grid; grid-template-rows: 1fr 56px; }
+    .stage { position: relative; overflow: hidden; }
+    .deck { height: 100%; width: 100%; display: grid; place-items: center; padding: 24px; }
+    .slide {
+      position: absolute; inset: 24px; max-width: 1440px; margin: auto;
+      background: var(--paper); border-radius: 18px; box-shadow: var(--shadow);
+      padding: clamp(28px, 5vw, 76px); overflow: auto; opacity: 0; pointer-events: none;
+      transform: translateX(28px) scale(.985); transition: opacity .28s ease, transform .28s ease;
+    }
+    .slide.active { opacity: 1; pointer-events: auto; transform: translateX(0) scale(1); }
+    .slide.section-break { background: var(--ink); color: var(--paper); }
+    .slide.cover { background: radial-gradient(circle at 83% 18%, rgba(240,183,99,.27), transparent 25%), linear-gradient(135deg, #f5f0e7, #e9e0ce); }
+    .slide.dark { background: #1b2527; color: #f8f2e8; }
+
+    .kicker { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; font-weight: 800; color: var(--amber); margin-bottom: 16px; }
+    .section-break .kicker { color: var(--amber-2); }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 940px; font-size: clamp(44px, 7vw, 112px); line-height: .96; letter-spacing: -.065em; margin-bottom: 26px; }
+    h2 { max-width: 960px; font-size: clamp(32px, 4vw, 66px); line-height: 1.02; letter-spacing: -.05em; margin-bottom: 22px; }
+    h3 { font-size: clamp(16px, 1.35vw, 21px); letter-spacing: -.025em; margin-bottom: 10px; }
+    p { color: var(--muted); line-height: 1.55; font-size: clamp(15px, 1.45vw, 20px); }
+    .section-break p, .dark p { color: rgba(248,242,232,.68); }
+    .lede { max-width: 740px; font-size: clamp(18px, 2vw, 28px); line-height: 1.4; }
+    .small { font-size: 13px; line-height: 1.45; color: var(--muted); }
+    .source { position: absolute; bottom: 22px; left: clamp(28px, 5vw, 76px); right: clamp(28px, 5vw, 76px); font-size: 11px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+    .dark .source, .section-break .source { color: rgba(248,242,232,.55); border-color: rgba(248,242,232,.19); }
+    .source a { text-decoration-thickness: 1px; text-underline-offset: 3px; }
+
+    .cover-mark { display: flex; align-items: center; gap: 12px; margin-bottom: 62px; }
+    .lion { width: 48px; height: 48px; border-radius: 50%; background: var(--ink); color: var(--amber-2); display: grid; place-items: center; font-size: 25px; box-shadow: 0 8px 20px rgba(23,25,29,.2); }
+    .cover-mark span { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; font-weight: 800; }
+    .cover-meta { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 30px; }
+    .pill { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; font-size: 12px; font-weight: 800; background: rgba(255,253,248,.48); }
+    .pill.amber { background: var(--amber); color: #25170a; border-color: transparent; }
+    .cover-orbit { position: absolute; right: 9%; top: 25%; width: min(34vw, 450px); aspect-ratio: 1; border: 1px solid rgba(23,25,29,.15); border-radius: 50%; opacity: .8; }
+    .cover-orbit:before, .cover-orbit:after { content: ""; position: absolute; inset: 12%; border: 1px solid rgba(23,25,29,.11); border-radius: 50%; transform: rotate(32deg) scaleX(.48); }
+    .cover-orbit:after { inset: 0; transform: rotate(-28deg) scaleX(.45); }
+    .orbit-dot { position: absolute; width: 20px; height: 20px; border-radius: 50%; background: var(--amber); top: 12%; right: 6%; box-shadow: 0 0 0 9px rgba(217,139,50,.14); }
+
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 34px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 32px; }
+    .card { background: rgba(255,253,248,.66); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+    .dark .card, .section-break .card { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.14); }
+    .card p { font-size: 15px; margin-bottom: 0; }
+    .card strong { color: var(--ink); }
+    .dark .card strong, .section-break .card strong { color: var(--paper); }
+    .num { color: var(--amber); font-size: 36px; font-weight: 900; letter-spacing: -.06em; margin-bottom: 14px; }
+    .tag { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; font-weight: 900; padding: 5px 7px; border-radius: 5px; margin-bottom: 14px; background: rgba(23,25,29,.08); color: var(--muted); }
+    .tag.evidence { background: rgba(23,107,107,.12); color: var(--teal); }
+    .tag.recommendation { background: rgba(182,79,66,.12); color: var(--coral); }
+    .dark .tag, .section-break .tag { background: rgba(255,255,255,.11); color: rgba(248,242,232,.7); }
+
+    .split { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(24px, 5vw, 74px); align-items: center; min-height: 72%; }
+    .split.wide-left { grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); }
+    .quote { border-left: 4px solid var(--amber); padding: 8px 0 8px 20px; font-family: var(--serif); font-size: clamp(22px, 2.7vw, 39px); line-height: 1.15; letter-spacing: -.03em; }
+    .quote span { display: block; margin-top: 12px; font-family: var(--sans); font-size: 12px; line-height: 1.3; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+
+    .language-cloud { display: flex; flex-wrap: wrap; gap: 10px; align-content: center; padding: 22px; min-height: 280px; background: var(--ink); border-radius: 30px; color: var(--paper); }
+    .language-cloud span { border: 1px solid rgba(255,255,255,.22); border-radius: 999px; padding: 10px 14px; font-size: clamp(13px, 1.4vw, 18px); }
+    .language-cloud span:nth-child(3n) { color: var(--amber-2); }
+    .language-cloud span:nth-child(4n) { color: #9bd4c4; }
+
+    .bar-chart { display: grid; gap: 17px; margin-top: 24px; }
+    .bar-row { display: grid; grid-template-columns: 150px 1fr 58px; align-items: center; gap: 12px; font-size: 13px; }
+    .bar-track { height: 16px; background: rgba(23,25,29,.09); border-radius: 999px; overflow: hidden; }
+    .bar-fill { height: 100%; width: var(--w); background: linear-gradient(90deg, var(--teal), #4aa69a); border-radius: inherit; }
+    .bar-fill.amber { background: linear-gradient(90deg, var(--amber), var(--amber-2)); }
+    .bar-val { text-align: right; font-weight: 900; }
+    .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 20px; font-size: 12px; color: var(--muted); }
+    .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; background: var(--teal); }
+    .legend i.amber { background: var(--amber); }
+    .toggle-row { display: flex; gap: 8px; margin: 6px 0 24px; }
+    .toggle { border: 1px solid var(--line); border-radius: 999px; background: transparent; padding: 9px 13px; font-size: 12px; font-weight: 800; color: var(--muted); }
+    .toggle.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+    .pipeline { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; align-items: stretch; margin-top: 32px; }
+    .pipe { position: relative; min-height: 130px; padding: 18px 15px; border-radius: 18px; background: var(--ink); color: var(--paper); display: flex; flex-direction: column; justify-content: space-between; }
+    .pipe:not(:last-child):after { content: "→"; position: absolute; right: -16px; top: 50%; z-index: 2; color: var(--amber); font-size: 25px; }
+    .pipe small { color: rgba(248,242,232,.62); font-size: 11px; line-height: 1.35; }
+    .pipe b { font-size: 16px; line-height: 1.05; }
+    .pipe:nth-child(2) { background: var(--teal); }
+    .pipe:nth-child(4) { background: var(--coral); }
+    .pipe:nth-child(5) { background: var(--amber); color: #261a0e; }
+    .pipe:nth-child(5) small { color: rgba(38,26,14,.65); }
+
+    .data-mix { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: center; }
+    .donut { width: min(260px, 72vw); aspect-ratio: 1; border-radius: 50%; margin: auto; background: conic-gradient(var(--teal) 0 55%, var(--amber) 55% 80%, var(--coral) 80% 100%); display: grid; place-items: center; }
+    .donut:after { content: "200B\A tokens"; white-space: pre; text-align: center; width: 54%; aspect-ratio: 1; border-radius: 50%; background: var(--paper); display: grid; place-items: center; font-weight: 900; line-height: 1.05; font-size: 19px; }
+    .mix-item { display: grid; grid-template-columns: 14px 1fr auto; gap: 9px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .mix-item i { width: 12px; height: 12px; border-radius: 50%; background: var(--teal); }
+    .mix-item:nth-child(2) i { background: var(--amber); }
+    .mix-item:nth-child(3) i { background: var(--coral); }
+    .mix-item b { font-size: 18px; }
+
+    .two-column-list { columns: 2; column-gap: 34px; margin-top: 26px; }
+    .two-column-list li { break-inside: avoid; margin-bottom: 13px; color: var(--muted); line-height: 1.45; }
+    .two-column-list li::marker { color: var(--amber); }
+    .numbered { counter-reset: steps; display: grid; gap: 12px; margin-top: 28px; }
+    .step { counter-increment: steps; display: grid; grid-template-columns: 44px 1fr; gap: 15px; align-items: start; padding: 17px 0; border-bottom: 1px solid var(--line); }
+    .step:before { content: counter(steps, decimal-leading-zero); color: var(--amber); font-weight: 900; font-size: 14px; padding-top: 4px; }
+    .step h3 { margin-bottom: 4px; }
+    .step p { font-size: 15px; margin-bottom: 0; }
+
+    details { border-top: 1px solid var(--line); padding: 15px 0; }
+    details:last-child { border-bottom: 1px solid var(--line); }
+    summary { cursor: pointer; list-style: none; font-weight: 850; display: flex; justify-content: space-between; gap: 16px; }
+    summary::-webkit-details-marker { display:none; }
+    summary:after { content: "+"; color: var(--amber); font-size: 22px; line-height: .8; }
+    details[open] summary:after { content: "−"; }
+    details p { font-size: 14px; margin: 12px 0 0; }
+
+    pre { overflow: auto; background: #182022; color: #e9f2ec; padding: 18px; border-radius: 16px; font-size: 12px; line-height: 1.55; }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+    .callout { background: var(--ink); color: var(--paper); border-radius: 20px; padding: 20px; }
+    .callout p { color: rgba(248,242,232,.7); font-size: 15px; }
+    .callout b { color: var(--amber-2); }
+
+    .footer { display: flex; align-items: center; gap: 16px; padding: 0 26px; background: #17191d; color: #f4f0e8; }
+    .footer button { border: 0; background: transparent; color: #f4f0e8; width: 30px; height: 30px; border-radius: 50%; font-size: 20px; }
+    .footer button:hover, .footer button:focus { background: rgba(255,255,255,.1); outline: none; }
+    .progress { flex: 1; height: 4px; background: rgba(255,255,255,.18); border-radius: 9px; overflow: hidden; }
+    .progress > span { display: block; width: 0; height: 100%; background: var(--amber-2); transition: width .25s ease; }
+    .counter { font-size: 12px; color: rgba(244,240,232,.65); min-width: 58px; text-align: right; }
+    .hint { font-size: 11px; color: rgba(244,240,232,.55); }
+
+    @media (max-width: 800px) {
+      body { overflow: auto; }
+      .app { min-height: 100vh; height: auto; grid-template-rows: 1fr 54px; }
+      .stage { min-height: calc(100vh - 54px); height: auto; }
+      .deck { min-height: calc(100vh - 54px); padding: 0; display: block; }
+      .slide { position: absolute; inset: 0; min-height: calc(100vh - 54px); border-radius: 0; padding: 30px 23px 90px; }
+      .cover-orbit { width: 220px; top: 10%; right: -44px; opacity: .42; }
+      .cover-mark { margin-bottom: 42px; }
+      .grid-3, .grid-2, .split, .split.wide-left, .data-mix { grid-template-columns: 1fr; gap: 14px; }
+      .pipeline { grid-template-columns: 1fr; gap: 9px; }
+      .pipe { min-height: auto; gap: 12px; }
+      .pipe:not(:last-child):after { content: "↓"; right: 50%; top: auto; bottom: -22px; transform: translateX(50%); }
+      .two-column-list { columns: 1; }
+      .bar-row { grid-template-columns: 98px 1fr 42px; gap: 8px; }
+      .hint { display: none; }
+      .footer { padding: 0 12px; }
+      .source { position: static; margin-top: 30px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="SEA-LION interactive slide deck">
+    <section class="stage">
+      <div class="deck">
+        <article class="slide cover active" data-title="Cover">
+          <div class="cover-mark"><div class="lion">◒</div><span>AI Singapore · SEA-LION</span></div>
+          <div class="cover-orbit"><div class="orbit-dot"></div></div>
+          <div class="kicker">Research paper deep dive</div>
+          <h1>Southeast Asian languages in one network.</h1>
+          <p class="lede">How SEA-LION turns a general-purpose language model into a more capable, more culturally grounded open model for the region.</p>
+          <div class="cover-meta"><span class="pill amber">Beginner → technical deep dive</span><span class="pill">Interactive HTML deck</span><span class="pill">September 2026 reading</span></div>
+          <div class="source">Based on <em>SEA-LION: Southeast Asian Languages in One Network</em>, arXiv:2504.05747v4, 30 October 2025. <a href="https://arxiv.org/abs/2504.05747" target="_blank" rel="noreferrer">Open paper ↗</a></div>
+        </article>
+
+        <article class="slide" data-title="TL;DR">
+          <div class="kicker">01 · Plain-English summary</div>
+          <h2>SEA-LION is a recipe for making open LLMs work better across Southeast Asia.</h2>
+          <p class="lede">The authors start with Llama 3.1 8B-Instruct and Gemma 2 9B, continue training them on a carefully mixed corpus, then add multilingual instruction tuning, preference alignment and model merging.</p>
+          <div class="grid-3">
+            <div class="card"><div class="num">11</div><h3>SEA languages</h3><p>English, Chinese, Indonesian, Vietnamese, Malay, Thai, Burmese, Lao, Filipino, Tamil and Khmer.</p></div>
+            <div class="card"><div class="num">200B</div><h3>Continued-pretraining tokens</h3><p>A deliberate mix of SEA-language, English and code data, rather than SEA-only training.</p></div>
+            <div class="card"><div class="num">2</div><h3>Open models</h3><p>Llama-SEA-LION-8B-IT and Gemma-SEA-LION-9B-IT, released under the MIT licence.</p></div>
+          </div>
+          <div class="source">Paper, abstract and introduction, pp. 1-2. “We introduce Llama-SEA-LION-8B-IT and Gemma-SEA-LION-9B-IT” and report support for 11 SEA languages.</div>
+        </article>
+
+        <article class="slide" data-title="Why it matters">
+          <div class="split">
+            <div>
+              <div class="kicker">02 · Why it matters</div>
+              <h2>Language coverage isn’t the same as regional competence.</h2>
+              <p>English-centric models can look strong on general benchmarks while still underperforming on SEA-specific language, knowledge and cultural understanding.</p>
+              <div class="quote">A model can speak a language without really understanding the world around it.<span>Deck interpretation of the paper’s motivation</span></div>
+            </div>
+            <div class="language-cloud" aria-label="SEA-LION language coverage">
+              <span>English</span><span>中文</span><span>Bahasa Indonesia</span><span>Tiếng Việt</span><span>Bahasa Melayu</span><span>ไทย</span><span>မြန်မာ</span><span>ລາວ</span><span>Filipino</span><span>தமிழ்</span><span>ខ្មែរ</span>
+            </div>
+          </div>
+          <div class="source">Paper, introduction, p. 1. The paper identifies Filipino, Lao, Burmese and Khmer as examples of lower-resource SEA languages with limited support in many open-source English-centric LLMs.</div>
+        </article>
+
+        <article class="slide" data-title="Benefits + use cases">
+          <div class="kicker">03 · Benefits and use cases</div>
+          <h2>What becomes possible when the model is tuned for the region?</h2>
+          <div class="grid-2">
+            <div class="card"><span class="tag evidence">Paper evidence</span><h3>Better SEA-language performance</h3><p>The reported models lead their comparison set on the paper’s SEA-focused benchmarks, especially Gemma-SEA-LION-9B-IT.</p></div>
+            <div class="card"><span class="tag evidence">Paper evidence</span><h3>Open research infrastructure</h3><p>The authors release models and training artefacts to support reproducibility and future SEA-specific applications.</p></div>
+            <div class="card"><span class="tag recommendation">Practical use case</span><h3>Localised support and commerce</h3><p>Customer support, product help and buying journeys that can handle local languages, code-switching and regional context.</p></div>
+            <div class="card"><span class="tag recommendation">Practical use case</span><h3>Public services and education</h3><p>Translation, explanation and access layers for communities that are poorly served by English-first interfaces.</p></div>
+          </div>
+          <p class="small" style="margin-top:20px">The two recommendation cards are plausible applications, not experiments reported in this paper.</p>
+          <div class="source">Paper, abstract, introduction and conclusion, pp. 1-2, 8. Application examples are deck recommendations, clearly labelled as such.</div>
+        </article>
+
+        <article class="slide section-break" data-title="Deep dive">
+          <div class="split">
+            <div><div class="kicker">Section break</div><h2>Deep dive</h2><p class="lede">The interesting part isn’t a single dataset. It’s the training system: data mix, sequencing, model lineage, alignment and evaluation all matter.</p></div>
+            <div class="card"><div class="num">→</div><h3>Next: follow the recipe</h3><p>We’ll unpack what changed at each stage and what the benchmark results can, and can’t, tell us.</p></div>
+          </div>
+          <div class="source">Section transition. Source basis: paper, Sections 2-5, pp. 2-8.</div>
+        </article>
+
+        <article class="slide" data-title="System overview">
+          <div class="kicker">04 · System overview</div>
+          <h2>SEA-LION is a training pipeline, not just a language pack.</h2>
+          <p>There are two broad moves: teach the base model more SEA-language knowledge, then rebuild useful instruction-following behaviour on top.</p>
+          <div class="pipeline" aria-label="SEA-LION training pipeline">
+            <div class="pipe"><small>1 · Knowledge</small><b>Continued pre-training</b><small>200B tokens, 55% SEA / 25% English / 20% code</small></div>
+            <div class="pipe"><small>2 · General capability</small><b>Stage 1 IFT</b><small>English instruction, reasoning, maths and code</small></div>
+            <div class="pipe"><small>3 · Regional capability</small><b>Stage 2 IFT</b><small>SEA-language and higher-complexity instructions</small></div>
+            <div class="pipe"><small>4 · Preference</small><b>Alignment</b><small>SEA preference data with SimPO</small></div>
+            <div class="pipe"><small>5 · Recovery</small><b>Model merging</b><small>Empirical combinations to balance capabilities</small></div>
+          </div>
+          <div class="source">Paper, Sections 2-3, pp. 2-4. Simplified visual summary of the reported workflow; the Llama and Gemma merge paths differ in detail.</div>
+        </article>
+
+        <article class="slide" data-title="Data mix">
+          <div class="split wide-left">
+            <div>
+              <div class="kicker">05 · Continued pre-training</div>
+              <h2>The core bet: enough SEA data, without forgetting everything else.</h2>
+              <p>The paper reports a 200-billion-token continued-pretraining budget. Small-scale experiments led to this starting mix:</p>
+              <div class="mix-item"><i></i><span>SEA languages</span><b>55%</b></div>
+              <div class="mix-item"><i></i><span>English</span><b>25%</b></div>
+              <div class="mix-item"><i></i><span>Code</span><b>20%</b></div>
+            </div>
+            <div class="donut" aria-label="200 billion token mix"></div>
+          </div>
+          <div class="source">Paper, Section 2.1, p. 2 and Appendix Table 6, p. 10. The ratio is the authors’ selected mix for a 200B-token budget after small-scale CPT experiments.</div>
+        </article>
+
+        <article class="slide" data-title="Data sources">
+          <div class="kicker">06 · Data construction</div>
+          <h2>Data quality is a modelling decision.</h2>
+          <div class="grid-2">
+            <div class="card"><span class="tag evidence">Reported method</span><h3>Source and filter</h3><p>Open corpora include Dolma, FineWeb, The Stack v2, SEA-LION-Pile, CommonCrawl and public-domain sources. SEA documents are filtered with a fastText language classifier and cleaned with Trafilatura.</p></div>
+            <div class="card"><span class="tag evidence">Reported method</span><h3>Ratio selection</h3><p>The team ran small-scale CPT experiments with a 10B-token budget and varied English, code and SEA proportions before selecting the 55/25/20 mix.</p></div>
+          </div>
+          <ul class="two-column-list">
+            <li>SEA-PILE-v1: 47.58B tokens</li>
+            <li>SEA-PILE-v2: 7B Indonesian tokens</li>
+            <li>VinBigData: 16B Vietnamese tokens</li>
+            <li>WangChanBERTa: 8.5B Thai tokens</li>
+            <li>Dolma: 37.5B English tokens</li>
+            <li>The Stack v2 dedup: 40B code tokens</li>
+          </ul>
+          <div class="source">Paper, Section 2.1 and Appendix Table 6, pp. 2 and 10. The six listed sources are examples from the paper’s dataset inventory, not the complete table.</div>
+        </article>
+
+        <article class="slide" data-title="Post-training">
+          <div class="kicker">07 · Post-training</div>
+          <h2>They sequence capability building before alignment.</h2>
+          <div class="grid-2">
+            <div>
+              <div class="numbered">
+                <div class="step"><div><h3>Stage 1 IFT</h3><p>About 9.5M mostly English instruction pairs for reasoning, maths and code.</p></div></div>
+                <div class="step"><div><h3>Stage 2 IFT</h3><p>7,298,828 samples across 11 languages, including synthetic SEA-language instruction data.</p></div></div>
+                <div class="step"><div><h3>Preference alignment</h3><p>SEA preference data is used with SimPO to encourage helpful, relevant and informative responses.</p></div></div>
+              </div>
+            </div>
+            <div class="callout"><h3>Why not fine-tune on SEA data only?</h3><p>The paper describes a tension: SEA-focused tuning can improve local performance but may erode English capability or instruction following. The pipeline keeps returning to the base lineage through model merges.</p><p><b>Interpretation:</b> the model is treated as a portfolio of capabilities that needs balancing, not as a single score to maximise.</p></div>
+          </div>
+          <div class="source">Paper, Sections 3.1-3.3 and Appendix Tables 7-9, pp. 3-5, 10-12. “Portfolio of capabilities” is a deck interpretation, not the authors’ phrase.</div>
+        </article>
+
+        <article class="slide" data-title="Evaluation lenses">
+          <div class="kicker">08 · Evaluation design</div>
+          <h2>One benchmark can’t answer a multilingual model question.</h2>
+          <div class="grid-3">
+            <div class="card"><div class="num">SEA</div><h3>SEA-HELM</h3><p>Holistic SEA benchmark used here across NLU, NLG, NLR, NLI, instruction following and multi-turn chat. The reported tables cover four languages: Indonesian, Vietnamese, Thai and Tamil.</p></div>
+            <div class="card"><div class="num">31</div><h3>SEACrowd-NLU</h3><p>Zero-shot NLU evaluation across 131 data subsets, 7 tasks and 31 SEA indigenous languages.</p></div>
+            <div class="card"><div class="num">6</div><h3>Open LLM Leaderboard</h3><p>English-facing checks across IFEval, BBH, MATH, GPQA, MuSR and MMLU-PRO.</p></div>
+          </div>
+          <details open style="margin-top:30px"><summary>Important reading of the evidence</summary><p>The authors could not reproduce the SEACrowd NLG benchmark because of maintenance issues, so their SEACrowd experiment is NLU-only. That matters when interpreting “multilingual quality” as a whole.</p></details>
+          <div class="source">Paper, Section 4.2 and limitation, pp. 5 and 8. Benchmark descriptions and coverage are reported by the authors.</div>
+        </article>
+
+        <article class="slide" data-title="SEA results">
+          <div class="kicker">09 · Reported results</div>
+          <h2>SEA-LION’s strongest signal is regional performance.</h2>
+          <p>Use the toggle to switch between the two instruct model families. Values are the SEA-HELM average from Table 3.</p>
+          <div class="toggle-row" role="tablist" aria-label="Model family"><button class="toggle active" data-family="gemma">Gemma family</button><button class="toggle" data-family="llama">Llama family</button></div>
+          <div class="chart-panel" data-chart="gemma">
+            <div class="bar-chart">
+              <div class="bar-row"><span>Base instruct</span><div class="bar-track"><div class="bar-fill" style="--w:55.33%"></div></div><span class="bar-val">55.33</span></div>
+              <div class="bar-row"><span>SEA-LION IT</span><div class="bar-track"><div class="bar-fill amber" style="--w:69.35%"></div></div><span class="bar-val">69.35</span></div>
+            </div>
+            <p class="small" style="margin-top:20px">Gemma-SEA-LION-9B-IT: +14.02 points against Gemma-2-9B-IT on the reported SEA-HELM average.</p>
+          </div>
+          <div class="chart-panel" data-chart="llama" hidden>
+            <div class="bar-chart">
+              <div class="bar-row"><span>Base instruct</span><div class="bar-track"><div class="bar-fill" style="--w:41.48%"></div></div><span class="bar-val">41.48</span></div>
+              <div class="bar-row"><span>SEA-LION IT</span><div class="bar-track"><div class="bar-fill amber" style="--w:61.84%"></div></div><span class="bar-val">61.84</span></div>
+            </div>
+            <p class="small" style="margin-top:20px">Llama-SEA-LION-8B-IT: +20.36 points against Llama-3.1-8B-Instruct on the reported SEA-HELM average.</p>
+          </div>
+          <div class="source">Paper, Table 3, p. 5. The deltas are arithmetic from the table values. “Strongest signal” is a deck interpretation of the paper’s reported SEA-focused results.</div>
+        </article>
+
+        <article class="slide" data-title="English trade-off">
+          <div class="split">
+            <div><div class="kicker">10 · Generalisation</div><h2>Regional specialisation didn’t require an English collapse.</h2><p>On the paper’s Open LLM Leaderboard comparison, the final SEA-LION instruct models remained competitive in English, maths and reasoning tasks.</p></div>
+            <div class="card">
+              <h3>Open LLM Leaderboard average</h3>
+              <div class="bar-chart">
+                <div class="bar-row"><span>Gemma 2 IT</span><div class="bar-track"><div class="bar-fill" style="--w:28.86%"></div></div><span class="bar-val">28.86</span></div>
+                <div class="bar-row"><span>Gemma SEA-LION</span><div class="bar-track"><div class="bar-fill amber" style="--w:35.43%"></div></div><span class="bar-val">35.43</span></div>
+                <div class="bar-row"><span>Llama 3.1 IT</span><div class="bar-track"><div class="bar-fill" style="--w:27.88%"></div></div><span class="bar-val">27.88</span></div>
+                <div class="bar-row"><span>Llama SEA-LION</span><div class="bar-track"><div class="bar-fill amber" style="--w:30.39%"></div></div><span class="bar-val">30.39</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="source">Paper, Table 5, p. 6. These are the table’s averages across six English-oriented benchmarks, not a claim that SEA-LION wins every English task.</div>
+        </article>
+
+        <article class="slide" data-title="Why the merges matter">
+          <div class="kicker">11 · Design analysis</div>
+          <h2>Each stage fixes a different kind of drift.</h2>
+          <div class="grid-2">
+            <div class="card"><h3>Stage 1 restores general instruction behaviour</h3><p>The authors report gains in English instruction following and SEA-HELM after the first instruction-tuning stage.</p></div>
+            <div class="card"><h3>Stage 2 adds multilingual and reasoning capability</h3><p>The second stage produces a further increase in SEA-HELM over Stage 1 in both model families.</p></div>
+            <div class="card"><h3>Merges recover capabilities</h3><p>Merging brings in strengths from related instruct models and is used to mitigate catastrophic forgetting from fine-tuning.</p></div>
+            <div class="card"><h3>Alignment improves preference behaviour, with trade-offs</h3><p>The paper reports broader SEA MTBench gains, alongside minor degradation on some instruction-following and task-specific scores.</p></div>
+          </div>
+          <details style="margin-top:26px"><summary>What to take away</summary><p>Model merging is not a magic final polish. In this paper, it is an empirically selected balancing operation whose value depends on the model lineage, task mix and desired trade-offs.</p></details>
+          <div class="source">Paper, Section 5.3, pp. 6-8. The “drift” framing is a concise interpretation of the paper’s performance analysis.</div>
+        </article>
+
+        <article class="slide section-break" data-title="Implementation guide">
+          <div class="split">
+            <div><div class="kicker">Section break</div><h2>Build your own regional model</h2><p class="lede">A practical adaptation of the paper’s logic, sized for a real product team or research prototype.</p></div>
+            <div class="card"><div class="num">6</div><h3>Implementation moves</h3><p>Define the target, build the data, continue pre-training, post-train, evaluate, then deploy with guardrails.</p></div>
+          </div>
+          <div class="source">Section transition. The next slides are implementation guidance informed by the paper, with recommendations labelled where they go beyond the reported experiment.</div>
+        </article>
+
+        <article class="slide" data-title="Step 1: target">
+          <div class="kicker">12 · How-to guide · Step 1</div>
+          <h2>Start with a narrow language-and-task contract.</h2>
+          <div class="grid-2">
+            <div class="card"><span class="tag recommendation">Recommended</span><h3>Choose the first wedge</h3><p>Pick 1-3 languages, one user segment and 3-5 tasks. For example: Indonesian + Malay customer support, product troubleshooting and summarisation.</p></div>
+            <div class="card"><span class="tag recommendation">Recommended</span><h3>Build a golden set</h3><p>Create native-speaker prompts with expected answers, cultural edge cases, code-switching and refusal cases. Keep a private test split.</p></div>
+          </div>
+          <pre><code>target = {
+  "languages": ["id", "ms"],
+  "tasks": ["support", "summarise", "classify"],
+  "must_not_regress": ["English safety", "citation fidelity"],
+  "golden_set": "versioned, native-speaker reviewed"
+}</code></pre>
+          <div class="source">Implementation guidance. The paper motivates SEA-specific evaluation but doesn’t prescribe this product-scoping template.</div>
+        </article>
+
+        <article class="slide" data-title="Step 2: data">
+          <div class="kicker">13 · How-to guide · Step 2</div>
+          <h2>Make language, licence and provenance first-class fields.</h2>
+          <div class="numbered">
+            <div class="step"><div><h3>Collect</h3><p>Prioritise consented, licensed or public-domain text. Record source, date, language, domain and usage rights.</p></div></div>
+            <div class="step"><div><h3>Filter</h3><p>Run language identification, deduplication, quality checks, PII screening and document-level contamination checks.</p></div></div>
+            <div class="step"><div><h3>Balance</h3><p>Use the paper’s 55/25/20 ratio as a hypothesis, then tune the mix against your golden set rather than copying it blindly.</p></div></div>
+            <div class="step"><div><h3>Version</h3><p>Ship a dataset card, a manifest and a reproducible sampling recipe with every training run.</p></div></div>
+          </div>
+          <div class="source">The paper reports language filtering, cleaning and ratio experiments in Section 2.1. The governance checklist is implementation guidance.</div>
+        </article>
+
+        <article class="slide" data-title="Step 3: train">
+          <div class="kicker">14 · How-to guide · Step 3</div>
+          <h2>Reproduce the sequence at the smallest useful scale.</h2>
+          <div class="grid-3">
+            <div class="card"><div class="num">A</div><h3>Continued pre-training</h3><p>Start from an open instruct model and expose it to the regional corpus. Track language loss and general capability loss separately.</p></div>
+            <div class="card"><div class="num">B</div><h3>Instruction tuning</h3><p>Use general instruction data first, then multilingual and task-specific data. Keep the evaluation set untouched.</p></div>
+            <div class="card"><div class="num">C</div><h3>Alignment and merge</h3><p>Only add preference optimisation or model merging when the evals show a specific behavioural problem to fix.</p></div>
+          </div>
+          <details style="margin-top:28px"><summary>Prototype shortcut: adapter tuning</summary><p>For a one-GPU proof of concept, QLoRA/LoRA can reduce compute and memory. That is a practical adaptation, not the SEA-LION paper’s reported full-model fine-tuning recipe.</p></details>
+          <div class="source">Paper, Sections 2-3, pp. 2-5, reports full-model IFT, SimPO alignment, MergeKit and distributed training. Adapter tuning is a clearly labelled implementation recommendation.</div>
+        </article>
+
+        <article class="slide" data-title="Step 4: evaluate">
+          <div class="kicker">15 · How-to guide · Step 4</div>
+          <h2>Evaluate every improvement against the trade-off surface.</h2>
+          <div class="grid-2">
+            <div>
+              <div class="step"><div><h3>Regional quality</h3><p>Native-speaker review, task success, cultural fit, fluency and code-switching.</p></div></div>
+              <div class="step"><div><h3>General quality</h3><p>Instruction following, reasoning, maths, code and English regression checks.</p></div></div>
+              <div class="step"><div><h3>Safety and reliability</h3><p>Hallucination, refusal, privacy, harmful content, prompt injection and sensitive-domain tests.</p></div></div>
+            </div>
+            <div class="callout"><h3>Release gate</h3><p>Ship only when regional performance improves without unacceptable regression on general capability, safety or latency.</p><p><b>Done condition:</b> every score has a dataset version, sample count, language breakdown and human-review note.</p></div>
+          </div>
+          <div class="source">The multi-lens evaluation principle is grounded in the paper’s use of SEA-HELM, SEACrowd-NLU and the Open LLM Leaderboard. Release-gate details are implementation guidance.</div>
+        </article>
+
+        <article class="slide" data-title="Step 5: deploy">
+          <div class="kicker">16 · How-to guide · Step 5</div>
+          <h2>Deploy the model as a measured service, not a frozen artefact.</h2>
+          <div class="grid-3">
+            <div class="card"><h3>Route by language and task</h3><p>Use language ID and task routing where a smaller specialist model is enough. Keep a stronger fallback for uncertainty.</p></div>
+            <div class="card"><h3>Keep provenance</h3><p>Log model, dataset and prompt-template versions. Make user-visible claims traceable to the right source.</p></div>
+            <div class="card"><h3>Monitor drift</h3><p>Track quality by language, dialect, task, latency and refusal behaviour. Refresh the golden set as real usage exposes gaps.</p></div>
+          </div>
+          <div class="quote" style="margin-top:34px">The production question is not “does it speak Indonesian?” It is “where does it succeed, for whom, and with what evidence?”<span>Implementation principle</span></div>
+          <div class="source">Implementation guidance informed by the paper’s emphasis on data transparency, reproducibility and culturally relevant evaluation.</div>
+        </article>
+
+        <article class="slide" data-title="Limitations">
+          <div class="kicker">17 · Limitations and open questions</div>
+          <h2>Strong results, bounded evidence.</h2>
+          <div class="grid-2">
+            <div class="card"><span class="tag evidence">Paper limitation</span><h3>Coverage is incomplete</h3><p>SEA-HELM covers four languages in the reported tables. SEACrowd covers more languages but only with classical NLU datasets in this study.</p></div>
+            <div class="card"><span class="tag evidence">Paper limitation</span><h3>No holistic chat benchmark across all languages</h3><p>The authors call for a broader SEA benchmark that includes LLM-specific tasks across all covered languages.</p></div>
+            <div class="card"><span class="tag evidence">Paper limitation</span><h3>Only 8B and 9B models were tested</h3><p>The authors argue the technique should generalise to other sizes, but this paper doesn’t establish that empirically.</p></div>
+            <div class="card"><span class="tag recommendation">Open question</span><h3>How much comes from data versus recipe?</h3><p>A stronger ablation programme would isolate language mix, synthetic data, alignment and each merge decision across languages and tasks.</p></div>
+          </div>
+          <div class="source">Paper, “Limitation” and conclusion, p. 8. The final ablation question is a deck recommendation based on the paper’s multi-stage design.</div>
+        </article>
+
+        <article class="slide dark" data-title="Takeaways">
+          <div class="kicker">18 · Takeaways</div>
+          <h2>Three ideas worth carrying into your own AI work.</h2>
+          <div class="numbered">
+            <div class="step"><div><h3>Representation is a systems problem.</h3><p>Better regional performance comes from data, training order, evaluation and capability balancing together.</p></div></div>
+            <div class="step"><div><h3>Preserve the general model while specialising.</h3><p>The 55/25/20 mix and repeated merges are attempts to improve SEA capability without throwing away useful general behaviour.</p></div></div>
+            <div class="step"><div><h3>Benchmark coverage shapes what “good” means.</h3><p>If the benchmark misses dialect, culture, task type or language, the model can look better than it is for real users.</p></div></div>
+          </div>
+          <div class="source">Synthesis of the paper’s motivation, method, results and limitations. Paper: <a href="https://arxiv.org/abs/2504.05747" target="_blank" rel="noreferrer">arXiv:2504.05747 ↗</a>.</div>
+        </article>
+
+        <article class="slide" data-title="Sources">
+          <div class="kicker">19 · Sources and notes</div>
+          <h2>Read the paper, then inspect the artefacts.</h2>
+          <div class="grid-2">
+            <div class="card"><h3>Primary paper</h3><p><a href="https://arxiv.org/abs/2504.05747" target="_blank" rel="noreferrer">SEA-LION: Southeast Asian Languages in One Network</a><br>Raymond Ng et al. · arXiv:2504.05747v4 · 30 October 2025</p></div>
+            <div class="card"><h3>Project site</h3><p><a href="https://sea-lion.ai" target="_blank" rel="noreferrer">sea-lion.ai</a><br>Project landing page and model collection referenced by the paper.</p></div>
+            <div class="card"><h3>Model artefacts</h3><p><a href="https://huggingface.co/aisingapore" target="_blank" rel="noreferrer">Hugging Face · AI Singapore</a><br>Training data, checkpoints and model releases referenced in the paper.</p></div>
+            <div class="card"><h3>How to use this deck</h3><p>Use ← → or the buttons to navigate. Press Home/End to jump. On touch screens, swipe left or right. Expand details for caveats and implementation notes.</p></div>
+          </div>
+          <p class="small" style="margin-top:28px">This deck explains the paper. It doesn’t reproduce training, benchmark scores or production safety validation.</p>
+          <div class="source">All factual claims in this deck are sourced to the paper’s sections, tables or appendices. Recommendations are explicitly labelled.</div>
+        </article>
+      </div>
+    </section>
+    <nav class="footer" aria-label="Slide controls">
+      <button id="prev" aria-label="Previous slide">←</button>
+      <div class="progress" aria-hidden="true"><span id="progressFill"></span></div>
+      <button id="next" aria-label="Next slide">→</button>
+      <span class="counter" id="counter">01 / 22</span>
+      <span class="hint">Use arrow keys · swipe on mobile</span>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const counter = document.getElementById('counter');
+      const progressFill = document.getElementById('progressFill');
+      let index = 0;
+      let touchStartX = null;
+
+      function goTo(nextIndex) {
+        index = Math.max(0, Math.min(slides.length - 1, nextIndex));
+        slides.forEach((slide, i) => {
+          slide.classList.toggle('active', i === index);
+          slide.setAttribute('aria-hidden', i === index ? 'false' : 'true');
+          if (i !== index) slide.scrollTop = 0;
+        });
+        const n = String(index + 1).padStart(2, '0');
+        counter.textContent = `${n} / ${String(slides.length).padStart(2, '0')}`;
+        progressFill.style.width = `${((index + 1) / slides.length) * 100}%`;
+        history.replaceState(null, '', `#${index + 1}`);
+      }
+
+      document.getElementById('prev').addEventListener('click', () => goTo(index - 1));
+      document.getElementById('next').addEventListener('click', () => goTo(index + 1));
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') { event.preventDefault(); goTo(index + 1); }
+        if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); goTo(index - 1); }
+        if (event.key === 'Home') { event.preventDefault(); goTo(0); }
+        if (event.key === 'End') { event.preventDefault(); goTo(slides.length - 1); }
+      });
+      document.querySelector('.stage').addEventListener('touchstart', (event) => { touchStartX = event.changedTouches[0].screenX; }, {passive:true});
+      document.querySelector('.stage').addEventListener('touchend', (event) => {
+        if (touchStartX === null) return;
+        const delta = event.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(delta) > 45) goTo(index + (delta < 0 ? 1 : -1));
+        touchStartX = null;
+      }, {passive:true});
+
+      document.querySelectorAll('.toggle').forEach(button => button.addEventListener('click', () => {
+        const family = button.dataset.family;
+        document.querySelectorAll('.toggle').forEach(b => b.classList.toggle('active', b === button));
+        document.querySelectorAll('.chart-panel').forEach(panel => { panel.hidden = panel.dataset.chart !== family; });
+      }));
+
+      const initial = Number(location.hash.slice(1));
+      goTo(Number.isFinite(initial) && initial > 0 ? initial - 1 : 0);
+    })();
+  </script>
+</body>
+</html>

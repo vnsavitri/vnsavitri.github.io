@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An editable, interactive slide deck about Headlong by Laude Institute.">
+  <title>Headlong: the shell is back at the centre of computing</title>
+  <style>
+    :root {
+      --ink: #171716;
+      --paper: #f4f0e8;
+      --paper-2: #e8e0d1;
+      --muted: #7b776e;
+      --line: rgba(23, 23, 22, .16);
+      --green: #b8e86c;
+      --green-deep: #315f45;
+      --coral: #f06b52;
+      --blue: #6a94ff;
+      --yellow: #f1c75b;
+      --shadow: 0 24px 60px rgba(23, 23, 22, .13);
+      --radius: 24px;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: #c9c0b0; scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 0%, rgba(255,255,255,.45), transparent 30rem),
+        linear-gradient(135deg, #cfc6b8, #aaa394 68%, #908a80);
+      font-family: var(--sans);
+      min-height: 100vh;
+    }
+
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+
+    .toolbar {
+      position: sticky;
+      z-index: 10;
+      top: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 58px;
+      padding: 10px clamp(14px, 3vw, 42px);
+      color: var(--paper);
+      background: rgba(23, 23, 22, .92);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,.12);
+    }
+    .brand {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+      margin-right: auto;
+      font-weight: 700;
+      letter-spacing: -.03em;
+    }
+    .brand-mark { color: var(--green); font-family: var(--mono); font-weight: 400; }
+    .toolbar button {
+      border: 1px solid rgba(255,255,255,.18);
+      color: var(--paper);
+      background: rgba(255,255,255,.07);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      transition: .2s ease;
+    }
+    .toolbar button:hover, .toolbar button[aria-pressed="true"] { background: var(--green); color: var(--ink); border-color: var(--green); }
+    .counter { min-width: 54px; text-align: center; color: #c9c5bc; font: 12px var(--mono); }
+    .progress { position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: rgba(255,255,255,.14); }
+    .progress i { display: block; height: 100%; width: 8.33%; background: var(--green); transition: width .35s ease; }
+
+    .deck-wrap { width: min(1500px, 100%); margin: 0 auto; padding: clamp(16px, 3vw, 42px); }
+    .slides { display: grid; gap: clamp(22px, 4vw, 54px); }
+    .slide {
+      position: relative;
+      min-height: min(760px, calc(100vh - 118px));
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      padding: clamp(24px, 5vw, 72px);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      scroll-margin-top: 82px;
+      isolation: isolate;
+    }
+    .slide::after {
+      content: attr(data-number);
+      position: absolute;
+      right: clamp(24px, 4vw, 62px);
+      bottom: 26px;
+      font: 11px var(--mono);
+      color: var(--muted);
+      z-index: 2;
+    }
+    .slide.dark { color: var(--paper); background: var(--ink); }
+    .slide.green { background: var(--green); }
+    .slide.coral { background: var(--coral); }
+    .slide.blue { background: #cbd7ff; }
+    .eyebrow { color: var(--green-deep); font: 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .dark .eyebrow { color: var(--green); }
+    .coral .eyebrow { color: var(--ink); }
+    h1, h2, h3, p { margin: 0; }
+    h1 { max-width: 9ch; font-size: clamp(48px, 8vw, 126px); line-height: .88; letter-spacing: -.085em; font-weight: 650; }
+    h2 { max-width: 12ch; font-size: clamp(34px, 5vw, 80px); line-height: .94; letter-spacing: -.07em; font-weight: 650; }
+    h3 { font-size: clamp(16px, 2vw, 27px); line-height: 1.05; letter-spacing: -.04em; }
+    .lede { max-width: 620px; margin-top: 22px; color: #444139; font-size: clamp(16px, 1.7vw, 25px); line-height: 1.22; letter-spacing: -.03em; }
+    .dark .lede { color: #d8d2c8; }
+    .coral .lede { color: #3b201a; }
+    .tiny { color: var(--muted); font: 11px/1.4 var(--mono); }
+    .dark .tiny { color: #aaa69d; }
+    .source { position: absolute; left: clamp(24px, 4vw, 62px); bottom: 25px; z-index: 2; color: var(--muted); font: 10px var(--mono); }
+    .source a { text-decoration: none; border-bottom: 1px solid currentColor; }
+    .source a:hover { color: var(--ink); }
+    .dark .source { color: #9d9a91; }
+    .dark .source a:hover { color: var(--paper); }
+    .editable { outline: none; }
+    .editing .editable:hover { background: rgba(106,148,255,.12); box-shadow: 0 0 0 2px rgba(106,148,255,.32); border-radius: 4px; }
+    .editing .editable:focus { background: rgba(106,148,255,.16); box-shadow: 0 0 0 2px var(--blue); }
+
+    .cover { display: grid; grid-template-columns: 1.1fr .9fr; align-items: center; gap: 5vw; }
+    .cover h1 { font-size: clamp(68px, 11vw, 180px); }
+    .cover-orbit { position: relative; min-height: 390px; display: grid; place-items: center; }
+    .orbit-ring { position: absolute; width: min(34vw, 430px); aspect-ratio: 1; border: 1px solid rgba(23,23,22,.24); border-radius: 50%; }
+    .orbit-ring:nth-child(2) { width: min(25vw, 310px); border-style: dashed; transform: rotate(22deg); }
+    .orbit-ring:nth-child(3) { width: min(17vw, 210px); transform: rotate(-22deg); }
+    .orbit-core { position: relative; display: grid; place-items: center; width: 132px; aspect-ratio: 1; border-radius: 50%; background: var(--ink); color: var(--green); font: 22px var(--mono); box-shadow: 0 0 0 18px rgba(23,23,22,.06), 0 0 80px rgba(184,232,108,.35); }
+    .orbit-label { position: absolute; max-width: 12ch; font: 11px/1.2 var(--mono); text-transform: uppercase; }
+    .orbit-label.one { top: 5%; right: 8%; }
+    .orbit-label.two { left: 0; top: 52%; }
+    .orbit-label.three { bottom: 4%; right: 14%; }
+    .signature { position: absolute; right: clamp(24px, 4vw, 62px); bottom: 26px; font: 11px var(--mono); color: var(--ink); }
+
+    .compare { margin-top: 48px; display: grid; gap: 12px; }
+    .lane { display: grid; grid-template-columns: 145px 1fr; gap: 20px; align-items: center; }
+    .lane-label { font-weight: 600; letter-spacing: -.03em; }
+    .track { position: relative; height: 46px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .track span { position: absolute; top: 7px; bottom: 7px; display: grid; place-items: center; padding: 0 14px; border-radius: 8px; font: 11px var(--mono); white-space: nowrap; }
+    .reactive span { left: 0; width: 31%; background: var(--ink); color: var(--paper); }
+    .cron span { left: 0; width: 31%; background: var(--ink); color: var(--paper); }
+    .cron::after { content: "checklist"; position: absolute; right: 0; top: 15px; color: var(--muted); font: 11px var(--mono); }
+    .continuous span { left: 0; right: 0; color: var(--ink); background: var(--green); }
+    .message-dot { position: absolute; top: 15px; width: 14px; height: 14px; border-radius: 50%; background: var(--coral); border: 2px solid var(--paper); }
+    .message-dot.a { left: 29%; } .message-dot.b { left: 68%; }
+
+    .quote { max-width: 870px; margin-top: 54px; font-size: clamp(32px, 5vw, 76px); line-height: .98; letter-spacing: -.07em; }
+    .quote mark { padding: 0 .12em; color: var(--ink); background: var(--green); }
+    .quote-sub { margin-top: 30px; max-width: 500px; color: #d8d2c8; font-size: 16px; line-height: 1.35; }
+    .channel-row { position: absolute; left: clamp(24px, 5vw, 72px); right: clamp(24px, 5vw, 72px); bottom: 85px; display: flex; flex-wrap: wrap; gap: 10px; }
+    .channel { padding: 10px 14px; border: 1px solid rgba(255,255,255,.22); border-radius: 999px; color: #d8d2c8; font: 11px var(--mono); }
+    .channel strong { color: var(--green); font-weight: 500; }
+
+    .split { display: grid; grid-template-columns: .9fr 1.1fr; align-items: center; gap: 6vw; }
+    .code-window { overflow: hidden; border: 1px solid rgba(23,23,22,.28); border-radius: 15px; background: #20211e; box-shadow: 14px 18px 0 rgba(23,23,22,.11); }
+    .window-bar { display: flex; gap: 6px; align-items: center; padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,.12); }
+    .window-bar i { display: block; width: 8px; aspect-ratio: 1; border-radius: 50%; background: var(--coral); } .window-bar i:nth-child(2) { background: var(--yellow); } .window-bar i:nth-child(3) { background: var(--green); }
+    pre { margin: 0; padding: 26px; overflow: auto; color: #e5e1d8; font: clamp(11px, 1.2vw, 16px)/1.6 var(--mono); }
+    .cmd { color: var(--green); } .comment { color: #8d8b83; } .fn { color: #91b8ff; } .str { color: #f1c75b; }
+    .principle-list { display: grid; gap: 16px; margin-top: 38px; }
+    .principle { display: grid; grid-template-columns: 38px 1fr; gap: 14px; align-items: start; padding-top: 14px; border-top: 1px solid var(--line); }
+    .principle b { font: 13px var(--mono); color: var(--coral); }
+    .principle p { color: #565149; font-size: 15px; line-height: 1.35; }
+
+    .interactive { display: grid; grid-template-columns: 1.05fr .95fr; align-items: center; gap: 5vw; }
+    .diagram { position: relative; min-height: 430px; }
+    .node { position: absolute; width: 150px; min-height: 72px; padding: 14px; border: 1px solid var(--line); border-radius: 13px; background: rgba(255,255,255,.48); text-align: left; transition: .2s ease; }
+    button.node { color: var(--ink); }
+    .node:hover, .node.active { transform: translateY(-4px); background: var(--green); border-color: var(--green-deep); box-shadow: 0 9px 0 rgba(23,23,22,.12); }
+    .node small { display: block; margin-bottom: 7px; color: var(--muted); font: 10px var(--mono); text-transform: uppercase; }
+    .node strong { font-size: 17px; letter-spacing: -.04em; }
+    .node.context { left: 0; top: 44%; } .node.llm { left: 34%; top: 10%; } .node.bash { right: 0; top: 44%; } .node.traj { left: 34%; bottom: 0; }
+    .connector { position: absolute; height: 1px; background: var(--ink); transform-origin: left center; opacity: .45; }
+    .c1 { width: 140px; left: 133px; top: 47%; transform: rotate(-29deg); } .c2 { width: 140px; right: 127px; top: 47%; transform: rotate(29deg); } .c3 { width: 140px; left: 134px; bottom: 24%; transform: rotate(29deg); } .c4 { width: 140px; right: 128px; bottom: 24%; transform: rotate(-29deg); }
+    .detail { padding: 24px; border-left: 3px solid var(--coral); background: rgba(255,255,255,.4); }
+    .detail .tiny { margin-bottom: 10px; } .detail h3 { margin-bottom: 13px; }
+    .detail p { color: #4f4b43; font-size: 16px; line-height: 1.42; }
+    .hint { margin-top: 20px; color: var(--muted); font: 11px var(--mono); }
+
+    .stack { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 54px; }
+    .stack-item { min-height: 132px; padding: 18px; border-top: 3px solid var(--ink); background: rgba(255,255,255,.35); }
+    .stack-item:nth-child(1) { border-color: var(--coral); } .stack-item:nth-child(2) { border-color: var(--green-deep); } .stack-item:nth-child(3) { border-color: var(--blue); } .stack-item:nth-child(4) { border-color: var(--yellow); }
+    .stack-item h3 { margin-bottom: 9px; } .stack-item p { color: #5c574e; font-size: 13px; line-height: 1.3; }
+    .wide-stack { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .bridge { padding: 16px 18px; border: 1px dashed var(--line); font: 12px var(--mono); }
+
+    .state { display: grid; grid-template-columns: .8fr 1.2fr; align-items: center; gap: 6vw; }
+    .file-tree { padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.42); font: clamp(11px, 1.3vw, 17px)/1.7 var(--mono); }
+    .file-tree .folder { color: var(--green-deep); } .file-tree .file { color: #5c574e; }
+    .tier-bar { display: grid; gap: 9px; margin-top: 34px; }
+    .tier { display: grid; grid-template-columns: 120px 1fr; align-items: center; gap: 12px; font: 11px var(--mono); }
+    .tier i { display: block; height: 27px; border-radius: 5px; background: var(--ink); } .tier:nth-child(2) i { width: 76%; background: #55524b; } .tier:nth-child(3) i { width: 52%; background: #928d83; } .tier:nth-child(4) i { width: 34%; background: #c1baad; }
+
+    .episode { background: var(--green); }
+    .episode h2 { max-width: 9ch; }
+    .timeline { position: relative; margin-top: 56px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
+    .timeline::before { content: ""; position: absolute; left: 0; right: 0; top: 16px; height: 2px; background: rgba(23,23,22,.38); }
+    .moment { position: relative; z-index: 1; padding-right: 14px; }
+    .moment button { display: block; width: 33px; aspect-ratio: 1; border: 3px solid var(--green); border-radius: 50%; background: var(--ink); }
+    .moment button:hover, .moment button.active { background: var(--coral); transform: scale(1.12); }
+    .moment strong { display: block; margin-top: 18px; max-width: 16ch; font-size: 14px; line-height: 1.1; }
+    .moment span { display: block; margin-top: 8px; color: #4c4030; font: 10px/1.3 var(--mono); }
+    .episode-detail { position: absolute; right: clamp(24px, 4vw, 62px); bottom: 86px; width: min(370px, 35%); padding: 18px; background: rgba(23,23,22,.92); color: var(--paper); }
+    .episode-detail p { margin-top: 8px; color: #ded9ce; font-size: 13px; line-height: 1.35; }
+
+    .risk-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 42px; }
+    .risk { padding: 20px; min-height: 130px; border: 1px solid rgba(23,23,22,.2); background: rgba(255,255,255,.35); }
+    .risk b { display: block; margin-bottom: 11px; font: 11px var(--mono); color: var(--coral); text-transform: uppercase; } .risk p { max-width: 34ch; color: #443d35; font-size: 14px; line-height: 1.35; }
+    .economics { display: grid; grid-template-columns: .7fr 1.3fr; align-items: center; gap: 6vw; }
+    .big-number { font-size: clamp(64px, 10vw, 150px); letter-spacing: -.1em; line-height: .82; }
+    .big-number small { display: block; margin-top: 20px; font: 12px/1.3 var(--mono); letter-spacing: 0; }
+    .backoff { display: flex; align-items: end; gap: 10px; height: 160px; padding-bottom: 25px; border-bottom: 1px solid var(--line); }
+    .backoff i { flex: 1; max-width: 74px; background: var(--ink); border-radius: 7px 7px 0 0; } .backoff i:nth-child(1) { height: 120px; } .backoff i:nth-child(2) { height: 95px; } .backoff i:nth-child(3) { height: 68px; } .backoff i:nth-child(4) { height: 44px; } .backoff i:nth-child(5) { height: 26px; }
+    .backoff-labels { display: flex; gap: 10px; margin-top: 10px; color: var(--muted); font: 10px var(--mono); } .backoff-labels span { flex: 1; max-width: 74px; }
+    .eval-callout { margin-top: 34px; padding: 18px 20px; border-left: 3px solid var(--coral); background: rgba(255,255,255,.35); font-size: 15px; line-height: 1.35; }
+
+    .try { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 5vw; }
+    .install { margin-top: 28px; padding: 22px; background: var(--ink); color: var(--green); border-radius: 12px; font: clamp(12px, 1.4vw, 19px) var(--mono); overflow: auto; }
+    .checklist { display: grid; gap: 14px; margin-top: 28px; }
+    .check { display: grid; grid-template-columns: 25px 1fr; gap: 11px; align-items: start; padding-top: 13px; border-top: 1px solid var(--line); }
+    .check b { color: var(--green-deep); font: 13px var(--mono); } .check p { color: #504b42; font-size: 14px; line-height: 1.3; }
+    .warning { margin-top: 26px; padding: 15px 17px; border: 1px solid var(--coral); color: #63291d; font-size: 13px; line-height: 1.35; }
+
+    .closing { display: grid; place-items: center; text-align: center; }
+    .closing h2 { max-width: 11ch; font-size: clamp(50px, 8vw, 124px); }
+    .closing .lede { max-width: 580px; margin-left: auto; margin-right: auto; }
+    .closing-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 36px; }
+    .closing-links a { padding: 10px 14px; border: 1px solid rgba(255,255,255,.3); border-radius: 999px; color: #d8d2c8; font: 11px var(--mono); text-decoration: none; }
+    .closing-links a:hover { color: var(--ink); background: var(--green); border-color: var(--green); }
+
+    .nav-dots { display: flex; justify-content: center; gap: 7px; padding: 2px 0 26px; }
+    .nav-dots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 50%; background: rgba(23,23,22,.35); } .nav-dots button.active { width: 24px; border-radius: 99px; background: var(--ink); }
+    .footer-note { max-width: 850px; margin: 0 auto; padding: 2px 0 30px; color: #464139; text-align: center; font: 11px/1.4 var(--mono); }
+
+    @media (max-width: 820px) {
+      .toolbar { gap: 6px; } .toolbar .brand { font-size: 13px; } .toolbar button { padding: 7px 9px; font-size: 11px; } .toolbar button.hide-mobile { display: none; }
+      .deck-wrap { padding: 10px; } .slides { gap: 18px; }
+      .slide { min-height: 0; aspect-ratio: auto; padding: 30px 24px 60px; } .slide::after { right: 24px; bottom: 22px; }
+      .cover, .split, .interactive, .state, .economics, .try { grid-template-columns: 1fr; gap: 28px; }
+      .cover h1 { font-size: clamp(62px, 17vw, 110px); } .cover-orbit { min-height: 260px; } .orbit-ring { width: 250px; } .orbit-ring:nth-child(2) { width: 185px; } .orbit-ring:nth-child(3) { width: 125px; }
+      .quote { margin-top: 32px; } .channel-row { position: static; margin-top: 30px; } .source { bottom: 21px; }
+      .lane { grid-template-columns: 1fr; gap: 7px; } .track { margin-bottom: 12px; } .stack { grid-template-columns: 1fr 1fr; margin-top: 30px; } .wide-stack { grid-template-columns: 1fr; }
+      .diagram { min-height: 380px; transform: scale(.82); transform-origin: left center; width: 122%; margin-bottom: -50px; } .detail { margin-top: -10px; }
+      .timeline { margin-top: 35px; grid-template-columns: 1fr; gap: 14px; } .timeline::before { left: 15px; right: auto; top: 0; bottom: 0; width: 2px; height: auto; } .moment { display: grid; grid-template-columns: 33px 1fr; gap: 14px; align-items: center; padding: 0; } .moment strong, .moment span { margin-top: 0; max-width: none; } .moment span { grid-column: 2; margin-top: -8px; } .episode-detail { position: static; width: auto; margin-top: 30px; }
+      .risk-grid { grid-template-columns: 1fr; margin-top: 30px; } .big-number { font-size: 90px; } .backoff { height: 115px; } .backoff i:nth-child(1) { height: 82px; } .backoff i:nth-child(2) { height: 66px; } .backoff i:nth-child(3) { height: 51px; } .backoff i:nth-child(4) { height: 36px; } .backoff i:nth-child(5) { height: 23px; }
+      h2 { max-width: 15ch; } .lede { font-size: 17px; }
+    }
+
+    @media print {
+      .toolbar, .nav-dots, .footer-note { display: none; } body { background: var(--paper); } .deck-wrap { padding: 0; } .slides { gap: 0; } .slide { min-height: 100vh; aspect-ratio: 16 / 9; border-radius: 0; box-shadow: none; page-break-after: always; }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar" data-no-export>
+    <div class="brand"><span class="brand-mark">///</span><span>HEADLONG</span></div>
+    <button type="button" id="prev">← Prev</button>
+    <button type="button" id="next">Next →</button>
+    <span class="counter" id="counter">01 / 12</span>
+    <button type="button" id="edit" aria-pressed="false">Edit</button>
+    <button type="button" id="download">Download HTML</button>
+    <div class="progress"><i id="progress"></i></div>
+  </header>
+
+  <main class="deck-wrap">
+    <section class="slides" id="slides">
+      <article class="slide cover green" data-number="01" id="slide-1">
+        <div>
+          <div class="eyebrow editable" data-editable>LAUDE INSTITUTE · OPEN SOURCE</div>
+          <h1 class="editable" data-editable>Headlong</h1>
+          <p class="lede editable" data-editable>A mind that doesn’t wait for the next prompt.</p>
+          <p class="tiny editable" data-editable style="margin-top:22px">An open source agent microharness featuring persistent agency and recursive LLMs.</p>
+        </div>
+        <div class="cover-orbit" aria-label="A conceptual diagram showing a continuously thinking agent">
+          <div class="orbit-ring"></div><div class="orbit-ring"></div><div class="orbit-ring"></div>
+          <div class="orbit-core">mind<br>loop</div>
+          <div class="orbit-label one">thoughts<br>continue</div><div class="orbit-label two">bash as<br>interface</div><div class="orbit-label three">state on<br>disk</div>
+        </div>
+        <div class="signature editable" data-editable>Interactive field guide · 2026</div>
+        <div class="source">Source: <a href="https://github.com/laude-institute/headlong" target="_blank" rel="noreferrer">github.com/laude-institute/headlong</a></div>
+      </article>
+
+      <article class="slide" data-number="02" id="slide-2">
+        <div class="eyebrow editable" data-editable>01 · THE SHIFT</div>
+        <h2 class="editable" data-editable>From request / response to continuous thought.</h2>
+        <p class="lede editable" data-editable>Headlong’s central bet is simple: a message is an observation in the agent’s life, not the beginning of a temporary session.</p>
+        <div class="compare" aria-label="Comparison of reactive, cron-based, and continuously thinking agent harnesses">
+          <div class="lane"><div class="lane-label editable" data-editable>Reactive</div><div class="track reactive"><span>message → work → answer</span><i class="message-dot a"></i></div></div>
+          <div class="lane"><div class="lane-label editable" data-editable>Reactive + cron</div><div class="track cron"><span>message → work → answer</span><i class="message-dot a"></i><i class="message-dot b"></i></div></div>
+          <div class="lane"><div class="lane-label editable" data-editable>Headlong</div><div class="track continuous"><span>thought → act → reflect → thought</span><i class="message-dot a"></i><i class="message-dot b"></i></div></div>
+        </div>
+        <div class="source">Source: <a href="https://www.laude.org/updates/headlong-a-microharness-for-persistent-agents" target="_blank" rel="noreferrer">Laude · Headlong</a></div>
+      </article>
+
+      <article class="slide dark" data-number="03" id="slide-3">
+        <div class="eyebrow editable" data-editable>02 · ONE MIND, MANY PEOPLE</div>
+        <div class="quote editable" data-editable>A human message lands in the <mark>thought stream</mark>. The agent decides if and when to respond.</div>
+        <p class="quote-sub editable" data-editable>One shared agent can follow what different people are working on, connect threads, and ping whoever seems most relevant. It behaves more like a person than a service.</p>
+        <div class="channel-row"><span class="channel"><strong>Slack</strong> → observation</span><span class="channel"><strong>Telegram</strong> → observation</span><span class="channel"><strong>chat app</strong> → observation</span><span class="channel"><strong>one timeline</strong> → one mind</span></div>
+        <div class="source">Source: <a href="https://www.laude.org/updates/headlong-a-microharness-for-persistent-agents#multi-player-fun" target="_blank" rel="noreferrer">Laude · multi-player fun</a></div>
+      </article>
+
+      <article class="slide" data-number="04" id="slide-4">
+        <div class="split">
+          <div>
+            <div class="eyebrow editable" data-editable>03 · THE DESIGN THESIS</div>
+            <h2 class="editable" data-editable>The shell is back at the centre of computing.</h2>
+            <div class="principle-list">
+              <div class="principle"><b>01</b><p class="editable" data-editable>LLMs read text and write text. Unix tools already communicate through text streams.</p></div>
+              <div class="principle"><b>02</b><p class="editable" data-editable>Composition beats enumeration: capabilities emerge from pipes, files, and small tools.</p></div>
+              <div class="principle"><b>03</b><p class="editable" data-editable>The filesystem becomes the state layer, and the terminal remains inspectable.</p></div>
+            </div>
+          </div>
+          <div class="code-window" aria-label="Example of shell composition">
+            <div class="window-bar"><i></i><i></i><i></i></div>
+            <pre><span class="comment"># no bespoke count_links tool required</span>
+<span class="cmd">curl</span> -s <span class="str">"$URL"</span> \
+  | <span class="cmd">grep</span> -oP <span class="str">'href="\K[^"]+'</span> \
+  | <span class="cmd">grep</span> <span class="str">"$DOMAIN"</span> \
+  | <span class="cmd">wc</span> -l
+
+<span class="fn"># capability emerges from composition</span></pre>
+          </div>
+        </div>
+        <div class="source">Source: <a href="https://github.com/laude-institute/headlong/blob/main/philosophy.md" target="_blank" rel="noreferrer">philosophy.md</a></div>
+      </article>
+
+      <article class="slide blue interactive" data-number="05" id="slide-5">
+        <div>
+          <div class="eyebrow editable" data-editable>04 · SHELLM</div>
+          <h2 class="editable" data-editable>One loop. Bash all the way down.</h2>
+          <p class="lede editable" data-editable>The recursive language model at the core lets an LLM write shell commands, run them, read the output, and continue until it signals completion.</p>
+          <p class="hint">Click a node to inspect its role.</p>
+        </div>
+        <div>
+          <div class="diagram" aria-label="Interactive shellm loop diagram">
+            <span class="connector c1"></span><span class="connector c2"></span><span class="connector c3"></span><span class="connector c4"></span>
+            <button class="node context active" data-node="context"><small>input</small><strong>Context</strong></button>
+            <button class="node llm" data-node="llm"><small>reason</small><strong>LLM</strong></button>
+            <button class="node bash" data-node="bash"><small>act</small><strong>Bash</strong></button>
+            <button class="node traj" data-node="traj"><small>record</small><strong>Trajectory</strong></button>
+          </div>
+          <div class="detail" id="node-detail"><div class="tiny">SELECTED NODE</div><h3>Context</h3><p>The <code>context</code> tool projects the trajectory into the message array for the next LLM call.</p></div>
+        </div>
+        <div class="source">Source: <a href="https://github.com/laude-institute/headlong/blob/main/docs/shellm.md" target="_blank" rel="noreferrer">docs/shellm.md</a></div>
+      </article>
+
+      <article class="slide" data-number="06" id="slide-6">
+        <div class="eyebrow editable" data-editable>05 · THE MICROHARNESS</div>
+        <h2 class="editable" data-editable>Small parts, composed through files and pipes.</h2>
+        <div class="stack">
+          <div class="stack-item"><h3 class="editable" data-editable>Thinkers</h3><p class="editable" data-editable>The mind: dispatches thought processes for acting, learning, recalling, responding, or idling.</p></div>
+          <div class="stack-item"><h3 class="editable" data-editable>shellm</h3><p class="editable" data-editable>The RLM core: sends context to an LLM, executes returned Bash, repeats.</p></div>
+          <div class="stack-item"><h3 class="editable" data-editable>traj</h3><p class="editable" data-editable>Append-only JSONL trajectories that can fork and merge.</p></div>
+          <div class="stack-item"><h3 class="editable" data-editable>context</h3><p class="editable" data-editable>Renders the trajectory into tiered LLM context without deleting history.</p></div>
+          <div class="wide-stack"><div class="bridge"><strong>mem / skills</strong><br><span class="tiny">File-based memories and markdown abilities</span></div><div class="bridge"><strong>Docker / local</strong><br><span class="tiny">Generated code runs in a sandbox when available</span></div></div>
+        </div>
+        <div class="tiny editable" data-editable style="margin-top:24px">The core is described by the project as 9.9K lines of Bash, making it readable end to end.</div>
+        <div class="source">Source: <a href="https://github.com/laude-institute/headlong#the-tools" target="_blank" rel="noreferrer">GitHub README · tools</a></div>
+      </article>
+
+      <article class="slide" data-number="07" id="slide-7">
+        <div class="state">
+          <div>
+            <div class="eyebrow editable" data-editable>06 · STATE IS TEXT</div>
+            <h2 class="editable" data-editable>The mind’s life stays inspectable.</h2>
+            <p class="lede editable" data-editable>Identity, memory, skills, trajectories, and run logs live in an ordinary directory. The agent can read its own source and history.</p>
+            <div class="tier-bar" aria-label="Context compaction tiers"><div class="tier"><span>recent</span><i></i></div><div class="tier"><span>near past</span><i></i></div><div class="tier"><span>older</span><i></i></div><div class="tier"><span>deep history</span><i></i></div></div>
+          </div>
+          <div class="file-tree"><div class="folder">.identities/ada/</div><div class="file">├── activate</div><div class="file">├── core_identity_prompt.md</div><div class="folder">├── memories/</div><div class="folder">├── skills/</div><div class="folder">├── thinkers/</div><div class="folder">├── trajectories/</div><div class="folder">└── run/</div></div>
+        </div>
+        <div class="source">Source: <a href="https://github.com/laude-institute/headlong/blob/main/philosophy.md#headlong-a-mind-that-keeps-thinking" target="_blank" rel="noreferrer">philosophy.md · identity as text</a></div>
+      </article>
+
+      <article class="slide episode" data-number="08" id="slide-8">
+        <div class="eyebrow editable" data-editable>07 · PERSISTENT AGENCY IN ACTION</div>
+        <h2 class="editable" data-editable>Audel finds its own bug.</h2>
+        <p class="lede editable" data-editable>On August 5, 2026, the shared agent returned to a recall process it had built earlier, diagnosed a broken pipe, fixed the code, and verified the result without a human asking.</p>
+        <div class="timeline" aria-label="Interactive timeline of the Audel recall process">
+          <div class="moment"><button type="button" data-episode="0" class="active" aria-label="Select discovery"></button><div><strong>Returns to recall</strong><span>23:11 UTC</span></div></div>
+          <div class="moment"><button type="button" data-episode="1" aria-label="Select diagnosis"></button><div><strong>Suspects the cause</strong><span>pipe vs environment variable</span></div></div>
+          <div class="moment"><button type="button" data-episode="2" aria-label="Select verification"></button><div><strong>Searches the codebase</strong><span>checks the other processes</span></div></div>
+          <div class="moment"><button type="button" data-episode="3" aria-label="Select repair"></button><div><strong>Re-applies the fix</strong><span>first edit failed silently</span></div></div>
+          <div class="moment"><button type="button" data-episode="4" aria-label="Select result"></button><div><strong>Verifies end to end</strong><span>23:58 UTC · 48 minutes</span></div></div>
+        </div>
+        <div class="episode-detail" id="episode-detail"><div class="tiny">SELECTED BEAT</div><p>Audel notices that recall has been firing but surfacing nothing, then starts investigating its own implementation.</p></div>
+        <div class="source">Source: <a href="https://www.laude.org/updates/headlong-a-microharness-for-persistent-agents#persistent-agency-in-action-audel-acting-on-its-own" target="_blank" rel="noreferrer">Laude · Audel episode</a></div>
+      </article>
+
+      <article class="slide coral" data-number="09" id="slide-9">
+        <div class="eyebrow editable" data-editable>08 · WHAT BROKE</div>
+        <h2 class="editable" data-editable>Continuous agency makes failure modes visible.</h2>
+        <div class="risk-grid">
+          <div class="risk"><b>Watchdog</b><p class="editable" data-editable>Recursive sub-runs often died because a safety watchdog killed commands that stayed silent for 30 seconds.</p></div>
+          <div class="risk"><b>Self-stop</b><p class="editable" data-editable>The agent stopped its own service by accident. A guard fixed that, then introduced a narrower matching bug.</p></div>
+          <div class="risk"><b>Shared stream</b><p class="editable" data-editable>There are no hard walls between people. The project explicitly warns that anything told to the agent may be shared.</p></div>
+          <div class="risk"><b>Operational blast radius</b><p class="editable" data-editable>Without Docker, generated Bash runs directly as the user. The project recommends a sandbox and a spend-capped key.</p></div>
+        </div>
+        <div class="tiny editable" data-editable style="position:absolute; left:clamp(24px,4vw,62px); bottom:25px; color:#63291d">Alpha research software · treat the runtime as powerful and fallible.</div>
+        <div class="source" style="color:#63291d">Source: <a href="https://www.laude.org/updates/headlong-a-microharness-for-persistent-agents#what-broke-lessons-from-running-a-persistent-agent" target="_blank" rel="noreferrer">Laude · lessons from running it</a></div>
+      </article>
+
+      <article class="slide" data-number="10" id="slide-10">
+        <div class="economics">
+          <div>
+            <div class="eyebrow editable" data-editable>09 · COST AND EVALS</div>
+            <div class="big-number editable" data-editable>$1–2<small>per hour at Laude’s stated settings<br>with GLM or Grok</small></div>
+          </div>
+          <div>
+            <h2 class="editable" data-editable>Idle time becomes a product decision.</h2>
+            <p class="lede editable" data-editable>Headlong backs off exponentially when nobody is talking, then resets the rate when a message arrives. The cost still depends on model, loop speed, and configuration.</p>
+            <div class="backoff" aria-label="Exponential backoff from 5 seconds to longer intervals"><i></i><i></i><i></i><i></i><i></i></div><div class="backoff-labels"><span>5s</span><span>10s</span><span>20s</span><span>…</span><span>cap</span></div>
+            <div class="eval-callout editable" data-editable>Most current evaluation is qualitative. The open question is how to measure the long-term value of persistent agency.</div>
+          </div>
+        </div>
+        <div class="source">Source: <a href="https://www.laude.org/updates/headlong-a-microharness-for-persistent-agents#cost" target="_blank" rel="noreferrer">Laude · cost and measuring improvement</a></div>
+      </article>
+
+      <article class="slide" data-number="11" id="slide-11">
+        <div class="try">
+          <div>
+            <div class="eyebrow editable" data-editable>10 · TRY IT</div>
+            <h2 class="editable" data-editable>Give the mind a name.</h2>
+            <p class="lede editable" data-editable>One line installs Headlong, interviews you, creates an identity, and opens the dashboard.</p>
+            <div class="install editable" data-editable>curl -fsSL https://headlong.ai/install.sh | bash</div>
+          </div>
+          <div>
+            <div class="checklist">
+              <div class="check"><b>01</b><p class="editable" data-editable>Bring Bash 3.2+, git, curl, jq, and an API key from Anthropic, OpenAI, Gemini, or OpenRouter.</p></div>
+              <div class="check"><b>02</b><p class="editable" data-editable>Use Docker when available. It keeps generated shell work inside a container.</p></div>
+              <div class="check"><b>03</b><p class="editable" data-editable>Use a dedicated, spend-capped key. The agent thinks around the clock.</p></div>
+            </div>
+            <div class="warning editable" data-editable>Important: without Docker, commands run directly on your machine as you. The installer asks for explicit confirmation before that setup.</div>
+          </div>
+        </div>
+        <div class="source">Source: <a href="https://github.com/laude-institute/headlong#-get-started" target="_blank" rel="noreferrer">GitHub README · get started</a></div>
+      </article>
+
+      <article class="slide dark closing" data-number="12" id="slide-12">
+        <div>
+          <div class="eyebrow editable" data-editable>HEADLONG · THE TAKEAWAY</div>
+          <h2 class="editable" data-editable>The shell is the agent runtime.</h2>
+          <p class="lede editable" data-editable>Headlong is a compact experiment in what happens when persistent agency is built from old, inspectable primitives: text streams, processes, files, and a loop that never quite goes to sleep.</p>
+          <div class="closing-links"><a href="https://github.com/laude-institute/headlong" target="_blank" rel="noreferrer">GitHub repo</a><a href="https://www.laude.org/updates/headlong-a-microharness-for-persistent-agents" target="_blank" rel="noreferrer">Read the essay</a><a href="https://headlong.ai" target="_blank" rel="noreferrer">headlong.ai</a></div>
+        </div>
+        <div class="source">Editable deck · sources linked throughout</div>
+      </article>
+    </section>
+    <nav class="nav-dots" id="nav-dots" aria-label="Slide navigation"></nav>
+    <p class="footer-note">Tip: select <strong>Edit</strong> to rewrite any highlighted text, then choose <strong>Download HTML</strong> to save your edited copy. Keyboard: ← → to navigate, Home / End to jump.</p>
+  </main>
+
+  <script>
+    (function () {
+      const slides = Array.from(document.querySelectorAll('.slide'));
+      const dots = document.getElementById('nav-dots');
+      const counter = document.getElementById('counter');
+      const progress = document.getElementById('progress');
+      const editButton = document.getElementById('edit');
+      let current = 0;
+      let editing = false;
+
+      slides.forEach(function (slide, index) {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.setAttribute('aria-label', 'Go to slide ' + (index + 1));
+        dot.addEventListener('click', function () { goTo(index); });
+        dots.appendChild(dot);
+      });
+
+      function goTo(index) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides[current].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        updateChrome();
+      }
+
+      function updateChrome() {
+        counter.textContent = String(current + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+        progress.style.width = (((current + 1) / slides.length) * 100) + '%';
+        Array.from(dots.children).forEach(function (dot, index) { dot.classList.toggle('active', index === current); });
+      }
+
+      document.getElementById('prev').addEventListener('click', function () { goTo(current - 1); });
+      document.getElementById('next').addEventListener('click', function () { goTo(current + 1); });
+      window.addEventListener('keydown', function (event) {
+        if (editing && (event.key === 'ArrowLeft' || event.key === 'ArrowRight' || event.key === ' ')) return;
+        if (event.key === 'ArrowLeft' || event.key === 'PageUp') goTo(current - 1);
+        if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') goTo(current + 1);
+        if (event.key === 'Home') goTo(0);
+        if (event.key === 'End') goTo(slides.length - 1);
+      });
+
+      const observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            const index = slides.indexOf(entry.target);
+            if (index !== -1) { current = index; updateChrome(); }
+          }
+        });
+      }, { threshold: .58 });
+      slides.forEach(function (slide) { observer.observe(slide); });
+
+      editButton.addEventListener('click', function () {
+        editing = !editing;
+        document.body.classList.toggle('editing', editing);
+        editButton.setAttribute('aria-pressed', String(editing));
+        editButton.textContent = editing ? 'Done editing' : 'Edit';
+        document.querySelectorAll('[data-editable]').forEach(function (element) {
+          element.contentEditable = editing ? 'true' : 'false';
+          element.spellcheck = editing;
+        });
+      });
+
+      document.getElementById('download').addEventListener('click', function () {
+        const clone = document.documentElement.cloneNode(true);
+        clone.querySelectorAll('[data-no-export], .nav-dots, .footer-note').forEach(function (node) { node.remove(); });
+        clone.querySelectorAll('[contenteditable]').forEach(function (node) { node.removeAttribute('contenteditable'); });
+        clone.querySelectorAll('.editing').forEach(function (node) { node.classList.remove('editing'); });
+        const html = '<!doctype html>\n' + clone.outerHTML;
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'headlong-editable-deck.html';
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+
+      const nodeDetails = {
+        context: ['Context', 'The context tool projects the trajectory into the message array for the next LLM call.'],
+        llm: ['LLM', 'The model chooses the next thought, a Bash block to execute, or both.'],
+        bash: ['Bash', 'The returned shell code runs, and its output becomes the next message in the loop.'],
+        traj: ['Trajectory', 'Every thought, action, message, and sub-run is recorded as a step in the agent’s life.']
+      };
+      document.querySelectorAll('[data-node]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          document.querySelectorAll('[data-node]').forEach(function (item) { item.classList.remove('active'); });
+          button.classList.add('active');
+          const detail = nodeDetails[button.dataset.node];
+          document.getElementById('node-detail').innerHTML = '<div class="tiny">SELECTED NODE</div><h3>' + detail[0] + '</h3><p>' + detail[1] + '</p>';
+        });
+      });
+
+      const episodeDetails = [
+        'Audel notices that recall has been firing but surfacing nothing, then starts investigating its own implementation.',
+        'It suspects the process is looking for a thought in an environment variable that nothing ever sets.',
+        'It searches the whole codebase and checks the other background processes to rule out a wider pattern.',
+        'The first edit fails silently. Audel catches that failure and re-applies the fix so the process reads from the pipe.',
+        'It verifies end to end that memories now surface in its thought stream. The episode takes 48 minutes.'
+      ];
+      document.querySelectorAll('[data-episode]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          document.querySelectorAll('[data-episode]').forEach(function (item) { item.classList.remove('active'); });
+          button.classList.add('active');
+          document.getElementById('episode-detail').innerHTML = '<div class="tiny">SELECTED BEAT</div><p>' + episodeDetails[Number(button.dataset.episode)] + '</p>';
+        });
+      });
+
+      updateChrome();
+    }());
+  </script>
+</body>
+</html>

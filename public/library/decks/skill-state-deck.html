@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive explainer for SKILL.state: explicit execution state for scalable long-horizon agent skills.">
+  <title>SKILL.state - Scalable Long-Horizon Agent Skills</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --paper: #fbfaf7;
+      --ink: #1f2523;
+      --muted: #66706c;
+      --line: #d9ddd6;
+      --soft: #e8ece6;
+      --coral: #ee6c4d;
+      --coral-soft: #f9d9ce;
+      --blue: #4d6fe8;
+      --blue-soft: #dfe5ff;
+      --lime: #b7d93b;
+      --lime-soft: #edf5c9;
+      --violet: #8e72d9;
+      --shadow: 0 18px 60px rgba(31,37,35,.09);
+      --radius: 22px;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: var(--sans);
+      overflow: hidden;
+    }
+    body.dark {
+      --bg: #171b1a;
+      --paper: #202623;
+      --ink: #edf1ea;
+      --muted: #aab5af;
+      --line: #3a4540;
+      --soft: #2c3530;
+      --coral-soft: #563a31;
+      --blue-soft: #2f3861;
+      --lime-soft: #39421f;
+      --shadow: 0 18px 60px rgba(0,0,0,.24);
+    }
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+
+    .deck {
+      height: 100svh;
+      position: relative;
+      isolation: isolate;
+    }
+    .topbar {
+      position: fixed;
+      z-index: 10;
+      inset: 0 0 auto 0;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      border-bottom: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(18px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -.03em;
+      font-weight: 650;
+    }
+    .brand-mark {
+      width: 20px;
+      height: 20px;
+      position: relative;
+      border-radius: 50%;
+      background: var(--coral);
+      box-shadow: 7px 0 0 -3px var(--blue), 14px 0 0 -6px var(--lime);
+    }
+    .brand small { color: var(--muted); font-weight: 500; letter-spacing: 0; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .section-nav { display: flex; gap: 5px; margin-left: 24px; }
+    .section-nav button, .icon-button, .nav-button, .dot-button {
+      border: 0;
+      color: var(--muted);
+      background: transparent;
+    }
+    .section-nav button {
+      padding: 8px 10px;
+      font-size: 12px;
+      border-radius: 999px;
+    }
+    .section-nav button:hover, .section-nav button.active { color: var(--ink); background: var(--soft); }
+    .icon-button {
+      min-width: 40px;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+    }
+    .icon-button:hover, .nav-button:hover { color: var(--ink); background: var(--soft); }
+    .progress-wrap {
+      position: fixed;
+      z-index: 11;
+      left: 0;
+      right: 0;
+      top: 67px;
+      height: 2px;
+      background: var(--line);
+    }
+    .progress-bar { height: 100%; width: 0; background: var(--coral); transition: width .35s ease; }
+
+    .slides {
+      height: 100svh;
+      transition: transform .55s cubic-bezier(.22,.7,.2,1);
+      will-change: transform;
+    }
+    .slide {
+      height: 100svh;
+      min-height: 560px;
+      padding: 112px 8vw 82px;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .slide-inner { width: min(1180px, 100%); margin: 0 auto; position: relative; z-index: 1; }
+    .slide::after {
+      content: attr(data-number);
+      position: absolute;
+      right: 5vw;
+      bottom: 34px;
+      font: 500 12px var(--mono);
+      color: var(--muted);
+      opacity: .8;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      color: var(--coral);
+      font: 650 12px var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before { content: ""; width: 28px; height: 2px; background: currentColor; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2 { letter-spacing: -.065em; line-height: .96; font-weight: 650; }
+    h1 { max-width: 860px; margin-bottom: 24px; font-size: clamp(54px, 9vw, 126px); }
+    h2 { max-width: 880px; margin-bottom: 20px; font-size: clamp(42px, 6vw, 82px); }
+    h3 { margin-bottom: 10px; font-size: 18px; letter-spacing: -.025em; }
+    .lede { max-width: 690px; margin-bottom: 0; color: var(--muted); font-size: clamp(18px, 2.2vw, 26px); line-height: 1.3; letter-spacing: -.025em; }
+    .small { color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .source {
+      position: absolute;
+      bottom: 26px;
+      left: 8vw;
+      max-width: 700px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+      opacity: .92;
+    }
+    .source a { text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .accent { color: var(--coral); }
+    .blue { color: var(--blue); }
+    .lime { color: #6e8f00; }
+    .dark .lime { color: var(--lime); }
+
+    .hero-orbit {
+      position: absolute;
+      width: min(48vw, 560px);
+      aspect-ratio: 1;
+      right: 6vw;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      opacity: .9;
+    }
+    .hero-orbit::before, .hero-orbit::after { content: ""; position: absolute; inset: 12%; border: 1px solid var(--line); border-radius: 50%; }
+    .hero-orbit::after { inset: 25%; border-color: var(--coral); border-style: dashed; opacity: .65; }
+    .orbit-dot { position: absolute; border-radius: 50%; }
+    .orbit-dot.one { width: 18px; height: 18px; top: 7%; left: 55%; background: var(--lime); }
+    .orbit-dot.two { width: 13px; height: 13px; bottom: 18%; left: 12%; background: var(--blue); }
+    .orbit-dot.three { width: 28px; height: 28px; right: 4%; top: 47%; background: var(--coral); }
+    .orbit-core { position: absolute; inset: 39%; border-radius: 28%; background: var(--ink); color: var(--bg); display: grid; place-items: center; font: 650 11px var(--mono); letter-spacing: .06em; }
+    .hero-note { display: flex; gap: 14px; margin-top: 42px; color: var(--muted); font: 12px var(--mono); }
+    .hero-note span { padding-right: 14px; border-right: 1px solid var(--line); }
+    .hero-note span:last-child { border-right: 0; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 52px; align-items: center; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .padded { padding: 24px; }
+    .tl-dr { display: grid; gap: 13px; }
+    .tl-item { display: grid; grid-template-columns: 38px 1fr; gap: 16px; align-items: start; padding: 16px 18px; background: var(--paper); border: 1px solid var(--line); border-radius: 15px; }
+    .step-dot { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: var(--paper); background: var(--ink); font: 650 12px var(--mono); }
+    .tl-item:nth-child(2) .step-dot { background: var(--blue); }
+    .tl-item:nth-child(3) .step-dot { background: var(--coral); }
+    .tl-item:nth-child(4) .step-dot { background: var(--lime); color: var(--ink); }
+    .tl-item strong { display: block; margin-bottom: 4px; font-size: 15px; }
+    .tl-item span { color: var(--muted); font-size: 14px; line-height: 1.35; }
+    .quote-box { padding: 30px; border-left: 3px solid var(--coral); background: var(--coral-soft); border-radius: 0 18px 18px 0; }
+    .quote-box p { margin-bottom: 0; font-size: clamp(24px, 3vw, 40px); line-height: 1.08; letter-spacing: -.045em; }
+    .quote-box small { display: block; margin-top: 18px; color: var(--muted); font: 12px var(--mono); }
+
+    .problem-visual { position: relative; height: 390px; padding: 26px; overflow: hidden; }
+    .problem-visual::after { content: ""; position: absolute; left: 30px; right: 30px; bottom: 26px; height: 1px; background: var(--line); }
+    .history-stack { position: absolute; left: 40px; right: 40px; bottom: 60px; display: grid; gap: 7px; }
+    .history-line { height: 28px; padding: 0 12px; display: flex; align-items: center; border-radius: 6px; color: var(--muted); background: var(--soft); font: 11px var(--mono); white-space: nowrap; overflow: hidden; }
+    .history-line:nth-child(1) { width: 42%; opacity: .5; }
+    .history-line:nth-child(2) { width: 54%; opacity: .6; }
+    .history-line:nth-child(3) { width: 68%; opacity: .7; }
+    .history-line:nth-child(4) { width: 82%; opacity: .82; }
+    .history-line:nth-child(5) { width: 100%; background: var(--coral-soft); color: var(--coral); }
+    .context-label { position: absolute; top: 28px; right: 28px; color: var(--coral); font: 650 12px var(--mono); }
+    .attention-drag { position: absolute; right: 32px; top: 84px; width: 110px; height: 110px; border-radius: 50%; background: color-mix(in srgb, var(--coral) 12%, transparent); border: 1px dashed var(--coral); display: grid; place-items: center; text-align: center; color: var(--coral); font-size: 12px; }
+    .stat-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 18px; }
+    .stat { padding: 16px; border-top: 2px solid var(--ink); }
+    .stat strong { display: block; font: 650 29px var(--mono); letter-spacing: -.08em; }
+    .stat span { color: var(--muted); font-size: 12px; }
+
+    .runtime-loop { display: grid; grid-template-columns: 1.15fr .85fr; gap: 26px; align-items: stretch; }
+    .loop-panel { min-height: 390px; padding: 26px; }
+    .loop-flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; align-items: center; margin-top: 54px; }
+    .flow-node { min-height: 104px; padding: 14px 10px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 14px; border: 1px solid var(--line); background: var(--paper); }
+    .flow-node:nth-child(2) { border-color: var(--blue); background: var(--blue-soft); }
+    .flow-node:nth-child(3) { border-color: var(--coral); background: var(--coral-soft); }
+    .flow-node:nth-child(4) { border-color: var(--lime); background: var(--lime-soft); }
+    .flow-node b { font-size: 14px; }
+    .flow-node small { color: var(--muted); font-size: 11px; line-height: 1.25; }
+    .flow-arrow { text-align: center; color: var(--muted); font-size: 20px; }
+    .loop-caption { margin-top: 46px; display: flex; justify-content: space-between; gap: 20px; font: 12px var(--mono); color: var(--muted); }
+    .loop-caption b { color: var(--ink); }
+    .input-stack { display: grid; gap: 11px; margin: 34px 0; }
+    .input-chip { padding: 17px 18px; border-radius: 12px; border: 1px solid var(--line); background: var(--paper); }
+    .input-chip b { display: block; margin-bottom: 3px; font: 650 16px var(--mono); }
+    .input-chip span { color: var(--muted); font-size: 12px; }
+    .input-chip:nth-child(1) { border-left: 4px solid var(--ink); }
+    .input-chip:nth-child(2) { border-left: 4px solid var(--blue); }
+    .input-chip:nth-child(3) { border-left: 4px solid var(--coral); }
+
+    .state-split { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch; }
+    .state-card { min-height: 310px; padding: 26px; position: relative; }
+    .state-card h3 { display: flex; justify-content: space-between; align-items: center; }
+    .pill { padding: 5px 8px; border-radius: 99px; font: 650 10px var(--mono); letter-spacing: .04em; text-transform: uppercase; }
+    .pill.ephemeral { color: var(--coral); background: var(--coral-soft); }
+    .pill.persistent { color: #5b7600; background: var(--lime-soft); }
+    .dark .pill.persistent { color: var(--lime); }
+    .reasoning { display: grid; gap: 8px; margin-top: 24px; }
+    .reasoning div { height: 13px; border-radius: 99px; background: var(--soft); }
+    .reasoning div:nth-child(1) { width: 92%; }
+    .reasoning div:nth-child(2) { width: 78%; }
+    .reasoning div:nth-child(3) { width: 64%; }
+    .reasoning::after { content: "discarded after state projection"; display: block; margin-top: 18px; color: var(--coral); font: 11px var(--mono); }
+    .json-mini { margin-top: 24px; padding: 16px; border-radius: 12px; background: var(--soft); color: var(--ink); font: 12px/1.7 var(--mono); }
+    .json-mini .key { color: var(--blue); }
+    .json-mini .value { color: #688900; }
+    .dark .json-mini .value { color: var(--lime); }
+    .json-mini .null { color: var(--coral); }
+
+    .schema-card { padding: 26px; }
+    .schema-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 24px; }
+    .schema-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 15px; border-radius: 10px; background: var(--soft); font: 12px var(--mono); }
+    .schema-field span { color: var(--muted); }
+    .schema-field b { font-weight: 500; }
+    .schema-note { margin-top: 18px; color: var(--muted); font-size: 13px; line-height: 1.4; }
+
+    .complexity { display: grid; gap: 22px; }
+    .chart-controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .segmented { display: inline-flex; padding: 4px; border: 1px solid var(--line); background: var(--paper); border-radius: 12px; }
+    .segmented button { border: 0; border-radius: 8px; padding: 9px 12px; color: var(--muted); background: transparent; font: 12px var(--mono); }
+    .segmented button.active { color: var(--paper); background: var(--ink); }
+    .chart { padding: 25px; }
+    .bars { display: grid; gap: 17px; }
+    .bar-row { display: grid; grid-template-columns: 140px 1fr 90px; gap: 14px; align-items: center; }
+    .bar-label { font-size: 13px; color: var(--muted); }
+    .bar-track { height: 30px; border-radius: 7px; background: var(--soft); overflow: hidden; }
+    .bar-fill { height: 100%; width: 0; border-radius: inherit; transition: width .45s cubic-bezier(.22,.7,.2,1); }
+    .bar-fill.react { background: var(--coral); }
+    .bar-fill.skill { background: var(--blue); }
+    .bar-value { text-align: right; font: 650 13px var(--mono); }
+    .axis { display: flex; justify-content: space-between; margin: 12px 90px 0 154px; color: var(--muted); font: 11px var(--mono); }
+    .formula { margin-top: 23px; padding: 17px 20px; border-radius: 12px; background: var(--ink); color: var(--bg); font: 18px var(--mono); text-align: center; }
+    .formula em { color: var(--lime); font-style: normal; }
+
+    .demo { display: grid; grid-template-columns: .8fr 1.2fr; gap: 20px; }
+    .demo-controls { padding: 25px; }
+    .demo-controls h3 { margin-bottom: 18px; }
+    .demo-step { width: 100%; display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: center; border: 0; padding: 12px 10px; color: var(--muted); text-align: left; background: transparent; border-bottom: 1px solid var(--line); }
+    .demo-step:last-child { border-bottom: 0; }
+    .demo-step.active { color: var(--ink); }
+    .demo-step i { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; color: var(--muted); background: var(--soft); font: 11px var(--mono); font-style: normal; }
+    .demo-step.active i { color: var(--paper); background: var(--blue); }
+    .demo-step span { font-size: 13px; }
+    .terminal { min-height: 300px; padding: 25px; background: #202522; border: 1px solid #3a4540; border-radius: var(--radius); color: #dce6df; font: 13px/1.7 var(--mono); box-shadow: var(--shadow); }
+    .terminal .dim { color: #8b9891; }
+    .terminal .hi { color: #c7e665; }
+    .terminal .hot { color: #ff9b7e; }
+    .terminal .cyan { color: #9dc2ff; }
+    .terminal .line { display: block; min-height: 22px; }
+    .terminal .cursor { display: inline-block; width: 7px; height: 15px; background: #c7e665; vertical-align: -2px; animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .comparison { padding: 0; overflow: hidden; }
+    .comparison table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .comparison th, .comparison td { padding: 15px 17px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .comparison th { color: var(--muted); font: 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; background: var(--soft); }
+    .comparison tr:last-child td { border-bottom: 0; }
+    .comparison td:first-child { font-weight: 650; white-space: nowrap; }
+    .comparison tr:last-child td:first-child { color: var(--blue); }
+    .check { color: #6e8f00; font-weight: 700; }
+    .dark .check { color: var(--lime); }
+    .caution { color: var(--coral); }
+
+    .benchmark-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 28px; }
+    .benchmark { min-height: 160px; padding: 19px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); }
+    .benchmark b { display: block; margin-bottom: 14px; font-size: 15px; }
+    .benchmark p { margin-bottom: 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .benchmark .number { display: block; margin-bottom: 7px; color: var(--coral); font: 650 27px var(--mono); }
+    .metrics { display: flex; gap: 10px; margin-top: 28px; }
+    .metric { flex: 1; padding: 17px; border-top: 2px solid var(--ink); }
+    .metric b { display: block; font-size: 14px; }
+    .metric span { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; }
+
+    .evidence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .evidence-card { padding: 24px; }
+    .evidence-card h3 { display: flex; justify-content: space-between; gap: 10px; }
+    .evidence-card h3 span { color: var(--coral); font: 650 12px var(--mono); }
+    .mini-bars { display: grid; gap: 13px; margin-top: 24px; }
+    .mini-row { display: grid; grid-template-columns: 115px 1fr 43px; gap: 10px; align-items: center; }
+    .mini-row label { color: var(--muted); font-size: 12px; }
+    .mini-track { height: 18px; border-radius: 5px; background: var(--soft); overflow: hidden; }
+    .mini-fill { height: 100%; border-radius: inherit; background: var(--blue); }
+    .mini-fill.bad { background: var(--coral); }
+    .mini-row output { text-align: right; font: 650 12px var(--mono); }
+    .recovery-line { display: flex; gap: 6px; margin-top: 25px; align-items: end; height: 88px; }
+    .recovery-bar { flex: 1; display: flex; flex-direction: column; justify-content: end; gap: 6px; text-align: center; font: 10px var(--mono); color: var(--muted); }
+    .recovery-bar i { display: block; height: 55px; border-radius: 6px 6px 0 0; background: var(--coral); font-style: normal; }
+    .recovery-bar.skill i { height: 7px; background: var(--lime); }
+    .evidence-note { margin-top: 17px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+
+    .howto { display: grid; grid-template-columns: .9fr 1.1fr; gap: 34px; align-items: start; }
+    .howto-intro { position: sticky; top: 0; }
+    .howto-list { display: grid; gap: 10px; }
+    .howto-item { display: grid; grid-template-columns: 47px 1fr; gap: 16px; padding: 19px 20px; border: 1px solid var(--line); border-radius: 15px; background: var(--paper); }
+    .howto-item b { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; color: var(--paper); background: var(--ink); font: 650 13px var(--mono); }
+    .howto-item:nth-child(2) b, .howto-item:nth-child(5) b { background: var(--blue); }
+    .howto-item:nth-child(3) b, .howto-item:nth-child(6) b { background: var(--coral); }
+    .howto-item:nth-child(4) b, .howto-item:nth-child(7) b { background: var(--lime); color: var(--ink); }
+    .howto-item strong { display: block; margin-bottom: 4px; font-size: 15px; }
+    .howto-item span { color: var(--muted); font-size: 13px; line-height: 1.35; }
+    .code-card { padding: 25px; background: #202522; border-radius: var(--radius); color: #dce6df; box-shadow: var(--shadow); }
+    .code-card pre { margin: 20px 0 0; white-space: pre-wrap; font: 12px/1.7 var(--mono); }
+    .code-card .comment { color: #8b9891; }
+    .code-card .key { color: #9dc2ff; }
+    .code-card .string { color: #c7e665; }
+    .code-card .operator { color: #ff9b7e; }
+
+    .checklist { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 26px; }
+    .checklist label { display: flex; gap: 12px; align-items: start; padding: 15px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--muted); font-size: 13px; line-height: 1.35; }
+    .checklist input { accent-color: var(--blue); width: 17px; height: 17px; flex: 0 0 auto; }
+    .takeaway { margin-top: 30px; padding: 22px; border-radius: 15px; background: var(--lime-soft); }
+    .takeaway p { margin-bottom: 0; font-size: 18px; line-height: 1.25; letter-spacing: -.02em; }
+
+    .closing { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center; }
+    .principles { display: grid; gap: 13px; }
+    .principle { display: grid; grid-template-columns: 28px 1fr; gap: 12px; padding-bottom: 13px; border-bottom: 1px solid var(--line); }
+    .principle b { color: var(--coral); font: 650 14px var(--mono); }
+    .principle span { color: var(--muted); font-size: 15px; line-height: 1.35; }
+    .closing-mark { min-height: 360px; display: grid; place-items: center; position: relative; border: 1px solid var(--line); border-radius: 50%; }
+    .closing-mark::before, .closing-mark::after { content: ""; position: absolute; border: 1px solid var(--line); border-radius: 50%; }
+    .closing-mark::before { inset: 11%; }
+    .closing-mark::after { inset: 23%; border-color: var(--coral); border-style: dashed; }
+    .closing-mark div { width: 100px; height: 100px; z-index: 1; display: grid; place-items: center; border-radius: 24px; color: var(--paper); background: var(--ink); font: 650 12px var(--mono); text-align: center; }
+    .closing-mark i { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--lime); }
+    .closing-mark i:nth-child(2) { top: 12%; right: 23%; }
+    .closing-mark i:nth-child(3) { left: 13%; bottom: 24%; background: var(--blue); }
+    .closing-mark i:nth-child(4) { right: 4%; bottom: 42%; background: var(--coral); }
+
+    .footer-controls {
+      position: fixed;
+      z-index: 10;
+      inset: auto 0 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      padding: 17px 20px 20px;
+      background: linear-gradient(transparent, color-mix(in srgb, var(--bg) 94%, transparent) 34%);
+    }
+    .nav-button { min-width: 46px; min-height: 40px; border: 1px solid var(--line); border-radius: 999px; }
+    .dot-nav { display: flex; gap: 6px; align-items: center; max-width: 55vw; overflow: hidden; }
+    .dot-button { width: 7px; height: 7px; padding: 0; border-radius: 50%; background: var(--line); transition: all .2s ease; }
+    .dot-button.active { width: 24px; border-radius: 99px; background: var(--coral); }
+    .kbd { color: var(--muted); font: 11px var(--mono); }
+
+    @media (max-width: 900px) {
+      .section-nav { display: none; }
+      .slide { padding: 100px 6vw 82px; }
+      .source { left: 6vw; right: 6vw; }
+      .hero-orbit { opacity: .25; right: -15vw; width: 70vw; }
+      .grid-2, .runtime-loop, .demo, .howto, .closing { grid-template-columns: 1fr; gap: 22px; }
+      .howto-intro { position: static; }
+      .loop-flow { gap: 5px; }
+      .flow-node { min-height: 94px; }
+      .flow-arrow { font-size: 16px; }
+      .benchmark-grid { grid-template-columns: repeat(2, 1fr); }
+      .closing-mark { min-height: 230px; }
+    }
+    @media (max-width: 600px) {
+      body { overflow: hidden; }
+      .topbar { height: 59px; padding: 0 16px; }
+      .brand small { display: none; }
+      .progress-wrap { top: 58px; }
+      .slide { min-height: 520px; padding: 83px 20px 78px; align-items: flex-start; overflow-y: auto; overscroll-behavior: contain; }
+      .slide-inner { align-self: center; }
+      h1 { font-size: clamp(48px, 15vw, 78px); }
+      h2 { font-size: clamp(38px, 11vw, 58px); }
+      .lede { font-size: 18px; }
+      .hero-orbit { top: 28%; right: -35vw; width: 110vw; }
+      .hero-note { flex-wrap: wrap; gap: 8px; margin-top: 27px; }
+      .hero-note span { padding-right: 9px; }
+      .grid-3, .state-split, .evidence-grid, .checklist { grid-template-columns: 1fr; }
+      .quote-box p { font-size: 28px; }
+      .problem-visual { height: 280px; }
+      .history-stack { left: 25px; right: 25px; bottom: 45px; }
+      .context-label { top: 20px; right: 20px; }
+      .attention-drag { right: 20px; top: 65px; width: 85px; height: 85px; font-size: 10px; }
+      .loop-flow { grid-template-columns: 1fr; gap: 6px; margin-top: 24px; }
+      .flow-node { min-height: 60px; flex-direction: row; align-items: center; }
+      .flow-arrow { transform: rotate(90deg); height: 18px; }
+      .loop-panel { min-height: auto; }
+      .chart-controls { align-items: flex-start; flex-direction: column; }
+      .bar-row { grid-template-columns: 90px 1fr 66px; gap: 8px; }
+      .bar-label { font-size: 11px; }
+      .axis { margin-left: 98px; margin-right: 66px; }
+      .formula { font-size: 14px; }
+      .benchmark-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .benchmark { min-height: 145px; padding: 14px; }
+      .benchmark b { font-size: 13px; }
+      .metrics { display: grid; grid-template-columns: 1fr 1fr; }
+      .comparison { overflow-x: auto; }
+      .comparison table { min-width: 650px; }
+      .mini-row { grid-template-columns: 82px 1fr 38px; gap: 7px; }
+      .howto-item { grid-template-columns: 38px 1fr; padding: 14px; }
+      .code-card { padding: 18px; }
+      .code-card pre { font-size: 10px; }
+      .slide-inner { align-self: flex-start; padding-bottom: 18px; }
+      .source { position: static; margin: 0 auto 64px; padding: 0; }
+      .kbd { display: none; }
+      .footer-controls { padding-bottom: 13px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behaviour: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-label="SKILL.state interactive slide deck">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>SKILL.state</span><small>scalable long-horizon agent skills</small></div>
+      <nav class="section-nav" aria-label="Deck sections">
+        <button type="button" data-jump="1">TL;DR</button>
+        <button type="button" data-jump="3">Mechanics</button>
+        <button type="button" data-jump="9">Evidence</button>
+        <button type="button" data-jump="13">How to build</button>
+      </nav>
+      <div class="top-actions"><button type="button" class="icon-button" id="themeToggle" aria-label="Toggle colour theme">☼</button></div>
+    </header>
+    <div class="progress-wrap" aria-hidden="true"><div class="progress-bar" id="progressBar"></div></div>
+
+    <section class="slides" id="slides" aria-live="polite">
+      <article class="slide" data-index="0" data-number="01">
+        <div class="slide-inner">
+          <div class="eyebrow">Paper, translated</div>
+          <h1>Make the state<br><span class="accent">carry the work.</span></h1>
+          <p class="lede">A visual guide to SKILL.state, a runtime architecture for long-running agents that replaces transcript replay with explicit, validated execution state.</p>
+          <div class="hero-note"><span>17-slide explainer</span><span>beginner-friendly</span><span>implementation guide</span></div>
+        </div>
+        <div class="hero-orbit" aria-hidden="true"><span class="orbit-dot one"></span><span class="orbit-dot two"></span><span class="orbit-dot three"></span><div class="orbit-core">Σ STATE</div></div>
+        <p class="source">Based on Badhe, Tiwari & Chung, <a href="https://arxiv.org/abs/2608.26263" target="_blank" rel="noopener noreferrer">SKILL.state: Scalable Long-Horizon Agent Skills</a>, arXiv:2608.26263v1, August 26, 2026.</p>
+      </article>
+
+      <article class="slide" data-index="1" data-number="02">
+        <div class="slide-inner grid-2">
+          <div>
+            <div class="eyebrow">TL;DR</div>
+            <h2>Stop making the model reread its entire life.</h2>
+            <p class="lede">Give it the skill, the current state, and the latest observation. Let it reason, propose a small state patch, take one action, then throw the working transcript away.</p>
+          </div>
+          <div class="tl-dr">
+            <div class="tl-item"><i class="step-dot">01</i><div><strong>State is the memory</strong><span>Keep only facts needed for the next decision in a structured object.</span></div></div>
+            <div class="tl-item"><i class="step-dot">02</i><div><strong>Reasoning is temporary</strong><span>Use rich within-step reasoning, but don’t drag it into the next prompt.</span></div></div>
+            <div class="tl-item"><i class="step-dot">03</i><div><strong>Runtime owns truth</strong><span>Validate the proposed patch deterministically before applying it.</span></div></div>
+            <div class="tl-item"><i class="step-dot">04</i><div><strong>Prompt size stays bounded</strong><span>The paper reports O(1) prompt footprint and O(T) cumulative tokens.</span></div></div>
+          </div>
+        </div>
+        <p class="source">Paper abstract; Sections 3.1-3.3. Formula notation: P = procedural specification, Σ = structured execution state, O = latest observation.</p>
+      </article>
+
+      <article class="slide" data-index="2" data-number="03">
+        <div class="slide-inner grid-2">
+          <div>
+            <div class="eyebrow">The problem</div>
+            <h2>Long horizons create a history tax.</h2>
+            <p class="lede">In a conventional agent loop, observations, actions, tool outputs, and reasoning accumulate in the prompt. More context means more tokens, more stale facts, and more work separating now from then.</p>
+            <div class="stat-row"><div class="stat"><strong>O(T)</strong><span>prompt length as turns accumulate</span></div><div class="stat"><strong>O(T²)</strong><span>cumulative token complexity</span></div></div>
+          </div>
+          <div class="card problem-visual" aria-label="Illustration of an expanding conversation history">
+            <span class="context-label">context growth</span><div class="attention-drag">attention<br>drag</div>
+            <div class="history-stack"><div class="history-line">t = 1 / initial observation</div><div class="history-line">t = 12 / prior action + result</div><div class="history-line">t = 50 / stale telemetry</div><div class="history-line">t = 100 / obsolete reasoning</div><div class="history-line">latest / what matters now?</div></div>
+          </div>
+        </div>
+        <p class="source">Paper Sections 1 and 3.3. The paper describes historical observations and obsolete reasoning as remaining embedded after they cease to be relevant.</p>
+      </article>
+
+      <article class="slide" data-index="3" data-number="04">
+        <div class="slide-inner">
+          <div class="eyebrow">The core move</div>
+          <h2>Turn every step into a state transition.</h2>
+          <div class="runtime-loop">
+            <div class="card loop-panel"><h3>The SKILL.state loop</h3><div class="loop-flow"><div class="flow-node"><b>Observe</b><small>latest Oₜ</small></div><div class="flow-arrow">→</div><div class="flow-node"><b>Generate</b><small>reason + patch + action</small></div><div class="flow-arrow">→</div><div class="flow-node"><b>Validate</b><small>reject malformed updates</small></div></div><div class="loop-caption"><span><b>Σₜ₊₁</b> = Σₜ ⊕ ΔΣₜ</span><span>then execute aₜ</span></div></div>
+            <div class="card padded"><h3>What the model receives</h3><div class="input-stack"><div class="input-chip"><b>P</b><span>immutable procedural specification</span></div><div class="input-chip"><b>Σₜ</b><span>current structured execution state</span></div><div class="input-chip"><b>Oₜ</b><span>latest environment observation</span></div></div><p class="small">It does not receive previous observations, previous actions, or previous reasoning traces.</p></div>
+          </div>
+        </div>
+        <p class="source">Paper Section 3 and Algorithm 1. The merge operator ⊕ is described as dictionary merge with null-deletion semantics.</p>
+      </article>
+
+      <article class="slide" data-index="4" data-number="05">
+        <div class="slide-inner">
+          <div class="eyebrow">A useful distinction</div>
+          <h2>Reason richly. Remember selectively.</h2>
+          <div class="state-split">
+            <div class="card state-card"><h3>Intermediate reasoning <span class="pill ephemeral">ephemeral</span></h3><p class="small">Multi-step reasoning can remain intact while the model is deciding what to do.</p><div class="reasoning"><div></div><div></div><div></div></div></div>
+            <div class="card state-card"><h3>Execution state <span class="pill persistent">persistent</span></h3><p class="small">Only the validated facts needed for future execution survive the step.</p><div class="json-mini"><span class="key">"active_item"</span>: <span class="value">"item_12"</span>,<br><span class="key">"shelf"</span>: <span class="value">"shelf_42"</span>,<br><span class="key">"status"</span>: <span class="value">"ready_to_ship"</span></div></div>
+          </div>
+          <div class="quote-box" style="margin-top:20px"><p>State becomes the sufficient statistic for the next computation.</p><small>That is the bet. The limitations matter when the bet does not hold.</small></div>
+        </div>
+        <p class="source">Paper Sections 3.2 and 7. “Sufficient statistic” is the paper’s framing of when discarding history is lossless.</p>
+      </article>
+
+      <article class="slide" data-index="5" data-number="06">
+        <div class="slide-inner grid-2">
+          <div><div class="eyebrow">Schema authoring</div><h2>Design the state once per domain.</h2><p class="lede">The schema should capture what the agent must know to make the next correct move. It is not a diary of everything that happened.</p><p class="small" style="margin-top:22px">The paper’s InterCode CTF example reuses one static five-field schema across 100 diverse challenges.</p></div>
+          <div class="card schema-card"><h3>Example: software task state</h3><div class="schema-grid"><div class="schema-field"><b>discovered_flags</b><span>list</span></div><div class="schema-field"><b>tested_hypotheses</b><span>list</span></div><div class="schema-field"><b>active_files</b><span>list</span></div><div class="schema-field"><b>working_dir</b><span>string</span></div><div class="schema-field"><b>cmd_summary</b><span>string</span></div></div><p class="schema-note">A good field prevents repeated work, preserves a dependency, or anchors the next action.</p></div>
+        </div>
+        <p class="source">Paper Section 3.1. Example schema: discovered_flags, tested_hypotheses, active_files, working_dir, cmd_summary.</p>
+      </article>
+
+      <article class="slide" data-index="6" data-number="07">
+        <div class="slide-inner">
+          <div class="eyebrow">Why it scales</div><h2>One prompt stays small.<br><span class="blue">The horizon can grow.</span></h2>
+          <div class="card chart"><div class="chart-controls"><div><strong>Illustrative prompt footprint</strong><div class="small">The paper’s asymptotic comparison, made tangible.</div></div><div class="segmented" role="group" aria-label="Execution horizon"><button type="button" data-horizon="10">T = 10</button><button type="button" data-horizon="50" class="active">T = 50</button><button type="button" data-horizon="200">T = 200</button></div></div><div class="bars"><div class="bar-row"><span class="bar-label">history runtime</span><div class="bar-track"><div class="bar-fill react" id="reactBar"></div></div><span class="bar-value" id="reactValue">11,931</span></div><div class="bar-row"><span class="bar-label">SKILL.state</span><div class="bar-track"><div class="bar-fill skill" id="skillBar"></div></div><span class="bar-value" id="skillValue">1,773</span></div></div><div class="axis"><span>0</span><span>larger prompt</span></div><div class="formula">history: <em>O(T²)</em> &nbsp;&nbsp; | &nbsp;&nbsp; SKILL.state: <em>O(T)</em> cumulative tokens</div></div>
+        </div>
+        <p class="source">Paper Section 3.3 and Table 1, Warehouse Management using Gemini-3-Flash. Values shown: average prompt size at T = 10, 50, 200.</p>
+      </article>
+
+      <article class="slide" data-index="7" data-number="08">
+        <div class="slide-inner">
+          <div class="eyebrow">Worked example</div><h2>Keep the fact. Drop the monologue.</h2>
+          <div class="demo"><div class="card demo-controls"><h3>Warehouse episode</h3><button class="demo-step active" type="button" data-demo="0"><i>1</i><span>Observation arrives</span></button><button class="demo-step" type="button" data-demo="1"><i>2</i><span>Model checks state</span></button><button class="demo-step" type="button" data-demo="2"><i>3</i><span>Patch + action emitted</span></button><button class="demo-step" type="button" data-demo="3"><i>4</i><span>Next step is clean</span></button></div><div class="terminal" id="terminal" aria-live="polite"></div></div>
+        </div>
+        <p class="source">Paper Appendix B.3, “Example Episode Trajectory”. The example uses item_12 on shelf_42 and a null state update after shipping.</p>
+      </article>
+
+      <article class="slide" data-index="8" data-number="09">
+        <div class="slide-inner">
+          <div class="eyebrow">Not just compression</div><h2>Shorter is not enough.<br><span class="accent">Structure is the point.</span></h2>
+          <div class="card comparison"><table><thead><tr><th>Runtime</th><th>What survives</th><th>Failure pressure</th></tr></thead><tbody><tr><td>Prompt / ReAct</td><td>Full transcript</td><td class="caution">Growing context and stale facts</td></tr><tr><td>Memory</td><td>Summary + recent turns</td><td class="caution">Summary can blur exact relationships</td></tr><tr><td>Stateful</td><td>Structured state + full transcript</td><td class="caution">State still shares space with history</td></tr><tr><td>SKILL.state</td><td>Validated structured state</td><td class="check">Bounded prompt; exact fields survive</td></tr></tbody></table></div>
+          <p class="small" style="margin-top:18px">The paper’s budget-matched controls are important: at roughly 1,800 prompt tokens, sliding-window, summary-capped, and LLMLingua baselines still underperform structured state in the warehouse task.</p>
+        </div>
+        <p class="source">Paper Sections 5.1 and 5.6, Table 5. The comparison is a plain-English synthesis of the evaluated runtime paradigms.</p>
+      </article>
+
+      <article class="slide" data-index="9" data-number="10">
+        <div class="slide-inner">
+          <div class="eyebrow">Evidence</div><h2>Test the runtime, not just the model.</h2><p class="lede">SKILL.state was evaluated across controlled sequential environments and public interactive benchmarks.</p>
+          <div class="benchmark-grid"><div class="benchmark"><span class="number">500</span><b>Warehouse</b><p>Independent shelves. Store, ship, move, wait.</p></div><div class="benchmark"><span class="number">graph</span><b>Software repo</b><p>Branches, commits, PRs, CI status, merges and rollbacks.</p></div><div class="benchmark"><span class="number">100</span><b>InterCode CTF</b><p>Linux bash challenges spanning reverse engineering to exploitation.</p></div><div class="benchmark"><span class="number">τ</span><b>Sierra τ-Bench</b><p>Retail and airline customer-service workflows with tools and policy.</p></div></div>
+          <div class="metrics"><div class="metric"><b>Task success</b><span>Correct actions or final state</span></div><div class="metric"><b>Average prompt size</b><span>Tokens per model invocation</span></div><div class="metric"><b>Total token cost</b><span>Cumulative burn across the horizon</span></div></div>
+        </div>
+        <p class="source">Paper Section 4. Benchmarks and metrics as described by the authors.</p>
+      </article>
+
+      <article class="slide" data-index="10" data-number="11">
+        <div class="slide-inner">
+          <div class="eyebrow">Results</div><h2>At T = 100, the gap is not subtle.</h2>
+          <div class="evidence-grid"><div class="card evidence-card"><h3>Warehouse accuracy <span>T = 100</span></h3><div class="mini-bars"><div class="mini-row"><label>Prompt</label><div class="mini-track"><div class="mini-fill bad" style="width:84%"></div></div><output>0.84</output></div><div class="mini-row"><label>Memory</label><div class="mini-track"><div class="mini-fill bad" style="width:87%"></div></div><output>0.87</output></div><div class="mini-row"><label>Stateful</label><div class="mini-track"><div class="mini-fill" style="width:91%"></div></div><output>0.91</output></div><div class="mini-row"><label>SKILL.state</label><div class="mini-track"><div class="mini-fill" style="width:94%"></div></div><output>0.94</output></div></div><p class="evidence-note">SKILL.state keeps accuracy high while holding average prompt size near 1,905 tokens.</p></div><div class="card evidence-card"><h3>Total tokens <span>T = 100</span></h3><div class="mini-bars"><div class="mini-row"><label>Prompt</label><div class="mini-track"><div class="mini-fill bad" style="width:100%"></div></div><output>1.25M</output></div><div class="mini-row"><label>Memory</label><div class="mini-track"><div class="mini-fill bad" style="width:87%"></div></div><output>1.08M</output></div><div class="mini-row"><label>Stateful</label><div class="mini-track"><div class="mini-fill bad" style="width:85%"></div></div><output>1.06M</output></div><div class="mini-row"><label>SKILL.state</label><div class="mini-track"><div class="mini-fill" style="width:5.2%"></div></div><output>65k</output></div></div><p class="evidence-note">Compared with Stateful, the paper reports a 16.2× reduction against 1,062,387 tokens at T = 100.</p></div></div>
+        </div>
+        <p class="source">Paper Table 1, Warehouse Management with Gemini-3-Flash. Values are means; the paper reports ± sample standard deviation.</p>
+      </article>
+
+      <article class="slide" data-index="11" data-number="12">
+        <div class="slide-inner">
+          <div class="eyebrow">Robustness</div><h2>Noise hurts history more than state.</h2>
+          <div class="evidence-grid"><div class="card evidence-card"><h3>Warehouse score <span>T = 50</span></h3><div class="mini-bars"><div class="mini-row"><label>Prompt / low</label><div class="mini-track"><div class="mini-fill bad" style="width:68%"></div></div><output>0.68</output></div><div class="mini-row"><label>Prompt / high</label><div class="mini-track"><div class="mini-fill bad" style="width:53%"></div></div><output>0.53</output></div><div class="mini-row"><label>State / high</label><div class="mini-track"><div class="mini-fill" style="width:98%"></div></div><output>0.98</output></div><div class="mini-row"><label>SKILL / high</label><div class="mini-track"><div class="mini-fill" style="width:98%"></div></div><output>0.98</output></div></div><p class="evidence-note">At high noise, the Prompt runtime falls to 0.53. SKILL.state stays at 0.98.</p></div><div class="card evidence-card"><h3>Recovery after drift <span>external change</span></h3><p class="small">When the world changes outside the agent’s action loop:</p><div class="recovery-line"><div class="recovery-bar"><i></i>Prompt<br>5-8 steps</div><div class="recovery-bar"><i></i>Memory<br>5-8 steps</div><div class="recovery-bar"><i></i>Stateful<br>5-8 steps</div><div class="recovery-bar skill"><i></i>SKILL.state<br>0 steps</div></div><p class="evidence-note">The paper reports zero recovery steps for SKILL.state in the tested drift scenarios.</p></div></div>
+        </div>
+        <p class="source">Paper Tables 2 and 3, Warehouse Management. Noise is irrelevant telemetry; drift modifies the true world state outside the action loop.</p>
+      </article>
+
+      <article class="slide" data-index="12" data-number="13">
+        <div class="slide-inner grid-2">
+          <div><div class="eyebrow">The honest bit</div><h2>State is powerful when the schema is right.</h2><p class="lede">The paper’s strongest assumption is also its boundary: everything relevant to future action must be projected into state when it becomes known.</p><div class="quote-box" style="margin-top:24px"><p>Don’t delete the past until you know what the future needs.</p><small>Implementation implication, inferred from the paper’s limitations.</small></div></div>
+          <div class="card padded"><h3>Reported open-weight failure taxonomy</h3><div class="mini-bars" style="margin-top:23px"><div class="mini-row"><label>overwrite / delete</label><div class="mini-track"><div class="mini-fill bad" style="width:68%"></div></div><output>68%</output></div><div class="mini-row"><label>type coercion</label><div class="mini-track"><div class="mini-fill" style="width:20%"></div></div><output>20%</output></div><div class="mini-row"><label>JSON slips</label><div class="mini-track"><div class="mini-fill" style="width:12%"></div></div><output>12%</output></div></div><hr style="border:0;border-top:1px solid var(--line);margin:25px 0"><h3>Three boundary cases</h3><ul class="small" style="padding-left:18px;line-height:1.65"><li>No fixed schema is known in advance.</li><li>A past observation becomes relevant later, but was never committed.</li><li>The trajectory itself is the output, as in auditing or provenance.</li></ul></div>
+        </div>
+        <p class="source">Paper Sections 5.7 and 7. Failure percentages are reported for Gemma-4-31B at T = 100. The final quote is an explicit inference, not a paper quote.</p>
+      </article>
+
+      <article class="slide" data-index="13" data-number="14">
+        <div class="slide-inner howto"><div class="howto-intro"><div class="eyebrow">How to build it</div><h2>A small runtime pattern, with serious guardrails.</h2><p class="lede">Start with one domain and one agent. Make the state contract boring, explicit, and testable.</p></div><div class="howto-list"><div class="howto-item"><b>01</b><div><strong>Define the domain state</strong><span>List the minimum fields needed to choose the next valid action.</span></div></div><div class="howto-item"><b>02</b><div><strong>Separate immutable instructions</strong><span>Keep the skill specification P stable across every step.</span></div></div><div class="howto-item"><b>03</b><div><strong>Make the model output a patch</strong><span>Require state_patch plus one action. Use null to delete a key.</span></div></div><div class="howto-item"><b>04</b><div><strong>Validate before merge</strong><span>Check JSON, types, allowed keys, invariants, and action legality.</span></div></div><div class="howto-item"><b>05</b><div><strong>Merge deterministically</strong><span>Apply ΔΣ to Σ with explicit dictionary merge semantics.</span></div></div><div class="howto-item"><b>06</b><div><strong>Execute outside the model</strong><span>Let tools and environment enforce the actual world transition.</span></div></div><div class="howto-item"><b>07</b><div><strong>Evaluate the runtime</strong><span>Measure success, prompt size, total tokens, noise robustness, and recovery.</span></div></div></div></div>
+        <p class="source">Implementation guide derived from Paper Sections 3, 4, 5, Appendix A, and Appendix B. It adds practical engineering detail as an interpretation.</p>
+      </article>
+
+      <article class="slide" data-index="14" data-number="15">
+        <div class="slide-inner grid-2"><div><div class="eyebrow">Implementation contract</div><h2>Make the boundary machine-checkable.</h2><p class="lede">The model can propose a transition. The runtime decides whether it is valid.</p><div class="checklist"><label><input type="checkbox"> <span>Reject unknown state keys.</span></label><label><input type="checkbox"> <span>Validate field types and required values.</span></label><label><input type="checkbox"> <span>Check action arguments against current state.</span></label><label><input type="checkbox"> <span>Rollback and retry invalid patches.</span></label></div></div><div class="code-card"><strong>Minimal response shape</strong><pre><span class="operator">{</span>
+  <span class="key">"state_patch"</span>: <span class="operator">{</span>
+    <span class="key">"inventory"</span>: <span class="operator">{</span>
+      <span class="key">"shelf_42"</span>: <span class="string">null</span>
+    <span class="operator">}</span>
+  <span class="operator">}</span>,
+  <span class="key">"action"</span>: <span class="string">"Ship item_12 shelf_42"</span>
+<span class="operator">}</span>
+
+<span class="comment">// validate patch</span>
+<span class="comment">// merge state</span>
+<span class="comment">// execute action</span></pre></div></div>
+        <p class="source">Paper Appendix A.4 specifies exactly two JSON keys: state_patch and action; malformed updates are rejected by the runtime.</p>
+      </article>
+
+      <article class="slide" data-index="15" data-number="16">
+        <div class="slide-inner"><div class="eyebrow">Implementation sequence</div><h2>Build the loop. Then attack it.</h2><p class="lede">A practical first milestone is not a clever prompt. It is a deterministic state transition loop with adversarial evaluation.</p><div class="grid-3" style="margin-top:30px"><div class="card padded"><h3>1. Golden episodes</h3><p class="small">Create seeded event sequences with ground-truth state and legal actions.</p></div><div class="card padded"><h3>2. Failure injection</h3><p class="small">Add irrelevant telemetry, stale observations, malformed patches, and external drift.</p></div><div class="card padded"><h3>3. Compare runtimes</h3><p class="small">Run full history, summary, stateful, and explicit-state variants at matched budgets.</p></div></div><div class="takeaway"><p><strong>Success criterion:</strong> the agent makes the next correct transition, the state remains valid, and cost stays bounded as the horizon grows.</p></div></div>
+        <p class="source">Evaluation sequence derived from the paper’s SkillExecBench design, noise construction, state recovery tests, and budget-matched controls.</p>
+      </article>
+
+      <article class="slide" data-index="16" data-number="17">
+        <div class="slide-inner closing"><div><div class="eyebrow">Takeaway</div><h2>Persistent knowledge beats persistent transcript.</h2><div class="principles"><div class="principle"><b>01</b><span>Use conversation for computation, not as your only memory substrate.</span></div><div class="principle"><b>02</b><span>Make the execution state explicit, minimal, typed, and owned by the runtime.</span></div><div class="principle"><b>03</b><span>Keep history when the history itself is the product: audit, debugging, provenance, explanation.</span></div><div class="principle"><b>04</b><span>Evaluate the harness: scaling, noise, recovery, correctness, and cost.</span></div></div></div><div class="closing-mark" aria-hidden="true"><div>Σ<br>current<br>world</div><i></i><i></i><i></i></div></div>
+        <p class="source">Summary of the paper’s claims and limitations. Read the original for experimental details, prompts, seeds, and full tables.</p>
+      </article>
+    </section>
+
+    <footer class="footer-controls"><button type="button" class="nav-button" id="prev" aria-label="Previous slide">←</button><div class="dot-nav" id="dotNav" aria-label="Slide navigation"></div><button type="button" class="nav-button" id="next" aria-label="Next slide">→</button><span class="kbd">← → to navigate · T to toggle theme</span></footer>
+  </main>
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const strip = document.getElementById('slides');
+      const progress = document.getElementById('progressBar');
+      const dotNav = document.getElementById('dotNav');
+      const total = slides.length;
+      let current = 0;
+      let touchStartX = 0;
+      let touchStartY = 0;
+
+      const horizons = {
+        10: { react: 3249, skill: 1775 },
+        50: { react: 11931, skill: 1773 },
+        200: { react: 48007, skill: 1811 }
+      };
+      const demoLines = [
+        '<span class="line"><span class="dim">LATEST OBSERVATION</span></span><span class="line hot">Customer ordered item_12.</span><span class="line"><span class="cursor"></span></span>',
+        '<span class="line"><span class="dim">CHECK STATE</span></span><span class="line">item_12 <span class="cyan">→</span> shelf_42</span><span class="line">next action: <span class="hi">ship</span></span><span class="line"><span class="cursor"></span></span>',
+        '<span class="line"><span class="dim">VALIDATED OUTPUT</span></span><span class="line">{ <span class="cyan">state_patch</span>: {</span><span class="line">  inventory.shelf_42: <span class="hot">null</span></span><span class="line">  <span class="cyan">action</span>: <span class="hi">"Ship item_12 shelf_42"</span></span><span class="line">}</span>',
+        '<span class="line"><span class="dim">NEXT OBSERVATION</span></span><span class="line hi">Success: shipped item_12.</span><span class="line dim">Reasoning trace not carried forward.</span><span class="line"><span class="cursor"></span></span>'
+      ];
+
+      function setSlide(index, focus = false) {
+        current = Math.max(0, Math.min(total - 1, index));
+        strip.style.transform = `translateY(-${current * 100}svh)`;
+        progress.style.width = `${((current + 1) / total) * 100}%`;
+        slides.forEach((slide, i) => {
+          slide.setAttribute('aria-hidden', i === current ? 'false' : 'true');
+          slide.classList.toggle('is-active', i === current);
+        });
+        [...dotNav.children].forEach((dot, i) => {
+          dot.classList.toggle('active', i === current);
+          dot.setAttribute('aria-current', i === current ? 'step' : 'false');
+        });
+        document.querySelectorAll('[data-jump]').forEach(btn => btn.classList.toggle('active', Number(btn.dataset.jump) === current));
+        if (focus) slides[current].focus({ preventScroll: true });
+      }
+
+      slides.forEach((slide, i) => {
+        slide.setAttribute('tabindex', '-1');
+        const dot = document.createElement('button');
+        dot.type = 'button'; dot.className = 'dot-button'; dot.dataset.index = i;
+        dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+        dot.addEventListener('click', () => setSlide(i));
+        dotNav.appendChild(dot);
+      });
+      document.getElementById('prev').addEventListener('click', () => setSlide(current - 1, true));
+      document.getElementById('next').addEventListener('click', () => setSlide(current + 1, true));
+      document.querySelectorAll('[data-jump]').forEach(btn => btn.addEventListener('click', () => setSlide(Number(btn.dataset.jump), true)));
+
+      function updateHorizon(value) {
+        const item = horizons[value];
+        const max = item.react;
+        document.getElementById('reactBar').style.width = `${Math.max(8, (item.react / max) * 100)}%`;
+        document.getElementById('skillBar').style.width = `${Math.max(3, (item.skill / max) * 100)}%`;
+        document.getElementById('reactValue').textContent = item.react.toLocaleString();
+        document.getElementById('skillValue').textContent = item.skill.toLocaleString();
+        document.querySelectorAll('[data-horizon]').forEach(btn => btn.classList.toggle('active', btn.dataset.horizon === String(value)));
+      }
+      document.querySelectorAll('[data-horizon]').forEach(btn => btn.addEventListener('click', () => updateHorizon(btn.dataset.horizon)));
+
+      function setDemo(step) {
+        document.getElementById('terminal').innerHTML = demoLines[step];
+        document.querySelectorAll('[data-demo]').forEach(btn => btn.classList.toggle('active', btn.dataset.demo === String(step)));
+      }
+      document.querySelectorAll('[data-demo]').forEach(btn => btn.addEventListener('click', () => setDemo(btn.dataset.demo)));
+
+      function toggleTheme() {
+        document.body.classList.toggle('dark');
+        localStorage.setItem('skill-state-theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+      }
+      document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+      if (localStorage.getItem('skill-state-theme') === 'dark') document.body.classList.add('dark');
+
+      document.addEventListener('keydown', event => {
+        if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') { event.preventDefault(); setSlide(current + 1); }
+        if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); setSlide(current - 1); }
+        if (event.key === 'Home') { event.preventDefault(); setSlide(0); }
+        if (event.key === 'End') { event.preventDefault(); setSlide(total - 1); }
+        if (event.key.toLowerCase() === 't') toggleTheme();
+      });
+      document.addEventListener('touchstart', event => { touchStartX = event.changedTouches[0].screenX; touchStartY = event.changedTouches[0].screenY; }, { passive: true });
+      document.addEventListener('touchend', event => {
+        const dx = event.changedTouches[0].screenX - touchStartX;
+        const dy = event.changedTouches[0].screenY - touchStartY;
+        if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) setSlide(current + (dx < 0 ? 1 : -1));
+      }, { passive: true });
+
+      updateHorizon(50);
+      setDemo(0);
+      setSlide(0);
+    })();
+  </script>
+</body>
+</html>

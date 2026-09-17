@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quant Trading: The Hedge Fund Method</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #151d30;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --bullish: #10b981;
+            --bearish: #ef4444;
+            --sideways: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Slide Container */
+        .deck-container {
+            position: relative;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            width: 100%;
+        }
+
+        .slide {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95) translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .slide.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1) translateY(0);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #60a5fa, #22c55e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            color: #ffffff;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--accent);
+            padding-left: 1rem;
+        }
+
+        p {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        ul {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        li {
+            font-size: 1.1rem;
+            position: relative;
+            padding-left: 1.75rem;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+            line-height: 1.5;
+        }
+
+        li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .highlight {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* Layout Grids */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .state-card {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            padding: 1.5rem;
+            border-top: 4px solid var(--accent);
+            text-align: center;
+        }
+
+        .state-card.bull { border-top-color: var(--bullish); }
+        .state-card.bear { border-top-color: var(--bearish); }
+        .state-card.side { border-top-color: var(--sideways); }
+
+        .state-title {
+            font-weight: 700;
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        /* Matrix Simulation */
+        .matrix-table {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 1.5rem auto 0 auto;
+            max-width: 450px;
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .matrix-cell {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            text-align: center;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .matrix-header {
+            font-weight: bold;
+            color: var(--accent);
+            background: transparent;
+        }
+
+        .matrix-diagonal {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid var(--accent);
+            font-weight: bold;
+            color: #fff;
+        }
+
+        /* Controls Footer */
+        footer {
+            padding: 1.5rem 3rem;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-btn {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .nav-btn:hover { background: var(--accent-hover); }
+        .nav-btn:disabled { background: #2b354a; color: #6b7280; cursor: not-allowed; }
+
+        .progress-container {
+            flex-grow: 1;
+            margin: 0 2rem;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, var(--accent), var(--bullish));
+            width: 0%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .slide-counter {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            min-width: 45px;
+            text-align: right;
+        }
+
+        /* Responsive Tweaks */
+        @media (max-width: 768px) {
+            body { overflow-y: auto; height: auto; }
+            .deck-container { padding: 1rem; height: auto; min-height: 80vh; }
+            .slide { position: relative; display: none; padding: 1.5rem; opacity: 1; transform: none; }
+            .slide.active { display: block; }
+            footer { padding: 1rem; position: sticky; bottom: 0; width: 100%; }
+            h1 { font-size: 2rem; }
+            h2 { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="deck-container">
+        <div class="slide active">
+            <h1>Re-Creating a Hedge Fund Quant Strategy Using AI</h1>
+            <p>An interactive breakthrough breakdown of the <strong>Markov Regime Model</strong>—recalculated, backtested, and optimized using Claude Code.</p>
+            <ul>
+                <li>Inspired by elite hedge fund architecture.</li>
+                <li>Ditches retail trendlines for mathematical probabilities.</li>
+                <li>Uses code automation for continuous cross-market tracking.</li>
+            </ul>
+            <p style="font-size: 0.9rem; color: var(--accent);">💡 Use Left/Right Arrow keys or click Next below to navigate.</p>
+        </div>
+
+        <div class="slide">
+            <h2>The Core Shift: Quantifying Vibes</h2>
+            <p>Traditional retail trading relies heavily on indicators and subjective chart visuals. True quants operate strictly on empirical, mathematical probability distributions.</p>
+            <ul>
+                <li><span class="highlight">Objective Sizing:</span> Decisions are numerical, removing emotion.</li>
+                <li><span class="highlight">Continuous State Monitoring:</span> Shifting focus from "what is the historical chart pattern" to "what condition is the market in right now".</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <h2>1 & 2: Defining & Labeling States</h2>
+            <p>Every asset's lifetime data is systematically processed backwards looking at a 20-day returns window. Every single historic day is pinned into one of three rigid market categories:</p>
+            <div class="grid-3">
+                <div class="state-card bull">
+                    <div class="state-title" style="color: var(--bullish)">Bull State</div>
+                    <p style="font-size:0.95rem; margin:0;">Rolling 20-day cumulative return is <strong>+5% or higher</strong>.</p>
+                </div>
+                <div class="state-card bear">
+                    <div class="state-title" style="color: var(--bearish)">Bear State</div>
+                    <p style="font-size:0.95rem; margin:0;">Rolling 20-day cumulative return is <strong>-5% or lower</strong>.</p>
+                </div>
+                <div class="state-card side">
+                    <div class="state-title" style="color: var(--sideways)">Sideways State</div>
+                    <p style="font-size:0.95rem; margin:0;">Any rolling value oscillating safely <strong>in-between</strong> thresholds.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>3: The Markov Property</h2>
+            <p>A core mathematical pillar: <em>The market's next move depends exclusively on where it sits today.</em> The historical route taken to get to the current state holds zero mathematical relevance for tomorrow's baseline path.</p>
+            <ul>
+                <li><span class="highlight">The Geography Analogy:</span> If you are driving to New York City and have reached Ohio, your mapping strategy depends purely on your position in Ohio. It does not matter if your original departure point was Arkansas or Nebraska.</li>
+                <li>Weight is completely concentrated on the present live state.</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <h2>4 & 5: Transition Matrix & Stickiness</h2>
+            <p>Every historical state switch is tallied into a live <strong>3x3 Hedge Fund Grid</strong>. Rows depict today's environment; columns dictate tomorrow's path. Each row must sum perfectly to 100% certainty.</p>
+            
+            <div class="matrix-table">
+                <div class="matrix-cell matrix-header">Today \ Tmrw</div>
+                <div class="matrix-cell matrix-header">Bull</div>
+                <div class="matrix-cell matrix-header">Side</div>
+                <div class="matrix-cell matrix-header">Bear</div>
+                
+                <div class="matrix-cell matrix-header">Bull</div>
+                <div class="matrix-cell matrix-diagonal">80%</div>
+                <div class="matrix-cell">15%</div>
+                <div class="matrix-cell">5%</div>
+                
+                <div class="matrix-cell matrix-header">Side</div>
+                <div class="matrix-cell">20%</div>
+                <div class="matrix-cell matrix-diagonal">60%</div>
+                <div class="matrix-cell">20%</div>
+                
+                <div class="matrix-cell matrix-header">Bear</div>
+                <div class="matrix-cell">5%</div>
+                <div class="matrix-cell">15%</div>
+                <div class="matrix-cell matrix-diagonal">80%</div>
+            </div>
+            <p style="font-size: 0.95rem; margin-top: 1rem; text-align: center;">
+                The highlighted diagonal path uncovers <span class="highlight">Persistence / Stickiness</span>. Bull and Bear regimes are inherently sticky.
+            </p>
+        </div>
+
+        <div class="slide">
+            <h2>6 & 7: Squaring & Stationary Distribution</h2>
+            <p>To view metrics past a one-day forecast window, quants utilize basic matrix exponential scaling:</p>
+            <ul>
+                <li><span class="highlight">2-Day Forecast:</span> Square the matrix against itself (e.g., 80% stickiness × 80% = 64% probability to remain after 48 hours).</li>
+                <li><span class="highlight">3-Day Forecast:</span> Cube the matrix matrix.</li>
+                <li><span class="highlight">Stationary Distribution:</span> If extended deep out (e.g., to the 28th power), the predictive signal decays into uniform, flat, and non-actionable slivers.</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <h2>8: Sizing & Signal Generation</h2>
+            <p>Behind the deep computing lies a beautifully simple final computation. The raw trading alpha is pulled directly using a clear logic gap:</p>
+            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 1.2rem; text-align: center; margin-bottom: 1.5rem; border: 1px dashed var(--accent);">
+                Trading Signal % = (Bull Probability) - (Bear Probability)
+            </div>
+            <ul>
+                <li><strong>Positive Outcome:</strong> Generates an explicit Long trade signal.</li>
+                <li><strong>Negative Outcome:</strong> Generates an explicit Short trade signal.</li>
+                <li><strong>Risk Sizing:</strong> The absolute distance of the result determines precisely how heavily to capital-weight the trade.</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <h2>9: Walk Forward Backtesting</h2>
+            <p>Standard static backtesting leaks future market context into historic setups, inducing structural flaws known as <strong>lookahead bias</strong>.</p>
+            <ul>
+                <li>Models mistakenly optimize based on historical parameters that hadn't technically evolved yet.</li>
+                <li><span class="highlight">The Quant Solution:</span> Walk-forward architecture forces a complete data recalculation of the entire transition matrix for *every independent step forward* in the asset's history line.</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <h2>10: The Hidden Markov Model (HMM)</h2>
+            <p>Hardcoded state barriers (like static 5% cutoffs) introduce human error. The system bypasses this using unsupervised <strong>Hidden Markov Models</strong>.</p>
+            <ul>
+                <li>The asset data is stripped of all arbitrary human labels.</li>
+                <li>An unsupervised algorithm scrubs purely for patterns, discovering latent regimes independently.</li>
+                <li><span class="highlight">The Babysitter Analogy:</span> A new sitter discovers the specific core personalities of children organically over a few days through silent tracking, rather than raw text profiles.</li>
+                <li><strong>Execution:</strong> Trades execute when human-labeled states match HMM states.</li>
+            </ul>
+        </div>
+
+        <div class="slide">
+            <h2>Automation Architecture</h2>
+            <p>This institutional framework is implemented natively using dual tools:</p>
+            <ul>
+                <li><span class="highlight">Claude Code Integration:</span> Deployed as a direct background environment skill via terminal prompts to parse asset datasets automatically.</li>
+                <li><span class="highlight">TradingView Pine Script:</span> Generates a clean 3x3 live probability scorecard floating inside asset charts for quick execution.</li>
+            </ul>
+            <p style="text-align: center; margin-top: 1.5rem;">
+                <span style="color: var(--bullish); font-weight: bold;">✔ Deck Complete. Clear to Trade.</span>
+            </p>
+        </div>
+    </div>
+
+    <footer>
+        <button class="nav-btn" id="prevBtn" disabled>Previous</button>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <button class="nav-btn" id="nextBtn">Next</button>
+        <div class="slide-counter" id="counter">1 / 10</div>
+    </footer>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressBar = document.getElementById('progressBar');
+        const counter = document.getElementById('counter');
+        
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+
+        function updateSlideVisibility() {
+            slides.forEach((slide, index) => {
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+
+            // Button configurations
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+
+            // Timeline line adjustment
+            const progressPercentage = (currentSlide / (totalSlides - 1)) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+
+            // Score counter
+            counter.innerText = `${currentSlide + 1} / ${totalSlides}`;
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlideVisibility();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlideVisibility();
+            }
+        });
+
+        // Keyboard triggers
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' && currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlideVisibility();
+            } else if (e.key === 'ArrowLeft' && currentSlide > 0) {
+                currentSlide--;
+                updateSlideVisibility();
+            }
+        });
+
+        // Core Init
+        updateSlideVisibility();
+    </script>
+</body>
+</html>

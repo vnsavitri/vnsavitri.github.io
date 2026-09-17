@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Each Tool Organizes a Project</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #e0e0e0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 48px 24px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header Section */
+        .header {
+            margin-bottom: 56px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: clamp(28px, 5vw, 44px);
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff 0%, #b0b8ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 16px;
+            color: #a0a8c0;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+            gap: 32px;
+            margin-bottom: 48px;
+        }
+
+        @media (max-width: 1100px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Card Styles */
+        .card {
+            background: rgba(20, 26, 48, 0.6);
+            border: 1px solid rgba(200, 210, 240, 0.12);
+            border-radius: 12px;
+            padding: 40px;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.8s ease-out;
+            animation-fill-mode: both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:nth-child(1) {
+            animation-delay: 0.2s;
+            border-top: 2px solid rgba(255, 140, 100, 0.6);
+        }
+
+        .card:nth-child(2) {
+            animation-delay: 0.4s;
+            border-top: 2px solid rgba(100, 200, 160, 0.6);
+        }
+
+        .card:hover {
+            border-color: rgba(200, 210, 240, 0.25);
+            background: rgba(20, 26, 48, 0.85);
+            transform: translateY(-2px);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 140, 100, 0.3), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:nth-child(1)::before {
+            background: linear-gradient(90deg, transparent, rgba(255, 140, 100, 0.4), transparent);
+        }
+
+        .card:nth-child(2)::before {
+            background: linear-gradient(90deg, transparent, rgba(100, 200, 160, 0.4), transparent);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        /* Card Header */
+        .card-header {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 32px;
+            gap: 16px;
+        }
+
+        .card-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 6px 10px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .card:nth-child(1) .card-label {
+            color: #ff8c64;
+            background: rgba(255, 140, 100, 0.1);
+        }
+
+        .card:nth-child(2) .card-label {
+            color: #64c8a0;
+            background: rgba(100, 200, 160, 0.1);
+        }
+
+        .card h2 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            flex: 1;
+        }
+
+        .card h3 {
+            font-size: 16px;
+            font-weight: 400;
+            color: #808899;
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+
+        /* Config Rows */
+        .config-row {
+            margin-bottom: 28px;
+            animation: slideInLeft 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .card:nth-child(1) .config-row:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(1) .config-row:nth-child(4) { animation-delay: 0.4s; }
+        .card:nth-child(1) .config-row:nth-child(5) { animation-delay: 0.5s; }
+        .card:nth-child(1) .config-row:nth-child(6) { animation-delay: 0.6s; }
+        .card:nth-child(1) .config-row:nth-child(7) { animation-delay: 0.7s; }
+        .card:nth-child(1) .config-row:nth-child(8) { animation-delay: 0.8s; }
+
+        .card:nth-child(2) .config-row:nth-child(3) { animation-delay: 0.5s; }
+        .card:nth-child(2) .config-row:nth-child(4) { animation-delay: 0.6s; }
+        .card:nth-child(2) .config-row:nth-child(5) { animation-delay: 0.7s; }
+        .card:nth-child(2) .config-row:nth-child(6) { animation-delay: 0.8s; }
+        .card:nth-child(2) .config-row:nth-child(7) { animation-delay: 0.9s; }
+        .card:nth-child(2) .config-row:nth-child(8) { animation-delay: 1.0s; }
+
+        .config-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #7a8299;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .config-file {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            font-size: 14px;
+            font-weight: 500;
+            color: #ffffff;
+            margin-bottom: 4px;
+            word-break: break-word;
+        }
+
+        .config-description {
+            font-size: 13px;
+            color: #9aa3b8;
+            line-height: 1.5;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: #6a7382;
+            font-size: 12px;
+            margin-top: 64px;
+            padding-top: 32px;
+            border-top: 1px solid rgba(200, 210, 240, 0.08);
+        }
+
+        .footer p {
+            margin: 0;
+        }
+
+        /* Section Styles */
+        .section {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 16px;
+        }
+
+        .section-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(100, 150, 255, 0.15);
+            color: #7a9bff;
+            font-weight: 700;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .section-header h2 {
+            font-size: clamp(24px, 4vw, 36px);
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            margin: 0;
+        }
+
+        .section-subtitle {
+            font-size: 15px;
+            color: #a0a8c0;
+            margin: 12px 0 32px 0;
+            line-height: 1.5;
+        }
+
+        /* Folder Structure */
+        .folder-structure {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .folder-card {
+            background: rgba(20, 26, 48, 0.6);
+            border: 1px solid rgba(200, 210, 240, 0.12);
+            border-radius: 8px;
+            padding: 24px;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.8s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .folder-card:nth-child(1) {
+            animation-delay: 0.3s;
+            border-left: 3px solid rgba(255, 140, 100, 0.5);
+        }
+
+        .folder-card:nth-child(2) {
+            animation-delay: 0.4s;
+            border-left: 3px solid rgba(100, 200, 160, 0.5);
+        }
+
+        .folder-card:hover {
+            border-color: rgba(200, 210, 240, 0.25);
+            background: rgba(20, 26, 48, 0.85);
+        }
+
+        .folder-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #ffffff;
+        }
+
+        .folder-tree {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            font-size: 13px;
+            color: #b0b8d8;
+            background: rgba(10, 14, 39, 0.8);
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            line-height: 1.6;
+            margin: 0;
+            white-space: pre;
+        }
+
+        /* Legend Box */
+        .legend-box {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(20, 26, 48, 0.4);
+            border-radius: 8px;
+            margin-top: 24px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #a0a8c0;
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .claude-dot {
+            background: rgba(255, 140, 100, 0.7);
+        }
+
+        .codex-dot {
+            background: rgba(100, 200, 160, 0.7);
+        }
+
+        .shared-dot {
+            background: rgba(150, 150, 200, 0.7);
+        }
+
+        /* Cheat Sheet Table */
+        .cheat-sheet-table {
+            background: rgba(20, 26, 48, 0.6);
+            border: 1px solid rgba(200, 210, 240, 0.12);
+            border-radius: 8px;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out;
+            animation-fill-mode: both;
+            animation-delay: 0.3s;
+        }
+
+        .cheat-row {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 1.5fr;
+            border-bottom: 1px solid rgba(200, 210, 240, 0.08);
+            transition: background 0.2s;
+        }
+
+        .cheat-row:last-child {
+            border-bottom: none;
+        }
+
+        .cheat-row:hover {
+            background: rgba(100, 150, 255, 0.05);
+        }
+
+        .cheat-row.header-row {
+            background: rgba(100, 150, 255, 0.1);
+            border-bottom: 2px solid rgba(100, 150, 255, 0.2);
+        }
+
+        .cheat-cell {
+            padding: 16px;
+            font-size: 14px;
+            color: #e0e0e0;
+            display: flex;
+            align-items: center;
+        }
+
+        .cheat-row.header-row .cheat-cell {
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #a0b0ff;
+        }
+
+        .cheat-cell code {
+            background: rgba(10, 14, 39, 0.8);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', monospace;
+            font-size: 12px;
+            color: #ffffff;
+        }
+
+        /* Pitfalls Grid */
+        .pitfalls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 20px;
+            margin-top: 32px;
+        }
+
+        .pitfall-card {
+            background: rgba(20, 26, 48, 0.6);
+            border: 1px solid rgba(200, 210, 240, 0.12);
+            border-radius: 8px;
+            padding: 24px;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            animation: slideInLeft 0.6s ease-out;
+            animation-fill-mode: both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pitfall-card:nth-child(1) { animation-delay: 0.3s; border-left: 3px solid rgba(255, 140, 100, 0.5); }
+        .pitfall-card:nth-child(2) { animation-delay: 0.4s; border-left: 3px solid rgba(100, 200, 160, 0.5); }
+        .pitfall-card:nth-child(3) { animation-delay: 0.5s; border-left: 3px solid rgba(255, 200, 100, 0.5); }
+        .pitfall-card:nth-child(4) { animation-delay: 0.6s; border-left: 3px solid rgba(150, 150, 255, 0.5); }
+        .pitfall-card:nth-child(5) { animation-delay: 0.7s; border-left: 3px solid rgba(200, 100, 200, 0.5); }
+
+        .pitfall-card.bonus {
+            border-left: 3px solid rgba(100, 200, 160, 0.7);
+            animation-delay: 0.8s;
+        }
+
+        .pitfall-card:hover {
+            border-color: rgba(200, 210, 240, 0.25);
+            background: rgba(20, 26, 48, 0.85);
+            transform: translateY(-2px);
+        }
+
+        .pitfall-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            background: rgba(100, 150, 255, 0.2);
+            color: #7a9bff;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .pitfall-card.bonus .pitfall-number {
+            background: rgba(100, 200, 160, 0.2);
+            color: #64c8a0;
+        }
+
+        .pitfall-card h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #ffffff;
+            line-height: 1.4;
+        }
+
+        .pitfall-card p {
+            font-size: 13px;
+            color: #a0a8c0;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .pitfall-card code {
+            background: rgba(10, 14, 39, 0.8);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #ffffff;
+        }
+
+        /* Three-Layer Rule */
+        .three-layer-rule {
+            background: rgba(80, 100, 200, 0.1);
+            border: 1px solid rgba(150, 170, 255, 0.25);
+            border-radius: 8px;
+            padding: 32px;
+            margin-top: 32px;
+            animation: fadeInUp 0.8s ease-out;
+            animation-fill-mode: both;
+            animation-delay: 0.4s;
+        }
+
+        .rule-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #7a9bff;
+            margin-bottom: 6px;
+        }
+
+        .rule-subtitle {
+            font-size: 14px;
+            color: #a0a8c0;
+            margin-bottom: 24px;
+        }
+
+        .three-layers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .layer-card {
+            background: rgba(20, 26, 48, 0.8);
+            border: 1px solid rgba(150, 170, 255, 0.2);
+            border-radius: 6px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            animation: slideInLeft 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .layer-card:nth-child(1) { animation-delay: 0.5s; }
+        .layer-card:nth-child(2) { animation-delay: 0.6s; }
+        .layer-card:nth-child(3) { animation-delay: 0.7s; }
+
+        .layer-card:hover {
+            background: rgba(30, 40, 70, 0.9);
+            border-color: rgba(150, 170, 255, 0.4);
+        }
+
+        .layer-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(150, 170, 255, 0.3);
+            color: #7a9bff;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .layer-card h5 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .layer-card p {
+            font-size: 13px;
+            color: #9aa3b8;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* Conversion Prompt */
+        .conversion-prompt {
+            background: rgba(20, 26, 48, 0.6);
+            border: 1px solid rgba(200, 210, 240, 0.12);
+            border-radius: 8px;
+            padding: 28px;
+            font-family: 'SF Mono', monospace;
+            font-size: 13px;
+            color: #b0b8d8;
+            line-height: 1.6;
+            animation: fadeInUp 0.8s ease-out;
+            animation-fill-mode: both;
+            animation-delay: 0.3s;
+        }
+
+        .conversion-prompt p {
+            margin: 0 0 12px 0;
+            color: #e0e0e0;
+        }
+
+        .conversion-prompt ol {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+
+        .conversion-prompt li {
+            margin-bottom: 12px;
+            color: #e0e0e0;
+        }
+
+        .conversion-prompt ul {
+            margin: 8px 0 12px 20px;
+            padding: 0;
+        }
+
+        .conversion-prompt ul li {
+            list-style: circle;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #a0a8c0;
+        }
+
+        .conversion-prompt code {
+            background: rgba(10, 14, 39, 0.9);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #ffffff;
+            font-size: 11px;
+        }
+
+        .conversion-idea {
+            background: rgba(100, 200, 160, 0.1);
+            border-left: 3px solid rgba(100, 200, 160, 0.6);
+            padding: 20px;
+            border-radius: 6px;
+            margin-top: 24px;
+            animation: slideInLeft 0.6s ease-out;
+            animation-fill-mode: both;
+            animation-delay: 0.5s;
+        }
+
+        .conversion-idea p {
+            margin: 0;
+            font-size: 14px;
+            color: #e0e0e0;
+        }
+
+        .conversion-idea strong {
+            color: #64c8a0;
+        }
+
+        /* Maintenance Rules */
+        .maintenance-rules {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 28px;
+        }
+
+        .maintenance-rule {
+            background: rgba(20, 26, 48, 0.6);
+            border: 1px solid rgba(200, 210, 240, 0.12);
+            border-radius: 8px;
+            padding: 20px;
+            animation: slideInLeft 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .maintenance-rule:nth-child(1) { animation-delay: 0.3s; }
+        .maintenance-rule:nth-child(2) { animation-delay: 0.4s; }
+        .maintenance-rule:nth-child(3) { animation-delay: 0.5s; }
+        .maintenance-rule:nth-child(4) { animation-delay: 0.6s; }
+
+        .maintenance-rule:hover {
+            border-color: rgba(200, 210, 240, 0.25);
+            background: rgba(20, 26, 48, 0.85);
+        }
+
+        .maintenance-rule h5 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 10px 0;
+            color: #ffffff;
+        }
+
+        .maintenance-rule p {
+            font-size: 13px;
+            color: #a0a8c0;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .highlight-claude {
+            color: #ff8c64;
+        }
+
+        .highlight-codex {
+            color: #64c8a0;
+        }
+
+        .highlight-shared {
+            color: #7a9bff;
+        }
+
+        /* Global Note */
+        .global-note {
+            background: rgba(20, 26, 48, 0.6);
+            border-left: 3px solid rgba(150, 170, 255, 0.5);
+            padding: 20px;
+            border-radius: 8px;
+            animation: fadeInUp 0.8s ease-out;
+            animation-fill-mode: both;
+            animation-delay: 0.4s;
+        }
+
+        .global-note p {
+            font-size: 13px;
+            color: #a0a8c0;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .global-note code {
+            background: rgba(10, 14, 39, 0.8);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #ffffff;
+        }
+
+        /* Mobile refinements */
+        @media (max-width: 768px) {
+            .card {
+                padding: 28px;
+            }
+
+            .card h2 {
+                font-size: 24px;
+            }
+
+            .header h1 {
+                font-size: 32px;
+            }
+
+            body {
+                padding: 32px 16px;
+            }
+
+            .section-header {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .section-header h2 {
+                font-size: 24px;
+            }
+
+            .cheat-row {
+                grid-template-columns: 1fr;
+                border-bottom: 1px solid rgba(200, 210, 240, 0.08);
+            }
+
+            .cheat-cell {
+                padding: 12px 16px;
+            }
+
+            .three-layer-rule {
+                padding: 20px;
+            }
+
+            .conversion-prompt {
+                padding: 20px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>How Each Tool Organizes a Project</h1>
+            <p>Same idea, different file names and formats. Here's what each tool expects.</p>
+        </div>
+
+        <!-- Cards Grid -->
+        <div class="cards-grid">
+            <!-- Claude Code Card -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-label">Claude Code</span>
+                </div>
+                <h2>Anthropic's coding agent</h2>
+                <h3>One folder holds settings, agents, and skills.</h3>
+
+                <div class="config-row">
+                    <span class="config-label">Instructions</span>
+                    <div class="config-file">CLAUDE.md</div>
+                    <div class="config-description">Sits at the project root. Loads automatically.</div>
+                </div>
+
+                <div class="config-row">
+                    <span class="config-label">Config Folder</span>
+                    <div class="config-file">.claude/</div>
+                    <div class="config-description">Holds skills, agents, rules, and settings.</div>
+                </div>
+
+                <div class="config-row">
+                    <span class="config-label">Skills</span>
+                    <div class="config-file">.claude/skills/&lt;name&gt;/SKILL.md</div>
+                    <div class="config-description">Slash commands you can build yourself.</div>
+                </div>
+
+                <div class="config-row">
+                    <span class="config-label">Sub-Agents</span>
+                    <div class="config-file">.claude/agents/&lt;name&gt;.md</div>
+                    <div class="config-description">Markdown with a small header on top.</div>
+                </div>
+
+                <div class="config-row">
+                    <span class="config-label">Settings</span>
+                    <div class="config-file">.claude/settings.json</div>
+                    <div class="config-description">Hooks, permissions, env vars.</div>
+                </div>
+
+                <div class="config-row">
+                    <span class="config-label">Global Config</span>
+                    <div class="config-file">~/.claude/</div>
+                    <div class="config-description">Same structure, but applies to every project on your machine.</div>
+                </div>
+            </div>
+
+            <!-- Codex Card -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-label">Codex</span>
+                </div>
+                <h2>OpenAI's coding agent</h2>
+                <h3>Config and agents live in .codex. Skills live in .agents.</h3>
+
+                <div class="config-row">
+                    <span class="config-label">Instructions</span>
+                    <div class="config-file">AGENTS.md</div>
+                    <div class="config-description">Sits at the project root. Loads automatically.</div>
+                </div>
+
+                <div class="config-row">
+                    <span class="config-label">Temp Override</span>
+                    <div class="config-file">AGENTS.override.md</div>
+                    <div class="config-description">Quick way to override AGENTS.md without editing it.</div>
+                </div>
+
+                <div class="config-row">
+                    <span class="config-label">Config Folder</span>
+                    <div class="config-file">.codex/</div>
+                    <div class="config-description">Holds config and agent definitions.</div>
+                </div>
+
+                <div class="config-row">
+                    <span class="config-label">Skills Folder</span>
+                    <div class="config-file">.agents/skills/&lt;name&gt;/SKILL.md</div>
+                    <div class="config-description">Codex scans from your current directory up to the repo root.</div>
+                </div>
+
+                <div class="config-row">
+                    <span class="config-label">Sub-Agents</span>
+                    <div class="config-file">.codex/agents/&lt;name&gt;.toml</div>
+                    <div class="config-description">TOML format, not markdown.</div>
+                </div>
+
+                <div class="config-row">
+                    <span class="config-label">Settings</span>
+                    <div class="config-file">.codex/config.toml</div>
+                    <div class="config-description">Sandbox, MCP servers, env vars, profiles.</div>
+                </div>
+
+                <div class="config-row">
+                    <span class="config-label">Global Config</span>
+                    <div class="config-file">~/.codex/ and ~/.agents/skills/</div>
+                    <div class="config-description">Global config/agents live in ~/.codex. Global skills live in ~/.agents/skills.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: What It Looks Like in Your Folder -->
+        <div class="section" style="margin-top: 80px;">
+            <div class="section-header">
+                <span class="section-number">3</span>
+                <h2>What It Looks Like in Your Folder</h2>
+            </div>
+            <p class="section-subtitle">Claude keeps everything in one folder. Codex splits config and skills into two folders.</p>
+
+            <div class="folder-structure">
+                <div class="folder-card">
+                    <h3 class="folder-title">Claude Code</h3>
+                    <pre class="folder-tree">your-project/
+  CLAUDE.md
+  .claude/
+    settings.json
+    agents/
+      researcher.md
+    skills/
+      youtube-video/
+        SKILL.md</pre>
+                </div>
+                <div class="folder-card">
+                    <h3 class="folder-title">Codex</h3>
+                    <pre class="folder-tree">your-project/
+  AGENTS.md
+  .codex/
+    config.toml
+    agents/
+      researcher.toml
+  .agents/
+    skills/
+      youtube-video/
+        SKILL.md</pre>
+                </div>
+            </div>
+
+            <div class="legend-box">
+                <span class="legend-item"><span class="legend-dot claude-dot"></span>Claude Code files</span>
+                <span class="legend-item"><span class="legend-dot codex-dot"></span>Codex files</span>
+                <span class="legend-item"><span class="legend-dot shared-dot"></span>Shared (any tool)</span>
+            </div>
+        </div>
+
+        <!-- Section 4: The Cheat Sheet -->
+        <div class="section" style="margin-top: 80px;">
+            <div class="section-header">
+                <span class="section-number">4</span>
+                <h2>The Cheat Sheet</h2>
+            </div>
+            <p class="section-subtitle">When you forget where something lives, this table has the answer.</p>
+
+            <div class="cheat-sheet-table">
+                <div class="cheat-row header-row">
+                    <div class="cheat-cell col-what">What You Need</div>
+                    <div class="cheat-cell col-claude">Claude Code</div>
+                    <div class="cheat-cell col-codex">Codex</div>
+                </div>
+                
+                <div class="cheat-row">
+                    <div class="cheat-cell col-what">Project instructions</div>
+                    <div class="cheat-cell col-claude"><code>CLAUDE.md</code></div>
+                    <div class="cheat-cell col-codex"><code>AGENTS.md</code></div>
+                </div>
+
+                <div class="cheat-row">
+                    <div class="cheat-cell col-what">Project config folder</div>
+                    <div class="cheat-cell col-claude"><code>.claude/</code></div>
+                    <div class="cheat-cell col-codex"><code>.codex/</code></div>
+                </div>
+
+                <div class="cheat-row">
+                    <div class="cheat-cell col-what">Where skills live</div>
+                    <div class="cheat-cell col-claude"><code>.claude/skills/&lt;name&gt;/SKILL.md</code></div>
+                    <div class="cheat-cell col-codex"><code>.agents/skills/&lt;name&gt;/SKILL.md</code></div>
+                </div>
+
+                <div class="cheat-row">
+                    <div class="cheat-cell col-what">Where sub-agents live</div>
+                    <div class="cheat-cell col-claude"><code>.claude/agents/&lt;name&gt;.md</code></div>
+                    <div class="cheat-cell col-codex"><code>.codex/agents/&lt;name&gt;.toml</code></div>
+                </div>
+
+                <div class="cheat-row">
+                    <div class="cheat-cell col-what">Agent file format</div>
+                    <div class="cheat-cell col-claude">Markdown + YAML header</div>
+                    <div class="cheat-cell col-codex">TOML</div>
+                </div>
+
+                <div class="cheat-row">
+                    <div class="cheat-cell col-what">Hooks / permissions / env</div>
+                    <div class="cheat-cell col-claude"><code>.claude/settings.json</code></div>
+                    <div class="cheat-cell col-codex"><code>.codex/config.toml</code></div>
+                </div>
+
+                <div class="cheat-row">
+                    <div class="cheat-cell col-what">Personal / temp override</div>
+                    <div class="cheat-cell col-claude"><code>CLAUDE.local.md</code></div>
+                    <div class="cheat-cell col-codex"><code>AGENTS.override.md</code></div>
+                </div>
+
+                <div class="cheat-row">
+                    <div class="cheat-cell col-what">Global config</div>
+                    <div class="cheat-cell col-claude"><code>~/.claude/</code></div>
+                    <div class="cheat-cell col-codex"><code>~/.codex/ + ~/.agents/skills/</code></div>
+                </div>
+
+                <div class="cheat-row">
+                    <div class="cheat-cell col-what">User-wide instructions</div>
+                    <div class="cheat-cell col-claude"><code>~/.claude/CLAUDE.md</code></div>
+                    <div class="cheat-cell col-codex"><code>~/.codex/AGENTS.md</code></div>
+                </div>
+
+                <div class="cheat-row">
+                    <div class="cheat-cell col-what">Scoped subfolder instructions</div>
+                    <div class="cheat-cell col-claude">Nested <code>CLAUDE.md</code></div>
+                    <div class="cheat-cell col-codex">Nested <code>AGENTS.md</code></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5: 5 Things That Trip Up Beginners -->
+        <div class="section" style="margin-top: 80px;">
+            <div class="section-header">
+                <span class="section-number">5</span>
+                <h2>5 Things That Trip Up Beginners</h2>
+            </div>
+            <p class="section-subtitle">Worth reading before you start. These are the differences you can't paper over.</p>
+
+            <div class="pitfalls-grid">
+                <div class="pitfall-card">
+                    <div class="pitfall-number">1</div>
+                    <h4>Both tools have skills, in different folders.</h4>
+                    <p>Claude reads from <code>.claude/skills/</code>. Codex reads from <code>.agents/skills/</code>. Same basic <code>SKILL.md</code> shape, but Claude-specific tool names or hooks may need small edits for Codex.</p>
+                </div>
+
+                <div class="pitfall-card">
+                    <div class="pitfall-number">2</div>
+                    <h4>Different formats for agents.</h4>
+                    <p>A Claude agent is a <code>.md</code> file with a small YAML header. A Codex agent is a <code>.toml</code> file. The instructions inside are the same idea, just wrapped differently.</p>
+                </div>
+
+                <div class="pitfall-card">
+                    <div class="pitfall-number">3</div>
+                    <h4>Settings files are not interchangeable.</h4>
+                    <p>You can't copy <code>.claude/settings.json</code> into <code>.codex/config.toml</code>. They're different formats and configure different things. Keep them separate.</p>
+                </div>
+
+                <div class="pitfall-card">
+                    <div class="pitfall-number">4</div>
+                    <h4>Codex reads nested instructions.</h4>
+                    <p>Both tools support a <code>CLAUDE.md</code> or <code>AGENTS.md</code> inside a subfolder for scoped instructions. Codex chains them from the repo root down to your current directory. The closer file wins.</p>
+                </div>
+
+                <div class="pitfall-card">
+                    <div class="pitfall-number">5</div>
+                    <h4>Sub-agents work differently.</h4>
+                    <p>Claude agents are markdown files. Codex agents are TOML files. The role prompt can be similar, but the wrapper and execution model are different.</p>
+                </div>
+
+                <div class="pitfall-card bonus">
+                    <div class="pitfall-number">✓</div>
+                    <h4>Bonus: keep shared context out of tool folders.</h4>
+                    <p>Put reusable knowledge in <code>docs/</code>, <code>references/</code>, and <code>templates/</code>. Then both tools can read the same source instead of drifting apart.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 6: The Tool-Agnostic Setup -->
+        <div class="section" style="margin-top: 80px;">
+            <div class="section-header">
+                <span class="section-number">6</span>
+                <h2>The Tool-Agnostic Setup</h2>
+            </div>
+            <p class="section-subtitle">Split your project into three layers. Shared knowledge in one place, workflows in another, tool-specific config in their own folders.</p>
+
+            <div class="three-layer-rule">
+                <h4 class="rule-title">The Three-Layer Rule</h4>
+                <p class="rule-subtitle">Separate content this way and you never write the same thing twice.</p>
+
+                <div class="three-layers">
+                    <div class="layer-card">
+                        <div class="layer-number">1</div>
+                        <h5>Shared Knowledge</h5>
+                        <p>Lives in <code>references/</code>, <code>docs/</code>, <code>templates/</code>. Any agent reads it. Don't duplicate.</p>
+                    </div>
+
+                    <div class="layer-card">
+                        <div class="layer-number">2</div>
+                        <h5>Workflows (Skills)</h5>
+                        <p>Same basic <code>SKILL.md</code> shape in two folders: <code>.claude/skills/</code> for Claude, <code>.agents/skills/</code> for Codex. Sync the files, then adapt tool-specific details if needed.</p>
+                    </div>
+
+                    <div class="layer-card">
+                        <div class="layer-number">3</div>
+                        <h5>Tool-Specific Config</h5>
+                        <p>Stays in <code>.claude/</code> and <code>.codex/</code>. These don't overlap. Don't try to merge them.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 7: The Fastest Way to Convert a Claude Project -->
+        <div class="section" style="margin-top: 80px;">
+            <div class="section-header">
+                <span class="section-number">7</span>
+                <h2>The Fastest Way to Convert a Claude Project</h2>
+            </div>
+            <p class="section-subtitle">Open the Claude-built project in Codex and paste this prompt. Codex can create the adapter files for you.</p>
+
+            <div class="conversion-prompt">
+                <p>I built this project in Claude Code and want it to also work well in Codex.</p>
+                <p>Please inspect the project and create a Codex adapter setup.</p>
+                <p>Do these things:</p>
+                <ol>
+                    <li>Create <code>AGENTS.md</code> at the project root.
+                        <ul>
+                            <li>Use <code>CLAUDE.md</code> as the source of project knowledge.</li>
+                            <li>Do not duplicate long sections unnecessarily.</li>
+                            <li>Explain that <code>AGENTS.md</code> is the Codex-facing adapter.</li>
+                            <li>Include a clear project map.</li>
+                        </ul>
+                    </li>
+                    <li>Create <code>.codex/config.toml</code>.
+                        <ul>
+                            <li>Start with a minimal safe config.</li>
+                            <li>Do not add secrets.</li>
+                        </ul>
+                    </li>
+                    <li>Create <code>.agents/skills/</code>.
+                        <ul>
+                            <li>Copy important Claude skills from <code>.claude/skills/</code> into <code>.agents/skills/</code>.</li>
+                            <li>Keep each <code>SKILL.md</code> and supporting files together.</li>
+                            <li>Do not put skills in <code>.codex/skills/</code>.</li>
+                        </ul>
+                    </li>
+                    <li>Create <code>.codex/agents/</code> for any important Claude agents.
+                        <ul>
+                            <li>Claude agents are <code>.md</code> files in <code>.claude/agents/</code>.</li>
+                            <li>Codex agents are <code>.toml</code> files in <code>.codex/agents/</code>.</li>
+                            <li>Convert the agent instructions into <code>developer_instructions</code>.</li>
+                        </ul>
+                    </li>
+                    <li>Update <code>.gitignore</code> if needed.
+                        <ul>
+                            <li>Keep local overrides and secrets out of git.</li>
+                        </ul>
+                    </li>
+                </ol>
+                <p>Before editing, show me the files you plan to create or change.</p>
+            </div>
+
+            <div class="conversion-idea">
+                <p><strong>The whole conversion idea:</strong> do not rebuild the project. Add a Codex layer beside the Claude layer.</p>
+            </div>
+        </div>
+
+        <!-- Section 8: How to Maintain It -->
+        <div class="section" style="margin-top: 80px;">
+            <div class="section-header">
+                <span class="section-number">8</span>
+                <h2>How to Maintain It</h2>
+            </div>
+            <p class="section-subtitle">The setup only works if both tools stay in sync. These are the habits that matter.</p>
+
+            <div class="maintenance-rules">
+                <div class="maintenance-rule">
+                    <h5><span class="highlight-claude">When you update project instructions:</span> keep <code>CLAUDE.md</code> and <code>AGENTS.md</code> aligned.</h5>
+                    <p>Do not maintain two full copies. Pick one as the source of truth and make the other an adapter.</p>
+                </div>
+
+                <div class="maintenance-rule">
+                    <h5><span class="highlight-codex">When you create a Claude skill:</span> also copy it to <code>.agents/skills/</code> if Codex should use it.</h5>
+                </div>
+
+                <div class="maintenance-rule">
+                    <h5><span class="highlight-claude">When you create a Claude agent:</span> also create a matching <code>.codex/agents/&lt;name&gt;.toml</code> if Codex should spawn it.</h5>
+                </div>
+
+                <div class="maintenance-rule">
+                    <h5><span class="highlight-shared">When you add shared knowledge:</span> put it in <code>docs/</code>, <code>references/</code>, or <code>templates/</code> so every tool can read the same source.</h5>
+                </div>
+            </div>
+        </div>
+
+        <!-- Global vs Project Note -->
+        <div class="global-note" style="margin-top: 60px; margin-bottom: 60px;">
+            <p><strong>Global vs project:</strong> both tools support both Global files live in your home folder and apply everywhere. Project files live inside one repo. Claude mirrors <code>.claude/</code> into <code>.claude/</code>, Codex splits global files: <code>~/.codex/</code> for config and agents, <code>~/.agents/skills/</code> for skills.</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Tool-Agnostic Coding Agent Setup · AI Solopreneur</p>
+        </div>
+    </div>
+</body>
+</html>

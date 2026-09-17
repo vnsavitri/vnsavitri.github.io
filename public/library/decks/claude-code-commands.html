@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Every Claude Code Command — March 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b0d;
+    --surface: #111318;
+    --surface2: #171a20;
+    --border: #1e2229;
+    --amber: #f5a623;
+    --amber-dim: #b87a1a;
+    --green: #4ade80;
+    --blue: #60a5fa;
+    --pink: #f472b6;
+    --purple: #a78bfa;
+    --teal: #2dd4bf;
+    --orange: #fb923c;
+    --text: #e2e4e9;
+    --muted: #6b7280;
+    --dim: #374151;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    padding: 2rem 1.5rem 4rem;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(245,166,35,0.07) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px);
+  }
+
+  /* ── HEADER ── */
+  header {
+    text-align: center;
+    margin-bottom: 3rem;
+    position: relative;
+  }
+  header::after {
+    content: '';
+    display: block;
+    width: 120px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--amber), transparent);
+    margin: 1.5rem auto 0;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    color: var(--amber);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    opacity: 0.8;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+
+  h1 span {
+    color: var(--amber);
+    position: relative;
+  }
+
+  .subtitle {
+    margin-top: 0.75rem;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
+  }
+
+  .btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.5rem 1.2rem;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn:hover { border-color: var(--amber); color: var(--amber); background: rgba(245,166,35,0.06); }
+  .btn.active { border-color: var(--amber); color: var(--amber); background: rgba(245,166,35,0.1); }
+
+  /* ── GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.25rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--dim); }
+
+  .card-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .cat-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .card-count {
+    margin-left: auto;
+    font-size: 0.6rem;
+    color: var(--muted);
+    background: var(--surface2);
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  /* ── ROWS ── */
+  .cmd-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.45rem 1rem;
+    border-bottom: 1px solid rgba(30,34,41,0.6);
+    cursor: pointer;
+    transition: background 0.1s;
+    position: relative;
+  }
+  .cmd-row:last-child { border-bottom: none; }
+  .cmd-row:hover { background: var(--surface2); }
+  .cmd-row:hover .cmd-copy { opacity: 1; }
+
+  .cmd-num {
+    font-size: 0.55rem;
+    color: var(--dim);
+    min-width: 18px;
+    text-align: right;
+    flex-shrink: 0;
+    padding-top: 0.1rem;
+  }
+
+  .cmd-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    min-width: 180px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .cmd-desc {
+    font-size: 0.68rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .cmd-copy {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 0.55rem;
+    color: var(--muted);
+    opacity: 0;
+    transition: opacity 0.15s;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    pointer-events: none;
+  }
+
+  /* ── SHORTCUT ROWS (no num) ── */
+  .shortcut-row .cmd-name { min-width: 140px; }
+
+  /* ── CATEGORY COLOURS ── */
+  .c-pm   { background: #f5a623; }
+  .c-info { background: #60a5fa; }
+  .c-mode { background: #a78bfa; }
+  .c-feat { background: #f472b6; }
+  .c-env  { background: #4ade80; }
+  .c-int  { background: #2dd4bf; }
+  .c-bnd  { background: #fb923c; }
+  .c-cli  { background: #818cf8; }
+  .c-sc   { background: #34d399; }
+
+  .c-pm-t   { color: #f5a623; }
+  .c-info-t { color: #60a5fa; }
+  .c-mode-t { color: #a78bfa; }
+  .c-feat-t { color: #f472b6; }
+  .c-env-t  { color: #4ade80; }
+  .c-int-t  { color: #2dd4bf; }
+  .c-bnd-t  { color: #fb923c; }
+  .c-cli-t  { color: #818cf8; }
+  .c-sc-t   { color: #34d399; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--amber);
+    color: #000;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.5rem 1.2rem;
+    border-radius: 4px;
+    opacity: 0;
+    transition: all 0.2s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    margin-top: 3rem;
+    font-size: 0.6rem;
+    color: var(--dim);
+    letter-spacing: 0.1em;
+  }
+  footer span { color: var(--amber); }
+
+  /* ── SEARCH ── */
+  .search-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+  .search-input {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    padding: 0.55rem 1rem;
+    width: min(480px, 100%);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-input::placeholder { color: var(--dim); }
+  .search-input:focus { border-color: var(--amber); }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 600px) {
+    .cmd-name { min-width: 120px; font-size: 0.68rem; }
+    .cmd-desc { font-size: 0.62rem; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">The Complete Reference &nbsp;·&nbsp; 93 Commands &nbsp;·&nbsp; March 2026</div>
+  <h1>Every <span>Claude Code</span> Command</h1>
+  <p class="subtitle">click any row to copy &nbsp;·&nbsp; use search to filter</p>
+</header>
+
+<div class="search-wrap">
+  <input class="search-input" id="search" type="text" placeholder="/ search commands..." autocomplete="off" spellcheck="false">
+</div>
+
+<div class="toolbar">
+  <button class="btn active" data-filter="all">All 93</button>
+  <button class="btn" data-filter="pm">Project Mgmt</button>
+  <button class="btn" data-filter="info">Info &amp; Status</button>
+  <button class="btn" data-filter="mode">Mode &amp; Model</button>
+  <button class="btn" data-filter="feat">Features</button>
+  <button class="btn" data-filter="env">Environment</button>
+  <button class="btn" data-filter="int">Integrations</button>
+  <button class="btn" data-filter="bnd">Bundle</button>
+  <button class="btn" data-filter="cli">CLI</button>
+  <button class="btn" data-filter="sc">Shortcuts</button>
+  <button class="btn" id="copyAll">⎘ Copy All Text</button>
+</div>
+
+<div class="grid" id="grid">
+
+  <!-- ── PROJECT MANAGEMENT ── -->
+  <div class="card" data-cat="pm">
+    <div class="card-header">
+      <div class="cat-dot c-pm"></div>
+      <div class="card-title">Project Management</div>
+      <div class="card-count">12 cmds</div>
+    </div>
+    <div class="cmd-row" onclick="copy('/init','Auto-generate a CLAUDE.md for your project')"><span class="cmd-num">1</span><span class="cmd-name c-pm-t">/init</span><span class="cmd-desc">Auto-generate a CLAUDE.md for your project</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/memory','Edit the CLAUDE.md memory file')"><span class="cmd-num">2</span><span class="cmd-name c-pm-t">/memory</span><span class="cmd-desc">Edit the CLAUDE.md memory file</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/context','See what is consuming your context window')"><span class="cmd-num">3</span><span class="cmd-name c-pm-t">/context</span><span class="cmd-desc">See what is consuming your context window</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/compact','Compress context to free up space')"><span class="cmd-num">4</span><span class="cmd-name c-pm-t">/compact</span><span class="cmd-desc">Compress context to free up space</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/clear','Reset conversation history')"><span class="cmd-num">5</span><span class="cmd-name c-pm-t">/clear</span><span class="cmd-desc">Reset conversation history</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/resume','Resume a past session')"><span class="cmd-num">6</span><span class="cmd-name c-pm-t">/resume</span><span class="cmd-desc">Resume a past session</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/fork','Branch conversation into a new session')"><span class="cmd-num">7</span><span class="cmd-name c-pm-t">/fork</span><span class="cmd-desc">Branch conversation into a new session</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/rename','Rename the current session')"><span class="cmd-num">8</span><span class="cmd-name c-pm-t">/rename</span><span class="cmd-desc">Rename the current session</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/add-dir','Add an extra directory to context')"><span class="cmd-num">9</span><span class="cmd-name c-pm-t">/add-dir</span><span class="cmd-desc">Add an extra directory to context</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/copy','Select and copy code blocks')"><span class="cmd-num">10</span><span class="cmd-name c-pm-t">/copy</span><span class="cmd-desc">Select and copy code blocks</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/diff','View all changes in an interactive viewer')"><span class="cmd-num">11</span><span class="cmd-name c-pm-t">/diff</span><span class="cmd-desc">View all changes in an interactive viewer</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/export','Export conversation to file or clipboard')"><span class="cmd-num">12</span><span class="cmd-name c-pm-t">/export</span><span class="cmd-desc">Export conversation to file or clipboard</span><span class="cmd-copy">copy</span></div>
+  </div>
+
+  <!-- ── INFORMATION & STATUS ── -->
+  <div class="card" data-cat="info">
+    <div class="card-header">
+      <div class="cat-dot c-info"></div>
+      <div class="card-title">Information &amp; Status</div>
+      <div class="card-count">9 cmds</div>
+    </div>
+    <div class="cmd-row" onclick="copy('/usage','Check token usage against plan limits')"><span class="cmd-num">13</span><span class="cmd-name c-info-t">/usage</span><span class="cmd-desc">Check token usage against plan limits</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/cost','Show current session cost')"><span class="cmd-num">14</span><span class="cmd-name c-info-t">/cost</span><span class="cmd-desc">Show current session cost</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/help','List all available commands')"><span class="cmd-num">15</span><span class="cmd-name c-info-t">/help</span><span class="cmd-desc">List all available commands</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/tasks','Check background tasks')"><span class="cmd-num">16</span><span class="cmd-name c-info-t">/tasks</span><span class="cmd-desc">Check background tasks</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/doctor','Run environment diagnostics')"><span class="cmd-num">17</span><span class="cmd-name c-info-t">/doctor</span><span class="cmd-desc">Run environment diagnostics</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/stats','Generate usage statistics as HTML report')"><span class="cmd-num">18</span><span class="cmd-name c-info-t">/stats</span><span class="cmd-desc">Generate usage statistics as HTML report</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/debug','Display troubleshooting info')"><span class="cmd-num">19</span><span class="cmd-name c-info-t">/debug</span><span class="cmd-desc">Display troubleshooting info</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/effort','Switch thinking level (low/medium/high/auto)')"><span class="cmd-num">20</span><span class="cmd-name c-info-t">/effort</span><span class="cmd-desc">Switch thinking level (low/medium/high/auto)</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/extra-usage','Enable additional usage capacity')"><span class="cmd-num">21</span><span class="cmd-name c-info-t">/extra-usage</span><span class="cmd-desc">Enable additional usage capacity</span><span class="cmd-copy">copy</span></div>
+  </div>
+
+  <!-- ── MODE & MODEL CONTROL ── -->
+  <div class="card" data-cat="mode">
+    <div class="card-header">
+      <div class="cat-dot c-mode"></div>
+      <div class="card-title">Mode &amp; Model Control</div>
+      <div class="card-count">6 cmds</div>
+    </div>
+    <div class="cmd-row" onclick="copy('/model','Switch between Opus, Sonnet, and Haiku')"><span class="cmd-num">22</span><span class="cmd-name c-mode-t">/model</span><span class="cmd-desc">Switch between Opus, Sonnet, and Haiku</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/fast','Toggle Fast Mode (Opus 4.6 at 2.5× speed)')"><span class="cmd-num">23</span><span class="cmd-name c-mode-t">/fast</span><span class="cmd-desc">Toggle Fast Mode (Opus 4.6 at 2.5× speed)</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/plan','Toggle Plan Mode (read-only planning)')"><span class="cmd-num">24</span><span class="cmd-name c-mode-t">/plan</span><span class="cmd-desc">Toggle Plan Mode (read-only planning)</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/vim','Toggle Vim-style editing')"><span class="cmd-num">25</span><span class="cmd-name c-mode-t">/vim</span><span class="cmd-desc">Toggle Vim-style editing</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/output-style','Change output style')"><span class="cmd-num">26</span><span class="cmd-name c-mode-t">/output-style</span><span class="cmd-desc">Change output style</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/voice','Enable voice prompting')"><span class="cmd-num">27</span><span class="cmd-name c-mode-t">/voice</span><span class="cmd-desc">Enable voice prompting</span><span class="cmd-copy">copy</span></div>
+  </div>
+
+  <!-- ── FEATURE MANAGEMENT ── -->
+  <div class="card" data-cat="feat">
+    <div class="card-header">
+      <div class="cat-dot c-feat"></div>
+      <div class="card-title">Feature Management</div>
+      <div class="card-count">8 cmds</div>
+    </div>
+    <div class="cmd-row" onclick="copy('/hooks','Configure lifecycle hooks')"><span class="cmd-num">28</span><span class="cmd-name c-feat-t">/hooks</span><span class="cmd-desc">Configure lifecycle hooks</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/agents','Create and manage sub-agents')"><span class="cmd-num">29</span><span class="cmd-name c-feat-t">/agents</span><span class="cmd-desc">Create and manage sub-agents</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/permissions','Change permission settings')"><span class="cmd-num">30</span><span class="cmd-name c-feat-t">/permissions</span><span class="cmd-desc">Change permission settings</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/sandbox','Enable sandbox mode')"><span class="cmd-num">31</span><span class="cmd-name c-feat-t">/sandbox</span><span class="cmd-desc">Enable sandbox mode</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/config','Open settings interface')"><span class="cmd-num">32</span><span class="cmd-name c-feat-t">/config</span><span class="cmd-desc">Open settings interface</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/rewind','Rewind conversation and/or code changes')"><span class="cmd-num">33</span><span class="cmd-name c-feat-t">/rewind</span><span class="cmd-desc">Rewind conversation and/or code changes</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/login','Re-authenticate')"><span class="cmd-num">34</span><span class="cmd-name c-feat-t">/login</span><span class="cmd-desc">Re-authenticate</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/logout','Log out')"><span class="cmd-num">35</span><span class="cmd-name c-feat-t">/logout</span><span class="cmd-desc">Log out</span><span class="cmd-copy">copy</span></div>
+  </div>
+
+  <!-- ── ENVIRONMENT SETTINGS ── -->
+  <div class="card" data-cat="env">
+    <div class="card-header">
+      <div class="cat-dot c-env"></div>
+      <div class="card-title">Environment Settings</div>
+      <div class="card-count">5 cmds</div>
+    </div>
+    <div class="cmd-row" onclick="copy('/terminal-setup','Set up Shift+Enter keybinding')"><span class="cmd-num">36</span><span class="cmd-name c-env-t">/terminal-setup</span><span class="cmd-desc">Set up Shift+Enter keybinding</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/keybindings','Open keybindings config')"><span class="cmd-num">37</span><span class="cmd-name c-env-t">/keybindings</span><span class="cmd-desc">Open keybindings config</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/status-line','Set up terminal status line')"><span class="cmd-num">38</span><span class="cmd-name c-env-t">/status-line</span><span class="cmd-desc">Set up terminal status line</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/theme','Change syntax highlighting theme')"><span class="cmd-num">39</span><span class="cmd-name c-env-t">/theme</span><span class="cmd-desc">Change syntax highlighting theme</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/upgrade','Upgrade your Claude plan')"><span class="cmd-num">40</span><span class="cmd-name c-env-t">/upgrade</span><span class="cmd-desc">Upgrade your Claude plan</span><span class="cmd-copy">copy</span></div>
+  </div>
+
+  <!-- ── INTEGRATIONS & EXTENSIONS ── -->
+  <div class="card" data-cat="int">
+    <div class="card-header">
+      <div class="cat-dot c-int"></div>
+      <div class="card-title">Integrations &amp; Extensions</div>
+      <div class="card-count">13 cmds</div>
+    </div>
+    <div class="cmd-row" onclick="copy('/install-github-app','Set up GitHub PR auto-review')"><span class="cmd-num">41</span><span class="cmd-name c-int-t">/install-github-app</span><span class="cmd-desc">Set up GitHub PR auto-review</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/plugin','Plugin management (add/remove/marketplace)')"><span class="cmd-num">42</span><span class="cmd-name c-int-t">/plugin</span><span class="cmd-desc">Plugin management (add/remove/marketplace)</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/mcp','Check MCP status and authentication')"><span class="cmd-num">43</span><span class="cmd-name c-int-t">/mcp</span><span class="cmd-desc">Check MCP status and authentication</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/rc','Switch to Remote Control (phone/tablet)')"><span class="cmd-num">44</span><span class="cmd-name c-int-t">/rc</span><span class="cmd-desc">Switch to Remote Control (phone/tablet)</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/review','Code review for a specified PR')"><span class="cmd-num">45</span><span class="cmd-name c-int-t">/review</span><span class="cmd-desc">Code review for a specified PR</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/pr-comments','Show PR comments for current branch')"><span class="cmd-num">46</span><span class="cmd-name c-int-t">/pr-comments</span><span class="cmd-desc">Show PR comments for current branch</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/security-review','Security audit of uncommitted changes')"><span class="cmd-num">47</span><span class="cmd-name c-int-t">/security-review</span><span class="cmd-desc">Security audit of uncommitted changes</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/skills','Skill management menu')"><span class="cmd-num">48</span><span class="cmd-name c-int-t">/skills</span><span class="cmd-desc">Skill management menu</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/find-skills','Browse and install skills')"><span class="cmd-num">49</span><span class="cmd-name c-int-t">/find-skills</span><span class="cmd-desc">Browse and install skills</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/chrome','Control your browser from Claude Code')"><span class="cmd-num">50</span><span class="cmd-name c-int-t">/chrome</span><span class="cmd-desc">Control your browser from Claude Code</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/ide','Manage IDE integrations')"><span class="cmd-num">51</span><span class="cmd-name c-int-t">/ide</span><span class="cmd-desc">Manage IDE integrations</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/btw','Ask a side question without interrupting')"><span class="cmd-num">52</span><span class="cmd-name c-int-t">/btw</span><span class="cmd-desc">Ask a side question without interrupting</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/loop','Run a prompt on a recurring schedule')"><span class="cmd-num">53</span><span class="cmd-name c-int-t">/loop</span><span class="cmd-desc">Run a prompt on a recurring schedule</span><span class="cmd-copy">copy</span></div>
+  </div>
+
+  <!-- ── BUNDLE COMMANDS ── -->
+  <div class="card" data-cat="bnd">
+    <div class="card-header">
+      <div class="cat-dot c-bnd"></div>
+      <div class="card-title">Bundle Commands</div>
+      <div class="card-count">2 cmds</div>
+    </div>
+    <div class="cmd-row" onclick="copy('/simplify','3-agent review (architecture, duplicates, performance)')"><span class="cmd-num">54</span><span class="cmd-name c-bnd-t">/simplify</span><span class="cmd-desc">3-agent review (architecture, duplicates, performance)</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('/batch','Large-scale parallel changes across worktrees')"><span class="cmd-num">55</span><span class="cmd-name c-bnd-t">/batch</span><span class="cmd-desc">Large-scale parallel changes across worktrees</span><span class="cmd-copy">copy</span></div>
+  </div>
+
+  <!-- ── CLI COMMANDS ── -->
+  <div class="card" data-cat="cli" style="grid-column: span 1;">
+    <div class="card-header">
+      <div class="cat-dot c-cli"></div>
+      <div class="card-title">CLI Commands</div>
+      <div class="card-count">25 cmds</div>
+    </div>
+    <div class="cmd-row" onclick="copy('claude','Start an interactive session')"><span class="cmd-num">56</span><span class="cmd-name c-cli-t">claude</span><span class="cmd-desc">Start an interactive session</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude &quot;question&quot;','Start with an initial prompt')"><span class="cmd-num">57</span><span class="cmd-name c-cli-t">claude "question"</span><span class="cmd-desc">Start with an initial prompt</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude -p &quot;question&quot;','Non-interactive mode, then exit')"><span class="cmd-num">58</span><span class="cmd-name c-cli-t">claude -p "question"</span><span class="cmd-desc">Non-interactive mode, then exit</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude -c','Resume the most recent session')"><span class="cmd-num">59</span><span class="cmd-name c-cli-t">claude -c</span><span class="cmd-desc">Resume the most recent session</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude -r "ID"','Resume a session by ID')"><span class="cmd-num">60</span><span class="cmd-name c-cli-t">claude -r "ID"</span><span class="cmd-desc">Resume a session by ID</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude --from-pr','Resume session linked to a PR')"><span class="cmd-num">61</span><span class="cmd-name c-cli-t">claude --from-pr</span><span class="cmd-desc">Resume session linked to a PR</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude update','Update to latest version')"><span class="cmd-num">62</span><span class="cmd-name c-cli-t">claude update</span><span class="cmd-desc">Update to latest version</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude mcp add','Add an MCP server')"><span class="cmd-num">63</span><span class="cmd-name c-cli-t">claude mcp add</span><span class="cmd-desc">Add an MCP server</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude mcp list','List configured MCP servers')"><span class="cmd-num">64</span><span class="cmd-name c-cli-t">claude mcp list</span><span class="cmd-desc">List configured MCP servers</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude mcp remove','Remove an MCP server')"><span class="cmd-num">65</span><span class="cmd-name c-cli-t">claude mcp remove</span><span class="cmd-desc">Remove an MCP server</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude mcp serve','Run Claude Code as an MCP server')"><span class="cmd-num">66</span><span class="cmd-name c-cli-t">claude mcp serve</span><span class="cmd-desc">Run Claude Code as an MCP server</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude auth login','Authenticate')"><span class="cmd-num">67</span><span class="cmd-name c-cli-t">claude auth login</span><span class="cmd-desc">Authenticate</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude auth status','Check auth status')"><span class="cmd-num">68</span><span class="cmd-name c-cli-t">claude auth status</span><span class="cmd-desc">Check auth status</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude auth logout','Log out')"><span class="cmd-num">69</span><span class="cmd-name c-cli-t">claude auth logout</span><span class="cmd-desc">Log out</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude agents','List configured agents')"><span class="cmd-num">70</span><span class="cmd-name c-cli-t">claude agents</span><span class="cmd-desc">List configured agents</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude rc','Start Remote Control session')"><span class="cmd-num">71</span><span class="cmd-name c-cli-t">claude rc</span><span class="cmd-desc">Start Remote Control session</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude plugin','Plugin management')"><span class="cmd-num">72</span><span class="cmd-name c-cli-t">claude plugin</span><span class="cmd-desc">Plugin management</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude config list','Display all settings')"><span class="cmd-num">73</span><span class="cmd-name c-cli-t">claude config list</span><span class="cmd-desc">Display all settings</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude config set','Update a setting')"><span class="cmd-num">74</span><span class="cmd-name c-cli-t">claude config set</span><span class="cmd-desc">Update a setting</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude --dangerously-skip-permissions','No permission prompts')"><span class="cmd-num">75</span><span class="cmd-name c-cli-t" style="font-size:0.6rem">claude --dangerously-skip-permissions</span><span class="cmd-desc">No permission prompts</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude --worktree','Isolated git worktree for parallel work')"><span class="cmd-num">76</span><span class="cmd-name c-cli-t">claude --worktree</span><span class="cmd-desc">Isolated git worktree for parallel work</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude --model opus','Specify model at launch')"><span class="cmd-num">77</span><span class="cmd-name c-cli-t">claude --model opus</span><span class="cmd-desc">Specify model at launch</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy("claude --agents '{json}'","Define sub-agents at launch")"><span class="cmd-num">78</span><span class="cmd-name c-cli-t">claude --agents '{json}'</span><span class="cmd-desc">Define sub-agents at launch</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude --append-system-prompt','Add to system prompt')"><span class="cmd-num">79</span><span class="cmd-name c-cli-t">claude --append-system-prompt</span><span class="cmd-desc">Add to system prompt</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row" onclick="copy('claude --max-turns N','Set turn limit')"><span class="cmd-num">80</span><span class="cmd-name c-cli-t">claude --max-turns N</span><span class="cmd-desc">Set turn limit</span><span class="cmd-copy">copy</span></div>
+  </div>
+
+  <!-- ── SHORTCUTS & NOTATION ── -->
+  <div class="card" data-cat="sc">
+    <div class="card-header">
+      <div class="cat-dot c-sc"></div>
+      <div class="card-title">Shortcuts &amp; Notation</div>
+      <div class="card-count">13 items</div>
+    </div>
+    <div class="cmd-row shortcut-row" onclick="copy('Esc','Stop processing')"><span class="cmd-num">81</span><span class="cmd-name c-sc-t">Esc</span><span class="cmd-desc">Stop processing</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row shortcut-row" onclick="copy('Esc × 2','Open rewind menu')"><span class="cmd-num">82</span><span class="cmd-name c-sc-t">Esc × 2</span><span class="cmd-desc">Open rewind menu</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row shortcut-row" onclick="copy('Shift+Tab','Cycle modes (normal/auto-accept/plan)')"><span class="cmd-num">83</span><span class="cmd-name c-sc-t">Shift+Tab</span><span class="cmd-desc">Cycle modes (normal/auto-accept/plan)</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row shortcut-row" onclick="copy('Tab','Toggle extended thinking')"><span class="cmd-num">84</span><span class="cmd-name c-sc-t">Tab</span><span class="cmd-desc">Toggle extended thinking</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row shortcut-row" onclick="copy('Ctrl+F','Stop all background agents')"><span class="cmd-num">85</span><span class="cmd-name c-sc-t">Ctrl+F</span><span class="cmd-desc">Stop all background agents</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row shortcut-row" onclick="copy('Ctrl+V','Paste image from clipboard')"><span class="cmd-num">86</span><span class="cmd-name c-sc-t">Ctrl+V</span><span class="cmd-desc">Paste image from clipboard</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row shortcut-row" onclick="copy('Ctrl+R','Reverse search command history')"><span class="cmd-num">87</span><span class="cmd-name c-sc-t">Ctrl+R</span><span class="cmd-desc">Reverse search command history</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row shortcut-row" onclick="copy('@filename','Reference a file or directory')"><span class="cmd-num">88</span><span class="cmd-name c-sc-t">@filename</span><span class="cmd-desc">Reference a file or directory</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row shortcut-row" onclick="copy('#content','Add content to CLAUDE.md')"><span class="cmd-num">89</span><span class="cmd-name c-sc-t">#content</span><span class="cmd-desc">Add content to CLAUDE.md</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row shortcut-row" onclick="copy('!command','Execute a shell command directly')"><span class="cmd-num">90</span><span class="cmd-name c-sc-t">!command</span><span class="cmd-desc">Execute a shell command directly</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row shortcut-row" onclick="copy('& task','Run a task in the background')"><span class="cmd-num">91</span><span class="cmd-name c-sc-t">&amp; task</span><span class="cmd-desc">Run a task in the background</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row shortcut-row" onclick="copy('&quot;Think harder&quot;','Force high effort for one turn')"><span class="cmd-num">92</span><span class="cmd-name c-sc-t">"Think harder"</span><span class="cmd-desc">Force high effort for one turn</span><span class="cmd-copy">copy</span></div>
+    <div class="cmd-row shortcut-row" onclick="copy('&quot;Ultra think&quot;','Force maximum reasoning depth')"><span class="cmd-num">93</span><span class="cmd-name c-sc-t">"Ultra think"</span><span class="cmd-desc">Force maximum reasoning depth</span><span class="cmd-copy">copy</span></div>
+  </div>
+
+</div>
+
+<footer>
+  <p>Every Claude Code Command &nbsp;·&nbsp; <span>93 commands</span> &nbsp;·&nbsp; March 2026 &nbsp;·&nbsp; Click any row to copy command</p>
+</footer>
+
+<div id="toast">Copied to clipboard</div>
+
+<script>
+  // Copy single command
+  function copy(cmd, desc) {
+    const clean = cmd.replace(/&quot;/g,'"').replace(/&amp;/g,'&');
+    navigator.clipboard.writeText(clean).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = clean; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); ta.remove();
+    });
+    showToast('Copied: ' + clean);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  // Filter buttons
+  document.querySelectorAll('.btn[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.btn[data-filter]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const f = btn.dataset.filter;
+      document.querySelectorAll('.card').forEach(card => {
+        card.classList.toggle('hidden', f !== 'all' && card.dataset.cat !== f);
+      });
+    });
+  });
+
+  // Search
+  document.getElementById('search').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.cmd-row').forEach(row => {
+      const txt = row.textContent.toLowerCase();
+      row.classList.toggle('hidden', q && !txt.includes(q));
+    });
+    // show/hide cards with no visible rows
+    document.querySelectorAll('.card').forEach(card => {
+      const visible = [...card.querySelectorAll('.cmd-row')].some(r => !r.classList.contains('hidden'));
+      card.classList.toggle('hidden', !visible);
+    });
+  });
+
+  // Copy all as plain text
+  document.getElementById('copyAll').addEventListener('click', () => {
+    const lines = [];
+    document.querySelectorAll('.cmd-row:not(.hidden)').forEach(row => {
+      const num  = row.querySelector('.cmd-num')?.textContent.trim() || '';
+      const name = row.querySelector('.cmd-name')?.textContent.trim() || '';
+      const desc = row.querySelector('.cmd-desc')?.textContent.trim() || '';
+      lines.push(`${num.padStart(2,'0')}. ${name.padEnd(38)} ${desc}`);
+    });
+    navigator.clipboard.writeText(lines.join('\n'));
+    showToast(`Copied ${lines.length} commands`);
+  });
+</script>
+</body>
+</html>

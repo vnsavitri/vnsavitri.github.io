@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive plain-English explainer of WikiSkill: compiling agent experience into persistent knowledge for skill evolution.">
+  <title>WikiSkill — Persistent Knowledge for Skill Evolution</title>
+  <style>
+    :root {
+      --ink: #10202b;
+      --ink-2: #425663;
+      --paper: #f4f6f3;
+      --paper-2: #e9eeea;
+      --line: #cbd7d0;
+      --white: #fbfcfa;
+      --amber: #e5a23b;
+      --amber-soft: #fff1cf;
+      --mint: #65b797;
+      --mint-soft: #d9f0e4;
+      --blue: #5488d8;
+      --blue-soft: #dfeafa;
+      --coral: #e77c68;
+      --coral-soft: #fbe1dc;
+      --shadow: 0 22px 70px rgba(16, 32, 43, .14);
+      --serif: Georgia, 'Times New Roman', serif;
+      --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--ink);
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+
+    .appbar {
+      position: fixed;
+      z-index: 20;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+      color: var(--white);
+      background: rgba(16, 32, 43, .94);
+      border-bottom: 1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(14px);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .brand-mark {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 13px 0 0 var(--mint), 26px 0 0 var(--blue);
+      margin-right: 26px;
+    }
+    .app-actions { display: flex; align-items: center; gap: 8px; }
+    .top-btn, .toc-btn {
+      min-height: 34px;
+      padding: 0 11px;
+      color: var(--white);
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.23);
+      border-radius: 7px;
+      font-size: 12px;
+    }
+    .top-btn:hover, .toc-btn:hover { background: rgba(255,255,255,.1); }
+    .progress-wrap {
+      position: fixed;
+      z-index: 21;
+      top: 57px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: rgba(255,255,255,.12);
+    }
+    .progress-bar { height: 100%; width: 0; background: var(--amber); transition: width .3s ease; }
+
+    .deck { padding-top: 58px; }
+    .slide {
+      display: none;
+      position: relative;
+      min-height: calc(100svh - 58px);
+      padding: clamp(30px, 5vw, 76px) clamp(24px, 7vw, 112px) 70px;
+      overflow: hidden;
+      background: var(--paper);
+    }
+    .slide.active { display: block; animation: enter .32s ease both; }
+    @keyframes enter { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+    .slide.dark { color: var(--white); background: var(--ink); }
+    .slide.amber { background: var(--amber-soft); }
+    .slide.mint { background: var(--mint-soft); }
+    .slide.blue { background: var(--blue-soft); }
+    .slide.coral { background: var(--coral-soft); }
+
+    .slide::after {
+      content: attr(data-number);
+      position: absolute;
+      right: clamp(24px, 7vw, 112px);
+      bottom: 24px;
+      color: var(--ink-2);
+      opacity: .58;
+      font: 12px var(--mono);
+    }
+    .dark::after { color: rgba(251,252,250,.62); }
+    .eyebrow {
+      margin-bottom: 18px;
+      color: var(--ink-2);
+      font-size: 11px;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .dark .eyebrow { color: var(--amber); }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2 { letter-spacing: -.045em; line-height: .98; }
+    h1 { max-width: 900px; margin-bottom: 22px; font-size: clamp(42px, 7.1vw, 104px); font-weight: 600; }
+    h2 { max-width: 860px; margin-bottom: 20px; font-size: clamp(34px, 5.3vw, 72px); font-weight: 600; }
+    h3 { margin-bottom: 10px; font-size: 17px; line-height: 1.15; font-weight: 700; letter-spacing: -.02em; }
+    p { max-width: 760px; font-size: clamp(16px, 1.55vw, 21px); line-height: 1.45; }
+    .lede { max-width: 690px; color: var(--ink-2); font-size: clamp(18px, 2vw, 26px); line-height: 1.35; }
+    .dark .lede { color: rgba(251,252,250,.72); }
+    .serif { font-family: var(--serif); }
+    .mono { font-family: var(--mono); }
+    .muted { color: var(--ink-2); }
+    .dark .muted { color: rgba(251,252,250,.62); }
+    .source {
+      margin-top: 26px;
+      color: var(--ink-2);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    .dark .source { color: rgba(251,252,250,.56); }
+    .source a { text-decoration-thickness: 1px; text-underline-offset: 3px; }
+
+    .hero-grid { display: grid; min-height: calc(100svh - 190px); align-items: center; grid-template-columns: 1.08fr .92fr; gap: 7vw; }
+    .hero-orbit { position: relative; min-height: 410px; display: grid; place-items: center; }
+    .orbit-ring { position: absolute; border: 1px solid rgba(229,162,59,.35); border-radius: 50%; }
+    .orbit-ring.r1 { width: 250px; height: 250px; }
+    .orbit-ring.r2 { width: 380px; height: 380px; border-color: rgba(101,183,151,.25); }
+    .orbit-ring.r3 { width: 510px; height: 510px; border-color: rgba(84,136,216,.2); }
+    .hero-core { position: relative; z-index: 2; display: grid; place-items: center; width: 145px; height: 145px; border-radius: 50%; color: var(--ink); background: var(--amber); text-align: center; font-weight: 800; line-height: 1.04; box-shadow: 0 0 0 16px rgba(229,162,59,.09), 0 0 0 40px rgba(229,162,59,.05); }
+    .orbit-label { position: absolute; z-index: 3; padding: 7px 10px; border: 1px solid rgba(251,252,250,.24); border-radius: 20px; background: rgba(16,32,43,.78); color: var(--white); font: 11px var(--mono); }
+    .orbit-label.l1 { top: 18%; right: 13%; }
+    .orbit-label.l2 { bottom: 17%; left: 7%; }
+    .orbit-label.l3 { top: 9%; left: 8%; }
+    .title-meta { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 34px; color: rgba(251,252,250,.62); font: 12px var(--mono); }
+    .title-meta span { padding-right: 9px; border-right: 1px solid rgba(251,252,250,.22); }
+    .title-meta span:last-child { border: 0; }
+
+    .big-statement { display: grid; align-items: center; min-height: calc(100svh - 190px); grid-template-columns: 1.1fr .9fr; gap: 7vw; }
+    .statement-number { color: var(--amber); font: 800 clamp(90px, 17vw, 230px)/.8 var(--mono); letter-spacing: -.12em; }
+    .statement-copy { font-size: clamp(22px, 3vw, 44px); line-height: 1.08; letter-spacing: -.04em; }
+    .statement-copy strong { color: var(--amber); font-weight: 600; }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .panel { padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: rgba(251,252,250,.55); }
+    .dark .panel { border-color: rgba(251,252,250,.16); background: rgba(251,252,250,.06); }
+    .panel p { margin-bottom: 0; font-size: 15px; line-height: 1.4; }
+    .panel .kicker { margin-bottom: 13px; color: var(--ink-2); font: 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+    .dark .panel .kicker { color: rgba(251,252,250,.55); }
+    .quote { border-left: 4px solid var(--amber); padding: 13px 0 13px 20px; font: 600 clamp(22px, 3vw, 40px)/1.12 var(--serif); }
+    .quote small { display: block; margin-top: 14px; color: var(--ink-2); font: 12px var(--mono); }
+    .dark .quote small { color: rgba(251,252,250,.55); }
+
+    .layer-stack { display: grid; gap: 12px; margin-top: 34px; }
+    .layer {
+      display: grid;
+      grid-template-columns: 132px 1fr auto;
+      align-items: center;
+      gap: 18px;
+      width: 100%;
+      padding: 18px 20px;
+      color: var(--ink);
+      text-align: left;
+      border: 1px solid transparent;
+      border-radius: 11px;
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+    .layer:hover, .layer.selected { transform: translateX(7px); border-color: rgba(16,32,43,.32); box-shadow: 0 9px 24px rgba(16,32,43,.08); }
+    .layer.raw { background: var(--blue-soft); }
+    .layer.wiki { background: var(--amber-soft); }
+    .layer.skill { background: var(--mint-soft); }
+    .layer-name { font: 700 14px var(--mono); }
+    .layer-desc { font-size: 17px; }
+    .layer-state { color: var(--ink-2); font-size: 12px; text-align: right; }
+    .detail-box { min-height: 104px; margin-top: 15px; padding: 18px 20px; border-radius: 11px; background: var(--ink); color: var(--white); }
+    .detail-box strong { color: var(--amber); }
+    .detail-box p { margin: 7px 0 0; font-size: 15px; color: rgba(251,252,250,.76); }
+
+    .loop { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: stretch; margin-top: 35px; }
+    .loop-step { position: relative; padding: 20px 17px 18px; min-height: 190px; border-radius: 13px; color: var(--ink); }
+    .loop-step::after { content: '→'; position: absolute; right: -15px; top: 50%; z-index: 2; color: var(--ink-2); font-size: 24px; transform: translateY(-50%); }
+    .loop-step:last-child::after { content: '↺'; right: -18px; color: var(--mint); }
+    .loop-step:nth-child(1) { background: var(--blue-soft); }
+    .loop-step:nth-child(2) { background: var(--coral-soft); }
+    .loop-step:nth-child(3) { background: var(--amber-soft); }
+    .loop-step:nth-child(4) { background: var(--mint-soft); }
+    .step-no { margin-bottom: 27px; font: 700 11px var(--mono); opacity: .62; }
+    .loop-step p { margin-bottom: 0; font-size: 14px; line-height: 1.35; }
+    .loop-caption { margin-top: 26px; display: flex; justify-content: space-between; gap: 20px; color: var(--ink-2); font: 12px var(--mono); }
+    .loop-caption strong { color: var(--ink); }
+
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: center; }
+    .rule { margin: 25px 0; height: 1px; background: var(--line); }
+    .dark .rule { background: rgba(251,252,250,.16); }
+    .versus { display: grid; gap: 12px; }
+    .versus-item { display: grid; grid-template-columns: 76px 1fr; gap: 16px; align-items: center; padding: 17px; border-radius: 10px; background: rgba(251,252,250,.66); }
+    .versus-item.bad { opacity: .64; }
+    .versus-item.good { border-left: 4px solid var(--mint); }
+    .versus-label { color: var(--ink-2); font: 700 11px var(--mono); text-transform: uppercase; }
+    .versus-item p { margin: 0; font-size: 15px; }
+
+    .gate { display: grid; grid-template-columns: 1fr 1.1fr; gap: 7vw; align-items: center; }
+    .gate-track { position: relative; padding: 26px 0; }
+    .gate-line { position: absolute; top: 50%; left: 8%; right: 8%; height: 2px; background: var(--line); }
+    .gate-nodes { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .gate-node { display: grid; place-items: center; min-height: 125px; padding: 15px; text-align: center; border: 1px solid var(--line); border-radius: 50%; background: var(--paper); font-weight: 700; }
+    .gate-node.candidate { border-color: var(--amber); background: var(--amber-soft); }
+    .gate-node.accept { border-color: var(--mint); background: var(--mint-soft); }
+    .gate-node.reject { border-color: var(--coral); background: var(--coral-soft); }
+    .gate-outcomes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+    .outcome { padding: 16px; border-radius: 10px; font-size: 14px; line-height: 1.35; }
+    .outcome.accept { background: var(--mint-soft); }
+    .outcome.reject { background: var(--coral-soft); }
+
+    .chart-wrap { margin-top: 26px; }
+    .chart { display: grid; gap: 12px; }
+    .chart-row { display: grid; grid-template-columns: 158px 1fr 55px; gap: 12px; align-items: center; }
+    .chart-name { font: 12px var(--mono); }
+    .bar-track { height: 18px; border-radius: 4px; background: rgba(16,32,43,.1); overflow: hidden; }
+    .bar { height: 100%; border-radius: 4px; background: var(--amber); transform-origin: left; animation: grow .65s ease both; }
+    .bar.baseline { background: var(--blue); }
+    .bar.competitor { background: var(--coral); }
+    @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    .chart-val { font: 700 13px var(--mono); text-align: right; }
+    .chart-note { margin-top: 18px; color: var(--ink-2); font-size: 13px; line-height: 1.45; }
+    .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; color: var(--ink-2); font: 11px var(--mono); }
+    .legend span::before { content: ''; display: inline-block; width: 9px; height: 9px; margin-right: 6px; border-radius: 2px; background: var(--amber); }
+    .legend .l-blue::before { background: var(--blue); }
+    .legend .l-coral::before { background: var(--coral); }
+
+    .transfer { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 28px; }
+    .transfer-card { padding: 21px; border: 1px solid var(--line); border-radius: 11px; background: rgba(251,252,250,.55); }
+    .transfer-card h3 { display: flex; justify-content: space-between; gap: 10px; }
+    .transfer-card p { margin-bottom: 0; font-size: 15px; }
+    .score { color: var(--mint); font: 700 14px var(--mono); white-space: nowrap; }
+    .warning { margin-top: 18px; padding: 16px 18px; border-left: 4px solid var(--coral); background: rgba(231,124,104,.12); font-size: 14px; line-height: 1.4; }
+
+    .case-study { display: grid; grid-template-columns: .82fr 1.18fr; gap: 35px; align-items: start; }
+    .timeline { position: relative; margin-top: 26px; padding-left: 25px; border-left: 2px solid var(--line); }
+    .timeline-item { position: relative; padding: 0 0 26px 18px; }
+    .timeline-item::before { content: ''; position: absolute; left: -32px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--amber); border: 4px solid var(--paper); }
+    .timeline-item:last-child::before { background: var(--mint); }
+    .timeline-item strong { display: block; margin-bottom: 6px; font: 700 12px var(--mono); }
+    .timeline-item p { margin: 0; font-size: 15px; }
+    .case-files { display: grid; gap: 10px; margin-top: 20px; }
+    .file { padding: 15px 16px; border-radius: 9px; font: 13px var(--mono); }
+    .file.raw { background: var(--blue-soft); }
+    .file.wiki { background: var(--amber-soft); }
+    .file.skill { background: var(--mint-soft); }
+    .file small { display: block; margin-top: 7px; color: var(--ink-2); font: 13px var(--sans); line-height: 1.35; }
+
+    .translation { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 13px; margin-top: 30px; }
+    .translation .panel { min-height: 177px; }
+    .translation .panel h3 { font-size: 16px; }
+    .translation .panel p { font-size: 14px; }
+    .tag { display: inline-block; margin-bottom: 15px; padding: 5px 7px; border-radius: 4px; font: 10px var(--mono); background: var(--ink); color: var(--white); }
+
+    .caveats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 28px; }
+    .caveat { padding: 17px; border-top: 3px solid var(--amber); background: rgba(251,252,250,.62); }
+    .caveat:nth-child(2) { border-color: var(--coral); }
+    .caveat:nth-child(3) { border-color: var(--blue); }
+    .caveat:nth-child(4) { border-color: var(--mint); }
+    .caveat h3 { font-size: 15px; }
+    .caveat p { margin: 0; font-size: 14px; line-height: 1.4; }
+
+    .guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 29px; }
+    .guide-step { display: grid; grid-template-columns: 33px 1fr; gap: 14px; align-items: start; }
+    .guide-no { display: grid; place-items: center; width: 27px; height: 27px; border-radius: 50%; background: var(--ink); color: var(--white); font: 11px var(--mono); }
+    .guide-step h3 { margin-bottom: 4px; font-size: 15px; }
+    .guide-step p { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.4; }
+    .checklist { margin-top: 23px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; background: rgba(251,252,250,.6); }
+    .check-row { display: flex; gap: 10px; align-items: center; padding: 9px 0; font-size: 14px; border-bottom: 1px solid var(--line); }
+    .check-row:last-child { border: 0; }
+    .check-row input { width: 17px; height: 17px; accent-color: var(--mint); }
+    .check-progress { margin-top: 12px; height: 7px; border-radius: 20px; background: rgba(16,32,43,.1); overflow: hidden; }
+    .check-progress > span { display: block; width: 0; height: 100%; background: var(--mint); transition: width .2s ease; }
+
+    pre { position: relative; margin: 16px 0 0; padding: 19px; overflow: auto; border-radius: 10px; background: #172d3a; color: #e7f1eb; font: 12px/1.55 var(--mono); }
+    .copy-btn { position: absolute; top: 9px; right: 9px; padding: 6px 8px; border: 1px solid rgba(255,255,255,.22); border-radius: 5px; background: transparent; color: var(--white); font: 10px var(--mono); }
+    .copy-btn:hover { background: rgba(255,255,255,.1); }
+    .code-key { color: #f4c36c; }
+    .code-value { color: #9bd5b8; }
+
+    .blueprint { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; align-items: start; margin-top: 28px; }
+    .tree { padding: 20px; border-radius: 11px; background: #172d3a; color: var(--white); font: 13px/1.8 var(--mono); }
+    .tree .folder { color: var(--amber); }
+    .tree .file-name { color: #bce0cb; }
+    .blueprint-notes { display: grid; gap: 12px; }
+    .blueprint-note { padding: 15px 17px; border-left: 3px solid var(--amber); background: rgba(251,252,250,.58); }
+    .blueprint-note:nth-child(2) { border-color: var(--mint); }
+    .blueprint-note:nth-child(3) { border-color: var(--blue); }
+    .blueprint-note p { margin: 0; font-size: 14px; line-height: 1.4; }
+
+    .final { display: grid; align-items: center; min-height: calc(100svh - 190px); grid-template-columns: 1fr .8fr; gap: 8vw; }
+    .final-quote { font: 600 clamp(32px, 5vw, 70px)/1.02 var(--serif); letter-spacing: -.045em; }
+    .final-quote em { color: var(--amber); font-style: normal; }
+    .final-stack { display: grid; gap: 10px; }
+    .final-pill { padding: 17px 18px; border: 1px solid rgba(251,252,250,.2); border-radius: 9px; color: rgba(251,252,250,.78); font-size: 15px; }
+    .final-pill strong { display: block; margin-bottom: 5px; color: var(--white); }
+
+    .nav-dock { position: fixed; z-index: 22; left: 50%; bottom: 17px; display: flex; align-items: center; gap: 9px; padding: 7px; border: 1px solid rgba(251,252,250,.18); border-radius: 10px; background: rgba(16,32,43,.9); color: var(--white); transform: translateX(-50%); backdrop-filter: blur(12px); }
+    .nav-dock button { width: 35px; height: 30px; border: 0; border-radius: 6px; color: var(--white); background: transparent; }
+    .nav-dock button:hover { background: rgba(255,255,255,.1); }
+    .counter { min-width: 54px; color: rgba(251,252,250,.7); font: 11px var(--mono); text-align: center; }
+    .toc {
+      position: fixed; z-index: 30; top: 0; right: 0; bottom: 0; width: min(390px, 92vw); padding: 82px 25px 25px; overflow: auto; background: var(--paper); box-shadow: -18px 0 60px rgba(0,0,0,.22); transform: translateX(105%); transition: transform .25s ease;
+    }
+    .toc.open { transform: translateX(0); }
+    .toc h2 { font-size: 29px; margin-bottom: 20px; }
+    .toc-close { position: absolute; top: 17px; right: 17px; border: 0; background: transparent; font-size: 25px; color: var(--ink); }
+    .toc-list { display: grid; gap: 5px; }
+    .toc-list button { padding: 9px 10px; border: 0; border-radius: 6px; color: var(--ink-2); background: transparent; text-align: left; font-size: 13px; }
+    .toc-list button:hover, .toc-list button.current { color: var(--ink); background: var(--paper-2); }
+    .toc-list button span { display: inline-block; width: 28px; color: var(--amber); font: 10px var(--mono); }
+
+    @media (max-width: 800px) {
+      .appbar { padding: 0 14px; }
+      .brand { font-size: 10px; }
+      .top-btn { padding: 0 8px; font-size: 11px; }
+      .slide { padding: 34px 22px 65px; }
+      .hero-grid, .big-statement, .split, .gate, .case-study, .final { grid-template-columns: 1fr; gap: 30px; }
+      .hero-grid, .big-statement, .final { min-height: auto; }
+      .hero-orbit { min-height: 310px; order: -1; }
+      .orbit-ring.r1 { width: 190px; height: 190px; }
+      .orbit-ring.r2 { width: 290px; height: 290px; }
+      .orbit-ring.r3 { width: 385px; height: 385px; }
+      .hero-core { width: 116px; height: 116px; font-size: 14px; }
+      .orbit-label { font-size: 10px; }
+      .grid-3, .translation { grid-template-columns: 1fr; }
+      .grid-2, .guide-grid, .blueprint, .transfer, .caveats { grid-template-columns: 1fr; }
+      .loop { grid-template-columns: 1fr 1fr; }
+      .loop-step::after { display: none; }
+      .layer { grid-template-columns: 94px 1fr; gap: 10px; padding: 15px; }
+      .layer-state { grid-column: 2; text-align: left; }
+      .chart-row { grid-template-columns: 115px 1fr 45px; gap: 8px; }
+      .chart-name { font-size: 10px; }
+      .gate-nodes { gap: 5px; }
+      .gate-node { min-height: 92px; font-size: 12px; }
+    }
+    @media (max-width: 460px) {
+      .app-actions .top-btn:first-child { display: none; }
+      h1 { font-size: 43px; }
+      h2 { font-size: 36px; }
+      .loop { grid-template-columns: 1fr; }
+      .statement-number { font-size: 116px; }
+      .chart-row { grid-template-columns: 88px 1fr 38px; }
+      .chart-name { font-size: 9px; }
+      .loop-caption { display: block; }
+      .loop-caption span { display: block; margin-top: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    }
+    @media print {
+      .appbar, .progress-wrap, .nav-dock, .toc { display: none !important; }
+      .deck { padding-top: 0; }
+      .slide, .slide.active { display: block; min-height: auto; page-break-after: always; padding: 45px; }
+      .slide::after { bottom: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="appbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>WikiSkill / paper explainer</div>
+    <div class="app-actions">
+      <button class="top-btn" id="shareBtn" type="button">Copy link</button>
+      <button class="toc-btn" id="tocBtn" type="button" aria-expanded="false" aria-controls="toc">Contents</button>
+    </div>
+  </header>
+  <div class="progress-wrap" aria-hidden="true"><div class="progress-bar" id="progressBar"></div></div>
+
+  <aside class="toc" id="toc" aria-label="Slide contents">
+    <button class="toc-close" id="tocClose" type="button" aria-label="Close contents">×</button>
+    <div class="eyebrow">18 slides · interactive explainer</div>
+    <h2>Contents</h2>
+    <div class="toc-list" id="tocList"></div>
+  </aside>
+
+  <main class="deck" id="deck" aria-live="polite">
+    <section class="slide dark active" data-title="Cover" data-number="01" aria-labelledby="s1-title">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow">Google Research · arXiv:2608.27454v1</div>
+          <h1 id="s1-title">WikiSkill</h1>
+          <p class="lede">How agents turn messy execution experience into persistent knowledge, then use it to evolve reusable skills.</p>
+          <div class="title-meta"><span>plain-English explainer</span><span>beginner first</span><span>implementation guide included</span></div>
+        </div>
+        <div class="hero-orbit" aria-label="A visual showing experience, knowledge and skills orbiting an agent">
+          <div class="orbit-ring r1"></div><div class="orbit-ring r2"></div><div class="orbit-ring r3"></div>
+          <div class="hero-core">agent<br>gets better</div>
+          <div class="orbit-label l1">skills /</div><div class="orbit-label l2">raw traces /</div><div class="orbit-label l3">wiki /</div>
+        </div>
+      </div>
+      <p class="source">Based on Liyan Tang et al., “WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution”, Google Research, 27 August 2026. <a href="https://arxiv.org/abs/2608.27454" target="_blank" rel="noreferrer">Read the paper ↗</a></p>
+    </section>
+
+    <section class="slide amber" data-title="TL;DR" data-number="02" aria-labelledby="s2-title">
+      <div class="eyebrow">Start here · the beginner version</div>
+      <h2 id="s2-title">An agent should remember <em>what happened</em>, not just rewrite its instructions.</h2>
+      <div class="grid-3" style="margin-top:32px">
+        <div class="panel"><div class="kicker">01 · observe</div><h3>Run real tasks</h3><p>Save the agent’s actions, tool calls, feedback and final answers as raw traces.</p></div>
+        <div class="panel"><div class="kicker">02 · compile</div><h3>Make patterns durable</h3><p>Turn repeated successes and failures into a searchable wiki with evidence and history.</p></div>
+        <div class="panel"><div class="kicker">03 · improve safely</div><h3>Promote only winners</h3><p>Propose a small skill change, test it on validation tasks, and roll back if it gets worse.</p></div>
+      </div>
+      <div class="quote" style="margin-top:32px">Raw experience → structured knowledge → executable skill → measured improvement.<small>That is the whole idea.</small></div>
+      <p class="source">Paper summary and Methodology, Sections 1–3. “Wiki” means a persistent knowledge layer, not a public website.</p>
+    </section>
+
+    <section class="slide dark" data-title="The problem" data-number="03" aria-labelledby="s3-title">
+      <div class="big-statement">
+        <div class="statement-number">01</div>
+        <div>
+          <div class="eyebrow">The problem</div>
+          <h2 id="s3-title">Most skill evolution has a short memory.</h2>
+          <p class="statement-copy">The agent may analyse traces and edit a skill, but the reasoning behind those edits can stay scattered across optimisation history. <strong>Useful lessons become hard to retrieve, compare or reuse.</strong></p>
+          <div class="rule"></div>
+          <p class="muted" style="font-size:15px">WikiSkill inserts a durable knowledge layer between “what the agent experienced” and “what the skill tells it to do”.</p>
+        </div>
+      </div>
+      <p class="source">Paraphrase of the paper’s motivation in Introduction, Section 1.</p>
+    </section>
+
+    <section class="slide" data-title="Three layers" data-number="04" aria-labelledby="s4-title">
+      <div class="eyebrow">The mental model</div>
+      <h2 id="s4-title">Three layers, three different jobs.</h2>
+      <p class="lede">Click a layer to see what it protects, what it contains and who can read it.</p>
+      <div class="layer-stack" id="layerStack">
+        <button class="layer raw" type="button" data-layer="raw" aria-pressed="false"><span class="layer-name">raw/</span><span class="layer-desc">Immutable execution traces</span><span class="layer-state">permanent · write once</span></button>
+        <button class="layer wiki" type="button" data-layer="wiki" aria-pressed="false"><span class="layer-name">wiki/</span><span class="layer-desc">Structured patterns and evolution logs</span><span class="layer-state">compounding · never reset</span></button>
+        <button class="layer skill" type="button" data-layer="skill" aria-pressed="false"><span class="layer-name">skills/</span><span class="layer-desc">Active procedural instructions</span><span class="layer-state">reversible · conditional update</span></button>
+      </div>
+      <div class="detail-box" id="layerDetail"><strong>raw/</strong><p>Keep the evidence intact: the agent’s reasoning, tool calls, observations and final answers. Later components can inspect it, but the history itself is not rewritten.</p></div>
+      <p class="source">Methodology, Section 3.1 and Figure 2.</p>
+    </section>
+
+    <section class="slide" data-title="The evolutionary loop" data-number="05" aria-labelledby="s5-title">
+      <div class="eyebrow">The mechanism</div>
+      <h2 id="s5-title">A four-part loop turns experience into a better skill.</h2>
+      <div class="loop" aria-label="Four steps in the WikiSkill evolutionary loop">
+        <div class="loop-step"><div class="step-no">STEP 01</div><h3>Inference agent</h3><p>Runs training tasks with the active skill and writes traces to <span class="mono">raw/</span>.</p></div>
+        <div class="loop-step"><div class="step-no">STEP 02</div><h3>Wiki maintainer</h3><p>Performs root-cause analysis and consolidates useful patterns into <span class="mono">wiki/</span>.</p></div>
+        <div class="loop-step"><div class="step-no">STEP 03</div><h3>Skill proposer</h3><p>Reads the wiki and selected traces, then proposes one atomic skill update.</p></div>
+        <div class="loop-step"><div class="step-no">STEP 04</div><h3>Gating + rollback</h3><p>Tests the candidate on validation tasks. Keep it only if the score improves.</p></div>
+      </div>
+      <div class="loop-caption"><strong>Next iteration</strong><span>the wiki stays, even when the skill is rolled back</span></div>
+      <p class="source">Methodology, Section 3.2 and Algorithm 1.</p>
+    </section>
+
+    <section class="slide blue" data-title="A deliberate constraint" data-number="06" aria-labelledby="s6-title">
+      <div class="eyebrow">A deliberate constraint</div>
+      <h2 id="s6-title">The learner sees the skill. The skill-maker sees the wiki.</h2>
+      <div class="split" style="margin-top:32px">
+        <div>
+          <div class="versus">
+            <div class="versus-item bad"><div class="versus-label">rollout</div><p>The Inference Agent uses active skills, but is restricted from reading the wiki during training.</p></div>
+            <div class="versus-item good"><div class="versus-label">evolution</div><p>The Wiki Maintainer and Skill Proposer inspect traces plus accumulated wiki knowledge.</p></div>
+          </div>
+          <p class="source">The paper’s ablation found that giving the Inference Agent wiki access during training reduced average performance from 63.7% to 60.9% in the tested Gemini configuration.</p>
+        </div>
+        <div class="panel">
+          <div class="kicker">Why might this help?</div>
+          <h3>Make the traces diagnostically useful.</h3>
+          <p>If the agent can solve tasks by directly consulting the wiki, its traces may reveal less about what the executable skill itself is missing. The authors describe this as a hypothesis, supported by the ablation rather than proven as a universal law.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide mint" data-title="Gate and rollback" data-number="07" aria-labelledby="s7-title">
+      <div class="eyebrow">Safety valve</div>
+      <h2 id="s7-title">The wiki learns from every attempt. The skill earns its place.</h2>
+      <div class="gate" style="margin-top:32px">
+        <div>
+          <p class="lede">A candidate skill update is evaluated on a validation split against the best score so far.</p>
+          <div class="gate-outcomes"><div class="outcome accept"><strong>Accepted</strong><br>Candidate becomes the new active skill and the best score moves up.</div><div class="outcome reject"><strong>Rejected</strong><br>Skill reverts to the last winner. The wiki still records what was tried.</div></div>
+        </div>
+        <div class="gate-track" aria-label="Candidate skill is either accepted or rejected by validation">
+          <div class="gate-line"></div>
+          <div class="gate-nodes"><div class="gate-node candidate">candidate<br>skill</div><div class="gate-node accept">score<br>improves</div><div class="gate-node reject">score<br>degrades</div></div>
+        </div>
+      </div>
+      <p class="source">Methodology, Section 3.2.4 and Algorithm 1. The paper uses a strict “must improve validation score” rule.</p>
+    </section>
+
+    <section class="slide" data-title="Evidence at a glance" data-number="08" aria-labelledby="s8-title">
+      <div class="eyebrow">Evidence · average test accuracy</div>
+      <h2 id="s8-title">WikiSkill was the strongest method on average across the five tested models.</h2>
+      <div class="chart-wrap">
+        <div class="chart" aria-label="Average test accuracy by inference model, comparing no skill and WikiSkill">
+          <div class="chart-row"><div class="chart-name">Qwen 3.5 4B · no skill</div><div class="bar-track"><div class="bar baseline" style="width:52.4%"></div></div><div class="chart-val">26.2</div></div>
+          <div class="chart-row"><div class="chart-name">Qwen 3.5 4B · WikiSkill</div><div class="bar-track"><div class="bar" style="width:77%"></div></div><div class="chart-val">38.5</div></div>
+          <div class="chart-row"><div class="chart-name">Qwen 3.5 9B · no skill</div><div class="bar-track"><div class="bar baseline" style="width:59.8%"></div></div><div class="chart-val">29.9</div></div>
+          <div class="chart-row"><div class="chart-name">Qwen 3.5 9B · WikiSkill</div><div class="bar-track"><div class="bar" style="width:94.8%"></div></div><div class="chart-val">47.4</div></div>
+          <div class="chart-row"><div class="chart-name">Qwen 3.6 27B · no skill</div><div class="bar-track"><div class="bar baseline" style="width:78.8%"></div></div><div class="chart-val">39.4</div></div>
+          <div class="chart-row"><div class="chart-name">Qwen 3.6 27B · WikiSkill</div><div class="bar-track"><div class="bar" style="width:100%"></div></div><div class="chart-val">63.3</div></div>
+          <div class="chart-row"><div class="chart-name">Gemma 4 31B · no skill</div><div class="bar-track"><div class="bar baseline" style="width:82.6%"></div></div><div class="chart-val">41.3</div></div>
+          <div class="chart-row"><div class="chart-name">Gemma 4 31B · WikiSkill</div><div class="bar-track"><div class="bar" style="width:87.0%"></div></div><div class="chart-val">54.9</div></div>
+          <div class="chart-row"><div class="chart-name">Gemini 3.5 Flash · no skill</div><div class="bar-track"><div class="bar baseline" style="width:82.6%"></div></div><div class="chart-val">49.5</div></div>
+          <div class="chart-row"><div class="chart-name">Gemini 3.5 Flash · WikiSkill</div><div class="bar-track"><div class="bar" style="width:100%"></div></div><div class="chart-val">68.1</div></div>
+        </div>
+        <div class="legend"><span class="l-blue">no skill baseline</span><span>WikiSkill result</span></div>
+        <p class="chart-note"><strong>Important:</strong> this is a visual summary of selected values, not a re-analysis. The underlying table reports averages over five benchmarks and three independent evolution runs; the paper reports paired bootstrap testing at <span class="mono">p &lt; 0.05</span>.</p>
+      </div>
+      <p class="source">Source: Table 1. Bars are scaled to 68.1%, the highest WikiSkill average in the table. Values shown are test accuracy percentages.</p>
+    </section>
+
+    <section class="slide dark" data-title="Scaling" data-number="09" aria-labelledby="s9-title">
+      <div class="eyebrow">What scales with what?</div>
+      <h2 id="s9-title">Model capability and procedural knowledge are complementary.</h2>
+      <div class="grid-2" style="margin-top:33px">
+        <div class="panel"><div class="kicker">within the Qwen family</div><h3>WikiSkill gains grew with model scale.</h3><p>Average improvement over no-skill baselines was reported as <strong>+12.3 points</strong> for Qwen-3.5-4B, <strong>+17.5</strong> for Qwen-3.5-9B and <strong>+23.9</strong> for Qwen-3.6-27B.</p></div>
+        <div class="panel"><div class="kicker">the counterintuitive bit</div><h3>Skills can compensate for model size.</h3><p>Qwen-3.5-9B with WikiSkill reached <strong>47.4%</strong> average accuracy, versus <strong>39.4%</strong> for Qwen-3.6-27B without skills.</p></div>
+      </div>
+      <div class="quote" style="margin-top:34px">A better model can discover better procedures. A better procedure can let a smaller model punch above its weight.<small>That is a complement, not a replacement for scaling.</small></div>
+      <p class="source">Results and interpretation from Section 4.2.1. Percentages are percentage-point differences in the paper’s wording.</p>
+    </section>
+
+    <section class="slide coral" data-title="Transfer" data-number="10" aria-labelledby="s10-title">
+      <div class="eyebrow">Cross-model transfer</div>
+      <h2 id="s10-title">A skill can travel. It can also carry the wrong assumptions.</h2>
+      <div class="transfer">
+        <div class="transfer-card"><h3>Useful transfer <span class="score">+26.2 pts</span></h3><p>Qwen-3.6-27B Spreadsheet skills lifted Qwen-3.5-9B from 24.3% without skills to 50.5%.</p></div>
+        <div class="transfer-card"><h3>Negative transfer <span class="score" style="color:var(--coral)">−32.4 pts</span></h3><p>Qwen-3.5-4B Spreadsheet skills reduced Gemini-3.5-Flash from 50.5% without skills to 18.1%.</p></div>
+      </div>
+      <div class="warning"><strong>Design implication:</strong> separate general procedures from model-specific workarounds. The paper attributes negative transfer to low-level constraints and fragmented diagnostics that helped one model but restricted another.</div>
+      <p class="source">Source: Table 2 and cross-model analysis in Section 4.2.2. Differences calculated from the reported values.</p>
+    </section>
+
+    <section class="slide amber" data-title="Case study" data-number="11" aria-labelledby="s11-title">
+      <div class="eyebrow">Case study · ALFWorld</div>
+      <h2 id="s11-title">The wiki turns a rejected idea into a concrete rule.</h2>
+      <div class="case-study" style="margin-top:28px">
+        <div class="timeline">
+          <div class="timeline-item"><strong>Iteration 0 · rejected</strong><p>“Goal-directed action” is too abstract and fails to improve validation performance.</p></div>
+          <div class="timeline-item"><strong>Iteration 1 · accepted</strong><p>“Break repetition loop” adds a concrete rule: don’t return an item to its origin location.</p></div>
+          <div class="timeline-item"><strong>Iteration 4 · refined</strong><p>New evidence leads to a sharper rule: perform each operation type once per item.</p></div>
+        </div>
+        <div class="case-files">
+          <div class="file raw">raw/traces/<small>The detailed action history shows the loop and the recovery.</small></div>
+          <div class="file wiki">wiki/patterns/take-examine-move-loop.md<small>Pattern page: description, evidence, root cause and workaround.</small></div>
+          <div class="file skill">skills/break-repetition-loop/SKILL.md<small>Executable instruction promoted after validation.</small></div>
+        </div>
+      </div>
+      <p class="source">Source: Figure 3 and Case Study, Section 5.3. File contents in the paper’s diagram are simplified for clarity.</p>
+    </section>
+
+    <section class="slide" data-title="Why it matters" data-number="12" aria-labelledby="s12-title">
+      <div class="eyebrow">Translation for agent builders</div>
+      <h2 id="s12-title">This is a memory architecture for improving procedures.</h2>
+      <div class="translation">
+        <div class="panel"><span class="tag">PRODUCT</span><h3>Make improvement inspectable.</h3><p>Keep the trace, the diagnosis, the proposal, the score and the decision linked. “The agent got better” should have an audit trail.</p></div>
+        <div class="panel"><span class="tag">ENGINEERING</span><h3>Use two speeds of knowledge.</h3><p>Raw traces are append-only evidence. Wiki patterns are curated understanding. Skills are the small runtime surface.</p></div>
+        <div class="panel"><span class="tag">EVALUATION</span><h3>Test changes, not vibes.</h3><p>Require a validation decision for each atomic update, while preserving rejected attempts as future context.</p></div>
+      </div>
+      <p class="source">These are practical interpretations of the paper’s architecture and findings, not additional experimental claims.</p>
+    </section>
+
+    <section class="slide blue" data-title="Limitations" data-number="13" aria-labelledby="s13-title">
+      <div class="eyebrow">Where to be careful</div>
+      <h2 id="s13-title">Promising does not mean production-complete.</h2>
+      <div class="caveats">
+        <div class="caveat"><h3>Retrieval is not tested</h3><p>Active skills were directly injected into prompts. Skill discovery and triggering at scale remain open problems.</p></div>
+        <div class="caveat"><h3>Strict gating can be myopic</h3><p>Neutral changes are rejected even if they could enable a later improvement.</p></div>
+        <div class="caveat"><h3>The wiki can grow without bound</h3><p>The paper does not yet automate pruning or consolidation over long runs.</p></div>
+        <div class="caveat"><h3>Long horizons remain open</h3><p>The benchmarks do not cover tasks spanning hundreds of actions or multiple hours.</p></div>
+      </div>
+      <p class="source">Limitations, Section 7. Treat this slide as the boundary around the paper’s evidence.</p>
+    </section>
+
+    <section class="slide mint" data-title="How-to guide" data-number="14" aria-labelledby="s14-title">
+      <div class="eyebrow">Implementation guide · start small</div>
+      <h2 id="s14-title">Build a tiny WikiSkill loop around one agent task.</h2>
+      <div class="guide-grid">
+        <div class="guide-step"><span class="guide-no">1</span><div><h3>Choose a narrow task family</h3><p>For example: spreadsheet edits, document retrieval or a bounded tool workflow. Define train, validation and test splits.</p></div></div>
+        <div class="guide-step"><span class="guide-no">2</span><div><h3>Log complete traces</h3><p>Capture inputs, observations, tool calls, outputs, errors, final answer and score. Never overwrite the original trace.</p></div></div>
+        <div class="guide-step"><span class="guide-no">3</span><div><h3>Ask a maintainer for patterns</h3><p>Sample both failures and successes. Require root cause, evidence and a concrete workaround.</p></div></div>
+        <div class="guide-step"><span class="guide-no">4</span><div><h3>Ask a proposer for one change</h3><p>Give it the wiki index, prior impact log and selected traces. Keep each proposal atomic.</p></div></div>
+        <div class="guide-step"><span class="guide-no">5</span><div><h3>Gate on validation</h3><p>Evaluate the candidate with the same harness. Accept only if your chosen rule says it is better.</p></div></div>
+        <div class="guide-step"><span class="guide-no">6</span><div><h3>Record the decision</h3><p>Store the diff, score and accepted/rejected outcome in the wiki so future proposals do not repeat dead ends.</p></div></div>
+      </div>
+      <p class="source">Implementation sequence adapted from Algorithm 1 and Sections 3.1–3.2. The guide adds practical engineering detail.</p>
+    </section>
+
+    <section class="slide" data-title="Folder blueprint" data-number="15" aria-labelledby="s15-title">
+      <div class="eyebrow">Implementation guide · workspace</div>
+      <h2 id="s15-title">Keep evidence, knowledge and runtime instructions visibly separate.</h2>
+      <div class="blueprint">
+        <div class="tree" aria-label="Suggested WikiSkill folder structure"><span class="folder">project/</span><br>├── <span class="folder">raw/</span><br>│   └── <span class="file-name">traces/iter-0001/task-004.jsonl</span><br>├── <span class="folder">wiki/</span><br>│   ├── <span class="folder">patterns/</span><br>│   │   └── <span class="file-name">search-wrong-file.md</span><br>│   ├── <span class="file-name">index.md</span><br>│   ├── <span class="file-name">logs.md</span><br>│   └── <span class="file-name">skill-impact.md</span><br>└── <span class="folder">skills/</span><br>    └── <span class="folder">document-search/</span><br>        ├── <span class="file-name">SKILL.md</span><br>        └── <span class="file-name">PURPOSE.md</span></div>
+        <div class="blueprint-notes">
+          <div class="blueprint-note"><p><strong>raw/</strong> is your replayable evidence. Append new traces; do not “clean” history.</p></div>
+          <div class="blueprint-note"><p><strong>wiki/</strong> is the durable diagnosis: patterns, evolution log, and what each proposal changed.</p></div>
+          <div class="blueprint-note"><p><strong>skills/</strong> is the compact runtime contract. Each skill should point back to the wiki patterns that motivated it.</p></div>
+        </div>
+      </div>
+      <p class="source">Directory names and file responsibilities follow the paper’s Three-Layer Knowledge Architecture.</p>
+    </section>
+
+    <section class="slide dark" data-title="Pseudo-code" data-number="16" aria-labelledby="s16-title">
+      <div class="eyebrow">Implementation guide · outer loop</div>
+      <h2 id="s16-title">The core can fit in one page of pseudo-code.</h2>
+      <pre><button class="copy-btn" type="button" data-copy="codeBlock">copy</button><code id="codeBlock"><span class="code-key">best_score</span> = evaluate(<span class="code-value">empty_skill</span>, validation)
+<span class="code-key">skill</span> = empty_skill
+<span class="code-key">wiki</span> = empty_wiki
+
+<span class="code-key">for</span> iteration <span class="code-key">in</span> range(max_iterations):
+    traces = rollout(agent, train_tasks, skill)
+    sampled = sample_failures_and_successes(traces)
+
+    wiki = maintainer.update(wiki, sampled)
+    proposal = proposer.create(wiki, traces, skill)
+    candidate = apply(skill, proposal)
+
+    candidate_score = evaluate(candidate, validation)
+    accepted = candidate_score &gt; best_score
+    skill = candidate <span class="code-key">if</span> accepted <span class="code-key">else</span> skill
+    best_score = max(best_score, candidate_score)
+    wiki = log_decision(wiki, proposal, candidate_score, accepted)</code></pre>
+      <p class="source">Adapted from Algorithm 1. In the paper, the proposer can read selected traces on demand and the wiki is retained whether the skill update is accepted or rejected.</p>
+    </section>
+
+    <section class="slide amber" data-title="Evaluation checklist" data-number="17" aria-labelledby="s17-title">
+      <div class="eyebrow">Implementation guide · done means measurable</div>
+      <h2 id="s17-title">Before you call it self-improving, check the loop.</h2>
+      <div class="checklist" id="checklist">
+        <label class="check-row"><input type="checkbox"> I have separate train, validation and test tasks.</label>
+        <label class="check-row"><input type="checkbox"> Every rollout has a complete, immutable trace.</label>
+        <label class="check-row"><input type="checkbox"> Patterns contain evidence, root cause and a workaround.</label>
+        <label class="check-row"><input type="checkbox"> Each proposal is atomic and diffable.</label>
+        <label class="check-row"><input type="checkbox"> Acceptance is based on a held-out validation rule.</label>
+        <label class="check-row"><input type="checkbox"> Rejected proposals remain searchable in the impact log.</label>
+        <label class="check-row"><input type="checkbox"> I can detect model-specific workarounds before transfer.</label>
+        <div class="check-progress" aria-label="Checklist progress"><span id="checkProgress"></span></div>
+        <p id="checkText" class="muted" style="margin:10px 0 0;font-size:12px">0 of 7 checked</p>
+      </div>
+      <p class="source">Checklist synthesises the paper’s architecture, ablation, transfer findings and limitations into a practical pre-flight check.</p>
+    </section>
+
+    <section class="slide dark" data-title="Closing takeaway" data-number="18" aria-labelledby="s18-title">
+      <div class="final">
+        <div>
+          <div class="eyebrow">The takeaway</div>
+          <h2 id="s18-title" class="final-quote">Don’t make the skill the <em>only</em> place the agent remembers.</h2>
+          <p class="lede">Let the wiki accumulate the messy learning history. Let the skill stay concise, executable and earned by evaluation.</p>
+          <p class="source">Paper: Tang et al., WikiSkill, Google Research, arXiv:2608.27454v1. <a href="https://arxiv.org/abs/2608.27454" target="_blank" rel="noreferrer">Source paper ↗</a></p>
+        </div>
+        <div class="final-stack">
+          <div class="final-pill"><strong>Experience</strong>raw traces you can replay</div>
+          <div class="final-pill"><strong>Knowledge</strong>patterns with memory and provenance</div>
+          <div class="final-pill"><strong>Action</strong>skills that improve only when the score says so</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="nav-dock" aria-label="Slide navigation">
+    <button id="prevBtn" type="button" aria-label="Previous slide">←</button>
+    <div class="counter" id="counter">01 / 18</div>
+    <button id="nextBtn" type="button" aria-label="Next slide">→</button>
+  </nav>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const counter = document.getElementById('counter');
+      const progressBar = document.getElementById('progressBar');
+      const toc = document.getElementById('toc');
+      const tocList = document.getElementById('tocList');
+      let current = 0;
+
+      slides.forEach((slide, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.innerHTML = '<span>' + String(index + 1).padStart(2, '0') + '</span>' + slide.dataset.title;
+        button.addEventListener('click', () => { goTo(index); closeToc(); });
+        tocList.appendChild(button);
+      });
+
+      function goTo(index, updateHash = true) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+        [...tocList.children].forEach((item, i) => item.classList.toggle('current', i === current));
+        counter.textContent = String(current + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+        progressBar.style.width = (((current + 1) / slides.length) * 100) + '%';
+        if (updateHash) history.replaceState(null, '', '#slide-' + (current + 1));
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      function fromHash() {
+        const match = location.hash.match(/slide-(\d+)/);
+        return match ? Number(match[1]) - 1 : 0;
+      }
+      function next() { goTo(current + 1); }
+      function previous() { goTo(current - 1); }
+      function openToc() { toc.classList.add('open'); document.getElementById('tocBtn').setAttribute('aria-expanded', 'true'); }
+      function closeToc() { toc.classList.remove('open'); document.getElementById('tocBtn').setAttribute('aria-expanded', 'false'); }
+
+      document.getElementById('nextBtn').addEventListener('click', next);
+      document.getElementById('prevBtn').addEventListener('click', previous);
+      document.getElementById('tocBtn').addEventListener('click', openToc);
+      document.getElementById('tocClose').addEventListener('click', closeToc);
+      document.addEventListener('keydown', (event) => {
+        if (['INPUT', 'TEXTAREA', 'BUTTON'].includes(document.activeElement.tagName) && event.key !== 'Escape') return;
+        if (['ArrowRight', 'PageDown', ' '].includes(event.key)) { event.preventDefault(); next(); }
+        if (['ArrowLeft', 'PageUp'].includes(event.key)) { event.preventDefault(); previous(); }
+        if (event.key === 'Home') { event.preventDefault(); goTo(0); }
+        if (event.key === 'End') { event.preventDefault(); goTo(slides.length - 1); }
+        if (event.key === 'Escape') closeToc();
+      });
+      let touchStartX = 0;
+      document.addEventListener('touchstart', (event) => { touchStartX = event.changedTouches[0].screenX; }, { passive: true });
+      document.addEventListener('touchend', (event) => {
+        const delta = event.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(delta) > 55) delta < 0 ? next() : previous();
+      }, { passive: true });
+
+      document.querySelectorAll('[data-layer]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const layer = button.dataset.layer;
+          const details = {
+            raw: ['raw/', 'Keep the evidence intact: the agent’s reasoning, tool calls, observations and final answers. Later components can inspect it, but the history itself is not rewritten.'],
+            wiki: ['wiki/', 'Compile evidence into patterns, evolution logs and skill-impact history. This layer persists across iterations, including rejected proposals.'],
+            skill: ['skills/', 'Store the active procedural instructions the Inference Agent can use. Each skill can point back to the wiki patterns that motivated it.']
+          }[layer];
+          document.querySelectorAll('[data-layer]').forEach(item => { item.classList.toggle('selected', item === button); item.setAttribute('aria-pressed', item === button ? 'true' : 'false'); });
+          document.getElementById('layerDetail').innerHTML = '<strong>' + details[0] + '</strong><p>' + details[1] + '</p>';
+        });
+      });
+
+      document.querySelectorAll('[data-copy]').forEach((button) => {
+        button.addEventListener('click', async () => {
+          const text = document.getElementById(button.dataset.copy).innerText;
+          try { await navigator.clipboard.writeText(text); button.textContent = 'copied'; }
+          catch { button.textContent = 'select manually'; }
+          setTimeout(() => { button.textContent = 'copy'; }, 1300);
+        });
+      });
+
+      const checks = [...document.querySelectorAll('#checklist input')];
+      const checkProgress = document.getElementById('checkProgress');
+      const checkText = document.getElementById('checkText');
+      checks.forEach((check) => check.addEventListener('change', () => {
+        const count = checks.filter(item => item.checked).length;
+        checkProgress.style.width = ((count / checks.length) * 100) + '%';
+        checkText.textContent = count + ' of ' + checks.length + ' checked';
+      }));
+
+      document.getElementById('shareBtn').addEventListener('click', async () => {
+        const url = location.href.split('#')[0] + '#slide-' + (current + 1);
+        try { await navigator.clipboard.writeText(url); document.getElementById('shareBtn').textContent = 'Link copied'; }
+        catch { window.prompt('Copy this link:', url); }
+        setTimeout(() => { document.getElementById('shareBtn').textContent = 'Copy link'; }, 1400);
+      });
+
+      goTo(fromHash(), false);
+    })();
+  </script>
+</body>
+</html>

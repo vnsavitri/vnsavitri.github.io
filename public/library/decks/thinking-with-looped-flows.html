@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b0e12" />
+  <meta name="description" content="An interactive explainer for Thinking with Looped Flows by Ayhan Suleymanzade and colleagues." />
+  <title>Thinking with Looped Flows</title>
+  <style>
+    :root {
+      --bg: #0b0e12;
+      --bg-soft: #11161c;
+      --panel: rgba(20, 26, 33, .82);
+      --panel-strong: #171e26;
+      --ink: #edf2f1;
+      --muted: #a7b2b0;
+      --faint: #697572;
+      --line: rgba(237, 242, 241, .13);
+      --cyan: #77e8d2;
+      --lime: #c7ee82;
+      --orange: #ffbd72;
+      --pink: #f49bb7;
+      --danger: #ff927d;
+      --shadow: 0 24px 80px rgba(0,0,0,.30);
+      --radius: 22px;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+    body { overflow: hidden; }
+    button, a { font: inherit; }
+    button { color: inherit; }
+    a { color: inherit; }
+    .deck { position: relative; height: 100svh; width: 100%; overflow: hidden; background:
+      radial-gradient(circle at 78% 8%, rgba(119,232,210,.08), transparent 28%),
+      radial-gradient(circle at 10% 88%, rgba(199,238,130,.06), transparent 26%), var(--bg); }
+    .topbar { position: fixed; z-index: 10; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 18px; padding: 18px 28px; pointer-events: none; }
+    .brand { font-family: var(--mono); font-size: 11px; letter-spacing: .15em; text-transform: uppercase; color: var(--cyan); opacity: .9; }
+    .progress { flex: 1; height: 2px; background: var(--line); overflow: hidden; border-radius: 5px; }
+    .progress i { display: block; width: 0; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--lime)); transition: width .35s ease; }
+    .counter { font-family: var(--mono); color: var(--muted); font-size: 11px; min-width: 48px; text-align: right; }
+    .top-actions { display: flex; align-items: center; gap: 7px; pointer-events: auto; }
+    .control { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 11px; background: rgba(17,22,28,.82); color: var(--muted); cursor: pointer; font-size: 11px; white-space: nowrap; }
+    .control:hover, .control:focus-visible { color: var(--cyan); border-color: var(--cyan); outline: none; }
+    .control-icon { font-size: 15px; line-height: 1; }
+    .overview-backdrop { display: none; position: fixed; z-index: 19; inset: 0; background: rgba(5,7,9,.58); backdrop-filter: blur(3px); }
+    .overview-backdrop.open { display: block; }
+    .overview-panel { position: fixed; z-index: 20; top: 72px; right: 20px; width: min(430px, calc(100vw - 40px)); max-height: calc(100svh - 96px); overflow: auto; border: 1px solid var(--line); border-radius: 20px; background: rgba(17,22,28,.97); box-shadow: 0 28px 90px rgba(0,0,0,.46); padding: 18px; }
+    .overview-panel[aria-hidden="true"] { display: none; }
+    .overview-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 15px; }
+    .overview-head h3 { font-size: 17px; }
+    .overview-head p { margin-top: 4px; color: var(--muted); font-size: 12px; }
+    .overview-close { width: 32px; height: 32px; flex: 0 0 auto; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
+    .overview-close:hover, .overview-close:focus-visible { color: var(--cyan); border-color: var(--cyan); outline: none; }
+    .overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .overview-item { min-height: 62px; text-align: left; border: 1px solid var(--line); border-radius: 13px; padding: 10px 12px; background: rgba(255,255,255,.025); color: var(--muted); cursor: pointer; }
+    .overview-item:hover, .overview-item:focus-visible { border-color: var(--cyan); color: var(--ink); outline: none; }
+    .overview-item[aria-current="true"] { border-color: var(--cyan); background: rgba(119,232,210,.09); color: var(--ink); }
+    .overview-number { display: block; color: var(--cyan); font: 10px var(--mono); margin-bottom: 6px; }
+    .overview-title { display: block; font-size: 12px; line-height: 1.25; }
+    .toast { position: fixed; z-index: 30; left: 50%; bottom: 26px; transform: translate(-50%, 12px); opacity: 0; pointer-events: none; padding: 11px 15px; border: 1px solid var(--line); border-radius: 999px; background: rgba(17,22,28,.96); color: var(--muted); font-size: 12px; transition: opacity .2s ease, transform .2s ease; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .slides { height: 100%; display: flex; transition: transform .55s cubic-bezier(.22,.8,.28,1); will-change: transform; }
+    .slide { flex: 0 0 100%; min-width: 0; height: 100%; overflow: auto; padding: 86px clamp(24px, 6vw, 96px) 64px; display: flex; align-items: center; }
+    .slide-inner { width: min(1200px, 100%); margin: 0 auto; }
+    .eyebrow { color: var(--cyan); font-family: var(--mono); text-transform: uppercase; letter-spacing: .18em; font-size: 11px; margin-bottom: 18px; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { max-width: 900px; font-size: clamp(48px, 8.2vw, 112px); line-height: .95; letter-spacing: -.065em; font-weight: 700; }
+    h2 { max-width: 900px; font-size: clamp(34px, 5.3vw, 76px); line-height: .98; letter-spacing: -.055em; font-weight: 680; }
+    h3 { font-size: clamp(18px, 2vw, 26px); letter-spacing: -.025em; }
+    .dek { max-width: 740px; margin-top: 26px; color: var(--muted); font-size: clamp(17px, 2vw, 22px); line-height: 1.45; }
+    .small { color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .mono { font-family: var(--mono); }
+    .accent { color: var(--cyan); }
+    .lime { color: var(--lime); }
+    .orange { color: var(--orange); }
+    .pink { color: var(--pink); }
+    .source { color: var(--faint); font-size: 11px; line-height: 1.4; }
+    .source a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--line); }
+    .source a:hover, .source a:focus { color: var(--cyan); border-color: var(--cyan); }
+    .hero { position: relative; min-height: 68vh; display: grid; grid-template-columns: 1.05fr .95fr; align-items: center; gap: 7vw; }
+    .hero-orbit { min-height: 430px; display: grid; place-items: center; position: relative; }
+    .orb { width: min(35vw, 410px); aspect-ratio: 1; border: 1px solid rgba(119,232,210,.35); border-radius: 50%; position: relative; box-shadow: 0 0 0 24px rgba(119,232,210,.025), 0 0 0 80px rgba(119,232,210,.02); }
+    .orb::before, .orb::after { content: ""; position: absolute; inset: 12%; border: 1px dashed rgba(199,238,130,.32); border-radius: 50%; }
+    .orb::after { inset: 28%; border-style: solid; border-color: rgba(244,155,183,.28); }
+    .orbit-dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 22px var(--cyan); transform: translate(-50%, -50%); }
+    .orbit-dot:nth-child(1) { left: 9%; top: 61%; }
+    .orbit-dot:nth-child(2) { left: 75%; top: 10%; background: var(--lime); box-shadow: 0 0 22px var(--lime); }
+    .orbit-dot:nth-child(3) { left: 89%; top: 74%; background: var(--orange); box-shadow: 0 0 22px var(--orange); }
+    .orbit-label { position: absolute; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .orbit-label.one { left: 0; top: 66%; }
+    .orbit-label.two { right: 2%; top: 3%; }
+    .orbit-label.three { right: -1%; bottom: 18%; }
+    .hero-core { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 125px; height: 125px; display: grid; place-items: center; border-radius: 50%; background: linear-gradient(145deg, #233a3b, #182424); border: 1px solid rgba(119,232,210,.55); color: var(--cyan); font-family: var(--mono); font-size: 12px; text-align: center; line-height: 1.35; box-shadow: 0 0 50px rgba(119,232,210,.12); }
+    .meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 13px; margin-top: 34px; color: var(--muted); font-family: var(--mono); font-size: 11px; }
+    .pill { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.025); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
+    .card { border: 1px solid var(--line); background: linear-gradient(145deg, rgba(23,30,38,.92), rgba(14,19,24,.78)); border-radius: var(--radius); padding: clamp(20px, 3vw, 34px); box-shadow: var(--shadow); }
+    .card h3 { margin-bottom: 12px; }
+    .card p { color: var(--muted); line-height: 1.55; }
+    .number { font-size: clamp(40px, 6vw, 72px); letter-spacing: -.07em; line-height: 1; color: var(--cyan); font-weight: 650; margin-bottom: 14px; }
+    .number-label { color: var(--muted); font-size: 13px; line-height: 1.35; }
+    .quote { border-left: 2px solid var(--cyan); padding: 4px 0 4px 20px; color: var(--ink); font-size: clamp(21px, 3vw, 34px); line-height: 1.2; letter-spacing: -.03em; max-width: 760px; }
+    .tag { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .13em; color: var(--faint); margin-bottom: 12px; }
+    .section-break { background: radial-gradient(circle at 72% 52%, rgba(119,232,210,.18), transparent 23%), var(--bg); }
+    .section-break .slide-inner { text-align: center; }
+    .section-break h2 { margin: 0 auto; }
+    .section-mark { width: 92px; height: 92px; border-radius: 50%; border: 1px solid var(--cyan); margin: 0 auto 32px; display: grid; place-items: center; color: var(--cyan); font-family: var(--mono); box-shadow: 0 0 70px rgba(119,232,210,.14); }
+    .section-mark::before { content: "↻"; font-size: 46px; }
+    .flow-wrap { border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; background: rgba(14,19,24,.75); margin-top: 34px; overflow: hidden; }
+    .flow-wrap svg { width: 100%; height: auto; display: block; }
+    .flow-wrap text { font-family: var(--sans); fill: var(--ink); }
+    .flow-wrap .muted { fill: var(--muted); }
+    .flow-wrap .mono-svg { font-family: var(--mono); font-size: 12px; }
+    .flow-wrap .wire { stroke: rgba(237,242,241,.22); stroke-width: 2; fill: none; stroke-linecap: round; }
+    .flow-wrap .wire-accent { stroke: var(--cyan); stroke-width: 3; fill: none; stroke-linecap: round; }
+    .flow-wrap .node { fill: #19262b; stroke: rgba(119,232,210,.5); stroke-width: 1; }
+    .flow-wrap .node2 { fill: #252b20; stroke: rgba(199,238,130,.52); stroke-width: 1; }
+    .compare { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: stretch; margin-top: 34px; }
+    .compare .arrow { display: grid; place-items: center; color: var(--cyan); font-size: 30px; }
+    .compare-box { border: 1px solid var(--line); border-radius: 18px; padding: 22px; background: rgba(255,255,255,.025); }
+    .compare-box h3 { margin-bottom: 18px; }
+    .step-list { display: grid; gap: 10px; margin-top: 22px; }
+    .step { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; }
+    .step-num { width: 28px; height: 28px; border: 1px solid var(--cyan); border-radius: 50%; display: grid; place-items: center; color: var(--cyan); font-family: var(--mono); font-size: 11px; }
+    .step strong { display: block; margin-bottom: 4px; }
+    .step span { color: var(--muted); font-size: 14px; line-height: 1.45; }
+    .metric-table { width: 100%; border-collapse: collapse; margin-top: 28px; font-size: 13px; }
+    .metric-table th { text-align: left; color: var(--faint); font-family: var(--mono); text-transform: uppercase; letter-spacing: .08em; font-size: 10px; font-weight: 500; padding: 0 10px 12px; }
+    .metric-table td { border-top: 1px solid var(--line); padding: 13px 10px; color: var(--muted); }
+    .metric-table td:first-child { color: var(--ink); }
+    .metric-table tr.highlight td { color: var(--ink); background: rgba(119,232,210,.055); }
+    .metric-table tr.highlight td:first-child { color: var(--cyan); font-weight: 650; }
+    .metric-table .right { text-align: right; }
+    .chart-card { margin-top: 30px; border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; background: rgba(255,255,255,.025); }
+    .chart-head { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; flex-wrap: wrap; }
+    .chart-output { font-family: var(--mono); color: var(--cyan); font-size: 13px; }
+    input[type=range] { width: 100%; accent-color: var(--cyan); margin: 18px 0 6px; }
+    .range-labels { display: flex; justify-content: space-between; color: var(--faint); font-family: var(--mono); font-size: 10px; }
+    .chart { height: 170px; position: relative; margin-top: 22px; border-bottom: 1px solid var(--line); border-left: 1px solid var(--line); background: linear-gradient(to top, rgba(119,232,210,.07) 1px, transparent 1px); background-size: 100% 25%; }
+    .chart-line { position: absolute; left: 0; right: 0; bottom: 0; height: 84%; clip-path: polygon(0 100%, 25% 88%, 50% 66%, 75% 35%, 100% 0, 100% 100%); background: linear-gradient(135deg, rgba(119,232,210,.55), rgba(199,238,130,.2)); opacity: .8; }
+    .chart-marker { position: absolute; bottom: 0; width: 2px; height: 100%; background: var(--orange); left: 0%; transition: left .2s ease; }
+    .chart-marker::after { content: ""; position: absolute; width: 12px; height: 12px; background: var(--orange); border-radius: 50%; top: 15%; left: 50%; transform: translateX(-50%); box-shadow: 0 0 18px var(--orange); }
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 14px; color: var(--muted); font-size: 12px; }
+    .legend span { display: inline-flex; align-items: center; gap: 7px; }
+    .legend i { width: 10px; height: 10px; border-radius: 50%; background: var(--cyan); display: inline-block; }
+    .legend i.orange-dot { background: var(--orange); }
+    .callout { display: flex; gap: 18px; align-items: flex-start; padding: 20px; border-radius: 18px; background: linear-gradient(100deg, rgba(255,189,114,.10), rgba(255,255,255,.025)); border: 1px solid rgba(255,189,114,.23); margin-top: 28px; }
+    .callout-icon { color: var(--orange); font-size: 24px; line-height: 1; }
+    .callout strong { display: block; margin-bottom: 5px; }
+    .callout p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .tabs { display: flex; gap: 8px; margin: 28px 0 16px; flex-wrap: wrap; }
+    .tab { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 9px 14px; cursor: pointer; color: var(--muted); }
+    .tab[aria-selected=true] { border-color: var(--cyan); color: var(--cyan); background: rgba(119,232,210,.07); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    pre { overflow: auto; margin: 0; padding: 22px; border-radius: 18px; border: 1px solid var(--line); background: #0a0d10; color: #dce8e5; font: 12px/1.7 var(--mono); tab-size: 2; }
+    .kw { color: var(--pink); }
+    .fn { color: var(--cyan); }
+    .cm { color: #7c8b88; }
+    .checklist { display: grid; gap: 10px; margin-top: 22px; }
+    .check { display: flex; gap: 10px; align-items: flex-start; color: var(--muted); line-height: 1.45; font-size: 14px; }
+    .check input { accent-color: var(--cyan); margin-top: 3px; }
+    details { border-top: 1px solid var(--line); padding: 15px 0; }
+    details:last-child { border-bottom: 1px solid var(--line); }
+    summary { cursor: pointer; color: var(--ink); font-weight: 600; }
+    details p { margin-top: 12px; color: var(--muted); line-height: 1.5; font-size: 14px; }
+    .takeaways { display: grid; gap: 12px; margin-top: 28px; }
+    .takeaway { display: grid; grid-template-columns: 28px 1fr; gap: 12px; align-items: start; }
+    .takeaway b { color: var(--cyan); font-family: var(--mono); }
+    .takeaway p { color: var(--muted); line-height: 1.5; }
+    .footnotes { margin-top: 30px; display: grid; gap: 10px; }
+    .footnote { padding: 13px 15px; border: 1px solid var(--line); border-radius: 14px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .footnote q { color: var(--ink); }
+    .nav { position: fixed; z-index: 11; right: 26px; bottom: 23px; display: flex; gap: 8px; }
+    .nav button { width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 50%; background: rgba(17,22,28,.8); cursor: pointer; color: var(--ink); }
+    .nav button:hover, .nav button:focus-visible { border-color: var(--cyan); color: var(--cyan); outline: none; }
+    .hint { position: fixed; z-index: 5; left: 28px; bottom: 28px; color: var(--faint); font-family: var(--mono); font-size: 10px; letter-spacing: .04em; }
+    .kbd { border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px; color: var(--muted); }
+    .hide { display: none; }
+    @media (max-width: 800px) {
+      body { overflow: auto; }
+      .deck { height: auto; overflow: visible; }
+      .slides { display: block; transform: none !important; }
+      .slide { min-height: 100svh; height: auto; align-items: flex-start; padding: 82px 20px 74px; }
+      .hero { grid-template-columns: 1fr; gap: 35px; min-height: auto; }
+      .hero-orbit { min-height: 280px; order: -1; }
+      .orb { width: min(72vw, 330px); }
+      .grid-2, .grid-3, .compare { grid-template-columns: 1fr; }
+      .compare .arrow { transform: rotate(90deg); }
+      .flow-wrap { padding: 8px; overflow-x: auto; }
+      .flow-wrap svg { min-width: 660px; }
+      .topbar { padding: 15px 18px; }
+      .top-actions { gap: 5px; }
+      .control { padding: 8px 9px; }
+      .control-label { display: none; }
+      .overview-panel { top: 65px; right: 14px; width: calc(100vw - 28px); max-height: calc(100svh - 82px); }
+      .nav { right: 18px; bottom: 16px; }
+      .hint { display: none; }
+      .section-break { min-height: 70svh; align-items: center; }
+      .metric-table { font-size: 11px; min-width: 650px; }
+      .table-scroll { overflow-x: auto; margin-right: -20px; padding-right: 20px; }
+      h1 { font-size: clamp(47px, 15vw, 82px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .slides, .progress i, .chart-marker { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-label="Thinking with Looped Flows interactive slide deck">
+    <div class="topbar">
+      <div class="brand">research → practice</div>
+      <div class="progress" aria-hidden="true"><i id="progressBar"></i></div>
+      <div class="counter" id="counter">01 / 21</div>
+      <div class="top-actions">
+        <button class="control" id="overviewToggle" aria-label="Open slide overview" aria-expanded="false"><span class="control-icon">☷</span><span class="control-label">Overview</span></button>
+        <button class="control" id="fullscreenToggle" aria-label="Enter full screen presentation mode"><span class="control-icon" id="fullscreenIcon">⛶</span><span class="control-label" id="fullscreenLabel">Full screen</span></button>
+      </div>
+    </div>
+
+    <div class="overview-backdrop" id="overviewBackdrop"></div>
+    <aside class="overview-panel" id="overviewPanel" aria-hidden="true" aria-label="Slide overview">
+      <div class="overview-head"><div><h3>Slide overview</h3><p>Jump directly to any page.</p></div><button class="overview-close" id="overviewClose" aria-label="Close slide overview">×</button></div>
+      <div class="overview-grid" id="overviewGrid"></div>
+    </aside>
+
+    <section class="slides" id="slides">
+      <section class="slide" data-title="Cover">
+        <div class="slide-inner hero">
+          <div>
+            <div class="eyebrow">Research paper explainer</div>
+            <h1>Thinking with<br><span class="accent">Looped Flows</span></h1>
+            <p class="dek">A recurrent model that learns to improve its internal state while moving from noise towards a solution.</p>
+            <div class="meta-row">
+              <span class="pill"><i class="dot"></i> Ayhan Suleymanzade et al.</span>
+              <span>arXiv:2609.11801v1</span>
+              <span>10 September 2026</span>
+            </div>
+            <p class="source" style="margin-top:26px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Open the paper ↗</a></p>
+          </div>
+          <div class="hero-orbit" aria-label="Abstract illustration of a state moving through a flow">
+            <div class="orb">
+              <i class="orbit-dot"></i><i class="orbit-dot"></i><i class="orbit-dot"></i>
+              <span class="orbit-label one">noise</span><span class="orbit-label two">state</span><span class="orbit-label three">solution</span>
+              <div class="hero-core">recurrent<br>denoiser</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="TL;DR">
+        <div class="slide-inner">
+          <div class="eyebrow">01 · plain-English TL;DR</div>
+          <h2>Give the model a <span class="accent">path</span> to think along.</h2>
+          <p class="dek">Looped flows combine two ideas: a loop that keeps updating hidden state, and a flow that gradually turns noise into a candidate answer. Training supervises small denoising steps in sequence, so the state can become more useful over time without backpropagating through a long unrolled computation.</p>
+          <div class="grid-3" style="margin-top:34px">
+            <div class="card"><div class="tag">The loop</div><h3>Reuse the same model</h3><p>Each recurrence update shares parameters but receives a changing state. Effective depth grows at inference time.</p></div>
+            <div class="card"><div class="tag">The flow</div><h3>Move from noisy to clean</h3><p>A probability path provides local denoising targets at progressively lower noise levels.</p></div>
+            <div class="card"><div class="tag">The payoff</div><h3>Spend more compute when useful</h3><p>Use a finer time grid, stochastic sampling, or several trajectories when the problem deserves more search.</p></div>
+          </div>
+          <p class="source" style="margin-top:24px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: paper abstract, pp. 1–5 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Why it matters">
+        <div class="slide-inner">
+          <div class="eyebrow">02 · why it matters</div>
+          <h2>Reasoning quality can depend on <span class="lime">how long</span> you let the process run.</h2>
+          <div class="compare">
+            <div class="compare-box"><div class="tag">One-shot model</div><h3>Fixed computation</h3><div class="step-list"><div class="step"><b class="step-num">1</b><span>Map the problem directly to one prediction.</span></div><div class="step"><b class="step-num">2</b><span>More capacity usually means a larger model or deeper network.</span></div><div class="step"><b class="step-num">3</b><span>Hard to trade extra inference budget for a single instance.</span></div></div></div>
+            <div class="arrow">→</div>
+            <div class="compare-box"><div class="tag">Looped flow</div><h3>Adjustable computation</h3><div class="step-list"><div class="step"><b class="step-num">1</b><span>Start with a noisy flow state and a recurrent state.</span></div><div class="step"><b class="step-num">2</b><span>Iteratively denoise while updating the hidden state.</span></div><div class="step"><b class="step-num">3</b><span>Spend more steps, or sample more trajectories, when needed.</span></div></div></div>
+          </div>
+          <div class="callout"><div class="callout-icon">↻</div><div><strong>Design implication</strong><p>This is a compute-allocation mechanism. It doesn’t guarantee better reasoning by itself: the recurrence must be trained so later updates can use earlier state.</p></div></div>
+          <p class="source" style="margin-top:20px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: introduction and background, pp. 1–3 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Benefits and uses">
+        <div class="slide-inner">
+          <div class="eyebrow">03 · benefits & use cases</div>
+          <h2>Where this pattern is most interesting.</h2>
+          <p class="dek">The paper tests structured reasoning problems. The first two cards below are directly evidenced by those experiments; the third is a practical inference from the mechanism.</p>
+          <div class="grid-3" style="margin-top:34px">
+            <div class="card"><div class="number">01</div><h3>Hard constraint solving</h3><p>Sudoku, maze paths, and abstract ARC tasks are useful because correctness is inspectable rather than judged only by a language-model preference.</p><p class="source" style="margin-top:18px">Demonstrated in the paper.</p></div>
+            <div class="card"><div class="number lime">02</div><h3>Several valid answers</h3><p>N-Queens and graph colouring let the model sample different valid solutions and measure coverage, not just the first answer.</p><p class="source" style="margin-top:18px">Demonstrated in the paper.</p></div>
+            <div class="card"><div class="number orange">03</div><h3>Budget-aware agents</h3><p>Potential fit: agent workflows where a cheap first pass can escalate to finer integration or multiple candidates when confidence is low.</p><p class="source" style="margin-top:18px">Design implication, not tested here.</p></div>
+          </div>
+          <div class="quote" style="margin-top:34px">“The model can spend more computation through a finer temporal grid.”</div>
+          <p class="source" style="margin-top:14px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: abstract and Section 3.2, pp. 1, 5 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide section-break" data-title="Deep dive">
+        <div class="slide-inner"><div class="section-mark" aria-hidden="true"></div><div class="eyebrow">Section break</div><h2>Deep dive:<br><span class="accent">how the loop learns</span></h2><p class="dek" style="margin-left:auto;margin-right:auto">The central trick is temporal alignment: make neighbouring denoising tasks related enough that a recurrent state can carry useful computation forward.</p></div>
+      </section>
+
+      <section class="slide" data-title="The training problem">
+        <div class="slide-inner">
+          <div class="eyebrow">04 · the training problem</div>
+          <h2>Truncated backprop makes the early loop <span class="pink">guess</span>.</h2>
+          <p class="dek">A conventional looped model can stop gradients between updates to keep training practical. That saves memory, but a later loss can’t directly teach an early state what future steps will need.</p>
+          <div class="grid-2" style="margin-top:34px">
+            <div class="card"><div class="tag">What gets cut</div><h3>Long-range credit assignment</h3><p>With stop-gradient between recurrent steps, every step gets a local target, but early states aren’t rewarded for making later computation easier.</p><div class="flow-wrap" style="margin-top:20px"><svg viewBox="0 0 520 120" role="img" aria-label="Truncated recurrence with stop-gradient barriers"><defs><marker id="arrowGrey" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="#697572"/></marker></defs><circle cx="60" cy="60" r="24" class="node"/><circle cx="190" cy="60" r="24" class="node"/><circle cx="320" cy="60" r="24" class="node"/><circle cx="450" cy="60" r="24" class="node"/><path d="M85 60 H165 M215 60 H295 M345 60 H425" class="wire" marker-end="url(#arrowGrey)"/><path d="M125 35 V85 M255 35 V85 M385 35 V85" stroke="#f49bb7" stroke-width="2" stroke-dasharray="4 5"/><text x="48" y="65">z₀</text><text x="178" y="65">z₁</text><text x="308" y="65">z₂</text><text x="438" y="65">z₃</text><text x="105" y="20" class="muted mono-svg">stop-grad</text><text x="235" y="20" class="muted mono-svg">stop-grad</text><text x="365" y="20" class="muted mono-svg">stop-grad</text></svg></div></div>
+            <div class="card"><div class="tag">What can go wrong</div><h3>Unstable recurrences</h3><p>The paper connects this setup to two failure modes: a recurrence can settle into a wrong but stable attractor, or fail to converge at all.</p><div class="grid-2" style="margin-top:20px"><div><div class="number pink">12.6%</div><div class="number-label">of tested TRM Sudoku cases failed, according to the paper’s analysis.</div></div><div><div class="number orange">90.9%</div><div class="number-label">of those TRM failures were resolved by looped flows.</div></div></div></div>
+          </div>
+          <p class="source" style="margin-top:22px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: Sections 2 and 5.1, pp. 2–3, 7–8 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Core mechanism">
+        <div class="slide-inner">
+          <div class="eyebrow">05 · core mechanism</div>
+          <h2>One stateful denoiser, two things moving.</h2>
+          <p class="dek">At each time step, the denoiser predicts a cleaner solution and updates a recurrent hidden state. A numerical integration step then moves the flow state forward.</p>
+          <div class="flow-wrap">
+            <svg viewBox="0 0 1000 300" role="img" aria-label="Looped flow architecture: problem and flow state enter a stateful denoiser, which emits a prediction and recurrent state, then the flow state is updated">
+              <defs><marker id="arrowCyan" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#77e8d2"/></marker><marker id="arrowLime" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#c7ee82"/></marker></defs>
+              <rect x="35" y="105" width="125" height="72" rx="16" class="node"/><text x="97" y="135" text-anchor="middle">problem c</text><text x="97" y="157" text-anchor="middle" class="muted mono-svg">context</text>
+              <rect x="35" y="210" width="125" height="54" rx="16" class="node2"/><text x="97" y="242" text-anchor="middle">flow state xₜ</text>
+              <rect x="35" y="35" width="125" height="54" rx="16" class="node2"/><text x="97" y="67" text-anchor="middle">hidden zₜ</text>
+              <rect x="355" y="78" width="290" height="145" rx="22" class="node"/><text x="500" y="125" text-anchor="middle" font-size="22">stateful denoiser</text><text x="500" y="153" text-anchor="middle" class="muted mono-svg">D̂ₜ(xₜ, zₜ ; c)</text><text x="500" y="183" text-anchor="middle" class="muted">predict + update</text>
+              <rect x="820" y="35" width="145" height="54" rx="16" class="node2"/><text x="892" y="67" text-anchor="middle">prediction x̂ₜ</text>
+              <rect x="820" y="118" width="145" height="54" rx="16" class="node"/><text x="892" y="150" text-anchor="middle">new state zₜ₊₁</text>
+              <rect x="820" y="201" width="145" height="54" rx="16" class="node2"/><text x="892" y="233" text-anchor="middle">flow state xₜ₊₁</text>
+              <path d="M160 141 H355" class="wire-accent" marker-end="url(#arrowCyan)"/><path d="M160 237 H280 Q320 237 355 190" class="wire-accent" marker-end="url(#arrowCyan)"/><path d="M160 62 H280 Q320 62 355 112" class="wire-accent" marker-end="url(#arrowCyan)"/>
+              <path d="M645 120 H820" class="wire-accent" marker-end="url(#arrowCyan)"/><path d="M645 153 H820" class="wire-accent" marker-end="url(#arrowLime)"/><path d="M645 188 H730 Q770 188 820 227" class="wire-accent" marker-end="url(#arrowCyan)"/>
+              <text x="692" y="105" class="muted mono-svg">denoise</text><text x="692" y="144" class="muted mono-svg">recur</text><text x="696" y="211" class="muted mono-svg">ODE/SDE step</text>
+            </svg>
+          </div>
+          <p class="source" style="margin-top:20px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: Figure 1 and Equation 8, pp. 1, 4 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Training recipe">
+        <div class="slide-inner">
+          <div class="eyebrow">06 · training</div>
+          <h2>Make adjacent steps share the same <span class="lime">story</span>.</h2>
+          <div class="grid-2" style="margin-top:34px">
+            <div class="card"><div class="tag">Temporal alignment</div><h3>Progressively less noise</h3><p>Sample ordered times <span class="mono accent">t₀ &lt; t₁ &lt; … &lt; tₖ</span>. The associated interpolants become easier to denoise as time advances.</p><div class="step-list"><div class="step"><b class="step-num">A</b><span>Draw one problem, solution, and noise sample.</span></div><div class="step"><b class="step-num">B</b><span>Reuse that same triplet across the ordered times.</span></div><div class="step"><b class="step-num">C</b><span>Apply a local cross-entropy loss at every step.</span></div></div></div>
+            <div class="card"><div class="tag">Credit assignment without BPTT</div><h3>Stop gradients between states</h3><p>Each denoising objective stays local. The sequence itself teaches the recurrence to carry useful state forward, while adaptive computation time ignores steps after accuracy saturates.</p><div class="flow-wrap" style="margin-top:20px"><svg viewBox="0 0 520 150" role="img" aria-label="Training uses shared noise and ordered denoising objectives"><defs><marker id="arrowTrain" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="#c7ee82"/></marker></defs><path d="M50 112 H470" class="wire"/><circle cx="85" cy="112" r="8" fill="#77e8d2"/><circle cx="210" cy="112" r="8" fill="#c7ee82"/><circle cx="335" cy="112" r="8" fill="#ffbd72"/><circle cx="460" cy="112" r="8" fill="#f49bb7"/><path d="M93 112 H202 M218 112 H327 M343 112 H452" stroke="#c7ee82" stroke-width="2" marker-end="url(#arrowTrain)"/><text x="85" y="78" text-anchor="middle" class="muted mono-svg">high noise</text><text x="210" y="78" text-anchor="middle" class="muted mono-svg">↓</text><text x="335" y="78" text-anchor="middle" class="muted mono-svg">↓</text><text x="460" y="78" text-anchor="middle" class="muted mono-svg">low noise</text><text x="85" y="139" text-anchor="middle" class="mono-svg">t₀</text><text x="210" y="139" text-anchor="middle" class="mono-svg">t₁</text><text x="335" y="139" text-anchor="middle" class="mono-svg">t₂</text><text x="460" y="139" text-anchor="middle" class="mono-svg">tₖ</text></svg></div></div>
+          </div>
+          <p class="source" style="margin-top:22px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: Section 3.1 and Algorithm 1, pp. 4–5 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Inference">
+        <div class="slide-inner">
+          <div class="eyebrow">07 · inference</div>
+          <h2>At test time, the <span class="accent">grid</span> becomes your compute dial.</h2>
+          <p class="dek">The paper integrates from <span class="mono">t = 0</span> to <span class="mono">t = 1</span>. A finer temporal grid means more denoising-and-state updates. Stochastic integration adds controlled variation so different runs can explore different valid answers.</p>
+          <div class="grid-3" style="margin-top:34px"><div class="card"><div class="tag">Dial 01</div><h3>Finer grid</h3><p>Increase the number of integration steps without changing the trained model.</p></div><div class="card"><div class="tag">Dial 02</div><h3>ODE or SDE</h3><p>Deterministic ODE integration preserves diversity; stochastic SDE integration can improve validity and coverage.</p></div><div class="card"><div class="tag">Dial 03</div><h3>Ensemble</h3><p>Run independent trajectories, then use the ACT head’s score to select a candidate.</p></div></div>
+          <div class="chart-card"><div class="chart-head"><h3>Interactive view · Sudoku inference budget</h3><span class="chart-output" id="stepOutput">8 steps · 74.5% reported</span></div><input id="stepSlider" type="range" min="0" max="4" value="0" step="1" aria-label="Select inference step budget" /><div class="range-labels"><span>8</span><span>16</span><span>32</span><span>64</span><span>128 steps</span></div><div class="chart"><div class="chart-line"></div><div class="chart-marker" id="chartMarker"></div></div><div class="legend"><span><i></i> conceptual trend from Figure 3</span><span><i class="orange-dot"></i> selected budget</span></div><p class="source" style="margin-top:14px">Only the paper’s reported endpoints are labelled here: 74.5% at 8 steps and 97.9% at 128 steps. Intermediate values are intentionally not asserted.</p></div>
+          <p class="source" style="margin-top:20px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: Figure 3 and Section 3.2, pp. 5, 7 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Evidence">
+        <div class="slide-inner">
+          <div class="eyebrow">08 · evidence</div>
+          <h2>Strongest gains show up on <span class="lime">structured</span> reasoning.</h2>
+          <p class="dek">The authors compare small models against prior looped methods on four benchmark families. The looped-flow models use 5–7M parameters in this table.</p>
+          <div class="table-scroll"><table class="metric-table"><thead><tr><th>Method</th><th class="right">Params</th><th class="right">Sudoku</th><th class="right">Maze</th><th class="right">ARC-1</th><th class="right">ARC-2</th></tr></thead><tbody><tr><td>TRM</td><td class="right">5–7M</td><td class="right">87.4</td><td class="right">85.3</td><td class="right">44.6</td><td class="right">7.8</td></tr><tr><td>FPRM</td><td class="right">7M</td><td class="right">94.2</td><td class="right">87.0</td><td class="right">47.5</td><td class="right">6.2</td></tr><tr><td>GRAM</td><td class="right">10M</td><td class="right">–</td><td class="right">–</td><td class="right">52.0</td><td class="right">11.1</td></tr><tr class="highlight"><td>Looped flows</td><td class="right">5–7M</td><td class="right">97.9 ± 0.4</td><td class="right">86.7 ± 1.1</td><td class="right">58.8 ± 1.8</td><td class="right">12.2 ± 1.9</td></tr></tbody></table></div>
+          <p class="small" style="margin-top:18px">Single-trajectory results. Sudoku and Maze are exact accuracy; ARC columns are pass@2. Dashes mean the cited comparison did not report that result in Table 1.</p>
+          <p class="source" style="margin-top:18px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: Table 1 and Section 5.1, pp. 7–8 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Stability">
+        <div class="slide-inner">
+          <div class="eyebrow">09 · stability</div>
+          <h2>Better recurrence means fewer dead ends.</h2>
+          <div class="grid-2" style="margin-top:34px"><div class="card"><div class="tag">TRM failure analysis</div><div class="number pink">12.6%</div><p>of around 65,000 tested Sudoku-Extreme instances failed under TRM. Among these failures, 88.3% did not converge and 11.7% reached a wrong stable attractor.</p><div class="flow-wrap" style="margin-top:20px"><svg viewBox="0 0 540 150" role="img" aria-label="Wrong attractor versus failure to converge"><path d="M50 105 C160 20 260 135 490 52" class="wire"/><circle cx="50" cy="105" r="7" fill="#77e8d2"/><circle cx="490" cy="52" r="8" fill="#ff927d"/><path d="M50 105 C170 105 210 105 310 105" stroke="#f49bb7" stroke-width="2" stroke-dasharray="5 6"/><text x="50" y="133" class="muted mono-svg">initial state</text><text x="340" y="133" class="muted mono-svg">wrong / unstable</text></svg></div></div><div class="card"><div class="tag">Looped-flow recovery</div><div class="number lime">90.9%</div><p>of TRM failure cases were resolved by looped flows: 89.9% of non-convergence cases and 98.0% of spurious-attractor cases.</p><div class="grid-2" style="margin-top:20px"><div><div class="number" style="font-size:42px">89.9%</div><div class="number-label">non-convergence cases recovered</div></div><div><div class="number" style="font-size:42px">98.0%</div><div class="number-label">spurious-attractor cases recovered</div></div></div></div></div>
+          <div class="callout"><div class="callout-icon">!</div><div><strong>Read this carefully</strong><p>These are recovery rates on the baseline’s failure cases, not a universal error reduction claim. The analysis is on Sudoku-Extreme and compares with TRM.</p></div></div>
+          <p class="source" style="margin-top:20px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: Section 5.1 and Figure 4, pp. 7–8 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Diversity">
+        <div class="slide-inner">
+          <div class="eyebrow">10 · diversity</div>
+          <h2>Don’t just find an answer. Find the <span class="accent">valid answer space</span>.</h2>
+          <p class="dek">For multi-solution tasks, the paper runs 20 independent inferences and measures validity plus coverage: how much of the set of compatible solutions was recovered.</p>
+          <div class="table-scroll"><table class="metric-table"><thead><tr><th>Task</th><th class="right">Validity / conflicts</th><th class="right">Coverage</th><th>What it tests</th></tr></thead><tbody><tr class="highlight"><td>N-Queens 8×8</td><td class="right">99.9 ± 0.1% accuracy</td><td class="right">91.4 ± 0.4%</td><td>Many valid board layouts</td></tr><tr class="highlight"><td>N-Queens 10×10</td><td class="right">94.4 ± 0.7% accuracy</td><td class="right">61.5 ± 0.1%</td><td>Larger solution space</td></tr><tr class="highlight"><td>Graph colouring 8</td><td class="right">0.7 ± 0.6 conflicts</td><td class="right">89.4 ± 0.7%</td><td>Valid colour assignments</td></tr><tr class="highlight"><td>Graph colouring 10</td><td class="right">1.0 ± 1.0 conflicts</td><td class="right">55.2 ± 0.3%</td><td>Larger graph</td></tr></tbody></table></div>
+          <div class="grid-2" style="margin-top:26px"><div class="card"><h3>Why stochasticity helps</h3><p>Different initial noise samples can be transported towards different valid solutions. In the paper, SDE generally improves coverage, especially on larger tasks.</p></div><div class="card"><h3>Why determinism still matters</h3><p>ODE integration retains diversity in the reported experiments, so variation isn’t solely attributed to injected noise.</p></div></div>
+          <p class="source" style="margin-top:20px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: Table 2 and Tables 4–5, pp. 9–10 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Ablations">
+        <div class="slide-inner">
+          <div class="eyebrow">11 · ablations</div>
+          <h2>The recipe is not one trick. It’s a <span class="orange">bundle</span>.</h2>
+          <p class="dek">Removing temporal conditioning, interpolants, decreasing noise, or shared noise lowers ARC performance. The largest drop in the table comes from removing both time conditioning and interpolants.</p>
+          <div class="table-scroll"><table class="metric-table"><thead><tr><th>Configuration</th><th class="right">ARC-AGI-1</th><th class="right">ARC-AGI-2</th><th>Interpretation</th></tr></thead><tbody><tr class="highlight"><td>Full looped flow</td><td class="right">58.8 ± 1.8</td><td class="right">12.2 ± 1.9</td><td>All components</td></tr><tr><td>Without time conditioning</td><td class="right">56.4</td><td class="right">9.9</td><td>Model loses explicit t</td></tr><tr><td>Without interpolant</td><td class="right">51.5</td><td class="right">9.9</td><td>No noisy-to-clean path</td></tr><tr><td>Without time + interpolant</td><td class="right">43.6</td><td class="right">5.0</td><td>Both signals removed</td></tr><tr><td>Without decreasing noise</td><td class="right">51.6</td><td class="right">9.9</td><td>Breaks temporal curriculum</td></tr><tr><td>Without noise sharing</td><td class="right">56.4</td><td class="right">10.8</td><td>Less cross-step association</td></tr></tbody></table></div>
+          <p class="small" style="margin-top:18px">The paper reports pass@2 accuracy for ARC. Values without ± are shown as reported in Table 3.</p>
+          <p class="source" style="margin-top:18px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: Table 3 and Section 5.3, p. 10 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Limits">
+        <div class="slide-inner">
+          <div class="eyebrow">12 · limits & open questions</div>
+          <h2>Promising mechanism. Early evidence.</h2>
+          <div class="grid-2" style="margin-top:34px"><div class="card"><h3>What the paper establishes</h3><div class="checklist"><label class="check"><input type="checkbox" checked disabled /> Stable recurrent reasoning on the reported benchmark setup.</label><label class="check"><input type="checkbox" checked disabled /> Better single-trajectory results than the cited looped baselines on most tasks.</label><label class="check"><input type="checkbox" checked disabled /> Diverse valid solutions on the multi-solution benchmarks.</label><label class="check"><input type="checkbox" checked disabled /> Flow and recurrence each contribute in ablations.</label></div></div><div class="card"><h3>What it doesn’t establish</h3><div class="checklist"><label class="check"><input type="checkbox" disabled /> General-purpose language reasoning or agent performance.</label><label class="check"><input type="checkbox" disabled /> Production efficiency, reliability, or cost outside the tested setup.</label><label class="check"><input type="checkbox" disabled /> That shared noise never creates shortcut learning.</label><label class="check"><input type="checkbox" disabled /> That the same recipe transfers without task-specific preprocessing.</label></div></div></div>
+          <div class="callout"><div class="callout-icon">→</div><div><strong>Open question from the paper</strong><p>The conclusion points to simulation-free training methods that could retain looped-flow benefits while changing the training procedure.</p></div></div>
+          <p class="source" style="margin-top:20px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: Sections 3.1, 5, Appendix B, and Conclusion, pp. 4–10, 14–16 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide section-break" data-title="Implementation">
+        <div class="slide-inner"><div class="section-mark" aria-hidden="true"></div><div class="eyebrow">Section break</div><h2>Implementation guide:<br><span class="lime">from problem to loop</span></h2><p class="dek" style="margin-left:auto;margin-right:auto">A research-oriented recipe you can adapt to a structured task. Start with inspectable correctness, then earn complexity one component at a time.</p></div>
+      </section>
+
+      <section class="slide" data-title="Step-by-step">
+        <div class="slide-inner">
+          <div class="eyebrow">13 · step-by-step</div>
+          <h2>Build the smallest loop that can be measured.</h2>
+          <div class="grid-2" style="margin-top:32px"><div class="card"><div class="step-list"><div class="step"><b class="step-num">1</b><span><strong>Choose a structured task.</strong> Begin with Sudoku, paths, scheduling, or another problem with an executable validator.</span></div><div class="step"><b class="step-num">2</b><span><strong>Define context and target.</strong> Encode problem <span class="mono">c</span> and solution <span class="mono">x₁</span> as categorical sequences or another state space.</span></div><div class="step"><b class="step-num">3</b><span><strong>Define the interpolant.</strong> Create <span class="mono">Iₜ = (1−t)x₀ + tx₁</span> from noise <span class="mono">x₀</span> to target <span class="mono">x₁</span>.</span></div><div class="step"><b class="step-num">4</b><span><strong>Make the denoiser stateful.</strong> Return both a denoised prediction and the next recurrent hidden state.</span></div></div></div><div class="card"><div class="step-list"><div class="step"><b class="step-num">5</b><span><strong>Train local losses.</strong> Sample ordered times, share the triplet, apply cross-entropy at each step, and stop gradients between state updates.</span></div><div class="step"><b class="step-num">6</b><span><strong>Add adaptive computation time.</strong> Train a head to identify when later steps no longer help.</span></div><div class="step"><b class="step-num">7</b><span><strong>Integrate at inference.</strong> Start from noise, use Euler or an SDE scheme, and let the grid determine compute.</span></div><div class="step"><b class="step-num">8</b><span><strong>Validate the loop.</strong> Track accuracy, convergence, invalid outputs, calibration, and solution coverage across compute budgets.</span></div></div></div></div>
+          <p class="source" style="margin-top:22px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: Algorithms 1–2 and Sections 3.1–3.2, pp. 4–5 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Pseudocode">
+        <div class="slide-inner">
+          <div class="eyebrow">14 · pseudocode</div>
+          <h2>Keep training and inference <span class="accent">conceptually separate</span>.</h2>
+          <div class="tabs" role="tablist"><button class="tab" role="tab" aria-selected="true" data-tab="train">Training loop</button><button class="tab" role="tab" aria-selected="false" data-tab="infer">Inference loop</button></div>
+          <div class="tab-panel active" id="train"><pre><span class="cm"># one local loss per ordered denoising objective</span>
+<span class="kw">for</span> (c, x1) <span class="kw">in</span> dataset:
+  x0 ← sample_noise()
+  z ← z0
+  times ← sort(sample_uniform(k + 1))
+
+  <span class="kw">for</span> t <span class="kw">in</span> times:
+    It ← (1 − t) · x0 + t · x1
+    x_hat, z_next ← denoiser(It, stop_grad(z), c, t)
+    loss ← cross_entropy(x_hat, x1)
+    loss.backward()      <span class="cm"># local, not through prior z</span>
+    z ← z_next
+
+  update_parameters()</pre></div>
+          <div class="tab-panel" id="infer"><pre><span class="cm"># integrate the learned probability flow</span>
+x ← sample_noise()
+z ← z0
+times ← grid(0, 1, n + 1)
+
+<span class="kw">for</span> (t, next_t) <span class="kw">in</span> adjacent(times):
+  x_hat, z ← denoiser(x, z, c, t)
+  velocity ← (x_hat − x) / (1 − t)
+  x ← x + (next_t − t) · velocity
+  <span class="cm"># optional: add SDE noise / use a better integrator</span>
+
+<span class="kw">return</span> round(x)</pre></div>
+          <p class="small" style="margin-top:18px">This is a teaching simplification of Algorithms 1–2. The paper’s full inference algorithm includes stochastic integration details and noise backtracking.</p>
+          <p class="source" style="margin-top:18px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: Algorithms 1–2, pp. 4–5 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Starter recipe">
+        <div class="slide-inner">
+          <div class="eyebrow">15 · starter recipe</div>
+          <h2>Use the paper’s defaults as a <span class="orange">baseline</span>, not a promise.</h2>
+          <div class="grid-3" style="margin-top:32px"><div class="card"><div class="tag">Training horizon</div><div class="number">k = 16</div><p>Local denoising steps used for training.</p></div><div class="card"><div class="tag">ACT weight</div><div class="number lime">λ = 0.5</div><p>Weight for the adaptive computation-time loss.</p></div><div class="card"><div class="tag">Inference</div><div class="number orange">n = 128</div><p>Representative steps for Sudoku in the task-specific table.</p></div></div>
+          <div class="card" style="margin-top:20px"><details open><summary>Optimiser and numeric setup</summary><p>Mean StableMax cross-entropy, Adam-atan2 with β₁ = 0.9 and β₂ = 0.95, peak learning rate 10⁻⁴, 2k-step warmup, batch size 768, gradient clipping 1.0, parameter EMA decay 0.999, and bfloat16 forward passes.</p></details><details><summary>Time sampling</summary><p>Sort k + 1 independent draws from Uniform[0, 1] so the model sees an ordered sequence of decreasing noise levels. The paper also studies a random-start sampler.</p></details><details><summary>Regularisation note</summary><p>For some single-solution tasks, the authors use pseudotargets in later interpolants to reduce exposure to nearly-clean targets. Treat this as a task-specific option.</p></details></div>
+          <p class="source" style="margin-top:20px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: Appendix D and Appendix E.1, pp. 16–17 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Validation plan">
+        <div class="slide-inner">
+          <div class="eyebrow">16 · validation plan</div>
+          <h2>Measure the <span class="lime">trajectory</span>, not only the final answer.</h2>
+          <div class="grid-2" style="margin-top:32px"><div class="card"><h3>Core evals</h3><div class="checklist"><label class="check"><input type="checkbox" /> Exact validity under an executable task checker.</label><label class="check"><input type="checkbox" /> Accuracy across inference budgets: 8, 16, 32, 64, 128.</label><label class="check"><input type="checkbox" /> Convergence rate and residual change across steps.</label><label class="check"><input type="checkbox" /> Invalid-answer rate under ODE vs SDE.</label><label class="check"><input type="checkbox" /> Distinct valid solutions recovered per 20 samples.</label></div></div><div class="card"><h3>Failure analysis</h3><div class="checklist"><label class="check"><input type="checkbox" /> Wrong stable attractor: low residual, wrong answer.</label><label class="check"><input type="checkbox" /> Failure to converge: residual remains high or unstable.</label><label class="check"><input type="checkbox" /> Shortcut risk from shared noise.</label><label class="check"><input type="checkbox" /> Memorisation vs held-out generalisation.</label><label class="check"><input type="checkbox" /> Cost and latency per valid solution.</label></div></div></div>
+          <div class="callout"><div class="callout-icon">✓</div><div><strong>Done condition</strong><p>You can plot quality against inference compute and explain why an extra step, another trajectory, or stochasticity changed the result.</p></div></div>
+          <p class="source" style="margin-top:20px"><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Source: Sections 5.1–5.3 and Tables 1–7, pp. 7–17 ↗</a></p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Takeaways">
+        <div class="slide-inner">
+          <div class="eyebrow">17 · takeaways</div>
+          <h2>Three ideas worth carrying forward.</h2>
+          <div class="takeaways"><div class="takeaway"><b>01</b><p><strong>Temporal structure can make local training useful.</strong> A sequence of related denoising objectives can teach a recurrent state to accumulate computation without full BPTT.</p></div><div class="takeaway"><b>02</b><p><strong>Inference-time compute is a product knob.</strong> Finer grids and multiple trajectories create a controllable quality–cost trade-off on the tested tasks.</p></div><div class="takeaway"><b>03</b><p><strong>Validity and diversity should be separate metrics.</strong> A model that returns one valid answer isn’t necessarily good at exploring a problem with many valid answers.</p></div></div>
+          <div class="quote" style="margin-top:36px">The useful abstraction is not “make the model think harder”. It is “learn a state transition that remains useful as computation continues”.</div>
+          <p class="source" style="margin-top:16px">The final sentence is an interpretation of the paper’s mechanism, not a quotation.</p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Sources">
+        <div class="slide-inner">
+          <div class="eyebrow">18 · source notes</div>
+          <h2>Read the paper for the details.</h2>
+          <p class="dek">This deck is an evidence-grounded explainer of the supplied PDF. Metrics, algorithms, and limitations below are drawn from the paper; broader use cases are labelled as implications.</p>
+          <div class="footnotes"><div class="footnote"><strong>Primary source</strong><br /><a href="https://arxiv.org/abs/2609.11801" target="_blank" rel="noreferrer">Thinking with Looped Flows · arXiv:2609.11801v1 ↗</a><br /><q>We propose looped flows, an approach that sidesteps this issue by training the recurrence with local denoising objectives.</q></div><div class="footnote"><strong>Evidence anchor</strong><br /><q>Across six reasoning benchmarks including two multi-solution benchmarks, looped flows outperform prior state-of-the-art looped models overall.</q></div><div class="footnote"><strong>Scope note</strong><br />The paper reports benchmark experiments using small task-specific models and preprocessing. It doesn’t establish general-purpose agent or language-model performance.</div></div>
+          <div class="meta-row" style="margin-top:30px"><span class="pill"><i class="dot"></i> Designed as a shareable, self-contained HTML deck</span><span>Use ← → or swipe to navigate</span></div>
+        </div>
+      </section>
+    </section>
+
+    <div class="hint"><span class="kbd">←</span> <span class="kbd">→</span> navigate · swipe on touch</div>
+    <nav class="nav" aria-label="Slide navigation"><button id="prev" aria-label="Previous slide">←</button><button id="next" aria-label="Next slide">→</button></nav>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </main>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const track = document.getElementById('slides');
+      const progress = document.getElementById('progressBar');
+      const counter = document.getElementById('counter');
+      const overviewToggle = document.getElementById('overviewToggle');
+      const overviewClose = document.getElementById('overviewClose');
+      const overviewPanel = document.getElementById('overviewPanel');
+      const overviewBackdrop = document.getElementById('overviewBackdrop');
+      const overviewGrid = document.getElementById('overviewGrid');
+      const fullscreenToggle = document.getElementById('fullscreenToggle');
+      const fullscreenIcon = document.getElementById('fullscreenIcon');
+      const fullscreenLabel = document.getElementById('fullscreenLabel');
+      const toast = document.getElementById('toast');
+      const isMobile = () => window.matchMedia('(max-width: 800px)').matches;
+      let index = 0;
+      slides.forEach((slide) => slide.setAttribute('tabindex', '-1'));
+
+      slides.forEach((slide, slideIndex) => {
+        const item = document.createElement('button');
+        item.className = 'overview-item';
+        item.type = 'button';
+        item.setAttribute('aria-current', 'false');
+        item.innerHTML = `<span class="overview-number">${String(slideIndex + 1).padStart(2, '0')}</span><span class="overview-title">${slide.dataset.title || `Slide ${slideIndex + 1}`}</span>`;
+        item.addEventListener('click', () => { render(slideIndex); closeOverview(); });
+        overviewGrid.appendChild(item);
+      });
+      const overviewItems = [...overviewGrid.querySelectorAll('.overview-item')];
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => toast.classList.remove('show'), 2600);
+      }
+
+      function closeOverview() {
+        overviewPanel.setAttribute('aria-hidden', 'true');
+        overviewBackdrop.classList.remove('open');
+        overviewToggle.setAttribute('aria-expanded', 'false');
+      }
+
+      function openOverview() {
+        overviewPanel.setAttribute('aria-hidden', 'false');
+        overviewBackdrop.classList.add('open');
+        overviewToggle.setAttribute('aria-expanded', 'true');
+        overviewItems[index]?.focus();
+      }
+
+      overviewToggle.addEventListener('click', () => overviewPanel.getAttribute('aria-hidden') === 'true' ? openOverview() : closeOverview());
+      overviewClose.addEventListener('click', closeOverview);
+      overviewBackdrop.addEventListener('click', closeOverview);
+
+      function render(nextIndex, push = true) {
+        index = Math.max(0, Math.min(slides.length - 1, nextIndex));
+        if (!isMobile()) track.style.transform = `translateX(-${index * 100}%)`;
+        else slides[index].scrollIntoView({behavior: push ? 'smooth' : 'auto', block: 'start'});
+        progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+        counter.textContent = `${String(index + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+        overviewItems.forEach((item, itemIndex) => item.setAttribute('aria-current', String(itemIndex === index)));
+        if (push) history.replaceState(null, '', `#${index + 1}`);
+        slides[index].focus({preventScroll: true});
+      }
+
+      function go(delta) { render(index + delta); }
+      document.getElementById('prev').addEventListener('click', () => go(-1));
+      document.getElementById('next').addEventListener('click', () => go(1));
+      document.addEventListener('keydown', (event) => {
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName)) return;
+        if (event.key === 'Escape' && overviewPanel.getAttribute('aria-hidden') === 'false') { closeOverview(); return; }
+        if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') { event.preventDefault(); go(1); }
+        if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); go(-1); }
+        if (event.key === 'Home') { event.preventDefault(); render(0); }
+        if (event.key === 'End') { event.preventDefault(); render(slides.length - 1); }
+      });
+
+      let touchStartX = 0;
+      document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].clientX; }, {passive: true});
+      document.addEventListener('touchend', (e) => { const dx = e.changedTouches[0].clientX - touchStartX; if (Math.abs(dx) > 55) go(dx < 0 ? 1 : -1); }, {passive: true});
+      window.addEventListener('resize', () => render(index, false));
+
+      function updateFullscreenControl() {
+        const active = Boolean(document.fullscreenElement);
+        fullscreenIcon.textContent = active ? '×' : '⛶';
+        fullscreenLabel.textContent = active ? 'Exit full screen' : 'Full screen';
+        fullscreenToggle.setAttribute('aria-label', active ? 'Exit full screen presentation mode' : 'Enter full screen presentation mode');
+      }
+
+      fullscreenToggle.addEventListener('click', async () => {
+        try {
+          if (document.fullscreenElement) await document.exitFullscreen();
+          else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+          else showToast('Full screen isn’t available in this browser.');
+        } catch (error) {
+          showToast('Full screen was blocked. Try your browser’s full-screen command.');
+        }
+      });
+      document.addEventListener('fullscreenchange', updateFullscreenControl);
+      updateFullscreenControl();
+
+      const initial = Number(location.hash.slice(1));
+      render(Number.isFinite(initial) && initial > 0 ? initial - 1 : 0, false);
+
+      const slider = document.getElementById('stepSlider');
+      const output = document.getElementById('stepOutput');
+      const marker = document.getElementById('chartMarker');
+      const values = ['8 steps · 74.5% reported', '16 steps · trend shown in Figure 3', '32 steps · trend shown in Figure 3', '64 steps · trend shown in Figure 3', '128 steps · 97.9% reported'];
+      slider.addEventListener('input', () => { output.textContent = values[slider.value]; marker.style.left = `${Number(slider.value) * 25}%`; });
+
+      document.querySelectorAll('.tab').forEach((button) => button.addEventListener('click', () => {
+        const name = button.dataset.tab;
+        document.querySelectorAll('.tab').forEach((tab) => tab.setAttribute('aria-selected', String(tab === button)));
+        document.querySelectorAll('.tab-panel').forEach((panel) => panel.classList.toggle('active', panel.id === name));
+      }));
+    })();
+  </script>
+</body>
+</html>

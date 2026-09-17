@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Guide: Claude Code Session Management & Token Discipline</title>
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --primary: #4f46e5;
+            --primary-light: #e0e7ff;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --border: #e2e8f0;
+            --code-bg: #f1f5f9;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            color: #0f172a;
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            margin-bottom: 0.5rem;
+        }
+
+        .meta-info {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .meta-info a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .meta-info a:hover {
+            text-decoration: underline;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .card-tldr {
+            border-left: 5px solid var(--primary);
+            background-color: #fbfbfe;
+        }
+
+        .card-warning {
+            border-left: 5px solid var(--warning);
+            background-color: #fffdf5;
+        }
+
+        .card-shortcuts {
+            border-left: 5px solid #06b6d4;
+            background-color: #f0fdfa;
+        }
+
+        h2 {
+            color: #0f172a;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-primary { background-color: var(--primary-light); color: var(--primary); }
+        .badge-success { background-color: var(--success-light); color: var(--success); }
+        .badge-warning { background-color: var(--warning-light); color: var(--warning); }
+        .badge-info { background-color: #cffaf2; color: #0891b2; }
+
+        p {
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+
+        ul, ol {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        strong {
+            color: #0f172a;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 8px;
+            background-color: var(--bg-main);
+            border: 1px solid var(--border);
+        }
+
+        .stat-num {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            background-color: var(--code-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .kbd-shortcut {
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            box-shadow: 0 2px 0 #cbd5e1;
+            color: #334155;
+            display: inline-block;
+            font-family: ui-monospace, monospace;
+            font-size: 0.85em;
+            font-weight: 700;
+            line-height: 1;
+            padding: 0.25rem 0.4rem;
+            white-space: nowrap;
+        }
+
+        .shortcut-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .shortcut-table th, .shortcut-table td {
+            text-align: left;
+            padding: 0.65rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .shortcut-table th {
+            background-color: #f1f5f9;
+            color: #334155;
+            font-weight: 700;
+        }
+
+        .shortcut-table tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .step-number {
+            background-color: var(--primary);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .discipline-tip {
+            margin-bottom: 1.25rem;
+            padding-left: 0.75rem;
+            border-left: 3px solid #cbd5e1;
+        }
+        .discipline-tip:hover {
+            border-left-color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Claude Code & Cowork Token Discipline Guide</h1>
+        <div class="meta-info">
+            Internal Engineering Briefing &bull; Based on insights by 
+            <a href="https://youtu.be/6cEQEba0i2A" target="_blank">Nate Herk (AI Automation)</a> & Thariq (Anthropic)
+        </div>
+    </header>
+
+    <div class="card card-tldr">
+        <h2><span class="badge badge-primary">TL;DR</span> Summary</h2>
+        <p><strong>Prompt Caching</strong> automatically saves context between turns inside Claude Code, cutting costs and expanding session longevity. However, the cache vanishes completely if you stay inactive for more than <strong>1 hour</strong>, shift system prefixes unnecessarily, or change models mid-stream. Combining native slash commands with professional execution discipline stops token-thrashed death spirals before they happen.</p>
+    </div>
+
+    <div class="card">
+        <h2>Why Our Team Needs to Care</h2>
+        <div class="grid-2" style="margin-bottom: 1.5rem;">
+            <div class="stat-box">
+                <div class="stat-num">10%</div>
+                <div class="stat-label">Cost of Cached Tokens</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num">10x</div>
+                <div class="stat-label">In-Terminal Processing Speed</div>
+            </div>
+        </div>
+        <ul>
+            <li><strong>Drastic Efficiency:</strong> Cached tokens only cost <strong>10%</strong> of a fresh input token. High cache hits make subscription usage limits feel significantly larger.</li>
+            <li><strong>Substantial Latency Drop:</strong> Reading from cache is incredibly fast, ensuring Claude Code processes long codebases without noticeable delays.</li>
+            <li><strong>Anthropic Integrity:</strong> Cache hits are so critical to infrastructure load that Anthropic explicitly tracks failures internally as high-priority incidents (SEVs).</li>
+        </ul>
+    </div>
+
+    <div class="card card-shortcuts">
+        <h2><span class="badge badge-info">Essentials</span> Power-User Shortcuts & Commands</h2>
+        <p>Stop guessing your context load. Use these native interactive bindings to manage active terminal sessions:</p>
+        
+        <table class="shortcut-table">
+            <thead>
+                <tr>
+                    <th>Command / Binding</th>
+                    <th>Action</th>
+                    <th>Token / Optimization Impact</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>/context</code></td>
+                    <td>Visualizes what is currently loaded into your active window.</td>
+                    <td>Instantly audits which files are eating your structural memory limits.</td>
+                </tr>
+                <tr>
+                    <td><code>/compact</code></td>
+                    <td>Manually compress and summarize conversation history.</td>
+                    <td>Compresses previous turns down to a tight baseline summary, shedding raw tool output bytes.</td>
+                </tr>
+                <tr>
+                    <td><code>/btw [question]</code></td>
+                    <td>Asks a quick side question outside the conversation timeline.</td>
+                    <td>Executes a read-only query without adding payload overhead to the persistent chat cache stack.</td>
+                </tr>
+                <tr>
+                    <td><code>/clear</code> or <code>/reset</code></td>
+                    <td>Wipes current conversation context completely.</td>
+                    <td>Resets session memory while fully keeping local <code>CLAUDE.md</code> project architecture configurations alive.</td>
+                </tr>
+                <tr>
+                    <td><code>/rewind</code></td>
+                    <td>Rolls back conversation and file states to a target checkpoint.</td>
+                    <td>Trims out failed, hallucinated, or circular engineering paths to clean up the token history.</td>
+                </tr>
+                <tr>
+                    <td><span class="kbd-shortcut">Shift</span> + <span class="kbd-shortcut">Tab</span></td>
+                    <td>Cycles permissions mode: <code>default</code> ➔ <code>acceptEdits</code> ➔ <code>plan</code>.</td>
+                    <td><strong>Plan Mode</strong> blocks expensive mutating tools while you map logic out without token waste.</td>
+                </tr>
+                <tr>
+                    <td><span class="kbd-shortcut">Esc</span></td>
+                    <td>Interrupts Claude mid-response.</td>
+                    <td>Immediately halts runaway looping generations or faulty print statements, saving thousands of output tokens.</td>
+                </tr>
+                <tr>
+                    <td><span class="kbd-shortcut">Esc</span>, <span class="kbd-shortcut">Esc</span></td>
+                    <td>Opens the visual rewind/checkpoint selection menu.</td>
+                    <td>Allows safe backward time-travel across your file diff changes.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Cultivating Team Token Discipline (Avoiding Token Maxing)</h2>
+        <p>Token maxing or context thrashing happens due to poor conversational discipline. Follow these strict engineering heuristics:</p>
+        
+        <div class="discipline-tip">
+            <p><strong>1. Execute the "Plan and Clear" Routine (The Anthropic Standard)</strong><br>
+            Don't build features linearly inside a single, infinite terminal thread. Instead: drop into Plan Mode via <span class="kbd-shortcut">Shift</span>+<span class="kbd-shortcut">Tab</span>, iron out a precise checklist, run <code>/clear</code> to drop previous debugging baggage, and run the execution cleanly in a fresh session.</p>
+        </div>
+
+        <div class="discipline-tip">
+            <p><strong>2. Evade the "Agentic Death Spiral" Loop</strong><br>
+            If Claude attempts a terminal task (e.g., executing a failing regular expression or bad test suite compile) and fails twice in a row, <strong>do not let it try a third time blindly.</strong> Hit <span class="kbd-shortcut">Esc</span> to kill generation, step in, and manually correct its direction. Left unattended, agentic loops will burn a weekly allocation in minutes.</p>
+        </div>
+
+        <div class="discipline-tip">
+            <p><strong>3. Keep State Static with <code>CLAUDE.md</code> and Skills</strong><br>
+            Never repeat setup rules, lint criteria, or custom project architecture constraints inside your terminal chat strings. Drop them as markdown files inside your project structure (or globally in <code>~/.claude/skills/</code>). Claude rehydrates these natively without bloating conversational streams.</p>
+        </div>
+
+        <div class="discipline-tip">
+            <p><strong>4. Scope Your Working Directory Tightly</strong><br>
+            Opening Claude Code at the absolute root of a complex, massive monorepo forces unnecessary filesystem context indexing. Launch the tool natively inside the targeted microservice subdirectory, and dynamically introduce sibling code paths using <code>/add-dir</code> only when explicitly required.</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>The Technical Mechanics: Prefix Matching</h2>
+        <p>Claude's backend caching relies on strict <strong>prefix matching</strong>. If you change even one byte at the absolute beginning of your prompt stream, the entire downstream cache fails.</p>
+        <ol>
+            <li><strong>Turn 1 (Cache Create):</strong> Your system prompts, core tool metadata, and project memories are compiled and saved. This is a full-price execution layer.</li>
+            <li><strong>Turn 2+ (Cache Read):</strong> If the previous prefix remains untouched, Claude securely references the hot segment. Only your new user modifications are computed.</li>
+        </ol>
+        <p><strong>The Lifetime Reality (TTL):</strong> On standard corporate seat subscriptions, your cache persists for <strong>1 hour</strong>. However, if you trigger pay-per-token API tiers or utilize dynamic background sub-agents, that safety buffer contracts to a sharp <strong>5-minute window</strong>.</p>
+    </div>
+
+    <div class="card card-warning">
+        <h2><span class="badge badge-warning">Caution</span> Common Habits That Secretly Break Caching</h2>
+        <ul>
+            <li><strong>Dynamic Data Flooding:</strong> Placing volatile metrics like local system timestamps, Git hashes, or environment variables at the <em>beginning</em> of a system prompt breaks prefix alignment instantly.</li>
+            <li><strong>Model Swapping (<code>/model</code>):</strong> Altering targets mid-conversation breaks the active backend endpoint cache structure, forcing an immediate full-price re-read.</li>
+            <li><strong>The "Opus Plan" Myth:</strong> Toggling configurations like using Opus for architecture planning and Sonnet for code writing forces a continuous model shift on <em>every single turn</em>, completely rendering prompt caching useless.</li>
+        </ul>
+    </div>
+</div>
+
+</body>
+</html>

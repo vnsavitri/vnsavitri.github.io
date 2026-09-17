@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLM 5.2 in Claude Code: Summary Deck</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-card: rgba(22, 30, 49, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-cyan: #00f2fe;
+            --accent-blue: #38bdf8;
+            --accent-purple: #818cf8;
+            --accent-orange: #f97316;
+            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Slide Container */
+        .deck-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Individual Slides */
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 3rem 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, transform 0.5s ease, visibility 0.5s;
+            transform: scale(0.98);
+            z-index: 1;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+            z-index: 10;
+        }
+
+        /* Content Constraints */
+        .slide-content {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1.1;
+            background: linear-gradient(135deg, #fff 0%, var(--text-muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #fff;
+            border-left: 4px solid var(--accent-blue);
+            padding-left: 1rem;
+            line-height: 1.2;
+        }
+
+        p {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .highlight-cyan { color: var(--accent-cyan); }
+        .highlight-purple { color: var(--accent-purple); }
+        .highlight-orange { color: var(--accent-orange); }
+
+        /* Structural Cards Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(56, 189, 248, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.75rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Interactive Tabs Styling for Slide 3 */
+        .tabs-container {
+            width: 100%;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 6px;
+        }
+
+        .tab-btn.active {
+            color: #fff;
+            background: rgba(56, 189, 248, 0.15);
+            box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        /* Code Block Panel */
+        pre {
+            background: #05070c;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #e2e8f0;
+        }
+
+        .code-keyword { color: #ff79c6; }
+        .code-string { color: #f1fa8c; }
+        .code-comment { color: #6272a4; }
+
+        /* Global UI Elements */
+        .progress-bar-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            z-index: 100;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            transition: width 0.3s ease;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s ease;
+            font-size: 1.2rem;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--text-muted);
+        }
+
+        .slide-counter {
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            min-width: 45px;
+            text-align: center;
+        }
+
+        .source-footer {
+            position: absolute;
+            bottom: 2rem;
+            left: 2rem;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.25);
+            z-index: 100;
+        }
+
+        .source-footer a {
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: none;
+        }
+        .source-footer a:hover { text-decoration: underline; }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive Tweaks */
+        @media(max-width: 768px) {
+            h1 { font-size: 2.3rem; }
+            h2 { font-size: 1.6rem; }
+            p, .card h3 { font-size: 1rem; }
+            .slide { padding: 2rem 1rem; justify-content: flex-start; overflow-y: auto; }
+            .controls { bottom: 1rem; right: 1rem; }
+            .source-footer { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="progress-bar-container">
+        <div class="progress-bar" id="progress"></div>
+    </div>
+
+    <div class="deck-container">
+
+        <div class="slide active">
+            <div class="slide-content" style="text-align: center; align-items: center; gap: 1rem;">
+                <span style="text-transform: uppercase; letter-spacing: 2px; color: var(--accent-blue); font-weight: 600; font-size: 0.9rem;">Open-Source Paradigm Shift</span>
+                <h1>GLM 5.2 in Claude Code</h1>
+                <p style="font-size: 1.4rem; max-width: 650px; margin-bottom: 2rem;">
+                    Swapping the engine of AI development to cut inference costs by 5x while preserving flagship performance.
+                </p>
+                <div style="font-size: 0.95rem; color: var(--text-muted); font-family: var(--font-mono); background: rgba(255,255,255,0.03); padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--border-color);">
+                    Press Space / Arrow Keys to Navigate
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h2>First Impressions & Power</h2>
+                <p>Running GLM 5.2 mapped inside the <strong>Claude Code harness</strong> offers immediate, striking advantages for everyday knowledge and production engineering work.</p>
+                
+                <div class="grid-2">
+                    <div class="card">
+                        <h3><span class="highlight-cyan">⚡</span> Blazing Speed</h3>
+                        <p>Significantly faster than alternative models for standard frontend engineering, file mutations, and structural scripts.</p>
+                    </div>
+                    <div class="card">
+                        <h3><span class="highlight-purple">🧠</span> Massive Context</h3>
+                        <p>Boasts a robust <strong>1 Million token context window</strong>, handling massive directories or multi-hour prompt tasks with ease.</p>
+                    </div>
+                    <div class="card">
+                        <h3><span class="highlight-orange">📉</span> 5x Cheaper</h3>
+                        <p>Inference economics that completely alter developer habits—giving you massive compute freedom without skyrocketing API balances.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Head-to-Head Battles</h2>
+                <p>How does GLM 5.2 truly fare against the closed-source industry heavyweight, <strong>Claude Opus 4.8</strong>? Toggle below to explore the empirical tests:</p>
+                
+                <div class="tabs-container">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" onclick="switchTab(event, 'tab-design')">1. Web Design Challenge</button>
+                        <button class="tab-btn" onclick="switchTab(event, 'tab-homework')">2. Logic Coding Task</button>
+                    </div>
+
+                    <div id="tab-design" class="tab-content active">
+                        <div class="card" style="border-left: 3px solid var(--accent-cyan);">
+                            <p style="margin-bottom: 0.75rem;"><strong>The Prompt:</strong> "Get creative, show me your design skills, and build a beautiful HTML interactive presentation document."</p>
+                            <ul style="margin-left: 1.5rem; color: var(--text-muted); line-height: 1.7;">
+                                <li><strong>GLM 5.2 Speed:</strong> Finished successfully in just <span class="highlight-cyan">3 mins, 59 secs</span>.</li>
+                                <li><strong>Opus 4.8 Speed:</strong> Took a lengthy <span class="highlight-purple">14 mins, 59 secs</span>.</li>
+                                <li><strong>Result:</strong> Visual aesthetics were shockingly comparable. GLM produced a fully custom, interactive visual chart layer instantly at a fraction of the time and token burn.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div id="tab-homework" class="tab-content">
+                        <div class="card" style="border-left: 3px solid var(--accent-purple);">
+                            <p style="margin-bottom: 0.75rem;"><strong>The Prompt:</strong> Complex technical data manipulation homework judged independently by an external LLM.</p>
+                            <ul style="margin-left: 1.5rem; color: var(--text-muted); line-height: 1.7;">
+                                <li><strong>The Outcome:</strong> Opus 4.8 barely won the evaluation because it caught an extremely subtle edge case regarding duplicate database entries (matching variations like <code>true</code> vs <code>1</code> vs <code>1.0</code>).</li>
+                                <li><strong>The Strategy:</strong> Use GLM 5.2 for <strong>80%+ of your daily tasks</strong>, and save heavy-reasoning, closed-source models exclusively for edge cases requiring extreme logical precision.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h2>The Frontier Benchmarks</h2>
+                <p>GLM 5.2 is an open-source behemoth packing <strong>753 Billion parameters</strong>. It isn't just cheap; it sits directly on the frontier line.</p>
+                
+                <div class="card" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem; font-size: 0.95rem;">
+                            <span><strong>Frontier Coding / SWE Benchmarks</strong></span>
+                            <span class="highlight-cyan">Outperforms GPT 5.5</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.05); height: 12px; border-radius: 6px; overflow: hidden;">
+                            <div style="background: var(--accent-cyan); width: 92%; height: 100%;"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem; font-size: 0.95rem;">
+                            <span><strong>Agnostic Coding Evals</strong></span>
+                            <span class="highlight-purple">Beats Sonnet & Older Opus 4.7</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.05); height: 12px; border-radius: 6px; overflow: hidden;">
+                            <div style="background: var(--accent-purple); width: 88%; height: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <p style="font-size: 1rem; font-style: italic; text-align: center;">
+                    "Why risk being locked out or priced out by closed API vendors when open architecture matches the top tier?"
+                </p>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h2>The Economic Breakdown</h2>
+                <p>Heavy engineering pipelines burn millions of tokens daily. Swapping to GLM 5.2 through providers like Z.AI reshapes your budget:</p>
+                
+                <div class="grid-2">
+                    <div class="card" style="border: 1px solid rgba(249, 115, 22, 0.2);">
+                        <h3 class="highlight-orange">Claude Opus 4.8 Pricing</h3>
+                        <p style="font-family: var(--font-mono); font-size: 1.3rem; margin: 0.5rem 0; color: #fff;">$5.00 / $25.00</p>
+                        <p style="font-size: 0.9rem;">Per Million tokens (Input / Output). Highly restrictive for massive iterative codebase rewrites.</p>
+                    </div>
+
+                    <div class="card" style="border: 1px solid rgba(0, 242, 254, 0.2);">
+                        <h3 class="highlight-cyan">GLM 5.2 Pricing</h3>
+                        <p style="font-family: var(--font-mono); font-size: 1.3rem; margin: 0.5rem 0; color: #fff;">$1.40 / $4.40</p>
+                        <p style="font-size: 0.9rem;">Per Million tokens (Input / Output). Roughly <strong>5x cheaper input</strong> and <strong>~6x cheaper output</strong>.</p>
+                    </div>
+                </div>
+                <p style="font-size: 1rem; text-align: center;">Z.AI offers flexible subscription access tiers starting at <strong>$16/mo</strong> up to <strong>$144/mo</strong>.</p>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Step-by-Step Harness Routing</h2>
+                <p>You can seamlessly swap the "engine" of Claude Code to GLM 5.2 without replacing the application itself. Simply update your local project configurations:</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <span style="font-size: 0.85rem; font-family: var(--font-mono); color: var(--accent-blue);">settings.local.json</span>
+                    <pre><code>{
+  <span class="code-keyword">"env"</span>: {
+    <span class="code-keyword">"ANTHROPIC_BASE_URL"</span>: <span class="code-string">"https://api.z.ai/v1"</span>,
+    <span class="code-keyword">"ANTHROPIC_API_KEY"</span>: <span class="code-string">""</span>, 
+    <span class="code-keyword">"ANTHROPIC_AUTH_TOKEN"</span>: <span class="code-string">"YOUR_Z_AI_API_KEY"</span>,
+    <span class="code-keyword">"CLAUDE_CODE_DEFAULT_MODEL"</span>: <span class="code-string">"glm-5.2"</span>
+  }
+}</code></pre>
+                </div>
+                <p style="font-size: 0.95rem;">Once saved, initialization reveals <strong>"GLM 5.2 with 1 Million Context"</strong> actively powering your local Claude command shell!</p>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-content" style="text-align: center; gap: 1.5rem;">
+                <h2>Smart Folder Strategy</h2>
+                <p style="max-width: 700px; margin: 0 auto;">You don't have to choose permanently. You can isolate your routing configuration on a per-project directory basis.</p>
+                
+                <div class="card" style="max-width: 500px; margin: 0 auto; text-align: left; font-family: var(--font-mono); font-size: 0.95rem; line-height: 1.8;">
+                    📁 Root Workspace<br>
+                    ├── 📁 project-glm-cheap/<br>
+                    │   └── 📄 settings.local.json <span class="highlight-cyan">(Routes to Z.AI)</span><br>
+                    └── 📁 project-opus-heavy/<br>
+                        └── 📄 <span style="color: rgba(255,255,255,0.3);">[No Local Override Config]</span> <span class="highlight-purple">(Defaults to Opus)</span>
+                </div>
+
+                <p style="font-size: 1.1rem; margin-top: 1rem;">
+                    Unlock optimal efficiency. Put your engineering stack ahead of the game with open-source flexibility today.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="controls">
+        <button class="nav-btn" onclick="navigate(-1)">←</button>
+        <div class="slide-counter" id="counter">1 / 7</div>
+        <button class="nav-btn" onclick="navigate(1)">→</button>
+    </div>
+
+    <div class="source-footer">
+        Based on Nate Herk's Guide | <a href="https://youtu.be/2OD14-0cot4" target="_blank">Watch Original Video</a>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progress');
+        const counterText = document.getElementById('counter');
+
+        function updateDeck() {
+            slides.forEach((slide, idx) => {
+                slide.classList.toggle('active', idx === currentSlide);
+            });
+            
+            // Progress Calculation
+            const percentage = ((currentSlide + 1) / slides.length) * 100;
+            progressBar.style.width = `${percentage}%`;
+            
+            // Counter Text Update
+            counterText.innerText = `${currentSlide + 1} / ${slides.length}`;
+        }
+
+        function navigate(direction) {
+            currentSlide += direction;
+            if (currentSlide >= slides.length) currentSlide = 0;
+            if (currentSlide < 0) currentSlide = slides.length - 1;
+            updateDeck();
+        }
+
+        // Global Keyboard Event Listeners
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                navigate(1);
+            }
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                navigate(-1);
+            }
+        });
+
+        // Interactive Tabs Logic (Slide 3)
+        function switchTab(event, tabId) {
+            const tabContainer = event.target.closest('.tabs-container');
+            
+            // Clear active classes from buttons & contents
+            tabContainer.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            tabContainer.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Set active states
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Initialize display
+        updateDeck();
+    </script>
+</body>
+</html>

@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Agentic AI Periodic Table</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f0ede6;
+    color: #1a1a1a;
+    padding: 36px 20px 52px;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header { text-align: center; margin-bottom: 28px; }
+  header h1 {
+    font-size: clamp(1.9rem, 4.5vw, 3.2rem);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: #1a1a1a;
+  }
+  header h1 .green { color: #4a9e6b; }
+
+  /* ── LEGEND ── */
+  .legend {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px 32px;
+    max-width: 820px;
+    margin: 18px auto 28px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #333;
+  }
+  .swatch {
+    width: 16px; height: 16px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  /* ── GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 7px;
+    max-width: 1060px;
+    margin: 0 auto;
+  }
+
+  /* ── ELEMENT CARD ── */
+  .el {
+    border-radius: 9px;
+    padding: 9px 9px 8px;
+    min-height: 105px;
+    display: flex;
+    flex-direction: column;
+    cursor: default;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
+    animation: fadeUp 0.35s ease both;
+  }
+  .el:hover {
+    transform: translateY(-3px) scale(1.04);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+    z-index: 10;
+    position: relative;
+  }
+  .el .sym {
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 3px;
+    color: #111;
+    word-break: break-word;
+  }
+  .el .name {
+    font-size: 0.58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin-bottom: 4px;
+    color: #222;
+    line-height: 1.25;
+  }
+  .el .desc {
+    font-size: 0.62rem;
+    color: #2a2a2a;
+    line-height: 1.45;
+    flex: 1;
+  }
+
+  /* ── CATEGORY COLOURS (solid fill, matching the image) ── */
+  /* Salmon/red — AI Terminology */
+  .t  { background: #e8847a; }
+  /* Lilac/purple — Capabilities & Skills */
+  .c  { background: #b89bd4; }
+  /* Warm orange — Memory & Context */
+  .m  { background: #d4a06a; }
+  /* Yellow — Agent Patterns */
+  .p  { background: #d4c050; }
+  /* Green — Evaluation & Safety */
+  .e  { background: #72b87e; }
+  /* Teal — Agent Collaboration & Networking */
+  .n  { background: #70bfb0; }
+  /* Sky blue — Vendor Tools */
+  .v  { background: #78aed4; }
+  /* Pink — Business & Use Cases */
+  .b  { background: #d478a8; }
+  /* Gold/olive — Deployment & Scaling */
+  .d  { background: #c4a840; }
+
+  /* Empty spacer */
+  .sp {
+    background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+  }
+  .sp:hover { transform: none; }
+
+  /* Watermark area — spans 4 cols */
+  .wm {
+    background: #e8e4da;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #aaa;
+    letter-spacing: 0.04em;
+    box-shadow: none;
+    min-height: 105px;
+  }
+  .wm:hover { transform: none; }
+
+  /* Footer */
+  footer {
+    margin-top: 28px;
+    text-align: center;
+    font-size: 0.7rem;
+    color: #777;
+    font-style: italic;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Stagger delays */
+  .el:nth-child(1)  { animation-delay: 0.02s }
+  .el:nth-child(2)  { animation-delay: 0.04s }
+  .el:nth-child(3)  { animation-delay: 0.06s }
+  .el:nth-child(4)  { animation-delay: 0.08s }
+  .el:nth-child(5)  { animation-delay: 0.10s }
+  .el:nth-child(6)  { animation-delay: 0.12s }
+  .el:nth-child(7)  { animation-delay: 0.14s }
+  .el:nth-child(8)  { animation-delay: 0.16s }
+  .el:nth-child(9)  { animation-delay: 0.18s }
+  .el:nth-child(10) { animation-delay: 0.20s }
+  .el:nth-child(11) { animation-delay: 0.22s }
+  .el:nth-child(12) { animation-delay: 0.24s }
+  .el:nth-child(13) { animation-delay: 0.26s }
+  .el:nth-child(14) { animation-delay: 0.28s }
+  .el:nth-child(15) { animation-delay: 0.30s }
+  .el:nth-child(16) { animation-delay: 0.32s }
+  .el:nth-child(17) { animation-delay: 0.34s }
+  .el:nth-child(18) { animation-delay: 0.36s }
+  .el:nth-child(19) { animation-delay: 0.38s }
+  .el:nth-child(20) { animation-delay: 0.40s }
+  .el:nth-child(n+21) { animation-delay: 0.42s }
+
+  @media (max-width: 700px) {
+    .grid { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Agentic AI <span class="green">Periodic Table</span></h1>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="swatch" style="background:#e8847a"></div> AI Terminology</div>
+  <div class="legend-item"><div class="swatch" style="background:#d4c050"></div> Agent Patterns</div>
+  <div class="legend-item"><div class="swatch" style="background:#78aed4"></div> Vendor Tools</div>
+  <div class="legend-item"><div class="swatch" style="background:#b89bd4"></div> Capabilities &amp; Skills</div>
+  <div class="legend-item"><div class="swatch" style="background:#72b87e"></div> Evaluation &amp; Safety</div>
+  <div class="legend-item"><div class="swatch" style="background:#d478a8"></div> Business &amp; Use Cases</div>
+  <div class="legend-item"><div class="swatch" style="background:#d4a06a"></div> Memory &amp; Context Handling</div>
+  <div class="legend-item"><div class="swatch" style="background:#70bfb0"></div> Agent Collaboration &amp; Networking</div>
+  <div class="legend-item"><div class="swatch" style="background:#c4a840"></div> Deployment &amp; Scaling</div>
+</div>
+
+<div class="grid">
+
+  <!-- ROW 1: AAI, AWS, [sp×5], MON -->
+  <div class="el t">
+    <div class="sym">AAI</div>
+    <div class="name">Agentic AI</div>
+    <div class="desc">AI systems with autonomy, reasoning, and goal-driven behaviour.</div>
+  </div>
+  <div class="el v">
+    <div class="sym">AWS</div>
+    <div class="name">Amazon Web Services</div>
+    <div class="desc">Cloud infra for deploying agents.</div>
+  </div>
+  <div class="el sp"></div>
+  <div class="el sp"></div>
+  <div class="el sp"></div>
+  <div class="el sp"></div>
+  <div class="el sp"></div>
+  <div class="el d">
+    <div class="sym">MON</div>
+    <div class="name">Monitoring</div>
+    <div class="desc">Observing performance &amp; reliability.</div>
+  </div>
+
+  <!-- ROW 2: AGI, API, HuggingFace, [watermark 4 cols], EDU, A2A, UPD -->
+  <div class="el t">
+    <div class="sym">AGI</div>
+    <div class="name">Artificial General Intelligence</div>
+    <div class="desc">AI with human-level intelligence.</div>
+  </div>
+  <div class="el t">
+    <div class="sym">API</div>
+    <div class="name">Application Programming Interface</div>
+    <div class="desc">Connects apps and services.</div>
+  </div>
+  <div class="el v">
+    <div class="sym">HF</div>
+    <div class="name">Hugging Face</div>
+    <div class="desc">Open-source hub for AI models.</div>
+  </div>
+  <!-- Watermark spanning 2 cols -->
+  <div class="el wm" style="grid-column: span 2;">⊕ Vivid Sydney ⊕</div>
+  <div class="el b">
+    <div class="sym">EDU</div>
+    <div class="name">Education Bots</div>
+    <div class="desc">Tutors for learning.</div>
+  </div>
+  <div class="el n">
+    <div class="sym">A2A</div>
+    <div class="name">Agent-to-Agent</div>
+    <div class="desc">Agents communicating.</div>
+  </div>
+  <div class="el d">
+    <div class="sym">UPD</div>
+    <div class="name">Update Manager</div>
+    <div class="desc">Keeping agents up to date.</div>
+  </div>
+
+  <!-- ROW 3: ASI, COL, Grok, MAP, ERR, HR, CTX, LOCAL -->
+  <div class="el t">
+    <div class="sym">ASI</div>
+    <div class="name">Artificial Superintelligence</div>
+    <div class="desc">Hypothetical AI beyond human intelligence.</div>
+  </div>
+  <div class="el n">
+    <div class="sym">COL</div>
+    <div class="name">Collaboration</div>
+    <div class="desc">Human + AI teamwork.</div>
+  </div>
+  <div class="el v">
+    <div class="sym">Grok</div>
+    <div class="name">Grok</div>
+    <div class="desc">Conversational AI by xAI.</div>
+  </div>
+  <div class="el p">
+    <div class="sym">MAP</div>
+    <div class="name">Map Agent</div>
+    <div class="desc">Location-based queries.</div>
+  </div>
+  <div class="el e">
+    <div class="sym">ERR</div>
+    <div class="name">Error Handling</div>
+    <div class="desc">Fixing failures.</div>
+  </div>
+  <div class="el b">
+    <div class="sym">HR</div>
+    <div class="name">HR Assistants</div>
+    <div class="desc">Automate employee support.</div>
+  </div>
+  <div class="el m">
+    <div class="sym">CTX</div>
+    <div class="name">Context Switch</div>
+    <div class="desc">Adapt to new topics.</div>
+  </div>
+  <div class="el d">
+    <div class="sym">LOCAL</div>
+    <div class="name">Local Agents</div>
+    <div class="desc">Run on personal machines.</div>
+  </div>
+
+  <!-- ROW 4: LLM, HAA, Gemini, VOICE, ACC, DATA, FORG, CLOUD -->
+  <div class="el t">
+    <div class="sym">LLM</div>
+    <div class="name">Large Language Model</div>
+    <div class="desc">Foundation of today's AI agents.</div>
+  </div>
+  <div class="el p">
+    <div class="sym">HAA</div>
+    <div class="name">Hierarchical Agents</div>
+    <div class="desc">Supervisors delegating to sub-agents.</div>
+  </div>
+  <div class="el v">
+    <div class="sym">Gemini</div>
+    <div class="name">Gemini</div>
+    <div class="desc">Google's multimodal AI agent.</div>
+  </div>
+  <div class="el c">
+    <div class="sym">VOICE</div>
+    <div class="name">Voice Interaction</div>
+    <div class="desc">Speech recognition &amp; synthesis.</div>
+  </div>
+  <div class="el e">
+    <div class="sym">ACC</div>
+    <div class="name">Accuracy Check</div>
+    <div class="desc">Validating responses.</div>
+  </div>
+  <div class="el b">
+    <div class="sym">DATA</div>
+    <div class="name">Data Analysis Agents</div>
+    <div class="desc">Generate insights.</div>
+  </div>
+  <div class="el m">
+    <div class="sym">FORG</div>
+    <div class="name">Forgetting</div>
+    <div class="desc">Remove unnecessary info.</div>
+  </div>
+  <div class="el d">
+    <div class="sym">CLOUD</div>
+    <div class="name">Cloud Agents</div>
+    <div class="desc">Run on cloud platforms.</div>
+  </div>
+
+  <!-- ROW 5: ML, PLAN, IBM ACP, IMG, SAFE, MKT, SAVE, HELP -->
+  <div class="el t">
+    <div class="sym">ML</div>
+    <div class="name">Machine Learning</div>
+    <div class="desc">Training models on data.</div>
+  </div>
+  <div class="el p">
+    <div class="sym">PLAN</div>
+    <div class="name">Planning</div>
+    <div class="desc">Breaking complex goals into steps.</div>
+  </div>
+  <div class="el v">
+    <div class="sym">IBM ACP</div>
+    <div class="name">Agent Communication Protocol</div>
+    <div class="desc">IBM's agent interaction framework.</div>
+  </div>
+  <div class="el c">
+    <div class="sym">IMG</div>
+    <div class="name">Image Recognition</div>
+    <div class="desc">Interpreting visual data.</div>
+  </div>
+  <div class="el e">
+    <div class="sym">SAFE</div>
+    <div class="name">Safety Guardrails</div>
+    <div class="desc">Prevents harmful instructions.</div>
+  </div>
+  <div class="el b">
+    <div class="sym">MKT</div>
+    <div class="name">Marketing Agents</div>
+    <div class="desc">Automate campaigns.</div>
+  </div>
+  <div class="el m">
+    <div class="sym">SAVE</div>
+    <div class="name">Data Storage</div>
+    <div class="desc">Structured information keeping.</div>
+  </div>
+  <div class="el n">
+    <div class="sym">HELP</div>
+    <div class="name">Human+AI Teams</div>
+    <div class="desc">Hybrid collaboration.</div>
+  </div>
+
+  <!-- ROW 6: RL, MAS, Anthropic, IDEA, TEST, SHOP, HIST, NET -->
+  <div class="el t">
+    <div class="sym">RL</div>
+    <div class="name">Reinforcement Learning</div>
+    <div class="desc">Learning from trial-and-error feedback.</div>
+  </div>
+  <div class="el p">
+    <div class="sym">MAS</div>
+    <div class="name">Multi-Agent Systems</div>
+    <div class="desc">Multiple agents collaborating.</div>
+  </div>
+  <div class="el v">
+    <div class="sym">Anthropic</div>
+    <div class="name">Anthropic</div>
+    <div class="desc">Creator of Claude AI models.</div>
+  </div>
+  <div class="el p">
+    <div class="sym">IDEA</div>
+    <div class="name">Idea Generation</div>
+    <div class="desc">Brainstorming new suggestions.</div>
+  </div>
+  <div class="el e">
+    <div class="sym">TEST</div>
+    <div class="name">Testing</div>
+    <div class="desc">Ensuring outputs work correctly.</div>
+  </div>
+  <div class="el b">
+    <div class="sym">SHOP</div>
+    <div class="name">Shopping Agents</div>
+    <div class="desc">Recommend &amp; purchase products.</div>
+  </div>
+  <div class="el m">
+    <div class="sym">HIST</div>
+    <div class="name">History Log</div>
+    <div class="desc">Interaction records.</div>
+  </div>
+  <div class="el n">
+    <div class="sym">NET</div>
+    <div class="name">Networking Agents</div>
+    <div class="desc">Interconnected agent systems.</div>
+  </div>
+
+  <!-- ROW 7: MCP, LTM, OpenAI, TRANS, DOC, SUP, DIARY, TASK -->
+  <div class="el t">
+    <div class="sym">MCP</div>
+    <div class="name">Model Context Protocol</div>
+    <div class="desc">Standard for agents to connect with tools.</div>
+  </div>
+  <div class="el m">
+    <div class="sym">LTM</div>
+    <div class="name">Long-Term Memory</div>
+    <div class="desc">Persistent memory across sessions.</div>
+  </div>
+  <div class="el v">
+    <div class="sym">OpenAI</div>
+    <div class="name">OpenAI</div>
+    <div class="desc">Leading AI company (ChatGPT, GPT models).</div>
+  </div>
+  <div class="el c">
+    <div class="sym">TRANSL</div>
+    <div class="name">Translation</div>
+    <div class="desc">Converting between languages.</div>
+  </div>
+  <div class="el c">
+    <div class="sym">DOC</div>
+    <div class="name">Document Reader</div>
+    <div class="desc">Reading files and PDFs.</div>
+  </div>
+  <div class="el b">
+    <div class="sym">SUP</div>
+    <div class="name">Customer Support Bots</div>
+    <div class="desc">Handle service queries.</div>
+  </div>
+  <div class="el m">
+    <div class="sym">DIARY</div>
+    <div class="name">Diary Memory</div>
+    <div class="desc">Persistent logs.</div>
+  </div>
+  <div class="el n">
+    <div class="sym">TASK</div>
+    <div class="name">Task Sharing</div>
+    <div class="desc">Divide and delegate work.</div>
+  </div>
+
+  <!-- ROW 8: TC, STM, AZR, SUM, CAL, FEED, NOTE, ACP -->
+  <div class="el c">
+    <div class="sym">TC</div>
+    <div class="name">Tool Calling</div>
+    <div class="desc">Letting agents trigger external functions.</div>
+  </div>
+  <div class="el m">
+    <div class="sym">STM</div>
+    <div class="name">Short-Term Memory</div>
+    <div class="desc">Session-based context recall.</div>
+  </div>
+  <div class="el v">
+    <div class="sym">AZR</div>
+    <div class="name">Microsoft Azure</div>
+    <div class="desc">Enterprise AI cloud.</div>
+  </div>
+  <div class="el c">
+    <div class="sym">SUM</div>
+    <div class="name">Summarisation</div>
+    <div class="desc">Condensing information.</div>
+  </div>
+  <div class="el p">
+    <div class="sym">CAL</div>
+    <div class="name">Calendar Agent</div>
+    <div class="desc">Managing schedules.</div>
+  </div>
+  <div class="el e">
+    <div class="sym">FEED</div>
+    <div class="name">Feedback Loop</div>
+    <div class="desc">Improving agents from feedback.</div>
+  </div>
+  <div class="el m">
+    <div class="sym">NOTE</div>
+    <div class="name">Notepad Memory</div>
+    <div class="desc">Temporary storage.</div>
+  </div>
+  <div class="el n">
+    <div class="sym">ACP</div>
+    <div class="name">IBM's Agent Communication Protocol</div>
+    <div class="desc">Shared language for agents to connect &amp; collaborate.</div>
+  </div>
+
+  <!-- ROW 9: RAG, MEM, GCP, CHAT, REM, HUMAN, LEGAL, CREW -->
+  <div class="el c">
+    <div class="sym">RAG</div>
+    <div class="name">Retrieval-Augmented Generation</div>
+    <div class="desc">Combining LLM with knowledge sources.</div>
+  </div>
+  <div class="el m">
+    <div class="sym">MEM</div>
+    <div class="name">Memory</div>
+    <div class="desc">Retains past context for better answers.</div>
+  </div>
+  <div class="el v">
+    <div class="sym">GCP</div>
+    <div class="name">Google Cloud Platform</div>
+    <div class="desc">Cloud AI platform.</div>
+  </div>
+  <div class="el p">
+    <div class="sym">CHAT</div>
+    <div class="name">Chat Agent</div>
+    <div class="desc">Engages in conversations, answers queries.</div>
+  </div>
+  <div class="el p">
+    <div class="sym">REM</div>
+    <div class="name">Reminder</div>
+    <div class="desc">Alerting for tasks.</div>
+  </div>
+  <div class="el n">
+    <div class="sym">HITL</div>
+    <div class="name">Human Oversight</div>
+    <div class="desc">Human-in-the-loop review.</div>
+  </div>
+  <div class="el b">
+    <div class="sym">LEGAL</div>
+    <div class="name">Legal AI Agent</div>
+    <div class="desc">Assists with contracts, compliance, and document review.</div>
+  </div>
+  <div class="el n">
+    <div class="sym">CREW</div>
+    <div class="name">Crew Agents</div>
+    <div class="desc">Cooperative multi-agent setup.</div>
+  </div>
+
+</div>
+
+<footer>
+  Note: This diagram uses both established and tailored abbreviations to capture complex concepts in a more concise and narrative visual.
+</footer>
+
+</body>
+</html>

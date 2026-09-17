@@ -1,0 +1,2580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Own CoworkOS — Finance Edition (Governance)</title>
+
+<!-- ── Open Graph / Slack unfurl tags ── -->
+<meta property="og:type"        content="website">
+<meta property="og:title"       content="Build Your Own CoworkOS — Finance Edition (Governance)">
+<meta property="og:description" content="Give Claude persistent memory, your finance context, and a governed process the whole team shares. A setup guide for the BRG Finance team.">
+<meta property="og:url"         content="REPLACE_WITH_HOSTED_URL">
+<meta property="og:image"       content="REPLACE_WITH_THUMBNAIL_IMAGE_URL">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card"       content="summary_large_image">
+<meta name="twitter:title"      content="Build Your Own CoworkOS — Finance Edition (Governance)">
+<meta name="twitter:description" content="Give Claude persistent memory, your finance context, and a governed process the whole team shares.">
+<meta name="twitter:image"      content="REPLACE_WITH_THUMBNAIL_IMAGE_URL">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+/* ── Design Tokens ── */
+:root {
+  --bg:           #FFFFFF;
+  --surface:      #F7F6F4;
+  --surface-2:    #EEECEA;
+  --text:         #1A1917;
+  --text-mid:     #4B4845;
+  --text-muted:   #928E8A;
+  --text-faint:   #D1CEC9;
+  --border:       #E4E1DD;
+  --border-mid:   #C9C5C0;
+  --accent:       #421540;
+  --accent-light: rgba(66, 21, 64, 0.12);
+  --accent-mid:   rgba(66, 21, 64, 0.3);
+  --green:        #166534;
+  --green-bg:     #F0FDF4;
+  --green-border: #BBF7D0;
+
+  --font: 'Outfit', sans-serif;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --out:  cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #F0EFED;
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  color: var(--text);
+  zoom: 1.2;
+}
+
+.deck { position: fixed; inset: 0; }
+
+#progress-bar {
+  position: fixed; top: 0; left: 0; height: 2px;
+  background: var(--accent);
+  transition: width 0.45s var(--ease);
+  z-index: 300;
+}
+
+#counter {
+  position: fixed; bottom: 1.8rem; right: 2.2vw;
+  font-size: 0.6rem; font-weight: 500;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-faint); z-index: 300;
+}
+
+#kbd-hint {
+  position: fixed; bottom: 1.8rem; left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.58rem; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-faint); z-index: 300; pointer-events: none;
+}
+
+.nav-wrap {
+  position: fixed; top: 50%; transform: translateY(-50%);
+  z-index: 300;
+}
+.nav-wrap.is-prev { left: 1.2vw; }
+.nav-wrap.is-next { right: 1.2vw; }
+
+.nav-btn {
+  width: 38px; height: 38px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--bg);
+  color: var(--text-muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.18s, color 0.18s;
+}
+.nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.nav-btn:disabled { opacity: 0.2; pointer-events: none; }
+
+
+/* ═══════════════════════════════════
+   SLIDE ENGINE
+═══════════════════════════════════ */
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 6.5vh 9vw;
+  background: var(--bg);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+  transform: translateX(28px);
+}
+.slide.is-active  { opacity: 1; pointer-events: all; transform: none; }
+.slide.is-exit    { opacity: 0; transform: translateX(-28px); }
+
+.slide.is-active .r  { animation: up 0.45s var(--out) both; }
+.slide.is-active .r:nth-child(1) { animation-delay: 0.05s; }
+.slide.is-active .r:nth-child(2) { animation-delay: 0.11s; }
+.slide.is-active .r:nth-child(3) { animation-delay: 0.17s; }
+.slide.is-active .r:nth-child(4) { animation-delay: 0.24s; }
+.slide.is-active .r:nth-child(5) { animation-delay: 0.30s; }
+.slide.is-active .r:nth-child(6) { animation-delay: 0.36s; }
+
+@keyframes up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.lbl {
+  font-size: 0.6rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 1.2rem;
+}
+.lbl--phase { color: var(--accent); }
+
+.slide h2 {
+  font-size: clamp(1.5rem, 2.8vw, 2.4rem);
+  font-weight: 700; line-height: 1.15;
+  color: var(--text); letter-spacing: -0.02em;
+}
+
+
+/* ═══════════════════════════════════
+   LAYOUT: TITLE  (s-title)
+═══════════════════════════════════ */
+.s-title { background: var(--bg); }
+
+.title-eyebrow {
+  font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 2rem;
+}
+
+.title-name {
+  font-size: clamp(3rem, 7vw, 6rem);
+  font-weight: 700; letter-spacing: -0.03em; line-height: 1;
+  color: var(--text); margin-bottom: 1.5rem;
+  padding-left: 1.4rem;
+  border-left: 4px solid var(--accent);
+}
+
+.title-sub {
+  font-size: 1.05rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.5;
+  max-width: 520px; margin-bottom: 2.5rem;
+  padding-left: 1.4rem;
+}
+
+.title-badge {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.38rem 1rem;
+  background: var(--accent);
+  border: 1px solid var(--accent); border-radius: 4px;
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: #fff;
+  margin-left: 1.4rem;
+}
+
+.title-agenda {
+  font-size: 0.75rem; font-weight: 400;
+  color: rgba(107, 114, 128, 0.65);
+  line-height: 1.45;
+  margin-top: 1.8rem;
+  padding-left: 1.4rem;
+  letter-spacing: 0.01em;
+  display: flex; flex-direction: column; gap: 0;
+}
+
+
+/* ═══════════════════════════════════
+   LAYOUT: TWO-COLUMN  (s-two-col)
+═══════════════════════════════════ */
+.s-two-col { background: var(--bg); }
+
+.two-components {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 6px;
+  overflow: hidden; margin-top: 1.8rem; margin-bottom: 1.8rem;
+}
+
+.component { padding: 2.4rem 2.2rem 2.8rem; background: var(--bg); }
+.component-featured { background: var(--surface); }
+
+.component-tag {
+  display: inline-block;
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent-mid);
+  background: var(--accent-light);
+  padding: 0.2rem 0.6rem; border-radius: 3px;
+  margin-bottom: 1.1rem;
+}
+
+.component h3 {
+  font-size: 1.25rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.7rem;
+  letter-spacing: -0.01em;
+}
+
+.component p {
+  font-size: 0.88rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.68;
+}
+
+.tools-note {
+  font-size: 0.8rem; font-weight: 500;
+  color: var(--text-mid); text-align: center;
+}
+
+
+/* ═══════════════════════════════════
+   LAYOUT: ARCHITECTURE  (s-arch)
+═══════════════════════════════════ */
+.s-arch { background: var(--bg); }
+
+.arch-diagram {
+  display: flex; flex-direction: column;
+  margin-top: 1rem; margin-bottom: 0.9rem;
+  width: 100%;
+}
+
+.arch-layer {
+  display: flex; align-items: center;
+  gap: 1.6rem; padding: 0.65rem 1.4rem;
+  border: 1.5px solid var(--border-mid);
+  border-radius: 6px;
+}
+
+.arch-layer--top   { background: var(--surface); justify-content: center; }
+.arch-layer--mid   { background: var(--accent); border-color: var(--accent); }
+.arch-layer--bottom { background: var(--bg); }
+
+.arch-name {
+  font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  white-space: nowrap; flex-shrink: 0;
+  color: var(--text-muted);
+}
+.arch-layer--top .arch-name    { color: var(--text); font-size: 0.72rem; }
+.arch-layer--mid .arch-name    { color: rgba(255,255,255,0.65); }
+
+.arch-split {
+  display: flex; align-items: stretch;
+  flex: 1; border-radius: 4px; overflow: hidden;
+  background: rgba(255,255,255,0.1);
+}
+.arch-split-item { flex: 1; padding: 0.45rem 1.1rem; }
+.arch-split-div  { width: 1px; background: rgba(255,255,255,0.18); flex-shrink: 0; }
+.arch-split-title { font-size: 0.8rem; font-weight: 700; color: #fff; margin-bottom: 0.1rem; }
+.arch-split-sub   { font-size: 0.65rem; font-weight: 400; color: rgba(255,255,255,0.55); }
+
+.arch-pills {
+  display: flex; align-items: center; gap: 0.45rem; flex: 1; flex-wrap: wrap;
+}
+.arch-pill {
+  padding: 0.32rem 0.8rem;
+  border: 1.5px solid var(--border-mid);
+  border-radius: 4px; background: var(--surface);
+  font-size: 0.67rem; font-weight: 600;
+  letter-spacing: 0.03em; color: var(--text-mid);
+  white-space: nowrap;
+}
+
+.arch-conn { height: 11px; position: relative; }
+.arch-conn::before {
+  content: ''; position: absolute;
+  left: 50%; top: 0; bottom: 0;
+  width: 1px; background: var(--border-mid);
+}
+
+.arch-note {
+  font-size: 0.74rem; font-weight: 400; color: var(--text-muted);
+  line-height: 1.55; padding-top: 0.75rem; margin-top: 0.2rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Governance Agent layer ── */
+.arch-layer--gov {
+  background: rgba(66, 21, 64, 0.07);
+  border: 1.5px solid var(--accent-mid);
+  align-items: flex-start;
+  gap: 1.4rem;
+}
+.arch-layer--gov .arch-name { color: var(--accent); }
+.arch-gov-body { flex: 1; display: flex; flex-direction: column; gap: 0.18rem; }
+.arch-gov-title { font-size: 0.8rem; font-weight: 700; color: var(--accent); }
+.arch-gov-sub   { font-size: 0.66rem; font-weight: 400; color: var(--text-mid); line-height: 1.5; }
+.arch-gov-lock {
+  flex-shrink: 0; align-self: center;
+  font-size: 0.56rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: #fff; background: var(--accent);
+  padding: 0.28rem 0.65rem; border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* ── Split workstation layer (governed vs free) ── */
+.arch-ws-split { display: flex; gap: 0.9rem; flex: 1; }
+.arch-ws-group {
+  flex: 1; border-radius: 5px;
+  padding: 0.55rem 0.8rem 0.7rem;
+}
+.arch-ws-group--governed { background: rgba(66, 21, 64, 0.06); border: 1.5px solid var(--accent-mid); }
+.arch-ws-group--free     { background: var(--surface); border: 1.5px solid var(--border-mid); }
+.arch-ws-group-label {
+  font-size: 0.52rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  margin-bottom: 0.45rem;
+}
+.arch-ws-group--governed .arch-ws-group-label { color: var(--accent); }
+.arch-ws-group--free     .arch-ws-group-label { color: var(--text-muted); }
+.arch-ws-pills { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.arch-pill--gov {
+  border-color: var(--accent-mid); background: var(--bg); color: var(--accent);
+}
+.arch-pill--gov::before { content: '🔒 '; font-size: 0.62rem; }
+
+
+/* ═══════════════════════════════════
+   LAYOUT: BUILD CARDS  (s-build)
+═══════════════════════════════════ */
+.s-build { background: var(--bg); }
+
+.build-cards {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1.2rem; margin-top: 1.8rem;
+  align-items: stretch;
+}
+
+.build-card {
+  padding: 1.8rem 1.6rem 2rem;
+  border: 1.5px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: 6px; background: var(--bg);
+  display: flex; flex-direction: column; gap: 0.75rem;
+}
+
+.build-card--featured {
+  background: rgba(66, 21, 64, 0.05);
+  border: 1.5px solid var(--accent-mid);
+  border-top: 4px solid var(--accent);
+}
+
+.build-card-badge {
+  display: inline-block;
+  font-size: 0.48rem; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: #fff; background: var(--accent);
+  padding: 0.15rem 0.6rem; border-radius: 3px;
+  margin-bottom: 0.1rem;
+}
+
+.build-card-num {
+  font-size: 0.58rem; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent);
+}
+
+.build-card-heading {
+  font-size: 1rem; font-weight: 700;
+  color: var(--text); line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.build-card p {
+  font-size: 0.84rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.68;
+}
+
+
+/* ═══════════════════════════════════
+   LAYOUT: CTA  (s-cta)
+═══════════════════════════════════ */
+.s-cta { background: var(--bg); }
+
+.cta-layout {
+  display: grid; grid-template-columns: 1fr 1.1fr;
+  gap: 6vw; align-items: start;
+  margin-top: 1.4rem;
+}
+
+.cta-q {
+  font-size: clamp(1.4rem, 2.6vw, 2.2rem);
+  font-weight: 700; letter-spacing: -0.02em;
+  color: var(--text); line-height: 1.2; margin-bottom: 1rem;
+}
+
+.cta-sub {
+  font-size: 0.9rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.65; max-width: 340px;
+}
+
+.inv-list {
+  display: flex; flex-direction: column;
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+}
+
+.inv {
+  display: flex; align-items: flex-start; gap: 1.2rem;
+  padding: 1.2rem 1.4rem; background: var(--bg);
+  transition: background 0.15s;
+}
+.inv:hover { background: var(--surface); }
+
+.inv-n {
+  font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-faint); flex-shrink: 0; margin-top: 3px;
+}
+.inv-title {
+  font-size: 0.88rem; font-weight: 600;
+  color: var(--text); margin-bottom: 0.2rem;
+}
+.inv-desc {
+  font-size: 0.78rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.55;
+}
+
+
+/* ═══════════════════════════════════
+   CUSTOM: TEMPLATE SLIDES  (s-tmpl)
+═══════════════════════════════════ */
+.s-tmpl { background: var(--bg); padding-top: 5vh; padding-bottom: 4vh; }
+
+.tmpl-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.75fr;
+  gap: 2.5vw;
+  margin-top: 1.4rem;
+  align-items: start;
+}
+
+.tmpl-desc { display: flex; flex-direction: column; gap: 1rem; }
+
+.tmpl-desc-tag {
+  display: inline-block;
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent-mid);
+  background: var(--accent-light);
+  padding: 0.2rem 0.6rem; border-radius: 3px;
+  margin-bottom: 0.2rem;
+  align-self: flex-start;
+}
+
+.tmpl-desc h3 {
+  font-size: 1.15rem; font-weight: 700;
+  color: var(--text); line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.tmpl-desc p {
+  font-size: 0.83rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.68;
+}
+
+.tmpl-hint {
+  font-size: 0.74rem; font-weight: 500;
+  color: var(--text-muted);
+  padding: 0.65rem 1rem;
+  background: var(--surface);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+  line-height: 1.55;
+}
+
+.tmpl-code-wrap { position: relative; }
+
+.tmpl-pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.1rem 1.3rem;
+  font-family: 'Courier New', 'Lucida Console', monospace;
+  font-size: 0.62rem;
+  line-height: 1.65;
+  color: var(--text-mid);
+  white-space: pre;
+  overflow: auto;
+  max-height: 56vh;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 0.55rem; right: 0.55rem;
+  padding: 0.28rem 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border-mid);
+  border-radius: 4px;
+  font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font);
+  z-index: 10;
+}
+.copy-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.copy-btn.copied { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+.tmpl-pre .tmpl-add { display: block; background: rgba(125, 77, 130, 0.14); color: #5a2d5f; border-left: 3px solid #7d4d82; padding: 0.1rem 0.55rem; border-radius: 0 4px 4px 0; }
+
+
+/* Trust grid */
+.s-trust { background: var(--bg); }
+
+.s-trust .sub {
+  font-size: 0.95rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.6;
+  max-width: 520px; margin: 0.4rem 0 2.2rem;
+}
+
+.trust-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border); border-radius: 6px;
+  overflow: hidden;
+}
+.trust { padding: 1.6rem 2rem; background: var(--bg); transition: background 0.15s; }
+.trust:hover { background: var(--surface); }
+
+.trust h3 {
+  font-size: 0.88rem; font-weight: 700;
+  color: var(--text); margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+.trust p {
+  font-size: 0.8rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.65;
+}
+
+.trust--featured {
+  background: rgba(66, 21, 64, 0.05);
+  border-left: 3px solid var(--accent);
+  padding-left: calc(2rem - 3px);
+}
+.trust--featured:hover { background: rgba(66, 21, 64, 0.09); }
+
+.trust-heading--featured {
+  font-size: 0.92rem; font-weight: 700;
+  color: var(--accent); margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+/* Memory Cycle */
+.mem-cycle {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+}
+.mem-step {
+  flex: 1; text-align: center;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 0.3rem;
+  padding: 0.6rem 0.3rem;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 5px;
+}
+.mem-step--hi { border-color: var(--accent); background: var(--accent-light); }
+.mem-step-ico { font-size: 1.1rem; line-height: 1; }
+.mem-step-lbl {
+  font-size: 0.55rem; font-weight: 600;
+  color: var(--text-muted); letter-spacing: 0.04em;
+  line-height: 1.3;
+}
+.mem-step--hi .mem-step-lbl { color: var(--accent); }
+.mem-arr { color: var(--border-mid); font-size: 0.85rem; flex-shrink: 0; }
+
+
+/* ═══════════════════════════════════
+   LAYOUT: TOOL PICKER  (s-tools)
+═══════════════════════════════════ */
+.s-tools { background: var(--bg); padding-top: 4.5vh; padding-bottom: 3.5vh; }
+
+.tools-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.4rem;
+}
+
+.tools-eyebrow {
+  font-size: 0.55rem; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent);
+}
+
+.tools-badge {
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.2em; color: var(--accent);
+  border: 1px solid var(--accent-mid);
+  background: var(--accent-light);
+  padding: 0.25rem 0.7rem; border-radius: 3px;
+  flex-shrink: 0; white-space: nowrap;
+}
+
+.tools-subtitle-line {
+  font-size: 0.65rem; color: var(--text-muted);
+  margin-top: 0.2rem; margin-bottom: 0.9rem;
+}
+
+.tools-columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.85rem; }
+
+.tool-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: flex; flex-direction: column;
+  overflow: hidden; position: relative;
+}
+
+.tool-col::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px; border-radius: 6px 6px 0 0;
+}
+
+.tool-col--chat::before   { background: #2ABFBF; }
+.tool-col--cowork::before { background: var(--accent); }
+.tool-col--code::before   { background: #E8762C; }
+
+.tool-col-header {
+  padding: 0.8rem 0.95rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.tool-col-label {
+  font-size: 0.52rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.15rem;
+}
+
+.tool-col--chat  .tool-col-label  { color: #2ABFBF; }
+.tool-col--cowork .tool-col-label { color: var(--accent); }
+.tool-col--code  .tool-col-label  { color: #E8762C; }
+
+.tool-col-name { font-size: 0.95rem; font-weight: 700; color: var(--text); line-height: 1.1; }
+.tool-col-access { font-size: 0.56rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+.tool-trigger { margin: 0.45rem 0.95rem 0.3rem; border-radius: 4px; padding: 0.38rem 0.6rem; }
+.tool-col--chat  .tool-trigger { background: rgba(42,191,191,0.08);  border-left: 3px solid #2ABFBF; }
+.tool-col--cowork .tool-trigger { background: var(--accent-light);    border-left: 3px solid var(--accent); }
+.tool-col--code  .tool-trigger  { background: rgba(232,118,44,0.08);  border-left: 3px solid #E8762C; }
+
+.tool-trigger-label {
+  font-size: 0.52rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.12rem;
+}
+.tool-col--chat  .tool-trigger-label  { color: #2ABFBF; }
+.tool-col--cowork .tool-trigger-label { color: var(--accent); }
+.tool-col--code  .tool-trigger-label  { color: #E8762C; }
+
+.tool-trigger-text { font-size: 0.68rem; color: var(--text-mid); font-weight: 500; line-height: 1.4; }
+
+.tool-use-cases { padding: 0.38rem 0.95rem 0; flex: 1; }
+.tool-use-label {
+  font-size: 0.52rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 0.35rem;
+}
+
+.tool-uc { display: flex; align-items: flex-start; gap: 0.38rem; margin-bottom: 0.38rem; }
+.tool-uc-dot { width: 4px; height: 4px; border-radius: 50%; margin-top: 0.33em; flex-shrink: 0; }
+.tool-col--chat  .tool-uc-dot  { background: #2ABFBF; }
+.tool-col--cowork .tool-uc-dot { background: var(--accent); }
+.tool-col--code  .tool-uc-dot  { background: #E8762C; }
+
+.tool-uc-main { font-size: 0.68rem; color: var(--text); font-weight: 600; line-height: 1.35; }
+.tool-uc-sub  { font-size: 0.58rem; color: var(--text-muted); line-height: 1.3; margin-top: 0.04rem; }
+
+.tool-not-for {
+  margin: 0.45rem 0.95rem 0.8rem;
+  padding: 0.38rem 0.55rem;
+  background: var(--bg); border-radius: 4px; border: 1px solid var(--border);
+}
+.tool-not-for-label {
+  font-size: 0.52rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 0.12rem;
+}
+.tool-not-for-text { font-size: 0.58rem; color: var(--text-muted); line-height: 1.4; }
+
+.tools-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 0.6rem; margin-top: 0.7rem;
+  border-top: 1px solid var(--border);
+  gap: 1rem; flex-wrap: wrap;
+}
+.tools-footer-note { font-size: 0.6rem; color: var(--text-muted); line-height: 1.5; }
+.tools-footer-note strong { color: var(--accent); }
+.tools-legend { display: flex; gap: 1rem; flex-shrink: 0; }
+.tools-legend-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.58rem; color: var(--text-muted); }
+.tools-legend-dot  { width: 6px; height: 6px; border-radius: 50%; }
+
+
+/* ═══════════════════════════════════
+   LAYOUT: SECTION PHASE BREAK (s-phase)
+═══════════════════════════════════ */
+.s-phase {
+  background: linear-gradient(145deg, #f0e8f2 0%, #e5d6ea 100%);
+  align-items: center;
+  justify-content: center;
+}
+
+.s-phase h2 {
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-weight: 700; color: #38183c;
+  letter-spacing: -0.03em; line-height: 1.05;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.phase-eyebrow {
+  font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: #7d4d82; margin-bottom: 1.1rem;
+  text-align: center;
+}
+
+.phase-sub {
+  font-size: 0.9rem; font-weight: 400;
+  color: #5a2d5f;
+  line-height: 1.65; text-align: center;
+  margin-bottom: 2.4rem;
+  max-width: 540px;
+}
+
+.phase-flow {
+  display: flex; align-items: stretch;
+  gap: 0; max-width: 840px; width: 100%;
+}
+
+.phase-step {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; text-align: center;
+  gap: 0.55rem; padding: 1.6rem 1.1rem 1.8rem;
+  background: rgba(255,255,255,0.78);
+  border: 1.5px solid rgba(200,165,204,0.4);
+  border-radius: 8px;
+}
+
+.phase-step-ico { font-size: 2.4rem; line-height: 1; }
+.phase-step-num { font-size: 0.5rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: #7d4d82; }
+.phase-step-title { font-size: 0.88rem; font-weight: 700; color: #38183c; line-height: 1.25; }
+.phase-step-sub   { font-size: 0.68rem; color: #5a2d5f; line-height: 1.5; }
+.phase-arr { color: #c8a5cc; font-size: 1.3rem; align-self: center; padding: 0 1rem; flex-shrink: 0; }
+
+/* ── Pause / ask section break (left-aligned phase) ── */
+.s-phase.s-ask { align-items: flex-start; }
+.s-ask .phase-eyebrow { text-align: left; }
+.s-ask h2 { text-align: left; max-width: 920px; font-size: clamp(1.8rem, 3.6vw, 3rem); line-height: 1.15; }
+.s-ask .phase-sub { text-align: left; max-width: 620px; margin-bottom: 0; }
+
+
+/* ═══════════════════════════════════
+   LAYOUT: FOLDER REVEAL  (s-folder-reveal)
+═══════════════════════════════════ */
+.s-folder-reveal { background: linear-gradient(145deg, #f0e8f2 0%, #e5d6ea 100%); }
+
+.s-folder-reveal .phase-eyebrow { text-align: left; margin-bottom: 1.2rem; }
+
+.s-folder-reveal h2 {
+  font-size: clamp(1.7rem, 3.2vw, 2.6rem);
+  font-weight: 700; color: #38183c;
+  letter-spacing: -0.025em; line-height: 1.1;
+  text-align: left;
+}
+
+.folder-reveal-layout {
+  display: grid; grid-template-columns: 1fr 1.05fr;
+  gap: 4.5vw; align-items: start;
+  margin-top: 1.6rem;
+}
+
+.folder-reveal-desc { display: flex; flex-direction: column; gap: 1.1rem; }
+.folder-reveal-desc p { font-size: 0.88rem; color: #5a2d5f; line-height: 1.7; }
+
+.folder-reveal-hint {
+  font-size: 0.76rem; color: #7d4d82; font-weight: 500;
+  padding: 0.65rem 0.95rem;
+  background: rgba(255,255,255,0.65);
+  border-left: 3px solid #7d4d82;
+  border-radius: 0 4px 4px 0;
+  line-height: 1.55;
+}
+
+.folder-card {
+  background: rgba(255,255,255,0.92);
+  border: 1.5px solid rgba(200,165,204,0.4);
+  border-radius: 10px; padding: 1.4rem 1.6rem;
+  font-family: 'Courier New', 'Lucida Console', monospace;
+  font-size: 0.7rem; line-height: 1.85;
+  color: #38183c;
+  box-shadow: 0 6px 24px rgba(66,21,64,0.1);
+}
+
+.folder-card .folder-root { font-weight: 700; color: #421540; font-size: 0.78rem; margin-bottom: 0.15rem; }
+.folder-dir  { color: #5a2d5f; font-weight: 600; }
+.folder-file { color: #7d4d82; }
+.folder-muted { color: #b899bb; font-style: italic; font-size: 0.62rem; }
+.folder-ws-block {
+  margin-top: 0.5rem; padding-top: 0.5rem;
+  border-top: 1px dashed rgba(200,165,204,0.5);
+}
+
+
+/* ── Glossary Slide ── */
+.s-glossary {
+  background: linear-gradient(165deg, #f8f5f9 0%, #ede6ef 100%);
+  padding-top: 4.5vh; padding-bottom: 3.5vh;
+}
+
+.s-glossary h2 {
+  font-size: clamp(1.5rem, 2.8vw, 2.4rem);
+  font-weight: 700; color: #38183c;
+  letter-spacing: -0.02em; line-height: 1.15;
+}
+
+.glossary-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; margin-top: 1.3rem;
+  background: rgba(200,165,204,0.3);
+  border: 1.5px solid rgba(200,165,204,0.35);
+  border-radius: 8px; overflow: hidden;
+}
+
+.glossary-item {
+  display: grid; grid-template-columns: 9rem 1fr;
+  gap: 0.75rem; align-items: baseline;
+  padding: 0.72rem 1.1rem;
+  background: rgba(255,255,255,0.62);
+  transition: background 0.15s;
+}
+.glossary-item:hover { background: rgba(255,255,255,0.82); }
+
+.glossary-item--full {
+  grid-column: 1 / -1;
+  display: flex; flex-direction: column;
+  gap: 0.45rem;
+  background: rgba(66, 21, 64, 0.05);
+  border-bottom: 1.5px solid rgba(200,165,204,0.35) !important;
+}
+
+.g-term { font-size: 0.68rem; font-weight: 700; color: var(--accent); letter-spacing: 0.01em; white-space: nowrap; }
+.g-def  { font-size: 0.67rem; color: var(--text-mid); line-height: 1.55; }
+
+.g-note {
+  font-size: 0.62rem; font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-light);
+  border-left: 3px solid var(--accent);
+  padding: 0.28rem 0.65rem;
+  border-radius: 0 3px 3px 0;
+  display: inline-block; align-self: flex-start;
+  line-height: 1.45;
+}
+
+
+/* ═══════════════════════════════════
+   LAYOUT: GOVERNANCE  (s-gov)
+═══════════════════════════════════ */
+.s-gov { background: var(--bg); padding-top: 3.5vh; padding-bottom: 3vh; }
+
+.s-gov .sub {
+  font-size: 0.88rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.55;
+  max-width: 640px; margin: 0.3rem 0 1rem;
+}
+
+.gov-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.gov-col {
+  border: 1.5px solid var(--border);
+  border-radius: 6px; padding: 1.1rem 1.3rem 1.2rem;
+  background: var(--bg);
+  display: flex; flex-direction: column; gap: 0.55rem;
+}
+.gov-col--hard {
+  background: rgba(66, 21, 64, 0.05);
+  border: 1.5px solid var(--accent-mid);
+  border-top: 3px solid var(--accent);
+}
+
+.gov-tag {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  align-self: flex-start;
+  font-size: 0.56rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 0.22rem 0.6rem; border-radius: 3px;
+  margin-bottom: 0.15rem;
+}
+.gov-col--soft .gov-tag { color: var(--text-muted); border: 1px solid var(--border-mid); background: var(--surface); }
+.gov-col--hard .gov-tag { color: #fff; background: var(--accent); }
+
+.gov-col h3 {
+  font-size: 1.05rem; font-weight: 700;
+  color: var(--text); line-height: 1.2; letter-spacing: -0.01em;
+}
+.gov-col--hard h3 { color: var(--accent); }
+
+.gov-col > p {
+  font-size: 0.8rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.6;
+}
+
+.gov-item { display: flex; align-items: flex-start; gap: 0.6rem; }
+.gov-item-mark {
+  flex-shrink: 0; margin-top: 0.1rem;
+  font-size: 0.78rem; line-height: 1.3;
+}
+.gov-item-text { font-size: 0.78rem; color: var(--text-mid); line-height: 1.55; }
+.gov-item-text strong { color: var(--text); font-weight: 600; }
+.gov-col--hard .gov-item-text strong { color: var(--accent); }
+
+.gov-foot {
+  margin-top: 1.3rem; padding: 0.7rem 1rem;
+  background: var(--surface);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+  font-size: 0.76rem; color: var(--text-mid); line-height: 1.55;
+}
+.gov-foot strong { color: var(--accent); }
+
+/* ── Governance operating-controls strip ── */
+.gov-controls-wrap { margin-top: 0.8rem; }
+.gov-controls-label {
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 0.5rem;
+}
+.gov-controls { display: flex; gap: 0.6rem; }
+.gov-control {
+  flex: 1; display: flex; flex-direction: column; gap: 0.2rem;
+  padding: 0.6rem 0.75rem; border-radius: 5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+}
+.gov-control-ico { font-size: 0.95rem; line-height: 1; }
+.gov-control-t { font-size: 0.68rem; font-weight: 700; color: var(--accent); line-height: 1.25; }
+.gov-control-s { font-size: 0.6rem; color: var(--text-mid); line-height: 1.4; }
+
+/* ═══════════════════════════════════
+   LAYOUT: KNOWN GAPS  (s-gaps)
+═══════════════════════════════════ */
+.s-gaps { background: var(--bg); padding-top: 5vh; padding-bottom: 4vh; }
+.s-gaps .sub {
+  font-size: 0.9rem; font-weight: 400;
+  color: var(--text-mid); line-height: 1.6;
+  max-width: 640px; margin: 0.3rem 0 1.5rem;
+}
+.gaps-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.gap-card { padding: 1.1rem 1.3rem 1.2rem; background: var(--bg); display: flex; flex-direction: column; gap: 0.4rem; }
+.gap-tag {
+  align-self: flex-start;
+  font-size: 0.52rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-danger, #B42318); background: #FBEAEA;
+  border: 1px solid #F3C9C7; padding: 0.16rem 0.55rem; border-radius: 3px;
+}
+.gap-h { font-size: 0.92rem; font-weight: 700; color: var(--text); line-height: 1.3; }
+.gap-fix { font-size: 0.76rem; color: var(--text-mid); line-height: 1.55; }
+.gap-fix strong { color: var(--accent); font-weight: 600; }
+.gaps-foot {
+  margin-top: 1.1rem; padding: 0.7rem 1rem;
+  background: rgba(66,21,64,0.05); border-left: 3px solid var(--accent);
+  border-radius: 0 4px 4px 0; font-size: 0.78rem; color: var(--text-mid); line-height: 1.55;
+}
+.gaps-foot strong { color: var(--accent); }
+
+/* ═══════════════════════════════════
+   LAYOUT: ONE-PAGER  (s-onepager)
+═══════════════════════════════════ */
+.s-onepager { background: linear-gradient(165deg, #f8f5f9 0%, #ede6ef 100%); padding-top: 3.5vh; padding-bottom: 3vh; }
+.s-onepager .lbl { color: #7d4d82; }
+.s-onepager h2 { font-size: clamp(1.5rem, 2.8vw, 2.3rem); font-weight: 700; color: #38183c; letter-spacing: -0.02em; }
+.op-purpose { font-size: 0.86rem; color: #5a2d5f; line-height: 1.55; max-width: 660px; margin: 0.3rem 0 1rem; }
+.op-layout { display: grid; grid-template-columns: 1.05fr 1fr; gap: 1.4rem; align-items: start; }
+.op-block { display: flex; flex-direction: column; gap: 0.7rem; }
+.op-row {
+  background: rgba(255,255,255,0.85); border: 1.5px solid rgba(200,165,204,0.45);
+  border-radius: 7px; padding: 0.8rem 1rem;
+}
+.op-row-label { font-size: 0.56rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #7d4d82; margin-bottom: 0.25rem; }
+.op-row-text { font-size: 0.78rem; color: #38183c; line-height: 1.5; }
+.op-row-text strong { color: #5a2d5f; }
+.op-asks {
+  background: var(--accent); border-radius: 8px; padding: 1.1rem 1.25rem;
+  display: flex; flex-direction: column; gap: 0.7rem;
+}
+.op-asks-h { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.7); }
+.op-ask { display: flex; align-items: flex-start; gap: 0.6rem; }
+.op-ask-n { flex-shrink: 0; width: 1.1rem; height: 1.1rem; border-radius: 50%; background: rgba(255,255,255,0.18); color: #fff; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-top: 0.1rem; }
+.op-ask-text { font-size: 0.76rem; color: #fff; line-height: 1.45; }
+.op-ask-text strong { font-weight: 700; }
+
+/* ── Closing Slide ── */
+.s-closing {
+  background: var(--accent);
+  justify-content: center; align-items: center;
+}
+.closing-wrap {
+  text-align: center;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 1.2rem;
+}
+.closing-h {
+  font-size: clamp(2.6rem, 5vw, 4.2rem);
+  font-weight: 700; color: #fff;
+  line-height: 1.1; letter-spacing: -0.02em;
+}
+.closing-contact { font-size: 0.95rem; font-weight: 400; color: rgba(255,255,255,0.65); line-height: 1.6; }
+.closing-contact strong { color: #fff; font-weight: 600; }
+.closing-channel {
+  display: inline-flex; padding: 0.5rem 1.5rem;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 6px;
+  font-size: 1.15rem; font-weight: 700;
+  color: #fff; letter-spacing: 0.02em;
+  font-family: var(--font);
+}
+
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 1 — TITLE
+  ══════════════════════════════════════════ -->
+  <section class="slide s-title">
+    <div class="r title-eyebrow">BRG Finance &nbsp;·&nbsp; June 2026</div>
+    <h1 class="r title-name">Build Your Own<br>CoworkOS</h1>
+    <p class="r title-sub">Give Claude persistent memory, your finance context, and one governed process the whole team shares.</p>
+    <div class="r title-badge">Finance · Governance Edition &nbsp;·&nbsp; Claude Desktop App ·&nbsp; Brought to you by Vivid</div>
+    <div class="r title-agenda">
+      <span>Why Claude needs your context to be useful</span>
+      <span>The three core files that power everything</span>
+      <span>How the Governance layer keeps the team on one process</span>
+      <span>Starter templates — copy and paste to get going</span>
+      <span>Finance workstation ideas to start with</span>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 2 — CLAUDE TOOLS OVERVIEW
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tools">
+
+    <div class="r tools-meta">
+      <span class="tools-eyebrow">BRG Finance &nbsp;·&nbsp; AI Enablement</span>
+      <div class="tools-badge">BRG</div>
+    </div>
+    <h2 class="r">Claude Tools — When to Use What</h2>
+    <p class="r tools-subtitle-line">A quick reference for Finance team members across all roles</p>
+
+    <div class="r tools-columns">
+
+      <div class="tool-col tool-col--chat">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Browser &nbsp;/&nbsp; Mobile &nbsp;/&nbsp; Desktop</div>
+          <div class="tool-col-name">Claude Chat</div>
+          <div class="tool-col-access">claude.ai &nbsp;·&nbsp; No setup required</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Reach for it when</div>
+          <div class="tool-trigger-text">You need a quick answer, a sanity check, or a first draft — right now.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">Good for</div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Quick research &amp; summarisation</div>
+            <div class="tool-uc-sub">Paste a report or policy doc, ask what it means</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Drafting on the fly</div>
+            <div class="tool-uc-sub">Emails, Slack updates, quick commentary summaries</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Brainstorming &amp; problem framing</div>
+            <div class="tool-uc-sub">Scenario thinking, stakeholder prep, slide structure</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">One-off file analysis</div>
+            <div class="tool-uc-sub">Upload a CSV or PDF and ask questions about it</div>
+          </div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">Not ideal for</div>
+          <div class="tool-not-for-text">Work that needs your entity structure, FX conventions, or memory across sessions</div>
+        </div>
+      </div>
+
+      <div class="tool-col tool-col--cowork">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Desktop App (Mac &nbsp;/&nbsp; Windows)</div>
+          <div class="tool-col-name">Claude Cowork</div>
+          <div class="tool-col-access">Installed locally &nbsp;·&nbsp; Connects your tools</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Reach for it when</div>
+          <div class="tool-trigger-text">You want Claude to know your entities, your numbers, and your reporting conventions — every session.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">Good for</div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Recurring finance workflows</div>
+            <div class="tool-uc-sub">Variance commentary, board pack drafts, budget reviews</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Working with local files</div>
+            <div class="tool-uc-sub">Read models, write narratives, output to Word or Excel</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Persistent finance context</div>
+            <div class="tool-uc-sub">Entity structure, FX rates, budget versions — loaded automatically</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Scheduled &amp; repeating tasks</div>
+            <div class="tool-uc-sub">Monthly report snapshots, automated digests</div>
+          </div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">Not ideal for</div>
+          <div class="tool-not-for-text">Writing or modifying code, running tests, or engineering workflows needing terminal access</div>
+        </div>
+      </div>
+
+      <div class="tool-col tool-col--code">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Terminal &nbsp;/&nbsp; Command Line (CLI)</div>
+          <div class="tool-col-name">Claude Code</div>
+          <div class="tool-col-access">Developer tool &nbsp;·&nbsp; Requires setup</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Reach for it when</div>
+          <div class="tool-trigger-text">You're building automation, data pipelines, or custom tools that need to run code.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">Good for</div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Finance automation scripts</div>
+            <div class="tool-uc-sub">Python for data extraction, consolidation, reconciliation</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Data pipeline building</div>
+            <div class="tool-uc-sub">Connect ERP data sources, automate report generation</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Excel/model scripting</div>
+            <div class="tool-uc-sub">VBA replacements, pandas transformations, SQL queries</div>
+          </div></div>
+          <div class="tool-uc"><div class="tool-uc-dot"></div><div>
+            <div class="tool-uc-main">Custom tool development</div>
+            <div class="tool-uc-sub">Build Finance-specific Cowork plugins and integrations</div>
+          </div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">Not ideal for</div>
+          <div class="tool-not-for-text">Non-technical users, everyday comms tasks, or anything that doesn't involve writing or running actual code</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="r tools-footer">
+      <div class="tools-footer-note">
+        <strong>All three tools run on Claude.</strong> &nbsp;This deck is about Cowork — the one built for your Finance workflows.
+        &nbsp;&nbsp;·&nbsp;&nbsp; Questions? Find us in <strong>#bai-claude-ama</strong> on Slack.
+      </div>
+      <div class="tools-legend">
+        <div class="tools-legend-item"><div class="tools-legend-dot" style="background: #2ABFBF;"></div>Claude Chat</div>
+        <div class="tools-legend-item"><div class="tools-legend-dot" style="background: #421540;"></div>Cowork</div>
+        <div class="tools-legend-item"><div class="tools-legend-dot" style="background: #E8762C;"></div>Claude Code</div>
+      </div>
+    </div>
+
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 3 — BEFORE / AFTER
+  ══════════════════════════════════════════ -->
+  <section class="slide s-two-col">
+    <div class="r lbl">The Problem</div>
+    <h2 class="r">Claude starts cold every session. CoworkOS fixes that.</h2>
+    <div class="r two-components">
+
+      <div class="component">
+        <div class="component-tag">Without Cowork OS</div>
+        <h3>Re-explaining context every time</h3>
+        <p>Claude doesn't know your entity structure, fiscal year, budget version, or how you label variances. You spend the first few exchanges re-establishing basics before anything useful gets done.</p>
+        <p style="margin-top: 0.8rem; font-size: 0.8rem; color: var(--text-muted);">Generic output. No memory of your chart of accounts, preferred rounding, or reporting conventions.</p>
+      </div>
+
+      <div class="component component-featured">
+        <div class="component-tag">With Cowork OS</div>
+        <h3>Claude already knows your numbers</h3>
+        <p>Claude reads your files at session start — entity list, active reporting periods, FX assumptions, stakeholder map. You jump straight into the work: variance commentary, board narrative, scenario modelling.</p>
+        <p style="margin-top: 0.8rem; font-size: 0.8rem; color: var(--text-mid);">Your formatting. Your assumptions. Routes the right tasks to the right workstation automatically.</p>
+      </div>
+
+    </div>
+    <p class="r tools-note">CoworkOS is just a folder on your computer. No data leaves Breville's environment.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 3A — PAUSE / QUESTION (are my Chat projects wasted?)
+  ══════════════════════════════════════════ -->
+  <section class="slide s-phase s-ask">
+    <div class="r phase-eyebrow">A Fair Question</div>
+    <h2 class="r">"OK, that sounds great. But what about all the project folders, skills and plugins I've already built in Claude Chat? Are they wasted?"</h2>
+    <p class="r phase-sub">Be honest, a few of you are thinking it. Let's deal with it head on.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 3B — COWORKOS vs COWORK FOLDER vs CHAT PROJECT
+  ══════════════════════════════════════════ -->
+  <section class="slide s-build">
+    <div class="r lbl">Why CoworkOS, Not Just a Folder</div>
+    <h2 class="r">👀 CoworkOS vs a Cowork folder vs a Claude Chat project</h2>
+    <div class="r build-cards">
+
+      <div class="build-card">
+        <div class="build-card-num">Option A</div>
+        <div class="build-card-heading">Project in Claude Chat</div>
+        <p>Custom instructions plus a few uploaded docs, in the browser. Quick to set up and easy to share. But it can't open your local models, can't update its own memory, won't route tasks, and can't run on a schedule or hold the team to one process.</p>
+        <p style="margin-top: 0.4rem; font-size: 0.78rem; color: var(--text-muted);"><strong>Best for:</strong> quick, shared, cloud Q&amp;A.</p>
+      </div>
+
+      <div class="build-card">
+        <div class="build-card-num">Option B</div>
+        <div class="build-card-heading">Plain Cowork folder</div>
+        <p>Point Cowork at any folder and it reads your files, runs skills and connects your tools. Powerful, but with no CLAUDE.md or MEMORY.md it forgets between sessions, has no routing, and no governance — every analyst freelances their own way.</p>
+        <p style="margin-top: 0.4rem; font-size: 0.78rem; color: var(--text-muted);"><strong>Best for:</strong> one-off local file work.</p>
+      </div>
+
+      <div class="build-card build-card--featured">
+        <div class="build-card-badge">Recommended</div>
+        <div class="build-card-num">Option C</div>
+        <div class="build-card-heading">CoworkOS (this kit)</div>
+        <p>Cowork plus persistent memory, your finance context, routing, the governed process and scheduled tasks. It compounds: every session makes the next one sharper, on your real files, done the approved way.</p>
+        <p style="margin-top: 0.4rem; font-size: 0.78rem; color: var(--text-muted);"><strong>Best for:</strong> the recurring finance work that matters.</p>
+      </div>
+
+    </div>
+    <div class="r" style="font-size: 0.8rem; color: var(--text-mid); margin-top: 0.7rem; padding: 0.7rem 1rem; background: rgba(66,21,64,0.05); border-left: 3px solid var(--accent); border-radius: 0 4px 4px 0; line-height: 1.55;">
+      <strong style="color: var(--accent);">Your Chat projects aren't wasted</strong> — they're the rough draft. The instructions and context you wrote there lift straight into CoworkOS. Keep Chat for quick or shared questions; bring the monthly grind into CoworkOS, where it remembers, routes, and stays on-process.
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 4 — ARCHITECTURE
+  ══════════════════════════════════════════ -->
+  <section class="slide s-arch">
+    <div class="r lbl">How It Works</div>
+    <h2 class="r">Four layers that power CoworkOS. One folder on your computer.</h2>
+    <div class="r arch-diagram">
+
+      <div class="arch-layer arch-layer--top">
+        <span class="arch-name">You &nbsp;—&nbsp; budget queries, variance questions, board pack requests</span>
+      </div>
+
+      <div class="arch-conn"></div>
+
+      <div class="arch-layer arch-layer--mid">
+        <span class="arch-name">CoworkOS</span>
+        <div class="arch-split">
+          <div class="arch-split-item">
+            <div class="arch-split-title">CLAUDE.md + MEMORY.md</div>
+            <div class="arch-split-sub">Entity context, fiscal conventions, routing map, and accumulated facts</div>
+          </div>
+          <div class="arch-split-div"></div>
+          <div class="arch-split-item">
+            <div class="arch-split-title">voice-principles.md + Skills</div>
+            <div class="arch-split-sub">Finance writing tone and installed capabilities</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-conn"></div>
+
+      <div class="arch-layer arch-layer--gov">
+        <span class="arch-name">Governance<br>Agent</span>
+        <div class="arch-gov-body">
+          <div class="arch-gov-title">The traffic controller for finance work</div>
+          <div class="arch-gov-sub">For governed tasks, it mandates the approved finance-shared skill, plugin and model, then routes the work through the approved process. No DIY skills, no three different ways of doing budgets.</div>
+        </div>
+        <span class="arch-gov-lock">🔒 Set by Head of Finance</span>
+      </div>
+
+      <div class="arch-conn"></div>
+
+      <div class="arch-layer arch-layer--bottom">
+        <span class="arch-name">Work<br>stations</span>
+        <div class="arch-ws-split">
+          <div class="arch-ws-group arch-ws-group--governed">
+            <div class="arch-ws-group-label">Governed · finance-shared process</div>
+            <div class="arch-ws-pills">
+              <span class="arch-pill arch-pill--gov">Budget Modeller</span>
+              <span class="arch-pill arch-pill--gov">FX &amp; Consolidation</span>
+              <span class="arch-pill arch-pill--gov">Board Pack Builder</span>
+            </div>
+          </div>
+          <div class="arch-ws-group arch-ws-group--free">
+            <div class="arch-ws-group-label">Light-touch · your own way</div>
+            <div class="arch-ws-pills">
+              <span class="arch-pill">Email</span>
+              <span class="arch-pill">Presentation</span>
+              <span class="arch-pill">+ yours</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <p class="r arch-note">The <strong style="color: var(--accent);">Governance Agent</strong> sits between your context and your workstations. Governed workstations (budgets, FX, consolidation) must use the shared, locked process so every analyst does it the same approved way. Light-touch workstations (email, slides) stay flexible. Each workstation is still a sub-agent with its own folder, but the governed ones inherit the finance-shared rules they can't override.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 5 — THREE CORE FILES
+  ══════════════════════════════════════════ -->
+  <section class="slide s-build">
+    <div class="r lbl">The Core Files</div>
+    <h2 class="r">Three files power the whole system</h2>
+    <div class="r build-cards">
+
+      <div class="build-card">
+        <div class="build-card-num">File 01</div>
+        <div class="build-card-heading">CLAUDE.md</div>
+        <p>The global constitution. Tells Claude your entity structure, fiscal year conventions, number formats, and which workstation to route each finance task to. Every session starts here.</p>
+      </div>
+
+      <div class="build-card">
+        <div class="build-card-num">File 02</div>
+        <div class="build-card-heading">MEMORY.md</div>
+        <p>The persistent brain. Claude reads it at session start and writes to it when you say "remember this." Tracks active budget versions, FX rates used, reporting periods, and key decisions.</p>
+      </div>
+
+      <div class="build-card">
+        <div class="build-card-num">File 03</div>
+        <div class="build-card-heading">voice-principles.md</div>
+        <p>Your writing voice. How you write board commentary, CFO updates, and variance narratives. Claude reads this before drafting any finance comms or reporting on your behalf.</p>
+      </div>
+
+    </div>
+    <div class="r" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem;">
+      These three files live in your CoworkOS root alongside a <code style="font-family: monospace; background: var(--surface); padding: 0.1em 0.4em; border-radius: 3px;">00_Resources/</code> folder. That's the whole system.
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 6 — SECTION BREAK: PHASE 1
+  ══════════════════════════════════════════ -->
+  <section class="slide s-phase">
+    <div class="r phase-eyebrow">Setup Guide &nbsp;·&nbsp; Three Phases</div>
+    <h2 class="r">Let's get started.</h2>
+    <p class="r phase-sub">You're one afternoon away from a Claude that knows your entities, your fiscal conventions, and how you write. Here's the path.</p>
+    <div class="r phase-flow">
+
+      <div class="phase-step">
+        <div class="phase-step-ico">📁</div>
+        <div class="phase-step-num">Phase 01</div>
+        <div class="phase-step-title">Create your home base</div>
+        <div class="phase-step-sub">Make an empty CoworkOS folder and run the Finance setup prompt — Claude scaffolds your entities, fiscal conventions, and routing in minutes.</div>
+      </div>
+
+      <div class="phase-arr">→</div>
+
+      <div class="phase-step">
+        <div class="phase-step-ico">🏗️</div>
+        <div class="phase-step-num">Phase 02</div>
+        <div class="phase-step-title">Build your workstations</div>
+        <div class="phase-step-sub">Add a workstation for each recurring finance task — budget modelling, board packs, FX consolidation. Each gets its own rules and memory; the governed ones inherit the finance-shared locked process.</div>
+      </div>
+
+      <div class="phase-arr">→</div>
+
+      <div class="phase-step">
+        <div class="phase-step-ico">🔄</div>
+        <div class="phase-step-num">Phase 03</div>
+        <div class="phase-step-title">Keep it compounding</div>
+        <div class="phase-step-sub">Log assumptions at the end of every session — FX rates, budget versions, rounding decisions. It builds your context and your audit trail automatically.</div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 7 — FIRST-TIME SETUP PROMPT
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tmpl">
+    <div class="r lbl lbl--phase">Phase 1 | Getting Started &nbsp;·&nbsp; Prompt Template</div>
+    <h2 class="r">Paste this to build your Finance CoworkOS from scratch</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">First-time setup</div>
+        <h3>One prompt. Five minutes. Done.</h3>
+        <p>Open Cowork with your CoworkOS folder selected, paste this prompt, and let it run. Claude creates all three core files with Finance-specific sections, including the two 🔒 LOCKED governance sections set by the Head of Finance, then asks a few questions to personalise the rest.</p>
+        <div class="tmpl-hint">
+          <strong>Before you paste:</strong> create an empty folder called CoworkOS somewhere on your computer (Documents is fine), then select it in the Cowork file picker.
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-setup">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-setup">I'm setting up CoworkOS for the first time.
+I work in Finance at Breville Group. Please create:
+
+1. CLAUDE.md — with sections:
+   Memory System, Memory Routing, Finance Context,
+   Preferences, Rules, Guardrails 🔒, Folder
+   Structure, Routing Map, Change Control 🔒
+
+2. MEMORY.md — with sections:
+   About Me, Entity Context, Active Reporting
+   Periods, Key Contacts, Key Decisions,
+   Budget Versions
+
+3. 00_Resources/voice-principles.md — with:
+   Tone, Finance Writing Style, Sentence Style,
+   Words to Avoid, Numbers, Words I Use
+
+4. 00_Skills/     (empty folder)
+5. 00_Scheduled/  (empty folder)
+
+For Guardrails and Change Control, use the finance-
+shared LOCKED defaults exactly as set by the Head of
+Finance — don't invent or soften them. Mark both
+🔒 LOCKED and note they ship via the finance-shared
+plugin and a read-only master; a local copy can't
+override them.
+
+Use starter templates with [bracketed placeholders]
+where I need to customise. After creating the files,
+ask me 3 questions to personalise my setup for my
+specific finance role and reporting responsibilities.</pre>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 8 — FOLDER REVEAL
+  ══════════════════════════════════════════ -->
+  <section class="slide s-phase s-folder-reveal">
+
+    <div class="r phase-eyebrow">After Running the Setup Prompt</div>
+    <h2 class="r">Let's see what you just created.</h2>
+
+    <div class="r folder-reveal-layout">
+
+      <div class="folder-reveal-desc">
+        <p>That one prompt created your entire CoworkOS skeleton — Finance-specific entity context, fiscal conventions, routing rules, and the two 🔒 LOCKED governance sections set by the Head of Finance.</p>
+        <p>The next three slides walk through each file with a copy-ready template. Fill in the <strong style="color: #5a2d5f;">[brackets]</strong> with your entities, FX conventions, and variance labels.</p>
+        <div class="folder-reveal-hint">
+          Once you've filled in your entity list, fiscal year, and reporting currency, add your first workstation. That's when Claude starts feeling like it actually knows your business.
+        </div>
+      </div>
+
+      <div class="folder-card">
+        <div class="folder-root">📁 CoworkOS/</div>
+        <div>├── 📄 <span class="folder-file">CLAUDE.md</span> &nbsp;<span class="folder-muted">— entity rules, routing &amp; 🔒 guardrails</span></div>
+        <div>├── 📄 <span class="folder-file">MEMORY.md</span> &nbsp;<span class="folder-muted">— FX rates, budget versions</span></div>
+        <div>├── 📁 <span class="folder-dir">00_Resources/</span></div>
+        <div>&nbsp;&nbsp;&nbsp;&nbsp;└── 📄 <span class="folder-file">voice-principles.md</span></div>
+        <div>├── 📁 <span class="folder-dir">00_Skills/</span> &nbsp;<span class="folder-muted">finance-shared plugin installs here</span></div>
+        <div>└── 📁 <span class="folder-dir">00_Scheduled/</span> &nbsp;<span class="folder-muted">empty for now</span></div>
+        <div class="folder-ws-block">
+          <div style="color: #b899bb; font-size: 0.62rem; font-style: italic; margin-bottom: 0.3rem;">After adding a workstation:</div>
+          <div>└── 📁 <span class="folder-dir">Budget Modeller/</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;├── 📄 <span class="folder-file">CLAUDE.md</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;├── 📄 <span class="folder-file">MEMORY.md</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;└── 📁 <span class="folder-dir">Budget Modeller Resources/</span></div>
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 9 — CLAUDE.md TEMPLATE
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tmpl">
+    <div class="r lbl">File 01 &nbsp;·&nbsp; Starter Template</div>
+    <h2 class="r">CLAUDE.md — the global constitution</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">Copy &amp; customise</div>
+        <h3>Finance context built in from day one</h3>
+        <p>This file is Claude's operating instructions. It loads automatically and governs how Claude handles entity names, fiscal conventions, number formatting, and which workstation to use for which task.</p>
+        <div class="tmpl-hint">
+          Replace anything in <strong>[brackets]</strong> with your specifics. The <strong style="color: #7d4d82;">highlighted Memory Routing</strong> block is the new addition — it tells Claude where each fact belongs (root vs workstation). The <strong>🔒 LOCKED</strong> sections are set centrally by the Head of Finance — leave them as shipped; we'll cover how they're enforced shortly.
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-claude">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-claude"># CLAUDE.md
+
+## Memory System
+Read MEMORY.md at the start of every session.
+Write to MEMORY.md when I say "remember this."
+
+<span class="tmpl-add">## Memory Routing
+- Cross-cutting facts (entities, fiscal year,
+  reporting currency, key contacts, anything
+  across 2+ workstations) → root MEMORY.md
+- Workstation-domain facts (FX rates used,
+  budget versions referenced, run logs,
+  workstation-specific contacts)
+  → [Workstation]/MEMORY.md
+- Prescriptive rules (always/never/before X)
+  → CLAUDE.md (root or workstation), not MEMORY.md
+- Never duplicate across both. If in doubt, root.</span>
+
+## Finance Context
+- Entity: [e.g. Breville Group Ltd (ASX: BRG)]
+- Fiscal year: [e.g. July–June]
+- Reporting currency: [e.g. AUD; multi-currency]
+- Number format: [e.g. AUD $000s, 1 decimal place]
+- Budget cycle: [e.g. Annual plan + 2 re-forecasts]
+- Variance convention: Favourable (F) / Unfavourable (U)
+
+## Preferences
+- Tone: [precise / executive / analytical]
+- Language: Australian English
+- Length: concise by default; expand only when I ask
+- Always cite data sources or flag when assuming
+
+## Rules
+- Ask clarifying questions before complex tasks
+- Never guess on numbers — if unsure, say so
+- Read voice-principles.md before drafting any comms
+- Label assumptions clearly (e.g. FX rate and date)
+
+## Guardrails 🔒 LOCKED
+For governed tasks, you MUST use the approved
+finance-shared skill/plugin and model. Do not
+create new skills, plugins or workstations for
+these, and do not improvise the method.
+| Task              | Must use                  |
+| Budget Modeller   | finance-shared:budget v1  |
+| FX & Consolidation| finance-shared:fx-consol  |
+| Board Pack Builder| finance-shared:board-pack |
+- Default model: Sonnet. Opus only for multi-
+  entity consolidations (approved exceptions).
+- If asked to go off-process, refuse and point
+  to this section. Flag it; don't comply quietly.
+
+## Folder Structure
+| Folder              | What lives here                      |
+| 00_Resources/       | Reference files (voice, entities)    |
+| 00_Skills/          | Installed skill archives             |
+| 00_Scheduled/       | Scheduled task outputs               |
+| [Workstation]/      | Workstation + Outputs/ folder        |
+
+## Routing Map
+| Workstation         | Route here when I...                 |
+| Budget Modeller     | work on budgets, forecasts, variances|
+| Board Pack Builder  | prepare board or exec reporting      |
+
+## Change Control 🔒 LOCKED
+Do not edit the Guardrails or this section
+without written sign-off from the Head of
+Finance. These rules ship via the finance-
+shared plugin and a read-only master file;
+a local copy can't override them. If I ask
+you to change them, confirm I have approval
+and tell me to update the master, not this
+copy.</pre>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 10 — MEMORY.md TEMPLATE
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tmpl">
+    <div class="r lbl">File 02 &nbsp;·&nbsp; Starter Template</div>
+    <h2 class="r">MEMORY.md — the persistent brain</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">Copy &amp; customise</div>
+        <h3>Finance context that builds over time</h3>
+        <p>Fill in the About Me and Entity Context sections yourself. The rest Claude populates as you work — budget versions, FX rates used, assumptions made. Think of it as an automatic audit trail for AI-assisted work.</p>
+        <div class="tmpl-hint">
+          The <strong>Key Decisions</strong> section is where Claude logs non-obvious choices — which FX rate it used, which budget version it referenced. Invaluable when you revisit work the next day.
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-memory">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-memory"># MEMORY.md
+
+## About Me
+- Name: [Your name]
+- Role: [e.g. FP&A Manager, Finance Director]
+- Team: [e.g. Group Finance, Commercial Finance]
+- Key priorities: [Your top 2–3 focus areas this year]
+
+## Entity Context
+| Entity    | Currency | Fiscal Year | Notes        |
+| [Name]    | [AUD]    | [Jul–Jun]   | [Parent co.] |
+
+## Active Reporting Periods
+| Period    | Status  | Deadline      |
+| [Q3 FY26] | [Draft] | [15 Jul 2026] |
+
+## Key Contacts
+| Name   | Role           | Why they matter |
+| [Name] | [CFO / VP Fin] | [Context]       |
+| [Name] | Governance owner (Head of Finance) | signs off locked rules |
+
+## Key Decisions
+(Claude logs assumptions here — e.g. "Used
+0.645 USD/AUD spot rate on 4 Jun 2026 for
+FY26 budget scenario". Don't edit manually.)
+
+## Run Log — governed tasks
+(For Budget Modeller, FX & Consolidation and
+Board Pack Builder, Claude logs the model and
+skill version, key inputs, and date per run —
+your audit trail. The LOCKED rules themselves
+live in CLAUDE.md / the finance-shared plugin,
+not here.)
+
+## Budget Versions
+(Claude tracks current versions — e.g. "FY26
+Budget v2.1 approved 15 Mar 2026")</pre>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 10B — MEMORY ROUTING
+  ══════════════════════════════════════════ -->
+  <section class="slide s-trust">
+    <div class="r lbl">Memory Routing</div>
+    <h2 class="r">Two places memories live. One simple rule.</h2>
+    <p class="r sub">When you say "remember this" inside a Finance workstation, Claude needs to know where to put it. Here's the routing decision — one test, every time.</p>
+    <div class="r trust-grid">
+  
+       <div class="trust">
+        <h3>Root MEMORY.md</h3>
+        <p>Cross-cutting facts: your entities, fiscal year, reporting currency, key contacts, and anything that applies across two or more workstations. The shared brain for the whole Finance setup.</p>
+      </div>
+
+      <div class="trust trust--featured">
+        <h3 class="trust-heading--featured">[Workstation]/MEMORY.md</h3>
+        <p>Workstation-domain facts only — FX rates used in a specific run, budget versions referenced, run logs for governed tasks, and contacts relevant only to that domain.</p>
+      </div>
+      
+      <div class="trust">
+        <h3>CLAUDE.md<br>(root or workstation)</h3>
+        <p>Prescriptive rules — "always", "never", "before doing X do Y." These go in CLAUDE.md, not MEMORY.md. The 🔒 LOCKED governance sections already handle the most important ones.</p>
+      </div>
+
+      <div class="trust">
+        <h3>The golden rule</h3>
+        <p>Never duplicate the same fact across root and a workstation MEMORY.md. If it could plausibly live in both, default to root. One source of truth, no drift.</p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 11 — VOICE-PRINCIPLES.md TEMPLATE
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tmpl">
+    <div class="r lbl">File 03 &nbsp;·&nbsp; Starter Template</div>
+    <h2 class="r">voice-principles.md — your writing voice</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">Copy &amp; customise</div>
+        <h3>Finance comms that sound like you, not a template</h3>
+        <p>Paste 5–8 of your own board commentaries, variance reports, or CFO updates and ask Claude to extract patterns. It'll populate your tone and style sections from your own writing.</p>
+        <div class="tmpl-hint">
+          Finance audiences hate hedging and vague language. "Revenue declined $2.3M (U) driven by lower APAC volumes" is better than "there were some revenue challenges." Specificity wins every time.
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-voice">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-voice"># Voice Principles
+
+## Tone
+- Sound like: [trusted adviser / sharp analyst]
+- More formal with: [board / CFO / external]
+- Avoid: [hedging / passive voice / imprecise language]
+
+## Finance Writing Style
+- Lead with the number, then explain it
+- Variance direction: Favourable (F) / Unfavourable (U)
+- Always state the period and comparison base
+- Use "driven by" not "due to the fact that"
+- Governed reports (board, FX, consolidation) follow
+  the finance-shared LOCKED format; voice adds polish,
+  not structure
+
+## Sentence Style
+- Short sentences for exec comms (20 words max)
+- Longer for analyst-level detail
+- Active voice: "Revenue grew 12% (F)"
+  not "Revenue was seen to increase"
+
+## Words to Avoid
+- Never: "leverage," "synergise," "going forward"
+- Avoid: "it is important to note that"
+- No stacked adjectives or vague intensifiers
+
+## Numbers
+- Always include units ($, %, bps)
+- Spell out millions: "$2.3M" not "2,300,000"
+- Variances: always state direction (F) or (U)
+
+## Words I Use
+- [Your signature phrases — add them here]
+- e.g. "driven by", "favourable mix", "on plan"</pre>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 11B — GOVERNANCE (how the lock works)
+  ══════════════════════════════════════════ -->
+  <section class="slide s-gov">
+    <div class="r lbl lbl--phase">Governance &nbsp;·&nbsp; Keeping the team on one process</div>
+    <h2 class="r">How the Governance layer actually holds</h2>
+    <p class="r sub">Writing a rule in CLAUDE.md is a soft guardrail — Claude follows it, but a determined person can still edit the file. Real governance needs two halves: a clear policy, plus a structural lock that lives outside editable text.</p>
+
+    <div class="r gov-grid">
+
+      <div class="gov-col gov-col--soft">
+        <span class="gov-tag">Half 1 · The policy</span>
+        <h3>Guardrails in the root CLAUDE.md</h3>
+        <p>The Governance Agent layer, written down. It tells Claude what must be consistent and what stays free.</p>
+        <div class="gov-item"><span class="gov-item-mark">📌</span><span class="gov-item-text"><strong>Mandates the approved skill, plugin and model</strong> for Budget Modeller, FX &amp; Consolidation and Board Pack Builder.</span></div>
+        <div class="gov-item"><span class="gov-item-mark">🚦</span><span class="gov-item-text"><strong>Routes each governed task</strong> through the finance-shared process — no DIY skills, no three ways of doing budgets.</span></div>
+        <div class="gov-item"><span class="gov-item-mark">🟢</span><span class="gov-item-text"><strong>Leaves light-touch work free</strong> — email, slides and ad-hoc tasks aren't bound by finance-shared rules.</span></div>
+        <div class="gov-item"><span class="gov-item-mark">🛑</span><span class="gov-item-text">If asked to go off-process, Claude <strong>refuses and flags it</strong> rather than quietly complying.</span></div>
+      </div>
+
+      <div class="gov-col gov-col--hard">
+        <span class="gov-tag">Half 2 · The lock 🔒</span>
+        <h3>So staff can't quietly change it</h3>
+        <p>The bit that makes "can't easily modify" real. The rules live where individuals can't rewrite them on a whim.</p>
+        <div class="gov-item"><span class="gov-item-mark">🧩</span><span class="gov-item-text"><strong>Ship governed skills as one central plugin</strong> ("finance-shared"). Staff install it, they don't author it — editing a local copy doesn't change the distributed process.</span></div>
+        <div class="gov-item"><span class="gov-item-mark">🔒</span><span class="gov-item-text"><strong>Hold the master CLAUDE.md read-only / centrally-synced</strong> (SharePoint or a managed repo). Only Finance leadership has write access.</span></div>
+        <div class="gov-item"><span class="gov-item-mark">✍️</span><span class="gov-item-text"><strong>Change Control clause:</strong> locked sections need Head of Finance sign-off. Claude refuses to edit them in-session and points changes to the master.</span></div>
+      </div>
+
+    </div>
+
+    <div class="r gov-controls-wrap">
+      <div class="gov-controls-label">Plus the operating controls that make it hold</div>
+      <div class="gov-controls">
+        <div class="gov-control">
+          <div class="gov-control-ico">📌</div>
+          <div class="gov-control-t">Versions pinned</div>
+          <div class="gov-control-s">Model and skill locked per task; re-checked on every upgrade</div>
+        </div>
+        <div class="gov-control">
+          <div class="gov-control-ico">🧮</div>
+          <div class="gov-control-t">Tools do the maths</div>
+          <div class="gov-control-s">Numbers computed in a spreadsheet or skill, never the model's head</div>
+        </div>
+        <div class="gov-control">
+          <div class="gov-control-ico">✅</div>
+          <div class="gov-control-t">Human sign-off</div>
+          <div class="gov-control-s">A person approves before anything ships to the board or CFO</div>
+        </div>
+        <div class="gov-control">
+          <div class="gov-control-ico">🧾</div>
+          <div class="gov-control-t">Run log</div>
+          <div class="gov-control-s">Model, skill version and inputs written to an audit trail</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 12 — SECTION BREAK: PHASE 2
+  ══════════════════════════════════════════ -->
+  <section class="slide s-phase">
+    <div class="r phase-eyebrow">Phase 02 &nbsp;·&nbsp; Workstations</div>
+    <h2 class="r">Time to build your first finance workstation.</h2>
+    <p class="r phase-sub">A workstation is Claude with a specific job — Budget Modeller, Board Pack Builder, FX Consolidation. Pick the one task that costs you the most time every month. That's where you start.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 13 — WORKSTATION ANATOMY
+  ══════════════════════════════════════════ -->
+  <section class="slide s-trust">
+    <div class="r lbl lbl--phase">Phase 2 | Workstations</div>
+    <h2 class="r">Every workstation has the same four parts</h2>
+    <p class="r sub">A workstation is just a folder with three files. The four sections inside its CLAUDE.md define how Claude behaves when routing finance work there.</p>
+    <div class="r trust-grid">
+
+      <div class="trust trust--featured">
+        <h3 class="trust-heading--featured">Identity</h3>
+        <p>One paragraph. Who Claude is in this workstation, what routes here, what doesn't. E.g. "Budget Modeller handles variance analysis and scenario planning — board narratives route to Board Pack Builder instead."</p>
+      </div>
+
+      <div class="trust">
+        <h3>Resources</h3>
+        <p>A table mapping reference files to "read when" conditions. Your chart of accounts loads only for modelling tasks; your board pack template loads only for reporting tasks. Context stays efficient.</p>
+      </div>
+
+      <div class="trust">
+        <h3>Workflow</h3>
+        <p>Numbered steps for the primary task. For a Budget Modeller: open data, identify variances, draft commentary, review assumptions, output. Start simple — 5–7 steps — and refine over time.</p>
+      </div>
+
+      <div class="trust">
+        <h3>Editorial Rules</h3>
+        <p>Always opens with "Follow voice-principles.md in 00_Resources." Then adds finance-specific rules — e.g. "Always label variance direction as (F) or (U). Always state the comparison period explicitly."</p>
+      </div>
+
+    </div>
+    <p class="r" style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.7rem;">For <strong style="color: var(--accent);">governed</strong> workstations (Budget Modeller, FX &amp; Consolidation, Board Pack Builder), these four parts sit on top of the finance-shared locked process — the workstation calls the approved skill and can't override it. Light-touch workstations (Email, Presentation) just use the four parts as they like.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 14 — WORKSTATION CREATION PROMPT
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tmpl">
+    <div class="r lbl lbl--phase">Phase 2 | Workstations &nbsp;·&nbsp; Prompt Template</div>
+    <h2 class="r">Paste this to create a new Finance workstation</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">New workstation</div>
+        <h3>30 seconds to a new capability</h3>
+        <p>Pick one recurring finance task — budget variance commentary, board packs, FX consolidation. Fill in the two brackets, paste, and Claude scaffolds the whole workstation.</p>
+        <div class="tmpl-hint">
+          Good triggers are specific: "draft, review, or finalise any board or exec management reporting" rather than "reporting stuff." Specificity is what makes routing reliable.
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-workstation">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-workstation">Create a new workstation called "[Workstation Name]".
+
+Route here when I: [describe the finance task — e.g.
+"prepare, draft, or review any board pack or
+executive management reporting"]
+
+Create these items inside the workstation folder:
+
+1. [Name]/CLAUDE.md with sections:
+   - Identity (what routes here, what doesn't)
+   - Resources (table: Resource | Read when...)
+   - Workflow (numbered steps for the main task)
+   - Editorial Rules (start with voice-principles.md
+     reference; then add finance-specific rules,
+     e.g. variance labelling, period references)
+
+2. [Name]/MEMORY.md with:
+   - Key Contacts (relevant to this domain)
+   - Key Decisions (for this workstation)
+   Note: cross-cutting facts (entities, fiscal
+   conventions, key contacts) belong in root
+   MEMORY.md, not here.
+
+3. [Name]/[Name] Resources/  (empty folder)
+
+If this is a governed task (budgets, FX,
+consolidation), the Workflow MUST call the approved
+finance-shared skill/plugin — don't create a new
+one — and Identity should note it inherits the
+LOCKED finance-shared process and can't override it.
+
+After creating, add a new row to the Routing Map
+in root CLAUDE.md.</pre>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 15 — ARCHITECTURE RECAP
+  ══════════════════════════════════════════ -->
+  <section class="slide s-arch">
+    <div class="r lbl">A Quick Recap</div>
+    <h2 class="r">One folder to rule them all. Four layers that power CoworkOS.</h2>
+    <div class="r arch-diagram">
+
+      <div class="arch-layer arch-layer--top">
+        <span class="arch-name">You &nbsp;—&nbsp; budget queries, variance questions, board pack requests</span>
+      </div>
+
+      <div class="arch-conn"></div>
+
+      <div class="arch-layer arch-layer--mid">
+        <span class="arch-name">CoworkOS</span>
+        <div class="arch-split">
+          <div class="arch-split-item">
+            <div class="arch-split-title">CLAUDE.md + MEMORY.md</div>
+            <div class="arch-split-sub">Entity context, fiscal conventions, routing map, and accumulated facts</div>
+          </div>
+          <div class="arch-split-div"></div>
+          <div class="arch-split-item">
+            <div class="arch-split-title">voice-principles.md + Skills</div>
+            <div class="arch-split-sub">Finance writing tone and installed capabilities</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-conn"></div>
+
+      <div class="arch-layer arch-layer--gov">
+        <span class="arch-name">Governance<br>Agent</span>
+        <div class="arch-gov-body">
+          <div class="arch-gov-title">Mandates the approved skills, plugins and model</div>
+          <div class="arch-gov-sub">Routes governed finance tasks through the shared, locked process. Everyone does budgets, FX and consolidation the same approved way.</div>
+        </div>
+        <span class="arch-gov-lock">🔒 Set by Head of Finance</span>
+      </div>
+
+      <div class="arch-conn"></div>
+
+      <div class="arch-layer arch-layer--bottom">
+        <span class="arch-name">Work<br>stations</span>
+        <div class="arch-ws-split">
+          <div class="arch-ws-group arch-ws-group--governed">
+            <div class="arch-ws-group-label">Governed · finance-shared</div>
+            <div class="arch-ws-pills">
+              <span class="arch-pill arch-pill--gov">Budget Modeller</span>
+              <span class="arch-pill arch-pill--gov">FX &amp; Consolidation</span>
+              <span class="arch-pill arch-pill--gov">Board Pack Builder</span>
+            </div>
+          </div>
+          <div class="arch-ws-group arch-ws-group--free">
+            <div class="arch-ws-group-label">Light-touch · your own way</div>
+            <div class="arch-ws-pills">
+              <span class="arch-pill">Email</span>
+              <span class="arch-pill">Presentation</span>
+              <span class="arch-pill">+ yours</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <p class="r arch-note">Global files apply everywhere. The <strong style="color: var(--accent);">Governance Agent</strong> enforces the shared process on governed workstations, while light-touch ones stay flexible. The governed workstations layer on top but can't override the finance-shared rules.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 16 — SECTION BREAK: PHASE 3
+  ══════════════════════════════════════════ -->
+  <section class="slide s-phase">
+    <div class="r phase-eyebrow">Phase 03 &nbsp;·&nbsp; System Maintenance</div>
+    <h2 class="r">Last bit. Log what you learn.</h2>
+    <p class="r phase-sub">FX rates you used, budget versions you referenced, rounding decisions you made — none of it survives the session unless it's written down. One prompt fixes that, and builds your audit trail at the same time.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 17 — SYSTEM MAINTENANCE
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tmpl">
+    <div class="r lbl lbl--phase">Phase 3 | System Maintenance</div>
+    <h2 class="r">CoworkOS only gets smarter if you save what you learn</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">End of every session</div>
+        <h3>Assumptions vanish when the session closes</h3>
+        <p>FX rates you mentioned, budget versions Claude referenced, rounding decisions you made — none of it survives unless it's written to MEMORY.md. For finance work, that's also your audit trail.</p>
+        <p style="margin-top: 0.6rem; font-size: 0.83rem; color: var(--text-mid); line-height: 1.68;">One prompt at the end fixes this. Claude scans the whole conversation, then writes anything useful — assumptions, decisions, data points — to the right place.</p>
+        <div class="tmpl-hint">
+          Done consistently, this turns CoworkOS into a system that <strong>compounds</strong>. Every session makes the next one sharper, and every assumption is on record.
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        <div class="mem-cycle">
+          <div class="mem-step">
+            <span class="mem-step-ico">💬</span>
+            <span class="mem-step-lbl">Work<br>session</span>
+          </div>
+          <span class="mem-arr">→</span>
+          <div class="mem-step">
+            <span class="mem-step-ico">🔍</span>
+            <span class="mem-step-lbl">Scan<br>convo</span>
+          </div>
+          <span class="mem-arr">→</span>
+          <div class="mem-step mem-step--hi">
+            <span class="mem-step-ico">📝</span>
+            <span class="mem-step-lbl">Write to<br>MEMORY.md</span>
+          </div>
+          <span class="mem-arr">→</span>
+          <div class="mem-step">
+            <span class="mem-step-ico">✨</span>
+            <span class="mem-step-lbl">Smarter<br>next time</span>
+          </div>
+        </div>
+
+        <div class="tmpl-code-wrap">
+          <button class="copy-btn" data-target="tmpl-scan">Copy</button>
+          <pre class="tmpl-pre" id="tmpl-scan">Scan this conversation for any unsaved assumptions,
+decisions, data points, or useful context. Write
+anything new to the right MEMORY.md:
+
+- Cross-cutting facts (entities, key contacts,
+  fiscal conventions, anything across 2+
+  workstations) → root MEMORY.md
+- Workstation-domain facts (FX rates used,
+  budget versions, run logs, workstation
+  contacts) → [Workstation]/MEMORY.md
+- Prescriptive rules (always/never/before X)
+  → CLAUDE.md, not MEMORY.md
+
+For finance-specific items (FX rates, budget
+versions, entity structures, rounding decisions),
+log them under the appropriate section with the
+date they were used.
+
+Don't duplicate what's already there. Focus only
+on what's genuinely new from this session.</pre>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 18 — FINANCE WORKSTATION IDEAS
+  ══════════════════════════════════════════ -->
+  <section class="slide s-build">
+    <div class="r lbl">Finance Workstations</div>
+    <h2 class="r">Three workstations worth building first</h2>
+    <div class="r build-cards">
+
+      <div class="build-card">
+        <div class="build-card-badge">🔒 Governed</div>
+        <div class="build-card-num">WS 01</div>
+        <div class="build-card-heading">Budget Modeller</div>
+        <p>Route variance analysis, scenario planning, forecast updates, and budget commentary here. Give it your budget structure, comparison periods, and standard variance thresholds as reference files.</p>
+      </div>
+
+      <div class="build-card">
+        <div class="build-card-badge">🔒 Governed</div>
+        <div class="build-card-num">WS 02</div>
+        <div class="build-card-heading">Board Pack Builder</div>
+        <p>Route monthly and quarterly board reporting, exec update decks, and management commentary here. Teach it your standard pack structure, narrative style, and the CFO's preferred level of detail.</p>
+      </div>
+
+      <div class="build-card">
+        <div class="build-card-badge">🔒 Governed</div>
+        <div class="build-card-num">WS 03</div>
+        <div class="build-card-heading">FX &amp; Consolidation</div>
+        <p>Route multi-currency reporting, intercompany elimination queries, and FX sensitivity analysis here. Give it your spot rates, hedging policy, and entity hierarchy as always-loaded reference files.</p>
+      </div>
+
+    </div>
+    <div class="r" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem; font-style: italic;">
+      Not sure where to start? Board Pack Builder or Budget Modeller will cover 80% of recurring Finance time spend. All three run the finance-shared locked process, so every analyst's numbers come out the same approved way.
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 19 — CTA
+  ══════════════════════════════════════════ -->
+  <section class="slide s-cta">
+    <div class="r lbl">Get Started</div>
+    <div class="r cta-layout">
+
+      <div>
+        <p class="cta-q">What's the finance report you hate rebuilding every month?</p>
+        <p class="cta-sub">That's your first workstation. CoworkOS compounds — the more you use it, the more Claude knows your models, your entities, and your voice. Start with one folder, three files.</p>
+        <p style="margin-top: 1.2rem; font-size: 0.78rem; color: var(--text-muted);">Questions? Find us in <strong style="color: var(--text-mid);">#bai-claude-ama</strong> on Slack.</p>
+      </div>
+
+      <div class="inv-list">
+
+        <div class="inv">
+          <span class="inv-n">01</span>
+          <div>
+            <div class="inv-title">Create your CoworkOS folder</div>
+            <div class="inv-desc">Make an empty folder in Documents. Select it in the Cowork file picker. That's your workspace.</div>
+          </div>
+        </div>
+
+        <div class="inv">
+          <span class="inv-n">02</span>
+          <div>
+            <div class="inv-title">Paste the first-time setup prompt</div>
+            <div class="inv-desc">Slide 9 has the Finance prompt — hit Copy, open Cowork, paste, let it run. Three files and a folder structure in under a minute.</div>
+          </div>
+        </div>
+
+        <div class="inv">
+          <span class="inv-n">03</span>
+          <div>
+            <div class="inv-title">Fill in your Finance context</div>
+            <div class="inv-desc">Add your entity list, fiscal year, reporting currency, and variance conventions. This is what makes every session feel like Claude already knows the business.</div>
+          </div>
+        </div>
+
+        <div class="inv">
+          <span class="inv-n">04</span>
+          <div>
+            <div class="inv-title">Add your first Finance workstation</div>
+            <div class="inv-desc">Use the workstation prompt (Slide 17) to scaffold your first domain. Board Pack Builder or Budget Modeller are the natural first picks.</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 20 — EFFICIENCY
+  ══════════════════════════════════════════ -->
+  <section class="slide s-build">
+    <div class="r lbl">Efficiency</div>
+    <h2 class="r">Keep your CoworkOS fast and cheap</h2>
+    <div class="r build-cards">
+
+      <div class="build-card">
+        <div class="build-card-num">Rule 01</div>
+        <div class="build-card-heading">Constrain the Root</div>
+        <p>Keep your master CLAUDE.md under 300 lines. Point to external reference files (entity lists, chart of accounts) rather than stuffing everything in one place — this keeps baseline token costs low.</p>
+      </div>
+
+      <div class="build-card">
+        <div class="build-card-num">Rule 02</div>
+        <div class="build-card-heading">Avoid Duplicated Rules</div>
+        <p>Never repeat global rules inside local workstations. If the root already says "label variances as (F) or (U)," your Budget Modeller shouldn't restate it. Inheritance is free.</p>
+      </div>
+
+      <div class="build-card build-card--featured">
+        <div class="build-card-badge">Recommended Default</div>
+        <div class="build-card-num">Rule 03</div>
+        <div class="build-card-heading">Default to <strong>Sonnet</strong></div>
+        <p><strong>Sonnet</strong> handles 80% of Finance tasks — variance commentary, board narratives, template filling. Reserve <strong>Opus</strong> exclusively for complex multi-entity consolidations with many interdependent steps.</p>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);"><strong>Haiku</strong> for small, lightweight tasks — quick lookups, short summaries, and simple data transforms.</p>
+      </div>
+
+    </div>
+    <div class="r" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem;">
+      Token efficiency means CoworkOS stays fast. A bloated root file taxes every session — trim it like you'd trim a good board pack.
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 22 — WHAT THIS DOESN'T COVER YET
+  ══════════════════════════════════════════ -->
+  <section class="slide s-gaps">
+    <div class="r lbl lbl--phase">Straight Talk &nbsp;·&nbsp; Known Gaps</div>
+    <h2 class="r">What this doesn't cover yet</h2>
+    <p class="r sub">Governance done well is friction plus deterrence, not a wall. Here's what it doesn't solve on its own, and what closes each gap.</p>
+
+    <div class="r gaps-grid">
+
+      <div class="gap-card">
+        <span class="gap-tag">Gap</span>
+        <div class="gap-h">It only binds inside CoworkOS</div>
+        <div class="gap-fix">Plain Claude Chat, a phone, or a fresh folder skip every rule here. <strong>Close it:</strong> make the approved workstation the easiest path, and spot-check finance outputs that didn't come from it.</div>
+      </div>
+
+      <div class="gap-card">
+        <span class="gap-tag">Gap</span>
+        <div class="gap-h">A locked rule still rots without an owner</div>
+        <div class="gap-fix">"Head of Finance sign-off" needs teeth. <strong>Close it:</strong> name a governance owner, require two-person review on changes to the finance-shared skills, and review the lot quarterly.</div>
+      </div>
+
+      <div class="gap-card">
+        <span class="gap-tag">Gap</span>
+        <div class="gap-h">Real numbers live on local laptops</div>
+        <div class="gap-fix">CoworkOS folders hold sensitive figures and persist after people leave. <strong>Close it:</strong> add a device and offboarding step that wipes leavers' folders.</div>
+      </div>
+
+      <div class="gap-card">
+        <span class="gap-tag">Gap</span>
+        <div class="gap-h">The data path is assumed, not confirmed</div>
+        <div class="gap-fix">Pre-results and M&amp;A data is the most sensitive we hold. <strong>Close it:</strong> confirm retention and enterprise terms with the agreement owner before sensitive data goes in.</div>
+      </div>
+
+    </div>
+
+    <div class="r gaps-foot">
+      <strong>Bottom line:</strong> treat this as a control that needs an owner and the occasional audit, not a one-and-done lock. The operating controls on the Governance slide handle the rest.
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 22B — SHARED TEAM MEMORY
+  ══════════════════════════════════════════ -->
+  <section class="slide s-gov">
+    <div class="r lbl lbl--phase">Phase 2 Consideration &nbsp;·&nbsp; Shared Team Use</div>
+    <h2 class="r">When Finance teams share a folder — or a Slack memory channel</h2>
+    <p class="r sub">The current model is personal by design. Shared folders and a Slack team memory channel add a fourth tier — and change where some facts should live.</p>
+
+    <div class="r gov-grid">
+
+      <div class="gov-col gov-col--soft">
+        <span class="gov-tag">The gap</span>
+        <h3>The personal model breaks with shared folders</h3>
+        <p>If the team shares one CoworkOS root, MEMORY.md becomes a jumble of personal context and team facts — two very different things in one file.</p>
+        <div class="gov-item"><span class="gov-item-mark">📌</span><span class="gov-item-text"><strong>Root MEMORY.md is designed for one person.</strong> Your role, your preferences, your working context — not the team's agreed FX rate.</span></div>
+        <div class="gov-item"><span class="gov-item-mark">🚦</span><span class="gov-item-text"><strong>Shared folders mix personal + team facts,</strong> making both unreliable. Personal context leaks to colleagues; team decisions get overwritten by individuals.</span></div>
+        <div class="gov-item"><span class="gov-item-mark">🟢</span><span class="gov-item-text"><strong>Your Slack channel is already doing team memory.</strong> CoworkOS just doesn't have a formal relationship with it yet.</span></div>
+      </div>
+
+      <div class="gov-col gov-col--hard">
+        <span class="gov-tag">The clean pattern</span>
+        <h3>Keep personal CoworkOS separate. Add a shared layer.</h3>
+        <p>Three adjustments give you team memory without breaking the personal model or duplicating Slack.</p>
+        <div class="gov-item"><span class="gov-item-mark">🧩</span><span class="gov-item-text"><strong>One CoworkOS per person.</strong> Don't share the root folder. Personal context stays personal — role, preferences, individual working notes.</span></div>
+        <div class="gov-item"><span class="gov-item-mark">📄</span><span class="gov-item-text"><strong>Add a shared <code>team-context.md</code> in <code>00_Resources/</code></strong> — owned by the governance owner, read-only for individuals. Holds agreed entity list, current budget versions, standing FX conventions.</span></div>
+        <div class="gov-item"><span class="gov-item-mark">✍️</span><span class="gov-item-text"><strong>Slack = source of truth for team decisions.</strong> MEMORY.md stores a pointer, not a copy — e.g. "USD/AUD 0.645 — see #finance-ops 4 Jun 2026." No drift, no duplication.</span></div>
+      </div>
+
+    </div>
+
+    <div class="r gov-controls-wrap">
+      <div class="gov-controls-label">The four memory tiers — where each fact type lives</div>
+      <div class="gov-controls">
+        <div class="gov-control">
+          <div class="gov-control-ico">👤</div>
+          <div class="gov-control-t">Personal MEMORY.md</div>
+          <div class="gov-control-s">Your role, preferences, contacts, individual working notes</div>
+        </div>
+        <div class="gov-control">
+          <div class="gov-control-ico">🗂️</div>
+          <div class="gov-control-t">[Workstation]/MEMORY.md</div>
+          <div class="gov-control-s">FX rates used, budget versions referenced, workstation-specific notes</div>
+        </div>
+        <div class="gov-control">
+          <div class="gov-control-ico">📄</div>
+          <div class="gov-control-t">team-context.md</div>
+          <div class="gov-control-s">Shared reference — entity list, standing conventions, governance-owner managed</div>
+        </div>
+        <div class="gov-control">
+          <div class="gov-control-ico">💬</div>
+          <div class="gov-control-t">Slack channel</div>
+          <div class="gov-control-s">Team decisions, source of truth — MEMORY.md points here, doesn't copy</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 23 — GOVERNANCE ONE-PAGER (HEAD OF FINANCE)
+  ══════════════════════════════════════════ -->
+  <section class="slide s-onepager">
+    <div class="r lbl">For the Head of Finance &nbsp;·&nbsp; One-Pager</div>
+    <h2 class="r">Governance at a glance, and what we need from you</h2>
+    <p class="r op-purpose">One shared, approved way to do the finance work that has to be consistent — budgets, FX, consolidation — without slowing down everything else. Here's the shape of it and the handful of calls that are yours.</p>
+
+    <div class="r op-layout">
+
+      <div class="op-block">
+        <div class="op-row">
+          <div class="op-row-label">What's governed</div>
+          <div class="op-row-text"><strong>Budget Modeller, FX &amp; Consolidation, Board Pack Builder</strong> — all run the same approved finance-shared skill and model. No DIY methods.</div>
+        </div>
+        <div class="op-row">
+          <div class="op-row-label">What stays free</div>
+          <div class="op-row-text">Email, slides and ad-hoc work — staff use Claude however suits them. Governance only touches what must be consistent.</div>
+        </div>
+        <div class="op-row">
+          <div class="op-row-label">How it's locked</div>
+          <div class="op-row-text">Rules ship via a central <strong>finance-shared plugin</strong> and a <strong>read-only master file</strong>. A local copy can't override them; changes need your sign-off.</div>
+        </div>
+      </div>
+
+      <div class="op-asks">
+        <div class="op-asks-h">Decisions we need from you</div>
+        <div class="op-ask"><span class="op-ask-n">1</span><span class="op-ask-text"><strong>Approve the finance-shared process</strong> for budgets, FX and consolidation before it's locked.</span></div>
+        <div class="op-ask"><span class="op-ask-n">2</span><span class="op-ask-text"><strong>Name a governance owner</strong> and a backup who maintain the locked rules.</span></div>
+        <div class="op-ask"><span class="op-ask-n">3</span><span class="op-ask-text"><strong>Set the sign-off and review cadence</strong> — who approves changes, and how often we review.</span></div>
+        <div class="op-ask"><span class="op-ask-n">4</span><span class="op-ask-text"><strong>Confirm model pinning and the data path</strong> with the Anthropic enterprise owner.</span></div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 25 — SCHEDULED / ROUTINE TASKS
+  ══════════════════════════════════════════ -->
+  <section class="slide s-trust">
+    <div class="r lbl">Scheduled &amp; Routine Tasks</div>
+    <h2 class="r">Set finance routines to run on their own</h2>
+    <p class="r sub">Cowork can run a saved prompt on a schedule — daily, weekly, or at month-end. Build these once and they fire in the background, dropping dated outputs into your 00_Scheduled/ folder.</p>
+    <div class="r trust-grid">
+
+      <div class="trust trust--featured">
+        <h3 class="trust-heading--featured">Month-end status snapshot</h3>
+        <p>Each month-end, capture which entities and periods are open, draft versus final, and what's still due. Lands in 00_Scheduled/ with the date, so close progress is always visible.</p>
+      </div>
+
+      <div class="trust">
+        <h3>Daily FX rate log</h3>
+        <p>Record the spot rates used each day to MEMORY.md, so every converted number has a dated, auditable source instead of a vague "around 0.65".</p>
+      </div>
+
+      <div class="trust">
+        <h3>Weekly variance watch</h3>
+        <p>Flag any actual-versus-budget variance over your threshold from the latest data drop, with a one-line likely cause where Claude can see one.</p>
+      </div>
+
+      <div class="trust">
+        <h3>Quarterly governance review</h3>
+        <p>Prompt the governance owner to review the locked finance-shared rules and skill versions. Keeps the guardrails current instead of quietly going stale.</p>
+      </div>
+
+    </div>
+    <div class="r" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem; font-style: italic;">
+      Start with the one you do half-asleep every month. The month-end snapshot is the usual first win.
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 24 — GLOSSARY
+  ══════════════════════════════════════════ -->
+  <section class="slide s-glossary">
+    <div class="r lbl">Reference</div>
+    <h2 class="r">Glossary of Terms</h2>
+    <div class="r glossary-grid">
+
+      <div class="glossary-item glossary-item--full">
+        <span class="g-term">Model</span>
+        <span class="g-def">The underlying AI engine. Claude comes in three sizes: <strong>Sonnet</strong> covers 80% of daily work; <strong>Opus</strong> is for complex, multi-step tasks with many interdependent decisions; <strong>Haiku</strong> is the fastest and cheapest for lightweight jobs.</span>
+        <span class="g-note">⚡ Default to Sonnet. Reaching for Opus reflexively just burns tokens — and slows you down. Most Finance tasks don't need it. Don't be a #TokkenMaxxer. Think of the environment.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Agent</span>
+        <span class="g-def">An AI model that can take actions — read files, send messages, run tasks — rather than just answer questions. Claude in Cowork mode is an agent.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Workstation</span>
+        <span class="g-def">A CoworkOS folder dedicated to a specific task type (e.g. Budget Modeller, Board Pack Builder). Has its own rules and memory. Claude auto-routes tasks to the right one.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Governance Agent</span>
+        <span class="g-def">The layer that sits between your context and your workstations. It mandates the approved skill, plugin and model for governed finance tasks and routes them through the shared process.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Guardrails</span>
+        <span class="g-def">The 🔒 LOCKED rules in the root CLAUDE.md that say which approved skill/plugin/model each governed task must use. Set centrally; not edited by individuals.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Skill</span>
+        <span class="g-def">A packaged workflow that gives Claude a specialised capability — creating Excel models, writing Word docs, pulling data. Install once, trigger by name.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Session</span>
+        <span class="g-def">A single conversation with Claude. Context resets when it ends — which is exactly the problem MEMORY.md solves. Always log assumptions before closing.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">MCP</span>
+        <span class="g-def">Model Context Protocol. The open standard that lets Claude connect to external tools and services — Slack, Jira, email, and so on. Think of it as Claude's plugin API.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Context Window</span>
+        <span class="g-def">The total amount of information Claude can hold in a single session. Larger context = more Claude knows, but also slower and pricier. Keep your root CLAUDE.md lean.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">MCP Server</span>
+        <span class="g-def">A connector that implements MCP for one specific service. The Slack MCP server is what gives Claude read/write access to your Slack workspace.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Token</span>
+        <span class="g-def">The unit any LLM uses to measure text in and out. Longer prompts cost more tokens. The reason Sonnet is faster and cheaper than Opus for everyday Finance tasks.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Plugin</span>
+        <span class="g-def">A bundle of MCP servers and skills packaged together for easy installation. How capabilities are distributed and added to Cowork.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Routine</span>
+        <span class="g-def">A task set to run automatically on a schedule. "Every month-end, snapshot the reporting period status." Cowork runs these in the background without you having to ask each time.</span>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 22 — CLOSING
+  ══════════════════════════════════════════ -->
+  <section class="slide s-closing">
+    <div class="r closing-wrap">
+      <div class="closing-h">Thank you</div>
+      <div class="closing-contact">Questions? Find <strong>Vivid</strong> or <strong>Lilly</strong> on Slack.</div>
+      <div class="closing-channel">#bai-claude-ama</div>
+    </div>
+  </section>
+
+
+</div><!-- /deck -->
+
+<!-- Chrome -->
+<div id="progress-bar"></div>
+<div id="counter">1 / 29</div>
+<div id="kbd-hint">← → to navigate</div>
+
+<div class="nav-wrap is-prev">
+  <button class="nav-btn" id="prevBtn" disabled aria-label="Previous">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <path d="M7.5 2L3.5 6l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+<div class="nav-wrap is-next">
+  <button class="nav-btn" id="nextBtn" aria-label="Next">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <path d="M4.5 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+<script>
+const slides  = document.querySelectorAll('.slide');
+const pb      = document.getElementById('progress-bar');
+const counter = document.getElementById('counter');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+let cur = 0;
+const total = slides.length;
+
+function goTo(n) {
+  if (n < 0 || n >= total) return;
+
+  slides[cur].classList.remove('is-active');
+  slides[cur].classList.add('is-exit');
+  const leaving = slides[cur];
+  setTimeout(() => leaving.classList.remove('is-exit'), 520);
+
+  cur = n;
+  slides[cur].classList.add('is-active');
+
+  pb.style.width = ((cur + 1) / total * 100) + '%';
+  counter.textContent = (cur + 1) + ' / ' + total;
+  prevBtn.disabled = (cur === 0);
+  nextBtn.disabled = (cur === total - 1);
+}
+
+prevBtn.addEventListener('click', () => goTo(cur - 1));
+nextBtn.addEventListener('click', () => goTo(cur + 1));
+
+document.addEventListener('keydown', e => {
+  if (['ArrowRight', ' ', 'ArrowDown'].includes(e.key)) { e.preventDefault(); goTo(cur + 1); }
+  if (['ArrowLeft', 'ArrowUp'].includes(e.key))         { e.preventDefault(); goTo(cur - 1); }
+  if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+  if (e.key === 'End')  { e.preventDefault(); goTo(total - 1); }
+});
+
+document.querySelector('.deck').addEventListener('click', e => {
+  if (e.target.closest('button')) return;
+  if (e.target.closest('.tmpl-pre')) return;
+  goTo(e.clientX > window.innerWidth * 0.6 ? cur + 1 : cur - 1);
+});
+
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text);
+  }
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  return Promise.resolve();
+}
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.copy-btn');
+  if (!btn) return;
+  e.stopPropagation();
+
+  const targetId = btn.getAttribute('data-target');
+  const pre = document.getElementById(targetId);
+  if (!pre) return;
+
+  copyText(pre.textContent.trim()).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+});
+
+slides[0].classList.add('is-active');
+pb.style.width = (1 / total * 100) + '%';
+counter.textContent = '1 / ' + total;
+</script>
+</body>
+</html>

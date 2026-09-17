@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f4ef">
+  <title>When Thinking Becomes Overthinking</title>
+  <style>
+    :root {
+      --ink: #17212b;
+      --muted: #68727a;
+      --paper: #f5f4ef;
+      --surface: #fffefa;
+      --line: #dfe1db;
+      --blue: #3d6c87;
+      --blue-soft: #dceaf0;
+      --coral: #c95846;
+      --coral-soft: #f3ddd7;
+      --gold: #b58c35;
+      --green: #3f7b62;
+      --shadow: 0 18px 60px rgba(23, 33, 43, .09);
+      --serif: Georgia, 'Times New Roman', serif;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--paper); color: var(--ink); font-family: var(--sans); }
+    body { overflow: hidden; }
+    button, a, input { font: inherit; }
+    button { color: inherit; }
+    .app { min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 22px 4vw 14px; position: relative; z-index: 5; }
+    .wordmark { display: flex; gap: .65rem; align-items: center; font-size: .75rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+    .mark { width: 16px; height: 16px; border-radius: 50%; background: var(--coral); box-shadow: 7px 0 0 var(--blue); }
+    .counter { color: var(--muted); font-size: .8rem; letter-spacing: .1em; font-variant-numeric: tabular-nums; }
+    main { min-height: 0; position: relative; }
+    .deck { height: 100%; position: relative; }
+    .slide { position: absolute; inset: 0; overflow: auto; opacity: 0; visibility: hidden; transform: translateX(18px); transition: opacity .42s ease, transform .42s ease, visibility .42s; padding: 2vh 7vw 7vh; }
+    .slide.active { opacity: 1; visibility: visible; transform: translateX(0); }
+    .slide-inner { max-width: 1120px; min-height: 100%; margin: 0 auto; display: flex; flex-direction: column; justify-content: center; }
+    .eyebrow { font-size: .73rem; letter-spacing: .16em; text-transform: uppercase; color: var(--coral); font-weight: 700; margin-bottom: 1.3rem; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2 { font-weight: 500; letter-spacing: -.045em; line-height: .98; }
+    h1 { font-size: clamp(3.2rem, 8vw, 7.7rem); max-width: 920px; margin-bottom: 1.8rem; }
+    h2 { font-size: clamp(2.4rem, 5vw, 5rem); max-width: 850px; margin-bottom: 1.2rem; }
+    h3 { font-size: 1.1rem; font-weight: 600; letter-spacing: -.02em; margin-bottom: .65rem; }
+    p { color: var(--muted); line-height: 1.55; max-width: 720px; }
+    .lead { font-size: clamp(1.1rem, 2vw, 1.45rem); line-height: 1.45; max-width: 700px; }
+    .small { font-size: .83rem; color: var(--muted); line-height: 1.45; }
+    .source { font-size: .74rem; color: var(--muted); line-height: 1.45; margin-top: auto; padding-top: 2rem; }
+    a { color: var(--blue); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .hero { background: radial-gradient(circle at 80% 20%, rgba(61,108,135,.12), transparent 28%), radial-gradient(circle at 14% 90%, rgba(201,88,70,.12), transparent 26%); }
+    .hero-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 5vw; align-items: center; }
+    .hero-note { border-top: 1px solid var(--line); padding-top: 1rem; color: var(--muted); font-size: .9rem; }
+    .hero-note strong { color: var(--ink); display: block; margin-bottom: .25rem; }
+    .orb { min-height: 360px; position: relative; display: grid; place-items: center; }
+    .orb::before, .orb::after { content: ''; position: absolute; border: 1px solid rgba(61,108,135,.35); border-radius: 50%; transform: rotate(-24deg); }
+    .orb::before { width: 280px; height: 140px; }
+    .orb::after { width: 390px; height: 190px; transform: rotate(28deg); border-color: rgba(201,88,70,.35); }
+    .orb-core { width: 170px; height: 170px; border-radius: 50%; background: var(--ink); color: var(--surface); display: grid; place-items: center; text-align: center; padding: 2rem; font-family: var(--serif); font-size: 1.35rem; line-height: 1.1; box-shadow: 0 0 0 12px rgba(23,33,43,.06), 0 20px 60px rgba(23,33,43,.2); z-index: 1; }
+    .orb-label { position: absolute; font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+    .orb-label.a { top: 6%; left: 2%; } .orb-label.b { bottom: 12%; right: 2%; } .orb-label.c { top: 21%; right: 0; color: var(--coral); }
+    .section-break { background: var(--ink); color: var(--paper); }
+    .section-break p, .section-break .small { color: rgba(245,244,239,.68); }
+    .section-break h2 { max-width: 700px; }
+    .section-number { font-family: var(--serif); font-size: clamp(8rem, 23vw, 20rem); line-height: .7; color: rgba(245,244,239,.09); position: absolute; right: 7vw; bottom: 8vh; font-weight: 400; }
+    .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 2rem 0; }
+    .stat { padding: 1.4rem 1rem 1.4rem 0; border-right: 1px solid var(--line); }
+    .stat:last-child { border-right: 0; padding-left: 1rem; }
+    .stat:nth-child(2) { padding-left: 1rem; }
+    .stat-value { font-size: clamp(2.1rem, 4.4vw, 4.4rem); letter-spacing: -.06em; line-height: 1; color: var(--coral); font-variant-numeric: tabular-nums; }
+    .stat-label { margin-top: .55rem; color: var(--muted); font-size: .88rem; line-height: 1.35; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5rem; align-items: start; }
+    .callout { background: var(--surface); padding: 1.4rem; border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .callout p { margin-bottom: 0; }
+    .callout.accent { border-left: 4px solid var(--coral); }
+    .axis { border-left: 1px solid var(--ink); border-bottom: 1px solid var(--ink); height: 255px; margin: 1.5rem 0 1rem 1rem; position: relative; background: linear-gradient(to top, transparent 49.7%, rgba(23,33,43,.1) 50%, transparent 50.3%), linear-gradient(to right, transparent 49.7%, rgba(23,33,43,.1) 50%, transparent 50.3%); }
+    .axis-x, .axis-y { position: absolute; font-size: .72rem; color: var(--muted); }
+    .axis-x { right: 0; bottom: -1.6rem; } .axis-y { left: -1rem; top: -1.2rem; transform: rotate(-90deg); transform-origin: left; }
+    .sweet-spot { position: absolute; width: 29%; height: 35%; left: 46%; bottom: 24%; background: rgba(63,123,98,.15); border: 1px dashed var(--green); }
+    .dot { position: absolute; width: 13px; height: 13px; border-radius: 50%; background: var(--blue); transform: translate(-50%, 50%); }
+    .dot.one { left: 20%; bottom: 12%; } .dot.two { left: 43%; bottom: 24%; } .dot.three { left: 60%; bottom: 54%; background: var(--green); } .dot.four { left: 75%; bottom: 57%; background: var(--coral); } .dot.five { left: 91%; bottom: 57%; background: var(--coral); }
+    .dot-label { position: absolute; font-size: .7rem; color: var(--muted); transform: translateX(-50%); bottom: -2rem; white-space: nowrap; }
+    .legend { display: flex; gap: 1.1rem; flex-wrap: wrap; color: var(--muted); font-size: .78rem; }
+    .legend span::before { content: ''; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: .4rem; background: var(--blue); }
+    .legend .good::before { background: var(--green); } .legend .over::before { background: var(--coral); }
+    .pipeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 2.5rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .stage { border: 0; border-right: 1px solid var(--line); padding: 1.2rem 1rem 1.2rem 0; background: transparent; text-align: left; cursor: pointer; min-height: 150px; }
+    .stage + .stage { padding-left: 1rem; } .stage:last-child { border-right: 0; }
+    .stage:hover, .stage:focus-visible { color: var(--coral); outline: none; }
+    .stage.active { color: var(--blue); }
+    .stage-num { font-family: var(--serif); font-size: 2.2rem; color: currentColor; }
+    .stage-title { font-size: .9rem; font-weight: 700; margin: .65rem 0 .35rem; }
+    .stage-detail { display: grid; grid-template-columns: 1.1fr .9fr; gap: 3rem; margin-top: 2rem; min-height: 165px; }
+    .stage-detail h3 { color: var(--blue); }
+    .stage-visual { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; padding: 1rem 0; }
+    .chip { border: 1px solid var(--line); padding: .6rem .72rem; font-size: .75rem; background: var(--surface); }
+    .chip.arrow::after { content: '→'; color: var(--coral); padding-left: .6rem; }
+    .labels { display: flex; flex-wrap: wrap; gap: .55rem; }
+    .label { padding: .5rem .7rem; border-radius: 999px; font-size: .74rem; border: 1px solid var(--line); background: var(--surface); }
+    .label.verify { border-color: rgba(181,140,53,.55); } .label.branch { border-color: rgba(61,108,135,.55); } .label.back { border-color: rgba(201,88,70,.55); }
+    .pattern-tabs, .case-tabs { display: flex; gap: .4rem; flex-wrap: wrap; margin: 1.3rem 0; }
+    .tab { cursor: pointer; border: 1px solid var(--line); background: transparent; padding: .7rem .9rem; font-size: .78rem; }
+    .tab[aria-selected="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .pattern-layout { display: grid; grid-template-columns: 1.2fr .8fr; gap: 3.5rem; align-items: center; }
+    .pattern-copy { min-height: 180px; }
+    .pattern-graph { min-height: 290px; position: relative; border-bottom: 1px solid var(--ink); border-left: 1px solid var(--ink); padding: 1rem 1rem 2rem; }
+    .graph-node { position: absolute; width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; text-align: center; font-size: .68rem; background: var(--blue-soft); border: 1px solid rgba(61,108,135,.35); }
+    .graph-node.correct { background: var(--coral-soft); border-color: var(--coral); color: var(--coral); }
+    .graph-line { position: absolute; height: 1px; background: var(--blue); transform-origin: left center; }
+    .explorer .n1 { left: 12%; bottom: 25%; } .explorer .n2 { left: 33%; bottom: 54%; } .explorer .n3 { left: 54%; bottom: 30%; } .explorer .n4 { left: 76%; bottom: 66%; }
+    .explorer .l1 { left: 20%; bottom: 38%; width: 100px; transform: rotate(-27deg); } .explorer .l2 { left: 40%; bottom: 57%; width: 104px; transform: rotate(16deg); } .explorer .l3 { left: 61%; bottom: 40%; width: 115px; transform: rotate(22deg); }
+    .late .n1 { left: 12%; bottom: 24%; } .late .n2 { left: 34%; bottom: 32%; } .late .n3 { left: 56%; bottom: 43%; } .late .n4 { left: 78%; bottom: 66%; }
+    .late .l1 { left: 20%; bottom: 34%; width: 105px; transform: rotate(7deg); } .late .l2 { left: 42%; bottom: 41%; width: 105px; transform: rotate(11deg); } .late .l3 { left: 64%; bottom: 52%; width: 110px; transform: rotate(20deg); }
+    .graph-caption { position: absolute; bottom: .45rem; right: .7rem; font-size: .7rem; color: var(--muted); }
+    .utility-wrap { display: grid; grid-template-columns: 1.2fr .8fr; gap: 3rem; align-items: center; }
+    .utility-chart { border-left: 1px solid var(--ink); border-bottom: 1px solid var(--ink); height: 290px; position: relative; padding: 1rem; background: repeating-linear-gradient(to top, transparent 0 57px, rgba(23,33,43,.08) 58px 59px); }
+    .curve { position: absolute; left: 4%; right: 4%; top: 11%; bottom: 9%; }
+    .curve svg { width: 100%; height: 100%; overflow: visible; }
+    .curve path { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .curve .explorer-line { stroke: var(--coral); } .curve .late-line { stroke: var(--blue); }
+    .convergence { position: absolute; top: 11%; bottom: 9%; left: 59%; border-left: 1px dashed var(--green); }
+    .convergence span { position: absolute; top: -1.5rem; left: .5rem; white-space: nowrap; font-size: .7rem; color: var(--green); }
+    .chart-axis-label { position: absolute; font-size: .7rem; color: var(--muted); }
+    .chart-axis-label.x { right: 0; bottom: -1.6rem; } .chart-axis-label.y { top: 0; left: -1rem; transform: rotate(-90deg); transform-origin: left; }
+    .range-control { margin-top: 1.2rem; }
+    input[type="range"] { width: 100%; accent-color: var(--coral); }
+    .thought-readout { display: flex; justify-content: space-between; gap: 1rem; color: var(--muted); font-size: .8rem; margin-top: .35rem; }
+    .result-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1.8rem; }
+    .result { background: var(--surface); border: 1px solid var(--line); padding: 1.2rem; }
+    .result .result-num { font-size: 1.7rem; letter-spacing: -.04em; color: var(--blue); }
+    .result p { font-size: .82rem; margin-bottom: 0; }
+    .heuristics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1.8rem; }
+    .heuristic { padding: 1.4rem; border-top: 2px solid var(--coral); background: var(--surface); }
+    .heuristic:nth-child(2) { border-color: var(--blue); }
+    .heuristic-number { font-family: var(--serif); font-size: 2rem; color: var(--muted); }
+    .use-case-layout { display: grid; grid-template-columns: .7fr 1.3fr; gap: 3rem; align-items: start; }
+    .case-tabs { display: grid; gap: .5rem; margin: 0; }
+    .case-tabs .tab { text-align: left; }
+    .case-panel { min-height: 280px; background: var(--surface); border: 1px solid var(--line); padding: 1.7rem; box-shadow: var(--shadow); }
+    .case-panel ul { padding-left: 1.1rem; color: var(--muted); line-height: 1.6; }
+    .case-panel li { margin: .45rem 0; }
+    .steps { display: grid; grid-template-columns: .42fr 1.58fr; gap: 3rem; margin-top: 2rem; }
+    .step-list { display: grid; align-content: start; gap: .35rem; }
+    .step-btn { display: grid; grid-template-columns: 2rem 1fr; gap: .7rem; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; padding: .85rem 0; cursor: pointer; }
+    .step-btn[aria-selected="true"] { color: var(--coral); }
+    .step-num { font-family: var(--serif); font-size: 1.4rem; }
+    .step-content { border-left: 1px solid var(--line); padding-left: 2rem; min-height: 265px; }
+    .step-content .step-tag { color: var(--coral); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; }
+    pre { background: var(--ink); color: #dceaf0; padding: 1rem; overflow: auto; line-height: 1.55; font-size: .78rem; margin: 1rem 0; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .architecture { display: grid; grid-template-columns: repeat(4, 1fr); align-items: center; gap: 0; margin: 2.5rem 0 1rem; }
+    .arch-node { min-height: 120px; padding: 1rem; border: 1px solid var(--line); background: var(--surface); display: flex; flex-direction: column; justify-content: center; }
+    .arch-node strong { font-size: .88rem; } .arch-node span { font-size: .75rem; color: var(--muted); margin-top: .45rem; line-height: 1.35; }
+    .arch-arrow { text-align: center; color: var(--coral); font-size: 1.3rem; }
+    .checklist { display: grid; grid-template-columns: repeat(2,1fr); gap: .65rem 2rem; margin: 1.5rem 0 0; }
+    .check { display: flex; gap: .7rem; align-items: start; color: var(--muted); font-size: .87rem; line-height: 1.4; }
+    .check::before { content: '✓'; color: var(--green); font-weight: 700; }
+    footer { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 13px 4vw 20px; position: relative; z-index: 5; }
+    .progress { height: 2px; background: var(--line); flex: 1; max-width: 340px; } .progress i { display: block; height: 100%; width: 0; background: var(--coral); transition: width .35s ease; }
+    .nav { display: flex; gap: .45rem; }
+    .nav button { border: 1px solid var(--line); background: transparent; width: 40px; height: 34px; cursor: pointer; font-size: 1rem; }
+    .nav button:hover, .nav button:focus-visible { border-color: var(--ink); outline: none; }
+    .notes { color: var(--muted); font-size: .74rem; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 800px) {
+      body { overflow: auto; }
+      .app { min-height: 100svh; }
+      main { min-height: 0; }
+      .slide { padding: 3vh 6vw 8vh; }
+      .slide-inner { justify-content: flex-start; padding-top: 3vh; }
+      .hero-grid, .two-col, .pattern-layout, .utility-wrap, .use-case-layout, .steps { grid-template-columns: 1fr; gap: 1.5rem; }
+      .orb { min-height: 260px; order: -1; } .orb::before { width: 220px; height: 110px; } .orb::after { width: 290px; height: 150px; } .orb-core { width: 130px; height: 130px; font-size: 1.05rem; }
+      .pipeline { grid-template-columns: repeat(2, 1fr); }
+      .stage:nth-child(2) { border-right: 0; } .stage:nth-child(3), .stage:nth-child(4) { border-top: 1px solid var(--line); }
+      .stage-detail { grid-template-columns: 1fr; gap: .5rem; }
+      .stat-grid { grid-template-columns: 1fr; } .stat, .stat:nth-child(2), .stat:last-child { border-right: 0; border-bottom: 1px solid var(--line); padding: 1rem 0; } .stat:last-child { border-bottom: 0; }
+      .result-grid, .heuristics, .checklist { grid-template-columns: 1fr; }
+      .architecture { grid-template-columns: 1fr; gap: .35rem; } .arch-arrow { transform: rotate(90deg); height: 20px; }
+      .step-content { border-left: 0; border-top: 1px solid var(--line); padding: 1.3rem 0 0; }
+      h1 { font-size: clamp(3.1rem, 15vw, 5rem); }
+      h2 { font-size: clamp(2.5rem, 11vw, 4rem); }
+      footer { padding-bottom: 16px; } .notes { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="app" id="deckApp">
+    <header>
+      <div class="wordmark"><span class="mark" aria-hidden="true"></span> TRACE / structural understanding</div>
+      <div class="counter" aria-live="polite"><span id="slideNo">01</span> / <span id="slideTotal">15</span></div>
+    </header>
+
+    <main>
+      <div class="deck" id="deck">
+        <section class="slide hero active" data-title="Cover" aria-roledescription="slide" aria-label="1 of 15">
+          <div class="slide-inner hero-grid">
+            <div>
+              <div class="eyebrow">A beginner-friendly field guide</div>
+              <h1>When thinking becomes overthinking.</h1>
+              <p class="lead">A visual tour of TRACE, a framework for seeing when a reasoning model is still solving the problem, and when it is just circling the runway.</p>
+              <div class="hero-note"><strong>Based on</strong> Zhang et al., “Do LLMs Really Need 10+ Thoughts for ‘Find the Time 1000 Days Later’?” · arXiv:2510.07880v2</div>
+            </div>
+            <div class="orb" aria-hidden="true"><div class="orb-core">more thought<br>&#8800<br>not always better</div><span class="orb-label a">performance</span><span class="orb-label b">compute</span><span class="orb-label c">diminishing returns</span></div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="TL;DR" aria-roledescription="slide" aria-label="2 of 15">
+          <div class="slide-inner">
+            <div class="eyebrow">01 / the short version</div>
+            <h2>Reasoning is a tool, not a virtue.</h2>
+            <p class="lead">Thinking models can be brilliant on hard problems, but they may burn a lot of tokens on easy ones without improving the answer.</p>
+            <div class="stat-grid">
+              <div class="stat"><div class="stat-value">5-20×</div><div class="stat-label">slower on simple tasks, according to the paper’s benchmark</div></div>
+              <div class="stat"><div class="stat-value">2</div><div class="stat-label">dominant patterns: <em>Explorer</em> and <em>Late Landing</em></div></div>
+              <div class="stat"><div class="stat-value">1</div><div class="stat-label">practical question: when did the useful return flatten out?</div></div>
+            </div>
+            <div class="callout accent"><h3>Plain English</h3><p>A model should spend enough effort to reach a reliable answer, then stop. TRACE helps you locate that stopping point from the shape of the reasoning, not just the number of tokens.</p></div>
+            <div class="source">Source: Zhang et al., arXiv:2510.07880v2, abstract, Sections 3-5. <a href="https://arxiv.org/abs/2510.07880" target="_blank" rel="noreferrer">Read the paper ↗</a></div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Why it matters" aria-roledescription="slide" aria-label="3 of 15">
+          <div class="slide-inner">
+            <div class="eyebrow">02 / why it matters</div>
+            <h2>Longer is not the same as wiser.</h2>
+            <div class="two-col">
+              <div>
+                <p class="lead">The paper compares thinking and non-thinking modes across 14 models and six data domains, with a focus on simple queries.</p>
+                <p>For tasks like basic arithmetic, date arithmetic, and fact recall, extra reasoning often adds latency and cost after the answer is already within reach. The danger is operational: slower responses, higher inference spend, and more opportunities to talk yourself out of a correct answer.</p>
+              </div>
+              <div class="callout"><h3>What to watch</h3><p><strong>Overthinking</strong> is not “a response that looks long”. It is additional thought that fails to create a meaningful performance gain.</p><p class="small">That distinction matters for evals: a token budget is a blunt proxy for effort; a utility curve is more informative.</p></div>
+            </div>
+            <div class="source">Benchmark setup in the paper: greedy decoding, temperature 0, top-p 0; thinking generations capped at 8k tokens and non-thinking at 2k.</div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="The useful middle" aria-roledescription="slide" aria-label="4 of 15">
+          <div class="slide-inner">
+            <div class="eyebrow">03 / the useful middle</div>
+            <h2>There is a narrow sweet spot.</h2>
+            <p class="lead">The paper’s vertical analysis suggests that useful thinking sits between trivial work and problems beyond a model’s representational capacity.</p>
+            <div class="two-col">
+              <div>
+                <div class="axis" role="img" aria-label="Schematic chart showing useful thinking in a middle ground between task difficulty and compute">
+                  <span class="axis-x">task difficulty →</span><span class="axis-y">useful return ↑</span>
+                  <div class="sweet-spot"></div>
+                  <i class="dot one"></i><span class="dot-label" style="left:20%">trivial</span>
+                  <i class="dot two"></i><span class="dot-label" style="left:43%">simple</span>
+                  <i class="dot three"></i><span class="dot-label" style="left:60%">sweet spot</span>
+                  <i class="dot four"></i><span class="dot-label" style="left:75%">hard</span>
+                  <i class="dot five"></i><span class="dot-label" style="left:91%">capacity limit</span>
+                </div>
+                <div class="legend"><span>more compute</span><span class="good">useful thinking</span><span class="over">overthinking / plateau</span></div>
+              </div>
+              <div>
+                <div class="callout"><h3>Two different failure modes</h3><p><strong>Too easy:</strong> the answer is already available, so extra thought mostly costs time.</p><p><strong>Too hard:</strong> more tokens cannot repair a missing internal representation of the rules.</p><p class="small">So “make the model think harder” is not a universal remedy.</p></div>
+              </div>
+            </div>
+            <div class="source">Schematic interpretation of the paper’s findings in Sections 3.1-3.2. The plotted relationship is conceptual, not a new measurement.</div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="TRACE pipeline" aria-roledescription="slide" aria-label="5 of 15">
+          <div class="slide-inner">
+            <div class="eyebrow">04 / meet TRACE</div>
+            <h2>Turn a monologue into a map.</h2>
+            <p class="lead">TRACE stands for <strong>Thought-process Reconstruction and Automated Clustering Engine</strong>. Click each stage to see what it contributes.</p>
+            <div class="pipeline" role="tablist" aria-label="TRACE stages">
+              <button class="stage active" type="button" role="tab" aria-selected="true" data-stage="0"><div class="stage-num">01</div><div class="stage-title">Sample</div><div class="small">Generate traces across models and query clusters.</div></button>
+              <button class="stage" type="button" role="tab" aria-selected="false" data-stage="1"><div class="stage-num">02</div><div class="stage-title">Decompose</div><div class="small">Split reasoning into minimally complete sub-thoughts.</div></button>
+              <button class="stage" type="button" role="tab" aria-selected="false" data-stage="2"><div class="stage-num">03</div><div class="stage-title">Graph</div><div class="small">Connect sub-thoughts with functional relationships.</div></button>
+              <button class="stage" type="button" role="tab" aria-selected="false" data-stage="3"><div class="stage-num">04</div><div class="stage-title">Induce</div><div class="small">Aggregate graphs to reveal recurring patterns.</div></button>
+            </div>
+            <div class="stage-detail" aria-live="polite"><div><h3 id="stageHeading">01 / Response sampling</h3><p id="stageCopy">Collect reproducible reasoning traces from several thinking models, query types, and difficulty levels. The paper samples four large thinking models for TRACE and benchmarks 14 models overall.</p></div><div class="stage-visual" id="stageVisual"><span class="chip arrow">query cluster</span><span class="chip arrow">model</span><span class="chip">thought trace</span></div></div>
+            <div class="source">TRACE overview adapted from Figure 2 and Section 4 of the paper.</div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Labels" aria-roledescription="slide" aria-label="6 of 15">
+          <div class="slide-inner">
+            <div class="eyebrow">05 / what gets measured</div>
+            <h2>Not every thought does the same job.</h2>
+            <p class="lead">TRACE labels the relationship between one sub-thought and the next, so a graph can distinguish progress from motion.</p>
+            <div class="two-col" style="margin-top:2rem">
+              <div class="callout"><h3>Minimal sub-thoughts</h3><p>A sub-thought should be self-contained, complete, and answer-bearing. That gives the analyser a stable unit to score for correctness and helpfulness.</p></div>
+              <div class="callout"><h3>Relational labels</h3><div class="labels"><span class="label">Initial</span><span class="label">Final</span><span class="label verify">Verify</span><span class="label verify">Correction</span><span class="label back">Backtrack</span><span class="label branch">Branch out</span><span class="label">Sidetrack</span></div></div>
+            </div>
+            <div class="stage-visual" style="margin-top:2rem"><span class="chip arrow">7 + 2 = 9</span><span class="chip arrow">double-check</span><span class="chip arrow">alternate route</span><span class="chip">final answer</span></div>
+            <div class="source">Labels summarised from Section 4, including Initial, Final, Verification, Correction, Backtrack, Branching Out, and Sidetrack.</div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Two patterns" aria-roledescription="slide" aria-label="7 of 15">
+          <div class="slide-inner">
+            <div class="eyebrow">06 / two patterns</div>
+            <h2>Overthinking has a shape.</h2>
+            <div class="pattern-tabs" role="tablist" aria-label="Thought patterns">
+              <button class="tab" type="button" role="tab" aria-selected="true" data-pattern="explorer">Explorer</button>
+              <button class="tab" type="button" role="tab" aria-selected="false" data-pattern="late">Late Landing</button>
+            </div>
+            <div class="pattern-layout">
+              <div class="pattern-copy" aria-live="polite"><h3 id="patternHeading">Explorer</h3><p id="patternCopy">The correct answer can appear early, but the model keeps branching into alternatives. It may backtrack, revisit an earlier answer, and distribute its probability of correctness across many nodes.</p><div class="callout accent"><p id="patternTakeaway">Typical waste: <strong>over-exploration</strong>, with verification as a secondary driver.</p></div></div>
+              <div class="pattern-graph explorer" id="patternGraph" role="img" aria-label="Schematic thought progression graph"><div class="graph-line l1"></div><div class="graph-line l2"></div><div class="graph-line l3"></div><div class="graph-node n1">answer<br>1</div><div class="graph-node n2 correct">answer<br>2</div><div class="graph-node n3">answer<br>3</div><div class="graph-node n4 correct">answer<br>4</div><div class="graph-caption">distinct answers →</div></div>
+            </div>
+            <div class="source">The patterns are reported for traces with at least three intermediate answers. The paper describes them as model-linked dynamics, not properties of individual prompts.</div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Utility curve" aria-roledescription="slide" aria-label="8 of 15">
+          <div class="slide-inner">
+            <div class="eyebrow">07 / the convergence point</div>
+            <h2>Stop measuring effort. Start measuring return.</h2>
+            <div class="utility-wrap">
+              <div>
+                <p class="lead">The paper reframes overthinking as the point after which the marginal return drops below a threshold ε.</p>
+                <div class="utility-chart" role="img" aria-label="Schematic utility curves for Explorer and Late Landing patterns">
+                  <div class="curve"><svg viewBox="0 0 600 260" preserveAspectRatio="none"><path class="explorer-line" d="M0 235 L45 185 L85 200 L130 130 L170 150 L210 120 L255 135 L300 98 L345 107 L390 90 L450 97 L510 92 L600 96"></path><path class="late-line" d="M0 240 L50 220 L100 195 L150 160 L200 135 L250 104 L300 82 L350 61 L400 52 L450 51 L510 51 L600 51"></path></svg></div>
+                  <div class="convergence"><span>convergence point</span></div><span class="chart-axis-label x">number of sub-thoughts →</span><span class="chart-axis-label y">performance ↑</span>
+                </div>
+                <div class="legend" style="margin-top:2rem"><span class="over">Explorer: peaks early, then fluctuates</span><span>Late Landing: rises, then plateaus</span></div>
+              </div>
+              <div class="callout"><h3>Explore the thought index</h3><p id="thoughtText">At sub-thought 1, the model is still establishing a path.</p><div class="range-control"><label class="small" for="thoughtRange">Sub-thought <strong id="thoughtIndex">1</strong> of 12</label><input id="thoughtRange" type="range" min="1" max="12" value="1" step="1"></div><div class="thought-readout"><span id="explorerValue">Explorer: building</span><span id="lateValue">Late Landing: building</span></div></div>
+            </div>
+            <div class="source">Definition and utility tracing adapted from Sections 5.2-5.3. The curves above are explanatory schematics based on Figure 6, not digitised source data.</div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Evidence" aria-roledescription="slide" aria-label="9 of 15">
+          <div class="slide-inner">
+            <div class="eyebrow">08 / evidence from the benchmark</div>
+            <h2>More compute can help, then mostly stops helping.</h2>
+            <p class="lead">For Qwen3-235B-A22B, thinking adds substantial accuracy on harder math, but at a steep token cost. On easy levels, the gain is negligible.</p>
+            <div class="result-grid">
+              <div class="result"><div class="result-num">ASDiv-1</div><p><strong>97.44 → 100.00%</strong> accuracy, while inference cost grows from <strong>46.5 → 320 words</strong>.</p></div>
+              <div class="result"><div class="result-num">ASDiv-2</div><p><strong>92.94 → 95.88%</strong> accuracy, while cost grows from <strong>54.4 → 348.5 words</strong>.</p></div>
+              <div class="result"><div class="result-num">GSM8k</div><p><strong>74.75 → 91.50%</strong> accuracy, but thinking uses <strong>1,021.7 words</strong> versus 118.1.</p></div>
+              <div class="result"><div class="result-num">Temporal-L3</div><p><strong>32.24 → 52.54%</strong> accuracy, but cost rises from <strong>309.2 → 2,485.6 words</strong>.</p></div>
+            </div>
+            <div class="callout accent" style="margin-top:1.3rem"><p><strong>Interpretation:</strong> the right policy is task- and model-aware. “Always think” and “never think” are both crude defaults.</p></div>
+            <div class="source">Numbers transcribed from Tables 1-2 in the paper. Values are reported as non-thinking / thinking; costs are words.</div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Management" aria-roledescription="slide" aria-label="10 of 15">
+          <div class="slide-inner">
+            <div class="eyebrow">09 / management heuristics</div>
+            <h2>Give the model a principled exit.</h2>
+            <p class="lead">TRACE suggests proxies for the convergence point that can work without ground-truth answers at runtime.</p>
+            <div class="heuristics">
+              <div class="heuristic"><div class="heuristic-number">01</div><h3>Self-looping</h3><p>Terminate after <strong>k consecutive self-verifications</strong> following an answer proposal. The paper’s starting case uses <strong>k = 2</strong>.</p></div>
+              <div class="heuristic"><div class="heuristic-number">02</div><h3>Backtrack</h3><p>Terminate when the model revisits a previously proposed answer directly as the result of a backtrack action.</p></div>
+            </div>
+            <div class="stat-grid" style="margin-top:2rem"><div class="stat"><div class="stat-value">−52%</div><div class="stat-label">average length in one case: 2,722 → 1,315 words</div></div><div class="stat"><div class="stat-value">~60%</div><div class="stat-label">efficiency savings for the Explorer case with backtracking</div></div><div class="stat"><div class="stat-value">+1.0</div><div class="stat-label">reported Late Landing accuracy lift from model-specific k = 3</div></div></div>
+            <div class="source">Management results and heuristics adapted from Section 5.3. The paper reports model-specific tuning; do not assume one k works everywhere.</div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Use cases" aria-roledescription="slide" aria-label="11 of 15">
+          <div class="slide-inner">
+            <div class="eyebrow">10 / where this is useful</div>
+            <h2>Use the lens anywhere inference has a budget.</h2>
+            <div class="use-case-layout">
+              <div class="case-tabs" role="tablist" aria-label="Use cases">
+                <button class="tab" type="button" role="tab" aria-selected="true" data-case="evals">Model evals</button>
+                <button class="tab" type="button" role="tab" aria-selected="false" data-case="router">Inference router</button>
+                <button class="tab" type="button" role="tab" aria-selected="false" data-case="agents">Agent harness</button>
+                <button class="tab" type="button" role="tab" aria-selected="false" data-case="product">AI product UX</button>
+              </div>
+              <div class="case-panel" aria-live="polite"><h3 id="caseHeading">Model evals</h3><p id="caseLead">Measure the quality of thinking, not just the final answer.</p><ul id="caseList"><li>Build a golden set across easy, medium, and hard tasks.</li><li>Track accuracy, helpfulness, tokens, latency, and cost together.</li><li>Cluster failure traces into Explorer, Late Landing, sidetrack, and correction-heavy behaviours.</li></ul></div>
+            </div>
+            <div class="source">These are implementation examples derived from the paper’s measurement framework and findings, not evaluated case studies from the paper.</div>
+          </div>
+        </section>
+
+        <section class="slide section-break" data-title="Build it" aria-roledescription="slide" aria-label="12 of 15">
+          <div class="slide-inner"><div class="eyebrow">Part II / implementation</div><h2>Build a stopping policy you can explain.</h2><p class="lead">A practical TRACE-inspired loop: collect traces, label structure, estimate utility, and enforce an exit condition.</p><div class="section-number">02</div></div>
+        </section>
+
+        <section class="slide" data-title="How-to guide" aria-roledescription="slide" aria-label="13 of 15">
+          <div class="slide-inner">
+            <div class="eyebrow">11 / step-by-step how-to</div>
+            <h2>Start small. Make the stopping rule observable.</h2>
+            <div class="steps">
+              <div class="step-list" role="tablist" aria-label="Implementation steps">
+                <button class="step-btn" type="button" role="tab" aria-selected="true" data-step="0"><span class="step-num">01</span><span>Define the workload</span></button>
+                <button class="step-btn" type="button" role="tab" aria-selected="false" data-step="1"><span class="step-num">02</span><span>Capture the trace</span></button>
+                <button class="step-btn" type="button" role="tab" aria-selected="false" data-step="2"><span class="step-num">03</span><span>Decompose and label</span></button>
+                <button class="step-btn" type="button" role="tab" aria-selected="false" data-step="3"><span class="step-num">04</span><span>Trace utility</span></button>
+                <button class="step-btn" type="button" role="tab" aria-selected="false" data-step="4"><span class="step-num">05</span><span>Ship the policy</span></button>
+              </div>
+              <div class="step-content" aria-live="polite"><div class="step-tag" id="stepTag">Step 01</div><h3 id="stepHeading">Define the workload</h3><p id="stepCopy">Choose one narrow workload where you can label success reliably. Mix easy, medium, and hard examples so your policy learns where more thought pays off.</p><pre id="stepCode"><code>workload = {
+  "domains": ["math", "temporal", "recall"],
+  "difficulty": ["easy", "medium", "hard"],
+  "metrics": ["accuracy", "latency", "tokens", "cost"]
+}</code></pre><div class="small" id="stepDone">Done when: you have a versioned golden set and a clear success metric.</div></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Architecture" aria-roledescription="slide" aria-label="14 of 15">
+          <div class="slide-inner">
+            <div class="eyebrow">12 / minimal architecture</div>
+            <h2>Put the exit logic beside the model.</h2>
+            <p class="lead">The goal is not to expose chain-of-thought to users. The goal is to make inference behaviour measurable and controllable.</p>
+            <div class="architecture" role="img" aria-label="Architecture flow from request to model trace, stopping policy, and final response">
+              <div class="arch-node"><strong>Request</strong><span>task type + difficulty signal</span></div><div class="arch-arrow">→</div><div class="arch-node"><strong>Thinking model</strong><span>sub-thought events + answer proposals</span></div><div class="arch-arrow">→</div><div class="arch-node"><strong>Stopping policy</strong><span>self-loop / backtrack / utility proxy</span></div><div class="arch-arrow">→</div><div class="arch-node"><strong>Response</strong><span>answer + telemetry for evals</span></div>
+            </div>
+            <div class="two-col" style="margin-top:2rem"><div><h3>What to log</h3><div class="checklist"><div class="check">task and model ID</div><div class="check">sub-thought count</div><div class="check">token and latency cost</div><div class="check">relationship labels</div><div class="check">answer proposals</div><div class="check">stop reason</div></div></div><div class="callout"><h3>Design principle</h3><p>Keep policy decisions inspectable. If you cannot explain why the model stopped, you cannot confidently tune the trade-off.</p></div></div>
+          </div>
+        </section>
+
+        <section class="slide" data-title="Takeaways" aria-roledescription="slide" aria-label="15 of 15">
+          <div class="slide-inner">
+            <div class="eyebrow">13 / takeaways</div>
+            <h2>Good reasoning knows when it is done.</h2>
+            <div class="two-col" style="margin-top:2rem"><div><p class="lead">TRACE offers a sharper operational lens than “the answer got longer”.</p><div class="checklist"><div class="check">Think more when the task actually benefits.</div><div class="check">Watch for exploration and late verification.</div><div class="check">Estimate a convergence point.</div><div class="check">Stop on observable structural signals.</div><div class="check">Evaluate quality and cost together.</div><div class="check">Tune per model and workload.</div></div></div><div class="callout accent"><h3>One sentence to remember</h3><p>Overthinking begins when the next unit of thought is costing more than it is returning.</p></div></div>
+            <div class="source" style="margin-top:3rem">Based on: Xinliang Frederick Zhang, Anhad Mohananey, Alexandra Chronopoulou, Pinelopi Papalampidi, Somit Gupta, Tsendsuren Munkhdalai, Lu Wang, and Shyam Upadhyay. <em>Do LLMs Really Need 10+ Thoughts for “Find the Time 1000 Days Later”? Towards Structural Understanding of LLM Overthinking.</em> arXiv:2510.07880v2, 10 October 2025. <a href="https://arxiv.org/abs/2510.07880" target="_blank" rel="noreferrer">Source paper ↗</a></div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer><div class="notes">← → to navigate · Home / End to jump · Space to advance</div><div class="progress" aria-hidden="true"><i id="progressBar"></i></div><div class="nav"><button type="button" id="prev" aria-label="Previous slide">←</button><button type="button" id="next" aria-label="Next slide">→</button></div></footer>
+  </div>
+
+  <script>
+    (() => {
+      const slides = Array.from(document.querySelectorAll('.slide'));
+      const total = slides.length;
+      let current = 0;
+      const slideNo = document.getElementById('slideNo');
+      const slideTotal = document.getElementById('slideTotal');
+      const progressBar = document.getElementById('progressBar');
+      slideTotal.textContent = String(total).padStart(2, '0');
+
+      function goTo(index) {
+        current = Math.max(0, Math.min(total - 1, index));
+        slides.forEach((slide, indexValue) => slide.classList.toggle('active', indexValue === current));
+        slideNo.textContent = String(current + 1).padStart(2, '0');
+        progressBar.style.width = `${((current + 1) / total) * 100}%`;
+        slides[current].scrollTop = 0;
+        document.getElementById('prev').disabled = current === 0;
+        document.getElementById('next').disabled = current === total - 1;
+      }
+      document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+      document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+      document.addEventListener('keydown', (event) => {
+        if (['ArrowRight', 'PageDown', ' '].includes(event.key)) { event.preventDefault(); goTo(current + 1); }
+        if (['ArrowLeft', 'PageUp'].includes(event.key)) { event.preventDefault(); goTo(current - 1); }
+        if (event.key === 'Home') { event.preventDefault(); goTo(0); }
+        if (event.key === 'End') { event.preventDefault(); goTo(total - 1); }
+      });
+
+      const stageData = [
+        ['01 / Response sampling', 'Collect reproducible reasoning traces from several thinking models, query types, and difficulty levels. The paper samples four large thinking models for TRACE and benchmarks 14 models overall.', ['query cluster', 'model', 'thought trace']],
+        ['02 / Thought decomposition', 'Break the trace into sequential sub-thoughts that are self-contained, complete, and answer-bearing. Then infer each transition’s functional relationship.', ['raw trace', 'sub-thoughts', 'relational labels']],
+        ['03 / Progression graph', 'Represent each answer proposal as a node and each inferred relationship as a directed edge. Backtracking creates elevated branches, making the search shape visible.', ['root', 'answer node', 'edge: verify / backtrack']],
+        ['04 / Pattern induction', 'Group similar graphs by query type, difficulty, and number of distinct answers. Aggregate and threshold them to reveal dominant thought patterns.', ['graph set', 'aggregate', 'Explorer / Late Landing']]
+      ];
+      const stageHeading = document.getElementById('stageHeading');
+      const stageCopy = document.getElementById('stageCopy');
+      const stageVisual = document.getElementById('stageVisual');
+      document.querySelectorAll('[data-stage]').forEach((button) => button.addEventListener('click', () => {
+        const index = Number(button.dataset.stage);
+        document.querySelectorAll('[data-stage]').forEach((item) => { item.classList.toggle('active', item === button); item.setAttribute('aria-selected', item === button ? 'true' : 'false'); });
+        stageHeading.textContent = stageData[index][0]; stageCopy.textContent = stageData[index][1];
+        stageVisual.innerHTML = stageData[index][2].map((item, itemIndex, array) => `<span class="chip${itemIndex < array.length - 1 ? ' arrow' : ''}">${item}</span>`).join('');
+      }));
+
+      const patternContent = {
+        explorer: { heading: 'Explorer', copy: 'The correct answer can appear early, but the model keeps branching into alternatives. It may backtrack, revisit an earlier answer, and distribute its probability of correctness across many nodes.', takeaway: 'Typical waste: <strong>over-exploration</strong>, with verification as a secondary driver.' },
+        late: { heading: 'Late Landing', copy: 'The model follows a more linear path and converges towards the correct answer late. Once confidence is adequate, it may continue with repeated self-verification.', takeaway: 'Typical waste: <strong>over-verification</strong> after convergence.' }
+      };
+      const patternHeading = document.getElementById('patternHeading'); const patternCopy = document.getElementById('patternCopy'); const patternTakeaway = document.getElementById('patternTakeaway'); const patternGraph = document.getElementById('patternGraph');
+      document.querySelectorAll('[data-pattern]').forEach((button) => button.addEventListener('click', () => {
+        const key = button.dataset.pattern; const data = patternContent[key];
+        document.querySelectorAll('[data-pattern]').forEach((item) => { item.setAttribute('aria-selected', item === button ? 'true' : 'false'); });
+        patternHeading.textContent = data.heading; patternCopy.textContent = data.copy; patternTakeaway.innerHTML = data.takeaway; patternGraph.className = `pattern-graph ${key}`;
+      }));
+
+      const thoughtRange = document.getElementById('thoughtRange');
+      function updateThought() {
+        const value = Number(thoughtRange.value); const after = value >= 8;
+        document.getElementById('thoughtIndex').textContent = value;
+        document.getElementById('thoughtText').textContent = after ? `At sub-thought ${value}, you are past the illustrative convergence point: extra verification is likely to have a low marginal return.` : `At sub-thought ${value}, the model is still building or testing a path.`;
+        document.getElementById('explorerValue').textContent = `Explorer: ${value < 5 ? 'searching' : value < 8 ? 'volatile' : 'diminishing return'}`;
+        document.getElementById('lateValue').textContent = `Late Landing: ${value < 8 ? 'converging' : 'plateau'}`;
+      }
+      thoughtRange.addEventListener('input', updateThought); updateThought();
+
+      const caseContent = {
+        evals: ['Model evals', 'Measure the quality of thinking, not just the final answer.', ['Build a golden set across easy, medium, and hard tasks.', 'Track accuracy, helpfulness, tokens, latency, and cost together.', 'Cluster failure traces into Explorer, Late Landing, sidetrack, and correction-heavy behaviours.']],
+        router: ['Inference router', 'Route only the tasks that need a long-thinking budget.', ['Use a cheap classifier or task metadata to estimate expected workload.', 'Start with non-thinking or short budgets for recall and trivial arithmetic.', 'Escalate when uncertainty, difficulty, or observed utility justifies it.']],
+        agents: ['Agent harness', 'Make long-running loops stop for reasons you can inspect.', ['Record answer proposals and tool calls as events.', 'Detect repeated verification, backtracking, and no-op turns.', 'Set a stop reason that is visible in telemetry and replay tools.']],
+        product: ['AI product UX', 'Treat latency as part of the user experience, not an infrastructure detail.', ['Give users a fast path for simple requests.', 'Avoid presenting verbosity as a proxy for trust.', 'Test whether extra reasoning improves the decision the user actually needs.']]
+      };
+      const caseHeading = document.getElementById('caseHeading'); const caseLead = document.getElementById('caseLead'); const caseList = document.getElementById('caseList');
+      document.querySelectorAll('[data-case]').forEach((button) => button.addEventListener('click', () => {
+        const data = caseContent[button.dataset.case]; document.querySelectorAll('[data-case]').forEach((item) => item.setAttribute('aria-selected', item === button ? 'true' : 'false'));
+        caseHeading.textContent = data[0]; caseLead.textContent = data[1]; caseList.innerHTML = data[2].map((item) => `<li>${item}</li>`).join('');
+      }));
+
+      const stepData = [
+        ['Step 01', 'Define the workload', 'Choose one narrow workload where you can label success reliably. Mix easy, medium, and hard examples so your policy learns where more thought pays off.', 'workload = {\n  "domains": ["math", "temporal", "recall"],\n  "difficulty": ["easy", "medium", "hard"],\n  "metrics": ["accuracy", "latency", "tokens", "cost"]\n}', 'Done when: you have a versioned golden set and a clear success metric.'],
+        ['Step 02', 'Capture the trace', 'Run the same prompts through thinking and non-thinking modes where possible. Store model ID, mode, latency, token counts, final answer, and intermediate answer proposals.', 'trace = {\n  "request_id": id,\n  "mode": "thinking",\n  "events": events,\n  "stop_reason": stop_reason\n}', 'Done when: every run can be replayed and compared.'],
+        ['Step 03', 'Decompose and label', 'Use a consistent parser or judge to split the trace into minimally complete sub-thoughts, then label transitions such as verify, correction, backtrack, branch out, and sidetrack.', 'subthoughts = decompose(trace)\nedges = infer_relations(subthoughts)\ngraph = build_progression_graph(subthoughts, edges)', 'Done when: two reviewers agree on a useful sample of labels.'],
+        ['Step 04', 'Trace utility', 'Estimate correctness and helpfulness after each sub-thought, or use a runtime proxy when ground truth is unavailable. Find the point where the marginal return drops below ε.', 'utility = delta_performance / delta_thought\nconvergence = first_index(utility < epsilon)', 'Done when: you can show the utility curve for each model and workload.'],
+        ['Step 05', 'Ship the policy', 'Turn structural signals into a bounded stopping rule. Start conservatively, compare against an unmodified baseline, and monitor quality regressions by task type.', 'if consecutive_self_verify >= k:\n    stop("self_loop")\nelif revisited_after_backtrack:\n    stop("backtrack")', 'Done when: the policy reduces cost without hiding a task-specific failure mode.']
+      ];
+      const stepTag = document.getElementById('stepTag'); const stepHeading = document.getElementById('stepHeading'); const stepCopy = document.getElementById('stepCopy'); const stepCode = document.querySelector('#stepCode code'); const stepDone = document.getElementById('stepDone');
+      document.querySelectorAll('[data-step]').forEach((button) => button.addEventListener('click', () => {
+        const data = stepData[Number(button.dataset.step)]; document.querySelectorAll('[data-step]').forEach((item) => item.setAttribute('aria-selected', item === button ? 'true' : 'false'));
+        stepTag.textContent = data[0]; stepHeading.textContent = data[1]; stepCopy.textContent = data[2]; stepCode.textContent = data[3]; stepDone.textContent = data[4];
+      }));
+      goTo(0);
+    })();
+  </script>
+</body>
+</html>

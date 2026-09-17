@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code: 4 Multiplier Upgrades</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --slide-bg: #131c2e;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-orange: #f97316;
+            --accent-blue: #38bdf8;
+            --accent-green: #10b981;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .deck-container {
+            position: relative;
+            width: 100%;
+            max-width: 960px;
+            height: 100%;
+            max-height: 580px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .slide {
+            position: absolute;
+            width: calc(100% - 40px);
+            height: calc(100% - 40px);
+            background-color: var(--slide-bg);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transform: translateX(60px) scale(0.98);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        .slide.previous {
+            opacity: 0;
+            transform: translateX(-60px) scale(0.98);
+        }
+
+        .slide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .slide-header h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #fff, var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .slide-header .tag {
+            background-color: rgba(56, 189, 248, 0.1);
+            color: var(--accent-blue);
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .slide-body {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .slide-body p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 5px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .card h3 {
+            color: var(--accent-orange);
+            font-size: 1.15rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        ul {
+            list-style-type: none;
+        }
+
+        li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 10px;
+            font-size: 1.05rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+
+        li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--accent-orange);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .slide-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 12px;
+        }
+
+        .timestamp {
+            background: rgba(249, 115, 22, 0.1);
+            color: var(--accent-orange);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .controls-container {
+            width: 100%;
+            max-width: 960px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px 20px 20px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background-color: var(--slide-bg);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .btn:hover:not(:disabled) {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: var(--accent-blue);
+        }
+
+        .btn:disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+        }
+
+        .progress-bar-container {
+            flex-grow: 1;
+            margin: 0 30px;
+            background: rgba(255, 255, 255, 0.05);
+            height: 6px;
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-orange));
+            height: 100%;
+            width: 0%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Title Slide Layout */
+        .title-slide {
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+        }
+        .title-slide h1 {
+            font-size: 2.6rem;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+            font-weight: 800;
+        }
+        .title-slide h3 {
+            color: var(--accent-orange);
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+        .title-slide p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            max-width: 620px;
+            line-height: 1.6;
+        }
+        .source-link {
+            color: var(--accent-blue);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--accent-blue);
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 768px) {
+            body {
+                overflow: auto;
+                height: auto;
+                padding-bottom: 80px;
+            }
+            .deck-container {
+                max-height: none;
+                height: auto;
+                padding: 10px;
+            }
+            .slide {
+                position: relative;
+                opacity: 1 !important;
+                transform: none !important;
+                pointer-events: auto;
+                margin-bottom: 20px;
+                height: auto;
+                min-height: 420px;
+                display: none;
+            }
+            .slide.active {
+                display: flex;
+            }
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            .title-slide h1 {
+                font-size: 1.8rem;
+            }
+            .controls-container {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                background: var(--bg-color);
+                padding: 15px;
+                border-top: 1px solid rgba(255,255,255,0.05);
+                z-index: 100;
+            }
+            .progress-bar-container {
+                margin: 0 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="deck-container">
+        
+        <div class="slide title-slide active">
+            <div></div>
+            <div>
+                <h1>4 Upgrades to Turn Claude Code Into Your Best Business Partner</h1>
+                <h3>Building Maximum Leverage & Cashflow with AI Automation</h3>
+                <p>An interactive optimization framework inspired by Nate Herk's implementation strategies for bypassing default AI vulnerabilities to produce rapid product frameworks.</p>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                Source Guide: <a class="source-link" href="https://youtu.be/iTY8Q449YNQ" target="_blank">Watch Original Video</a>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-header">
+                <h2>The Productivity vs. Profit Trap</h2>
+                <span class="tag">The Blueprint</span>
+            </div>
+            <div class="slide-body">
+                <p>By default, Claude is tuned to make you feel highly productive, not necessarily to make you money. There is a baseline distinction between executing tasks and generating functional assets.</p>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>The Income Formula</h3>
+                        <p style="font-size:1rem; margin-bottom:0;">Income is strictly capped by two core levers:</p>
+                        <ul>
+                            <li><strong>Output Quality:</strong> Shipping robust, zero-bug logic.</li>
+                            <li><strong>Velocity:</strong> Accelerating deployment speed.</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3>Built-in Failures</h3>
+                        <ul>
+                            <li>AI Sycophancy (Agreeable validation traps).</li>
+                            <li>Context degradation over extended usage loops.</li>
+                            <li>Confidently asserting untested dependencies work.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>The Core Architectural Dilemma</span>
+                <span class="timestamp">[00:01:04]</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-header">
+                <h2>Upgrade 1: Kill the "Yes-Man" via /roast</h2>
+                <span class="tag">System Design</span>
+            </div>
+            <div class="slide-body">
+                <p>Research confirms AI models fail to push back on faulty human framing up to 88% of the time (Sycophancy). Personalization features worsen this over lengthier discussions.</p>
+                <div class="card">
+                    <h3>The Solution: Persona Council Skill</h3>
+                    <p style="font-size:0.95rem; margin-bottom:10px;">Pull Claude out of default agreement mode by spinning up a structured sub-agent matrix before initializing code:</p>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size:0.9rem; color: var(--text-secondary);">
+                        <div>• <strong>The Contrarian:</strong> Uncovers fatal logic/market flaws.</div>
+                        <div>• <strong>The First Principles Thinker:</strong> Evaluates raw structural context.</div>
+                        <div>• <strong>The Deep Researcher:</strong> Evaluates competitor pricing data.</div>
+                        <div>• <strong>The Buyer:</strong> Simulates strict customer friction loops.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>The ultimate decision tool: Green Light, Reshaping, or Killing concepts</span>
+                <span class="timestamp">[00:01:56]</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-header">
+                <h2>Upgrade 2: Automated Verification Loops</h2>
+                <span class="tag">Quality Assurance</span>
+            </div>
+            <div class="slide-body">
+                <p>Something looking finished is structurally distinct from something operating cleanly. Studies confirm up to 40% of standard AI-generated scripts harbor silent edge bugs.</p>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>The Verification Pipeline</h3>
+                        <ul>
+                            <li><strong>Automated Vision:</strong> Leverage Playwright browser engines to auto-capture multi-viewport screenshots.</li>
+                            <li><strong>Self-Correction:</strong> Require the agent to iteratively review image outputs to patch visual bugs before handover.</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3>Automated Stress Testing</h3>
+                        <ul>
+                            <li>Instruct a headed browser script to execute high-velocity fuzzing passes.</li>
+                            <li>Simulate structural inputs (malformed forms, deep script limits) to capture silent failures early.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>Shifting reliance from generic assertions to strict end-to-end telemetry</span>
+                <span class="timestamp">[00:07:51]</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-header">
+                <h2>Upgrade 3: Eradicating Context Rot</h2>
+                <span class="tag">Optimization</span>
+            </div>
+            <div class="slide-body">
+                <p>Context Window degradation (Context Rot) causes severe processing drop-offs, hallucinations, and lazy code styling long before token limits hit ceilings. High context volume slows processing speed.</p>
+                <div class="card">
+                    <h3>The Protocol: Clean Desk Token Flow</h3>
+                    <ul>
+                        <li><strong>Telemetry:</strong> Run <code>/context</code> consistently to audit what files or active configurations are heavily loading token spaces.</li>
+                        <li><strong>Session Handoff Optimization:</strong> Before running <code>/clear</code>, execute a custom handoff command to synthesize locked architecture choices, core paths, and pending objectives.</li>
+                        <li><strong>Re-initialization:</strong> Clear the memory entirely, drop the state object back in, and maintain optimal execution speeds inside clean slots.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>Keeping active contextual environments lightweight ensures crisp responses</span>
+                <span class="timestamp">[00:16:46]</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-header">
+                <h2>Upgrade 4: Parallel Sub-Agents & /goal</h2>
+                <span class="tag">Scale & Leverage</span>
+            </div>
+            <div class="slide-body">
+                <p>Human reviews form engineering bottlenecks. Multi-agent arrays executing distinct workflows in parallel routinely out-perform single prompt setups by over 90%.</p>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>Parallel Deliverables</h3>
+                        <ul>
+                            <li>Isolate dependencies into distinct operations.</li>
+                            <li>Spin up individual sub-agents inside clean environments to compile separate pipeline assets simultaneously.</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3>Objective Goal Mode</h3>
+                        <ul>
+                            <li>Deploy <code>/goal [condition]</code> to define objective targets.</li>
+                            <li>Separate worker actions from validation roles by using an external model layer to audit code completion rules.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>Automating the execution path to free up strategic planning cycles</span>
+                <span class="timestamp">[00:21:12]</span>
+            </div>
+        </div>
+
+        <div class="slide">
+            <div class="slide-header">
+                <h2>The Paradigm Shift: Builder to Judge</h2>
+                <span class="tag">Execution</span>
+            </div>
+            <div class="slide-body" style="text-align: center; max-width: 700px; margin: 0 auto;">
+                <p style="font-size: 1.3rem; color: var(--accent-orange); font-weight: 600;">Stop acting as the baseline engine worker.</p>
+                <p style="font-size: 1.15rem; margin-bottom: 25px;">Your ultimate value multiplier rests in framing strict rules, reviewing structural breakdowns, and directing systematic validation loops.</p>
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; text-align: left;">
+                    <p style="font-size: 1rem; margin-bottom:5px; font-weight: bold; color: #fff;">Summary Playbook Checkpoints:</p>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.95rem;">
+                        <div>1. Run <strong>Roast Matrices</strong> to block sycophancy.</div>
+                        <div>2. Embed <strong>Telemetry Verification loops</strong>.</div>
+                        <div>3. Enforce <strong>Handoff protocols</strong> on token limits.</div>
+                        <div>4. Run <strong>Parallel sub-agent workflows</strong>.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-footer">
+                <span>Maximize Leverage & Speed</span>
+                <span class="timestamp">[00:27:23]</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="controls-container">
+        <button class="btn" id="prevBtn" disabled>Previous</button>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <button class="btn" id="nextBtn">Next</button>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressBar = document.getElementById('progressBar');
+        
+        let currentSlideIndex = 0;
+
+        function updateSlidePosition() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'previous');
+                if (index === currentSlideIndex) {
+                    slide.classList.add('active');
+                } else if (index < currentSlideIndex) {
+                    slide.classList.add('previous');
+                }
+            });
+
+            // Button Constraints
+            prevBtn.disabled = currentSlideIndex === 0;
+            nextBtn.disabled = currentSlideIndex === slides.length - 1;
+
+            // Bar Progress Calibration
+            const progressPercentage = (currentSlideIndex / (slides.length - 1)) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentSlideIndex > 0) {
+                currentSlideIndex--;
+                updateSlidePosition();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentSlideIndex < slides.length - 1) {
+                currentSlideIndex++;
+                updateSlidePosition();
+            }
+        });
+
+        // Key Commands Link
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                if (currentSlideIndex < slides.length - 1) {
+                    currentSlideIndex++;
+                    updateSlidePosition();
+                }
+            } else if (e.key === 'ArrowLeft') {
+                if (currentSlideIndex > 0) {
+                    currentSlideIndex--;
+                    updateSlidePosition();
+                }
+            }
+        });
+
+        // Swipe Configuration for Touch Devices
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        const container = document.querySelector('.deck-container');
+        container.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        container.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50) {
+                if (currentSlideIndex < slides.length - 1) {
+                    currentSlideIndex++;
+                    updateSlidePosition();
+                }
+            }
+            if (touchEndX > touchStartX + 50) {
+                if (currentSlideIndex > 0) {
+                    currentSlideIndex--;
+                    updateSlidePosition();
+                }
+            }
+        }
+
+        // Initialize Bar
+        updateSlidePosition();
+    </script>
+</body>
+</html>

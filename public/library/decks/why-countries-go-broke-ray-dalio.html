@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How Countries Go Broke: The Big Cycle — Ray Dalio Presentation</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --accent-gold: #d4af37;
+            --accent-red: #da3633;
+            --text-main: #c9d1d9;
+            --text-bright: #f0f6fc;
+            --text-muted: #8b949e;
+            --border-color: #30363d;
+            --card-glow: rgba(212, 175, 55, 0.05);
+            --transition-speed: 0.6s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Slide Deck Container */
+        .deck-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Individual Slides */
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 4rem 6rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95) translateX(50px);
+            transition: opacity var(--transition-speed) ease, 
+                        transform var(--transition-speed) cubic-bezier(0.25, 1, 0.5, 1);
+            background-color: var(--bg-primary);
+            z-index: 1;
+        }
+
+        .slide.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1) translateX(0);
+            z-index: 2;
+        }
+
+        .slide.previous {
+            transform: scale(0.95) translateX(-50px);
+        }
+
+        /* Slide Typography & Layout components */
+        h1, h2, h3 {
+            color: var(--text-bright);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .slide-title {
+            font-size: 2.8rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .slide-title span.accent {
+            color: var(--accent-gold);
+        }
+
+        p {
+            font-size: 1.25rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .highlight-box {
+            background-color: var(--bg-secondary);
+            border-left: 4px solid var(--accent-gold);
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin: 1.5rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .red-dot-principle {
+            border-left-color: var(--accent-red);
+            font-style: italic;
+        }
+        
+        .red-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: var(--accent-red);
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        /* Layout Grid Options */
+        .grid-2x2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .grid-3col {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 10px var(--card-glow);
+            border-color: var(--accent-gold);
+        }
+
+        .card h3 {
+            color: var(--accent-gold);
+            margin-bottom: 0.75rem;
+            font-size: 1.4rem;
+        }
+
+        /* Animations for elements inside active slides */
+        .slide.active .animate-fade-in {
+            animation: fadeIn 0.8s forwards;
+            animation-delay: 0.2s;
+            opacity: 0;
+        }
+
+        .slide.active .animate-cascade > * {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: cascadeIn 0.5s forwards;
+        }
+
+        .slide.active .animate-cascade > *:nth-child(1) { animation-delay: 0.1s; }
+        .slide.active .animate-cascade > *:nth-child(2) { animation-delay: 0.25s; }
+        .slide.active .animate-cascade > *:nth-child(3) { animation-delay: 0.4s; }
+        .slide.active .animate-cascade > *:nth-child(4) { animation-delay: 0.55s; }
+        .slide.active .animate-cascade > *:nth-child(5) { animation-delay: 0.7s; }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        @keyframes cascadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Navigation Controls */
+        .controls {
+            position: absolute;
+            bottom: 2rem;
+            right: 3rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 10;
+        }
+
+        .btn-nav {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-bright);
+            padding: 0.75rem 1.25rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-nav:hover {
+            background-color: var(--accent-gold);
+            color: var(--bg-primary);
+            border-color: var(--accent-gold);
+        }
+
+        .progress-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background-color: var(--border-color);
+            z-index: 10;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--accent-gold);
+            transition: width 0.3s ease;
+        }
+
+        .slide-counter {
+            position: absolute;
+            bottom: 2.2rem;
+            left: 3rem;
+            font-size: 1rem;
+            color: var(--text-muted);
+            z-index: 10;
+        }
+
+        /* Custom Specific Layout Styling */
+        .equation-box {
+            font-family: "Courier New", Courier, monospace;
+            background-color: #000;
+            color: #39ff14;
+            padding: 2rem;
+            border-radius: 6px;
+            font-size: 1.3rem;
+            text-align: center;
+            margin: 2rem 0;
+            border: 1px solid #1f3f1f;
+        }
+
+        .stage-badge {
+            display: inline-block;
+            background-color: var(--border-color);
+            color: var(--text-bright);
+            padding: 0.2rem 0.6rem;
+            border-radius: 3px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        /* Responsive changes */
+        @media(max-width: 900px) {
+            .slide { padding: 2rem; }
+            .slide-title { font-size: 2rem; }
+            .grid-2x2, .grid-3col { grid-template-columns: 1fr; }
+            .equation-box { font-size: 1rem; padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="deck-container">
+
+        <div class="slide active" style="justify-content: center; text-align: center; background: radial-gradient(circle, #1a2332 0%, #0d1117 100%);">
+            <div class="animate-cascade">
+                <h1 style="font-size: 4rem; margin-bottom: 1rem; color: var(--text-bright);">HOW COUNTRIES<br><span style="color: var(--accent-gold);">GO BROKE</span></h1>
+                <h2 style="font-size: 1.8rem; font-weight: 400; color: var(--text-muted); letter-spacing: 4px; margin-bottom: 3rem;">THE BIG CYCLE</h2>
+                <p style="font-size: 1.4rem; color: var(--text-bright);">A Comprehensive Template Framework by <strong>Ray Dalio</strong> [cite: 948]</p>
+                <div style="margin-top: 2rem; font-size: 1rem; color: var(--text-muted);">Interactive Book Presentation Deck — 2025 Edition [cite: 942]</div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2 class="slide-title">The Lifespan of <span class="accent">The Big Cycle</span></h2>
+            <div class="grid-2x2 animate-cascade">
+                <div class="card">
+                    <h3>The 80-Year Blindspot</h3>
+                    <p>Long-term debt cycles typically last about <strong>one lifetime (roughly 80 years, give or take 25 years)</strong>[cite: 1022]. Because of this timeline, most people do not get to live through a complete breakdown phase first-hand, making it easy to overlook the macro shift[cite: 1022].</p>
+                </div>
+                <div class="card">
+                    <h3>Extinction of Currencies</h3>
+                    <p>Historical data provides severe warnings. Out of roughly <strong>750 debt and currency markets</strong> that have existed since 1700, <strong>only about 20% remain</strong>[cite: 1014]. All the others were completely wiped out or severely devalued[cite: 1014].</p>
+                </div>
+            </div>
+            <div class="highlight-box red-dot-principle animate-fade-in">
+                <span class="red-dot"></span>If we don't agree on how things work, we won't be able to agree on what's happening or what is likely to happen. [cite: 1029]
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2 class="slide-title">The <span class="accent">Overall Big Cycle</span> Template</h2>
+            <p>The Big Debt Cycle does not act in isolation. It coordinates dynamically alongside 5 major macro drivers that shift world orders: [cite: 1039, 1040, 1041]</p>
+            <div class="grid-3col animate-cascade" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="card">
+                    <h3>1. Debt & Currency Cycle</h3>
+                    <p>The unwavering rise of domestic indebtedness matching the long-term weakening of monetary safeguards. [cite: 1056, 1057]</p>
+                </div>
+                <div class="card">
+                    <h3>2. Internal Order/Conflict</h3>
+                    <p>Cycles of political and social harmony vs extreme polarization, populism, and internal class strain. [cite: 1040]</p>
+                </div>
+                <div class="card">
+                    <h3>3. Geopolitical Alignment</h3>
+                    <p>Shifting world distribution of power, trade stand-offs, economic warfare, and external military friction. [cite: 1040, 601]</p>
+                </div>
+            </div>
+            <div class="grid-2x2 animate-cascade" style="margin-top: 1rem;">
+                <div class="card">
+                    <h3>4. Acts of Nature</h3>
+                    <p>Historically critical shocks like pandemics, severe droughts, floods, and volatile climate adaptations. [cite: 1041, 576]</p>
+                </div>
+                <div class="card">
+                    <h3>5. Technological Disruption</h3>
+                    <p>New waves of productivity advances that alter both baseline peace economies and warfare capabilities. [cite: 1041, 823]</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2 class="slide-title">The Mechanics in <span class="accent">Numbers & Equations</span></h2>
+            <p>Ray Dalio summarizes a sovereign asset's foundational fiscal health using a precise projection of future structural stability: [cite: 1056]</p>
+            
+            <div class="equation-box animate-fade-in">
+                (Future Expenses Excluding Interest - Future Revenue) + Current Debt * (1 + Interest Rate)<br>
+                -----------------------------------------------------------------------------------------<br>
+                Current Revenue * (1 + Growth Rate)
+            </div>
+
+            <div class="grid-2x2 animate-cascade">
+                <div class="card">
+                    <h3>3 Key Drivers of Future Ratios</h3>
+                    <p>1. <strong>Structural Spend:</strong> Spending more or less than one makes in baseline revenue[cite: 177].<br>
+                    2. <strong>Compounding Force:</strong> The velocity at which existing debts accumulate interest burdens[cite: 177].<br>
+                    3. <strong>Revenue Growth:</strong> Scaling economic productivity to support structural leverage[cite: 177].</p>
+                </div>
+                <div class="card">
+                    <h3>The Monetization Red Flag</h3>
+                    <p>When the free-market demand for central government bonds falls short of structural issuance supply, the central bank must step in to print money and purchase the debt[cite: 194, 297]. This holds interest rates artificially low but triggers currency erosion[cite: 194, 217].</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2 class="slide-title">The <span class="accent">9-Stage Sequence</span> of Sovereign Failure</h2>
+            <p>Derived from 35 structural case studies, Dalio charts the precise evolutionary trajectory of central governments going broke: [cite: 1057]</p>
+            <div class="grid-3col animate-cascade">
+                <div class="card">
+                    <h3>Stages 1–4: Private & Public Squeezes</h3>
+                    <p><span class="stage-badge">1</span> Healthy early credit expansions[cite: 586].<br>
+                    <span class="stage-badge">2</span> Asset bubbles accelerate[cite: 799].<br>
+                    <span class="stage-badge">3</span> Supply outstrips debt asset demand[cite: 297].<br>
+                    <span class="stage-badge">4</span> Government debt service spikes to swallow revenues[cite: 299, 304].</p>
+                </div>
+                <div class="card">
+                    <h3>Stages 5–6: Central Bank Spillovers</h3>
+                    <p><span class="stage-badge">5</span> Capital flight emerges; shortening of asset maturities[cite: 373, 428].<br>
+                    <span class="stage-badge">6</span> Aggressive quantitative easing / central bank monetization forces severe real asset devaluations[cite: 217, 428].</p>
+                </div>
+                <div class="card">
+                    <h3>Stages 7–9: The New Order</h3>
+                    <p><span class="stage-badge">7</span> Imposition of capital controls & wealth taxes[cite: 76, 239].<br>
+                    <span class="stage-badge">8</span> Debt write-downs, restructuring & debt defaults[cite: 239, 485].<br>
+                    <span class="stage-badge">9</span> Forced transition back to hard-linked money systems[cite: 240, 485].</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2 class="slide-title">Late-Stage <span class="accent">Corporate & Market Actions</span></h2>
+            <p>What behaviors signal that a sovereign ecosystem is approaching the later breakdown steps of the cycle? [cite: 374]</p>
+            <div class="grid-2x2 animate-cascade">
+                <div class="card">
+                    <h3>Offshore Capital Stashing</h3>
+                    <p>Domestic corporations structurally decide to keep international revenue offshore, holding major balances in reliable foreign FX rather than converting back to their volatile home currency[cite: 374].</p>
+                </div>
+                <div class="card">
+                    <h3>Currency Hedging Shifts</h3>
+                    <p>Companies transition from hedging typical standard exposures to actively treating their own home local currency as the primary high-risk exposure asset requiring strategic protection[cite: 375].</p>
+                </div>
+                <div class="card">
+                    <h3>Shortened Bond Durations</h3>
+                    <p>Free-market lenders limit risk by migrating exclusively to short-term paper[cite: 428]. The share of public debts maturing in under 1 year surges rapidly[cite: 428].</p>
+                </div>
+                <div class="card">
+                    <h3>Asset Protection Behavior</h3>
+                    <p>Private capital actively steps out of nominal cash/bonds and systematically relocates into tangible wealth storeholds like gold or hard industrial commodities[cite: 240, 459].</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2 class="slide-title">The Evolution of <span class="accent">Monetary Frameworks</span></h2>
+            <div class="grid-2x2 animate-cascade" style="grid-template-columns: 1fr 1fr;">
+                <div class="card">
+                    <h3>MP0 & MP1: Sound Links to Free Float</h3>
+                    <p><strong>Monetary Policy 0:</strong> Paper money directly linked to hard assets (classically Gold)[cite: 690]. Safeguards limits on credit expansion.<br><br>
+                    <strong>Monetary Policy 1:</strong> Interest-rate-driven systems operating via fiat frameworks[cite: 718, 757]. This functions cleanly until nominal rates hit 0% floor thresholds[cite: 88].</p>
+                </div>
+                <div class="card">
+                    <h3>MP2 & MP3: Monetization & Fiscal Blending</h3>
+                    <p><strong>Monetary Policy 2:</strong> Quantitative Easing (QE)[cite: 757]. Central Banks bypass standard bank lending channels to print money to directly acquire market debt assets[cite: 758].<br><br>
+                    <strong>Monetary Policy 3:</strong> Direct joint execution[cite: 900]. The central bank directly prints money to coordinate with large fiscal government deficit spending programs[cite: 900].</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2 class="slide-title">The Dalio <span class="accent">3% 3-Part Solution</span></h2>
+            <p>To pull a central government framework back to long-term mathematical stability, policy makers must balance adjustments strategically: [cite: 869]</p>
+            <div class="grid-3col animate-cascade">
+                <div class="card">
+                    <h3>1. Revenue Expansion</h3>
+                    <p>Implementing a structural <strong>11% baseline tax increase</strong> across target sectors to resolve the long-term sovereign primary account deficit[cite: 869].</p>
+                </div>
+                <div class="card">
+                    <h3>2. Spending Reform</h3>
+                    <p>Executing a structural <strong>12% real programmatic budget cut</strong> to permanently match outlays with current natural revenues[cite: 869].</p>
+                </div>
+                <div class="card">
+                    <h3>3. Monetary Easing</h3>
+                    <p>Adjusting systemic parameters to deliver a clean <strong>3% reduction in real interest rates</strong>, easing default pressures off debtors[cite: 869].</p>
+                </div>
+            </div>
+            <div class="highlight-box animate-fade-in" style="margin-top: 1.5rem; border-color: var(--accent-gold);">
+                <h3>Conclusion Summary</h3>
+                <p style="font-size: 1.1rem; margin-bottom: 0;">By recognizing these mechanisms as historic, repeatable equations rather than unique contemporary novelties, macro investors and policy leaders can successfully anticipate, protect capital, and transition seamlessly through inevitable adjustments in global currency orders[cite: 1011, 1054].</p>
+            </div>
+        </div>
+
+        <div class="slide-counter">Slide <span id="current-slide-num">1</span> of <span id="total-slides-num">8</span></div>
+        
+        <div class="controls">
+            <button class="btn-nav" id="btn-prev">← Previous</button>
+            <button class="btn-nav" id="btn-next">Next →</button>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="slide-progress"></div>
+        </div>
+
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const currentNumText = document.getElementById('current-slide-num');
+        const totalNumText = document.getElementById('total-slides-num');
+        const progressBar = document.getElementById('slide-progress');
+        
+        let currentSlideIndex = 0;
+        const totalSlides = slides.length;
+        
+        totalNumText.textContent = totalSlides;
+
+        function updateSlideVisibility() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'previous');
+                if (index === currentSlideIndex) {
+                    slide.classList.add('active');
+                } else if (index < currentSlideIndex) {
+                    slide.classList.add('previous');
+                }
+            });
+
+            // Update footer status text & progress tracker metrics
+            currentNumText.textContent = currentSlideIndex + 1;
+            const progressPercent = ((currentSlideIndex + 1) / totalSlides) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+        }
+
+        function nextSlide() {
+            if (currentSlideIndex < totalSlides - 1) {
+                currentSlideIndex++;
+                updateSlideVisibility();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlideIndex > 0) {
+                currentSlideIndex--;
+                updateSlideVisibility();
+            }
+        }
+
+        // Action Bindings (Buttons)
+        btnNext.addEventListener('click', nextSlide);
+        btnPrev.addEventListener('click', prevSlide);
+
+        // Action Bindings (Keyboard Controls)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Space') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+
+        // Initialize display properties
+        updateSlideVisibility();
+    </script>
+</body>
+</html>

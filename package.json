@@ -9,6 +9,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "og": "node scripts/generate-og.mjs",
+    "library": "node scripts/build-library.mjs",
     "preview": "astro preview",
     "astro": "astro"
   },

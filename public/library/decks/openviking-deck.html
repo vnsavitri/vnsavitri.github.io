@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="oklch(0.12 0.02 280)">
+  <meta name="description" content="A plain-English, interactive guide to OpenViking, the context database for AI agents.">
+  <title>OpenViking — Context, with a filesystem attached</title>
+  <style>
+    :root {
+      --bg: oklch(0.12 0.02 280);
+      --surface: oklch(0.17 0.02 280);
+      --surface-2: oklch(0.215 0.025 280);
+      --surface-3: oklch(0.26 0.03 280);
+      --ink: oklch(0.97 0.01 95);
+      --muted: oklch(0.76 0.025 280);
+      --quiet: oklch(0.62 0.035 280);
+      --line: oklch(0.34 0.03 280);
+      --violet: oklch(0.68 0.15 280);
+      --violet-soft: oklch(0.28 0.08 280);
+      --amber: oklch(0.78 0.15 70);
+      --cyan: oklch(0.75 0.12 205);
+      --green: oklch(0.76 0.13 150);
+      --red: oklch(0.72 0.16 30);
+      --shadow: oklch(0.02 0 0 / 0.32);
+      --radius: 12px;
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    html.light {
+      --bg: oklch(1 0 0);
+      --surface: oklch(0.965 0.012 280);
+      --surface-2: oklch(0.925 0.018 280);
+      --surface-3: oklch(0.875 0.024 280);
+      --ink: oklch(0.18 0.03 280);
+      --muted: oklch(0.43 0.035 280);
+      --quiet: oklch(0.57 0.03 280);
+      --line: oklch(0.83 0.02 280);
+      --violet: oklch(0.49 0.18 280);
+      --violet-soft: oklch(0.91 0.05 280);
+      --amber: oklch(0.58 0.16 70);
+      --cyan: oklch(0.51 0.13 205);
+      --green: oklch(0.53 0.14 150);
+      --red: oklch(0.57 0.16 30);
+      --shadow: oklch(0.1 0.02 280 / 0.13);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+    button, a { font: inherit; }
+    button { color: inherit; }
+    a { color: inherit; }
+    :focus-visible { outline: 3px solid var(--amber); outline-offset: 4px; }
+    ::selection { background: var(--amber); color: oklch(0.12 0 0); }
+
+    .deck {
+      min-height: 100svh;
+      background: var(--bg);
+    }
+    .topbar {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem clamp(1rem, 3vw, 2.5rem);
+      background: color-mix(in oklch, var(--bg) 90%, transparent);
+      border-bottom: 1px solid color-mix(in oklch, var(--line) 60%, transparent);
+      backdrop-filter: blur(14px);
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: .7rem;
+      font-size: .78rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 1.8rem;
+      height: 1.8rem;
+      border: 1px solid var(--violet);
+      color: var(--amber);
+      font-weight: 500;
+      font-size: .68rem;
+      letter-spacing: -.08em;
+    }
+    .top-actions { display: flex; align-items: center; gap: .5rem; }
+    .top-actions button, .top-actions a {
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--muted);
+      padding: .45rem .7rem;
+      border-radius: 7px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: .78rem;
+    }
+    .top-actions button:hover, .top-actions a:hover { color: var(--ink); border-color: var(--muted); }
+    .progress {
+      position: fixed;
+      inset: auto 0 0;
+      z-index: 11;
+      height: 3px;
+      background: var(--surface-2);
+    }
+    .progress > span { display: block; height: 100%; width: 0; background: var(--amber); transition: width .45s var(--ease); }
+
+    .slide {
+      display: none;
+      min-height: 100svh;
+      padding: clamp(6rem, 10vw, 8rem) clamp(1.1rem, 6vw, 6rem) clamp(4rem, 8vw, 6rem);
+      position: relative;
+    }
+    .slide.is-active { display: block; animation: slide-in .55s var(--ease) both; }
+    @keyframes slide-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @media (prefers-reduced-motion: reduce) {
+      .slide.is-active { animation: none; }
+      .progress > span { transition: none; }
+      * { scroll-behaviour: auto !important; }
+    }
+    .slide-inner { width: min(1180px, 100%); margin: 0 auto; }
+    .kicker { color: var(--amber); font-size: .76rem; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 1.5rem; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2, h3 { text-wrap: balance; }
+    h1 { max-width: 980px; font-size: clamp(3.4rem, 9vw, 7.5rem); line-height: .94; letter-spacing: -.035em; font-weight: 500; margin-bottom: 1.5rem; }
+    h2 { max-width: 820px; font-size: clamp(2.35rem, 5.2vw, 5.2rem); line-height: .98; letter-spacing: -.03em; font-weight: 500; margin-bottom: 1.25rem; }
+    h3 { font-size: clamp(1.25rem, 2.4vw, 1.8rem); line-height: 1.1; font-weight: 500; margin-bottom: .65rem; }
+    .lede { max-width: 65ch; color: var(--muted); font-size: clamp(1.05rem, 1.8vw, 1.35rem); line-height: 1.45; }
+    .small { color: var(--quiet); font-size: .82rem; }
+    .accent { color: var(--amber); }
+    .violet { color: var(--violet); }
+    .cyan { color: var(--cyan); }
+    .green { color: var(--green); }
+    .rule { height: 1px; background: var(--line); margin: 2rem 0; }
+    .source-row { display: flex; flex-wrap: wrap; gap: .65rem 1.2rem; margin-top: 2rem; color: var(--quiet); font-size: .78rem; }
+    .source-row a { color: var(--muted); text-decoration-color: var(--line); text-underline-offset: 3px; }
+    .source-row a:hover { color: var(--amber); }
+    .grid-2 { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: clamp(2rem, 7vw, 7rem); align-items: center; }
+    .slide:first-of-type .slide-inner {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(220px, .42fr);
+      grid-template-areas:
+        "kicker stamp"
+        "title stamp"
+        "lede stamp"
+        "note stamp"
+        "source stamp"
+        "control stamp";
+      column-gap: clamp(2rem, 6vw, 6rem);
+      align-items: center;
+    }
+    .slide:first-of-type .kicker { grid-area: kicker; }
+    .slide:first-of-type h1 { grid-area: title; }
+    .slide:first-of-type .lede { grid-area: lede; }
+    .slide:first-of-type .hero-note { grid-area: note; }
+    .slide:first-of-type .source-row { grid-area: source; }
+    .slide:first-of-type .slide-control { grid-area: control; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .grid-3 > * { background: var(--bg); padding: clamp(1.25rem, 3vw, 2rem); }
+    .label { color: var(--quiet); font-size: .78rem; letter-spacing: .05em; text-transform: uppercase; }
+
+    .hero-stamp {
+      grid-area: stamp;
+      position: relative;
+      width: min(100%, 360px);
+      aspect-ratio: 1;
+      border: 1px solid var(--line);
+      display: grid;
+      place-items: center;
+      color: var(--violet);
+      opacity: .9;
+      justify-self: end;
+      align-self: center;
+    }
+    .hero-stamp::before, .hero-stamp::after { content: ""; position: absolute; border: 1px solid var(--line); inset: 12%; }
+    .hero-stamp::after { inset: 24%; border-color: var(--amber); }
+    .hero-stamp span { position: relative; z-index: 1; font-size: clamp(2rem, 5vw, 5rem); letter-spacing: -.08em; }
+    .hero-note { display: flex; gap: 1rem; align-items: flex-start; max-width: 42rem; margin-top: 3rem; color: var(--muted); }
+    .hero-note i { width: 2.5rem; height: 1px; margin-top: .75rem; background: var(--amber); flex: 0 0 auto; }
+
+    .compare { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .compare-row { display: grid; grid-template-columns: minmax(8rem, .7fr) 1fr 1fr; border-bottom: 1px solid var(--line); }
+    .compare-row:last-child { border-bottom: 0; }
+    .compare-row > * { padding: 1rem; }
+    .compare-row > * + * { border-left: 1px solid var(--line); }
+    .compare-row .head { color: var(--quiet); font-size: .8rem; }
+    .compare-row .good { background: color-mix(in oklch, var(--violet-soft) 52%, var(--bg)); }
+    .check { color: var(--green); font-size: 1.15rem; }
+
+    .tree-wrap { border: 1px solid var(--line); background: var(--surface); padding: clamp(1.2rem, 3vw, 2rem); }
+    .tree-toolbar { display: flex; justify-content: space-between; gap: 1rem; padding-bottom: 1.15rem; border-bottom: 1px solid var(--line); }
+    .tree-path { color: var(--amber); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem; }
+    .tree-list { padding: 1.3rem 0 0 1rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9rem; line-height: 2; }
+    .tree-list div { padding-left: var(--indent, 0); }
+    .tree-list .dir { color: var(--cyan); }
+    .tree-list .file { color: var(--muted); }
+    .tree-list .note { color: var(--quiet); font-size: .76rem; }
+    .switcher { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.6rem 0; }
+    .switcher button { border: 1px solid var(--line); background: transparent; color: var(--muted); padding: .55rem .75rem; border-radius: 999px; cursor: pointer; }
+    .switcher button[aria-pressed="true"] { border-color: var(--amber); color: var(--ink); background: color-mix(in oklch, var(--amber) 10%, transparent); }
+
+    .tier-panel { border: 1px solid var(--line); min-height: 270px; background: var(--surface); padding: clamp(1.3rem, 3vw, 2rem); position: relative; overflow: hidden; }
+    .tier-panel::after { content: attr(data-tier); position: absolute; right: 1rem; bottom: -1.7rem; font-size: 10rem; font-weight: 500; color: color-mix(in oklch, var(--violet) 16%, transparent); letter-spacing: -.1em; line-height: 1; }
+    .tier-panel > * { position: relative; z-index: 1; }
+    .tier-panel .tier-name { color: var(--amber); font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+    .tier-panel .tier-limit { margin: 1.5rem 0; font-size: clamp(2.2rem, 5vw, 4.7rem); line-height: .95; letter-spacing: -.05em; }
+    .tier-panel .tier-copy { max-width: 36ch; color: var(--muted); }
+
+    .flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .flow-step { position: relative; padding: 1.2rem 1rem 1.5rem; min-height: 130px; }
+    .flow-step + .flow-step { border-left: 1px solid var(--line); }
+    .flow-step:not(:last-child)::after { content: "→"; position: absolute; right: -.65rem; top: 50%; transform: translateY(-50%); color: var(--amber); background: var(--bg); padding: .15rem; z-index: 1; }
+    .flow-number { color: var(--amber); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; }
+    .flow-step strong { display: block; margin: 1.2rem 0 .35rem; font-weight: 500; }
+    .flow-step span { color: var(--quiet); font-size: .82rem; }
+
+    .retrieval-demo { border: 1px solid var(--line); background: var(--surface); padding: clamp(1.2rem, 3vw, 2rem); }
+    .query-box { display: flex; align-items: center; gap: .8rem; border-bottom: 1px solid var(--line); padding-bottom: 1.1rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .query-box::before { content: ">"; color: var(--amber); }
+    .query-box code { color: var(--ink); overflow-wrap: anywhere; }
+    .retrieval-result { padding-top: 1.35rem; display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: end; }
+    .result-title { color: var(--cyan); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .86rem; }
+    .result-copy { max-width: 40ch; color: var(--muted); margin-top: .55rem; }
+    .result-metric { color: var(--amber); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-align: right; }
+    .result-metric small { display: block; color: var(--quiet); font-family: inherit; font-size: .7rem; margin-top: .2rem; }
+    .mini-bars { display: grid; gap: .45rem; margin-top: 1.5rem; }
+    .bar-line { display: grid; grid-template-columns: 7rem 1fr; gap: .6rem; align-items: center; font-size: .74rem; color: var(--quiet); }
+    .bar-track { height: .45rem; background: var(--surface-3); }
+    .bar-fill { height: 100%; background: var(--violet); }
+
+    .architecture { display: grid; grid-template-columns: 1fr 1.15fr 1fr; align-items: stretch; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .arch-column { background: var(--bg); padding: 1.25rem; display: grid; align-content: center; gap: .7rem; }
+    .arch-column.middle { background: var(--surface); padding: 1.5rem; }
+    .arch-node { border: 1px solid var(--line); padding: .85rem; cursor: pointer; transition: border-color .25s var(--ease), background .25s var(--ease); }
+    .arch-node:hover, .arch-node.is-selected { border-color: var(--amber); background: color-mix(in oklch, var(--amber) 9%, var(--bg)); }
+    .arch-node strong { display: block; font-weight: 500; }
+    .arch-node small { display: block; color: var(--quiet); margin-top: .25rem; }
+    .arch-core { display: grid; place-items: center; text-align: center; min-height: 190px; border: 1px solid var(--violet); background: color-mix(in oklch, var(--violet-soft) 70%, var(--surface)); }
+    .arch-core strong { font-size: clamp(1.3rem, 3vw, 2.3rem); font-weight: 500; letter-spacing: -.04em; }
+    .arch-core span { color: var(--muted); font-size: .85rem; max-width: 23ch; margin-top: .45rem; }
+    .arch-detail { min-height: 4rem; color: var(--muted); font-size: .9rem; padding-top: .5rem; }
+
+    .commit-sequence { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .commit-row { display: grid; grid-template-columns: 10rem 1fr; background: var(--bg); }
+    .commit-row > * { padding: 1rem 1.2rem; }
+    .commit-row .when { color: var(--amber); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem; }
+    .commit-row .what { color: var(--muted); }
+    .commit-row .what strong { color: var(--ink); font-weight: 500; }
+
+    .proof { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .proof-item { background: var(--surface); padding: 1.5rem; }
+    .proof-item .number { font-size: clamp(2rem, 5vw, 4.2rem); line-height: .95; letter-spacing: -.06em; color: var(--amber); }
+    .proof-item p { color: var(--muted); margin: .75rem 0 0; }
+    .proof-note { margin-top: 1rem; color: var(--quiet); font-size: .78rem; }
+
+    .use-cases { display: grid; grid-template-columns: 1.2fr .8fr; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .use-case-main, .use-case-list { background: var(--bg); padding: clamp(1.3rem, 3vw, 2.2rem); }
+    .use-case-main { min-height: 360px; display: flex; flex-direction: column; justify-content: space-between; }
+    .use-case-main .case-quote { font-size: clamp(1.8rem, 4vw, 4rem); line-height: 1.02; letter-spacing: -.04em; max-width: 16ch; }
+    .case-meta { color: var(--amber); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; }
+    .use-case-list { background: var(--surface); padding: 0; }
+    .use-case-list button { width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--line); background: transparent; padding: 1.1rem 1.25rem; cursor: pointer; }
+    .use-case-list button:last-child { border-bottom: 0; }
+    .use-case-list button:hover, .use-case-list button[aria-pressed="true"] { background: color-mix(in oklch, var(--violet-soft) 65%, var(--surface)); }
+    .use-case-list strong { display: block; font-weight: 500; }
+    .use-case-list span { color: var(--quiet); font-size: .82rem; }
+
+    .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .step { background: var(--bg); padding: 1.2rem 1.3rem 1.5rem; min-height: 175px; }
+    .step:nth-child(odd) { background: var(--surface); }
+    .step-top { display: flex; justify-content: space-between; gap: 1rem; color: var(--amber); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; }
+    .step h3 { margin-top: 1.25rem; font-size: 1.25rem; }
+    .step p { color: var(--muted); font-size: .9rem; max-width: 44ch; }
+    pre { margin: .9rem 0 0; padding: 1rem; overflow-x: auto; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink); font: .78rem/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .code-comment { color: var(--quiet); }
+    .code-key { color: var(--cyan); }
+    .code-string { color: var(--amber); }
+
+    .watch { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(2rem, 6vw, 6rem); align-items: start; }
+    .watch-list { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
+    .watch-list li { display: grid; grid-template-columns: 1.5rem 1fr; gap: .8rem; padding: 1rem 0; border-bottom: 1px solid var(--line); color: var(--muted); }
+    .watch-list li::before { content: "·"; color: var(--amber); font-size: 1.5rem; line-height: 1; }
+    .license { border: 1px solid var(--line); background: var(--surface); padding: 1.5rem; }
+    .license strong { display: block; font-size: 1.55rem; font-weight: 500; margin: .55rem 0; }
+
+    .source-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .source-list a { display: block; background: var(--bg); padding: 1.25rem; text-decoration: none; }
+    .source-list a:hover { background: var(--surface); }
+    .source-list strong { display: block; font-weight: 500; margin-bottom: .35rem; }
+    .source-list span { display: block; color: var(--quiet); font-size: .82rem; }
+    .closing { padding-top: clamp(8rem, 18vw, 14rem); }
+    .closing h2 { max-width: 950px; }
+    .closing .lede { max-width: 48ch; }
+    .closing-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 2rem; }
+    .cta { display: inline-flex; align-items: center; gap: .55rem; border: 1px solid var(--amber); background: var(--amber); color: oklch(0.13 0.01 70); padding: .75rem 1rem; border-radius: 7px; text-decoration: none; font-weight: 500; cursor: pointer; }
+    .cta.secondary { background: transparent; color: var(--ink); border-color: var(--line); }
+
+    .nav-dots { position: fixed; right: clamp(1rem, 3vw, 2.5rem); top: 50%; transform: translateY(-50%); z-index: 9; display: grid; gap: .45rem; }
+    .nav-dots button { width: .55rem; height: .55rem; padding: 0; border: 1px solid var(--quiet); background: transparent; cursor: pointer; border-radius: 50%; }
+    .nav-dots button[aria-current="true"] { border-color: var(--amber); background: var(--amber); }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    .slide-control { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 2rem; }
+    .slide-control button { border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: .5rem 0; }
+    .slide-control button:hover { color: var(--amber); }
+    .slide-control .counter { color: var(--quiet); font: .75rem ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+    @media (max-width: 820px) {
+      .slide:first-of-type .slide-inner { display: block; }
+      .hero-stamp { width: 42vw; min-width: 150px; margin: 4rem 0 0 auto; }
+      .grid-2, .watch, .use-cases { grid-template-columns: 1fr; }
+      .grid-3, .proof { grid-template-columns: 1fr; }
+      .flow { grid-template-columns: 1fr; }
+      .flow-step { min-height: 0; display: grid; grid-template-columns: 2rem 1fr; gap: .75rem; padding: 1rem; }
+      .flow-step + .flow-step { border-left: 0; border-top: 1px solid var(--line); }
+      .flow-step:not(:last-child)::after { content: "↓"; right: auto; left: 1.1rem; top: auto; bottom: -.75rem; transform: none; }
+      .flow-step strong { margin: 0 0 .3rem; }
+      .flow-step span { grid-column: 2; }
+      .architecture { grid-template-columns: 1fr; }
+      .arch-column.middle { order: -1; }
+      .steps { grid-template-columns: 1fr; }
+      .source-list { grid-template-columns: 1fr; }
+      .nav-dots { display: none; }
+      .top-actions a.github-link { display: none; }
+    }
+    @media (max-width: 560px) {
+      .topbar { padding: .8rem 1rem; }
+      .top-actions button, .top-actions a { font-size: .7rem; padding: .4rem .5rem; }
+      .brand { font-size: .68rem; }
+      .brand-mark { width: 1.6rem; height: 1.6rem; }
+      .compare-row { grid-template-columns: 1fr; }
+      .compare-row > * + * { border-left: 0; border-top: 1px solid var(--line); }
+      .compare-row .head { padding-bottom: .4rem; }
+      .retrieval-result { grid-template-columns: 1fr; }
+      .result-metric { text-align: left; }
+      .commit-row { grid-template-columns: 1fr; }
+      .commit-row > * { padding: .75rem 1rem; }
+      .commit-row .what { padding-top: 0; }
+      h1 { font-size: clamp(3rem, 16vw, 4.4rem); }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" id="deck">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">OV</span><span>OpenViking / context database</span></div>
+      <div class="top-actions">
+        <a class="github-link" href="https://github.com/volcengine/OpenViking" target="_blank" rel="noreferrer">GitHub ↗</a>
+        <button id="themeToggle" type="button" aria-label="Switch colour theme">Light mode</button>
+        <button id="shareButton" type="button">Share</button>
+      </div>
+    </header>
+
+    <nav class="nav-dots" aria-label="Slide navigation" id="navDots"></nav>
+    <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+    <div class="sr-only" aria-live="polite" id="announcer"></div>
+
+    <section class="slide is-active" data-title="Cover">
+      <div class="slide-inner">
+        <div class="kicker">A field guide for curious humans</div>
+        <h1>Context,<br><span class="accent">with a filesystem</span><br>attached.</h1>
+        <p class="lede">OpenViking is an open-source context database for AI agents. It brings memory, knowledge and skills together under one navigable <code>viking://</code> namespace.</p>
+        <div class="hero-note"><i></i><span>Imagine giving an agent a well-organised archive it can browse, inspect and learn from — instead of handing it a bag of retrieved chunks.</span></div>
+        <div class="hero-stamp" aria-hidden="true"><span>v://</span></div>
+        <div class="source-row"><span>Based on the OpenViking repository and official docs</span><a href="https://github.com/volcengine/OpenViking" target="_blank" rel="noreferrer">github.com/volcengine/OpenViking ↗</a></div>
+        <div class="slide-control"><span class="counter">01 / 13</span><button type="button" data-next>Begin with the plain-English version →</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="TL;DR">
+      <div class="slide-inner">
+        <div class="kicker">TL;DR</div>
+        <div class="grid-2">
+          <div>
+            <h2>It gives an agent a place to <span class="accent">remember, browse and improve.</span></h2>
+            <p class="lede">OpenViking unifies three kinds of context — user memory, project resources and reusable skills — into a virtual filesystem. The agent can navigate that context with familiar operations such as <code>ls</code>, <code>tree</code> and <code>find</code>.</p>
+          </div>
+          <div class="compare" aria-label="The shift OpenViking makes">
+            <div class="compare-row"><div class="head">Before</div><div>Context is scattered</div><div class="good"><span class="check">✓</span> One context home</div></div>
+            <div class="compare-row"><div class="head">Before</div><div>Retrieve a chunk</div><div class="good"><span class="check">✓</span> Navigate a subtree</div></div>
+            <div class="compare-row"><div class="head">Before</div><div>Load everything</div><div class="good"><span class="check">✓</span> Load detail on demand</div></div>
+            <div class="compare-row"><div class="head">Before</div><div>Debug the answer</div><div class="good"><span class="check">✓</span> Inspect the path taken</div></div>
+          </div>
+        </div>
+        <div class="rule"></div>
+        <div class="grid-3">
+          <div><div class="label">Benefit 01</div><h3>Less context waste</h3><p class="small">Three information layers let an agent check relevance before loading full detail.</p></div>
+          <div><div class="label">Benefit 02</div><h3>Better context shape</h3><p class="small">Directory-level summaries preserve where information belongs, not just what it says.</p></div>
+          <div><div class="label">Benefit 03</div><h3>More observable recall</h3><p class="small">Retrieval trajectories show how the system arrived at a result.</p></div>
+        </div>
+        <div class="source-row"><a href="https://github.com/volcengine/OpenViking#what-is-openviking" target="_blank" rel="noreferrer">Repository: What is OpenViking ↗</a><a href="https://docs.openviking.ai/en/concepts/01-architecture" target="_blank" rel="noreferrer">Architecture docs ↗</a></div>
+        <div class="slide-control"><button type="button" data-prev>← Cover</button><span class="counter">02 / 13</span><button type="button" data-next>Why this is useful →</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Why it matters">
+      <div class="slide-inner">
+        <div class="kicker">The problem it addresses</div>
+        <h2>Agents don’t just need answers.<br>They need <span class="violet">context operations.</span></h2>
+        <p class="lede">A long-running agent has to locate the right knowledge, decide how much to load, reuse skills, retain useful experience and explain its path. OpenViking treats those as one context system.</p>
+        <div class="flow" style="margin-top:3rem" aria-label="The context operations an agent needs">
+          <div class="flow-step"><div class="flow-number">01</div><div><strong>Locate</strong><span>Find the right branch of context.</span></div></div>
+          <div class="flow-step"><div class="flow-number">02</div><div><strong>Orient</strong><span>Understand what a branch contains.</span></div></div>
+          <div class="flow-step"><div class="flow-number">03</div><div><strong>Load</strong><span>Read detail only when useful.</span></div></div>
+          <div class="flow-step"><div class="flow-number">04</div><div><strong>Act</strong><span>Use a resource or skill in the task.</span></div></div>
+          <div class="flow-step"><div class="flow-number">05</div><div><strong>Commit</strong><span>Turn useful session experience into memory.</span></div></div>
+        </div>
+        <div class="source-row"><a href="https://github.com/volcengine/OpenViking#why-openviking" target="_blank" rel="noreferrer">Repository: Why OpenViking ↗</a><a href="https://docs.openviking.ai/en/concepts/14-sessions" target="_blank" rel="noreferrer">Sessions docs ↗</a></div>
+        <div class="slide-control"><button type="button" data-prev>← TL;DR</button><span class="counter">03 / 13</span><button type="button" data-next>See the mental model →</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Virtual filesystem">
+      <div class="slide-inner">
+        <div class="kicker">Mental model</div>
+        <div class="grid-2">
+          <div>
+            <h2>One namespace.<br><span class="cyan">Three context types.</span></h2>
+            <p class="lede">OpenViking presents context as a virtual filesystem. The important shift is structural: memory, resources and skills can live alongside one another, with stable <code>viking://</code> URIs.</p>
+            <div class="switcher" role="group" aria-label="Choose a context type">
+              <button type="button" data-context="resources" aria-pressed="true">Resources</button>
+              <button type="button" data-context="memories" aria-pressed="false">Memories</button>
+              <button type="button" data-context="skills" aria-pressed="false">Skills</button>
+            </div>
+            <p class="small" id="contextCopy">Project docs, repositories, web pages and other source material the agent may need.</p>
+          </div>
+          <div class="tree-wrap" aria-label="Interactive example of a Viking URI tree">
+            <div class="tree-toolbar"><span class="tree-path" id="treePath">viking://resources/</span><span class="small">filesystem view</span></div>
+            <div class="tree-list" id="treeList">
+              <div class="dir">├── my_project/</div>
+              <div class="dir" style="--indent:1.2rem">├── docs/</div>
+              <div class="file" style="--indent:2.4rem">└── api/</div>
+              <div class="file" style="--indent:2.4rem">└── tutorials/</div>
+              <div class="dir" style="--indent:1.2rem">└── src/</div>
+              <div class="note" style="--indent:2.4rem"># directories carry semantic summaries</div>
+            </div>
+          </div>
+        </div>
+        <div class="source-row"><a href="https://docs.openviking.ai/en/concepts/02-context-types" target="_blank" rel="noreferrer">Context types docs ↗</a><a href="https://docs.openviking.ai/en/concepts/04-viking-uri" target="_blank" rel="noreferrer">Viking URI docs ↗</a></div>
+        <div class="slide-control"><button type="button" data-prev>← Why it matters</button><span class="counter">04 / 13</span><button type="button" data-next>How detail is loaded →</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="L0 / L1 / L2">
+      <div class="slide-inner">
+        <div class="kicker">Progressive disclosure</div>
+        <div class="grid-2">
+          <div>
+            <h2>Don’t pour the whole archive into the prompt.</h2>
+            <p class="lede">OpenViking creates a three-layer information model. An agent can start with a short abstract, orient itself with an overview, then open the original detail only when the task warrants it.</p>
+            <div class="switcher" role="group" aria-label="Choose a context layer">
+              <button type="button" data-tier="L0" aria-pressed="true">L0 / abstract</button>
+              <button type="button" data-tier="L1" aria-pressed="false">L1 / overview</button>
+              <button type="button" data-tier="L2" aria-pressed="false">L2 / detail</button>
+            </div>
+          </div>
+          <div class="tier-panel" id="tierPanel" data-tier="L0" aria-live="polite">
+            <div class="tier-name" id="tierName">L0 · Abstract</div>
+            <div class="tier-limit" id="tierLimit">256 characters</div>
+            <p class="tier-copy" id="tierCopy">A quick relevance check. Enough to decide whether this directory is worth opening.</p>
+          </div>
+        </div>
+        <div class="rule"></div>
+        <div class="grid-3">
+          <div><div class="label">L0</div><p>Short semantic signal for vector retrieval and quick filtering.</p></div>
+          <div><div class="label">L1</div><p>Broader directory summary for reranking and navigation.</p></div>
+          <div><div class="label">L2</div><p>Original files and subdirectories, loaded on demand.</p></div>
+        </div>
+        <div class="source-row"><a href="https://docs.openviking.ai/en/concepts/03-context-layers" target="_blank" rel="noreferrer">Context Layers docs ↗</a></div>
+        <div class="slide-control"><button type="button" data-prev>← Virtual filesystem</button><span class="counter">05 / 13</span><button type="button" data-next>How retrieval works →</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Retrieval">
+      <div class="slide-inner">
+        <div class="kicker">Retrieval</div>
+        <div class="grid-2">
+          <div>
+            <h2>Search becomes a <span class="accent">path.</span></h2>
+            <p class="lede">OpenViking uses two retrieval modes. <code>find()</code> is the low-latency option for a simple query. <code>search()</code> can analyse a complex task, create typed queries and retrieve across context types.</p>
+            <div class="switcher" role="group" aria-label="Choose a retrieval mode">
+              <button type="button" data-retrieval="find" aria-pressed="true">find() · simple</button>
+              <button type="button" data-retrieval="search" aria-pressed="false">search() · complex</button>
+            </div>
+            <p class="small" id="retrievalCopy">Use when you already know the kind of thing you want and need a lower-latency query.</p>
+          </div>
+          <div class="retrieval-demo" aria-live="polite">
+            <div class="query-box"><code id="queryText">OAuth authentication</code></div>
+            <div class="retrieval-result">
+              <div><div class="result-title" id="resultTitle">MatchedContext</div><div class="result-copy" id="resultCopy">A ranked context with its URI, type, abstract and score — ready to inspect.</div></div>
+              <div class="result-metric" id="resultMetric">low latency<small>session not required</small></div>
+            </div>
+            <div class="mini-bars" aria-label="Illustrative retrieval path">
+              <div class="bar-line"><span>global recall</span><div class="bar-track"><div class="bar-fill" id="barOne" style="width:78%"></div></div></div>
+              <div class="bar-line"><span>directory drill-down</span><div class="bar-track"><div class="bar-fill" id="barTwo" style="width:52%; background:var(--cyan)"></div></div></div>
+              <div class="bar-line"><span>rerank</span><div class="bar-track"><div class="bar-fill" id="barThree" style="width:34%; background:var(--amber)"></div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="source-row"><a href="https://docs.openviking.ai/en/concepts/07-retrieval" target="_blank" rel="noreferrer">Retrieval Mechanism docs ↗</a></div>
+        <div class="slide-control"><button type="button" data-prev>← L0 / L1 / L2</button><span class="counter">06 / 13</span><button type="button" data-next>Inside the architecture →</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Architecture">
+      <div class="slide-inner">
+        <div class="kicker">Architecture</div>
+        <h2>A context database with a <span class="violet">clean centre.</span></h2>
+        <p class="lede">The client delegates to services for filesystem operations, retrieval, sessions, resource import and debugging. Content lives in AGFS; the vector index stores references, vectors and metadata rather than the file content.</p>
+        <div class="architecture" style="margin-top:2.5rem">
+          <div class="arch-column">
+            <div class="label">Inputs</div>
+            <div class="arch-node" data-arch="Client"><strong>Client</strong><small>SDK · CLI · HTTP</small></div>
+            <div class="arch-node" data-arch="Agent"><strong>Agent</strong><small>task + session</small></div>
+            <div class="arch-node" data-arch="Resources"><strong>Resources</strong><small>PDF · MD · HTML · media</small></div>
+          </div>
+          <div class="arch-column middle">
+            <div class="arch-core"><div><strong>Service layer</strong><span id="archDetail">Click a module to inspect its role.</span></div></div>
+            <div class="arch-node" data-arch="Retrieve"><strong>Retrieve</strong><small>intent · recursion · rerank</small></div>
+            <div class="arch-node" data-arch="Session"><strong>Session</strong><small>record · compress · commit</small></div>
+            <div class="arch-node" data-arch="Parse"><strong>Parse</strong><small>extract · tree-build · semantics</small></div>
+          </div>
+          <div class="arch-column">
+            <div class="label">Storage</div>
+            <div class="arch-node" data-arch="AGFS"><strong>AGFS</strong><small>content + L0/L1/L2</small></div>
+            <div class="arch-node" data-arch="Vector index"><strong>Vector index</strong><small>URIs · vectors · metadata</small></div>
+            <div class="arch-node" data-arch="Observer"><strong>Observer</strong><small>trace the path</small></div>
+          </div>
+        </div>
+        <div class="source-row"><a href="https://docs.openviking.ai/en/concepts/01-architecture" target="_blank" rel="noreferrer">Architecture Overview docs ↗</a></div>
+        <div class="slide-control"><button type="button" data-prev>← Retrieval</button><span class="counter">07 / 13</span><button type="button" data-next>What happens on commit →</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Session commit">
+      <div class="slide-inner">
+        <div class="kicker">The self-evolving loop</div>
+        <div class="grid-2">
+          <div>
+            <h2>A good session doesn’t have to <span class="accent">disappear.</span></h2>
+            <p class="lede">When a session commits, OpenViking can compress the conversation, archive older history, extract memories according to policy and write them back into storage.</p>
+            <p class="small">That makes memory a write path, not a separate afterthought.</p>
+          </div>
+          <div class="commit-sequence" aria-label="Session commit sequence">
+            <div class="commit-row"><div class="when">01 · messages</div><div class="what"><strong>Accumulate</strong> conversation messages and usage records.</div></div>
+            <div class="commit-row"><div class="when">02 · compress</div><div class="what"><strong>Keep recent rounds</strong> and archive older messages.</div></div>
+            <div class="commit-row"><div class="when">03 · archive</div><div class="what"><strong>Generate L0/L1</strong> for history segments.</div></div>
+            <div class="commit-row"><div class="when">04 · extract</div><div class="what"><strong>Identify memories</strong> using policy and memory schemas.</div></div>
+            <div class="commit-row"><div class="when">05 · store</div><div class="what"><strong>Write to AGFS + vector index.</strong></div></div>
+          </div>
+        </div>
+        <div class="source-row"><a href="https://docs.openviking.ai/en/concepts/14-sessions" target="_blank" rel="noreferrer">Session Management docs ↗</a><a href="https://github.com/volcengine/OpenViking#why-openviking" target="_blank" rel="noreferrer">Repository: sessions become memory ↗</a></div>
+        <div class="slide-control"><button type="button" data-prev>← Architecture</button><span class="counter">08 / 13</span><button type="button" data-next>What evidence exists? →</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Evidence">
+      <div class="slide-inner">
+        <div class="kicker">Evidence, with caveats</div>
+        <h2>The repository reports measurable gains in its <span class="cyan">own evaluations.</span></h2>
+        <p class="lede">The README describes OpenViking 0.3.22 evaluations on long-conversation memory and multi-turn agent tasks. Read these as reported benchmark results, not universal guarantees.</p>
+        <div class="proof" style="margin-top:2.5rem">
+          <div class="proof-item"><div class="label">LoCoMo / OpenClaw</div><div class="number">24.20 → 82.08%</div><p>Reported memory accuracy with OpenViking versus native memory.</p></div>
+          <div class="proof-item"><div class="label">Input tokens</div><div class="number">−34.3–91.0%</div><p>Reported reduction across the three agent integrations.</p></div>
+          <div class="proof-item"><div class="label">tau2-bench / airline</div><div class="number">+11.87 pp</div><p>Reported task-success lift from experience memory.</p></div>
+        </div>
+        <p class="proof-note">The README also reports query-latency reductions of 58.45–66.10% and other integration-specific results. Models, datasets and setup details are part of the benchmark context.</p>
+        <div class="source-row"><a href="https://github.com/volcengine/OpenViking#proof-it-works" target="_blank" rel="noreferrer">Repository: Proof it works ↗</a><a href="https://blog.openviking.ai/" target="_blank" rel="noreferrer">OpenViking benchmark blog ↗</a></div>
+        <div class="slide-control"><button type="button" data-prev>← Session commit</button><span class="counter">09 / 13</span><button type="button" data-next>Where might you use it? →</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Use cases">
+      <div class="slide-inner">
+        <div class="kicker">Use cases</div>
+        <div class="use-cases">
+          <div class="use-case-main" aria-live="polite">
+            <div class="case-meta" id="caseMeta">01 · Research notebook</div>
+            <div class="case-quote" id="caseQuote">“Remember the work. Show me the path.”</div>
+            <p class="small" id="caseCopy">Keep papers, notes, experiments and reusable analysis skills in one browseable context space — then retrieve the right level of detail for the next question.</p>
+          </div>
+          <div class="use-case-list" role="group" aria-label="Choose a use case">
+            <button type="button" data-case="research" aria-pressed="true"><strong>Research notebook</strong><span>papers · notes · experiments</span></button>
+            <button type="button" data-case="coding" aria-pressed="false"><strong>Long-running coding agent</strong><span>repos · conventions · skills</span></button>
+            <button type="button" data-case="support" aria-pressed="false"><strong>Support or ops copilot</strong><span>runbooks · cases · prior fixes</span></button>
+            <button type="button" data-case="multimodal" aria-pressed="false"><strong>Multimodal knowledge base</strong><span>documents · images · media summaries</span></button>
+          </div>
+        </div>
+        <p class="small" style="margin-top:1rem">These are design patterns inferred from the repository’s context types, retrieval, session and multimodal capabilities. They are examples, not product claims.</p>
+        <div class="source-row"><a href="https://github.com/volcengine/OpenViking#use-it-with-your-agent" target="_blank" rel="noreferrer">Agent integrations ↗</a><a href="https://docs.openviking.ai/en/concepts/02-context-types" target="_blank" rel="noreferrer">Context types ↗</a></div>
+        <div class="slide-control"><button type="button" data-prev>← Evidence</button><span class="counter">10 / 13</span><button type="button" data-next>How to implement it →</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="How to implement">
+      <div class="slide-inner">
+        <div class="kicker">How-to guide</div>
+        <h2>A practical first run, from zero to <span class="accent">first retrieval.</span></h2>
+        <p class="lede">The simplest route is a local Python installation. The official quick start also documents Docker for running OpenViking as an independent service.</p>
+        <div class="steps" style="margin-top:2.5rem">
+          <div class="step"><div class="step-top"><span>01</span><span>Prerequisite</span></div><h3>Prepare Python</h3><p>Use Python 3.10 or higher. A stable network connection is needed for dependencies and model services.</p><pre><code>python --version</code></pre></div>
+          <div class="step"><div class="step-top"><span>02</span><span>Install</span></div><h3>Install the package</h3><p>Choose a package manager. The docs recommend <code>uv</code>; <code>pip</code> and <code>pipx</code> are also documented.</p><pre><code>uv tool install openviking --upgrade</code></pre></div>
+          <div class="step"><div class="step-top"><span>03</span><span>Configure</span></div><h3>Initialise and diagnose</h3><p>The wizard writes the config and helps choose provider/model settings. Doctor checks setup before the server runs.</p><pre><code>openviking-server init
+openviking-server doctor</code></pre></div>
+          <div class="step"><div class="step-top"><span>04</span><span>Start</span></div><h3>Run the local server</h3><p>Start OpenViking, then use a second terminal for the client or CLI.</p><pre><code>openviking-server
+curl http://localhost:1933/health</code></pre></div>
+          <div class="step"><div class="step-top"><span>05</span><span>Ingest</span></div><h3>Add a resource</h3><p>Import a URL, file or directory, and wait for semantic processing before inspecting it.</p><pre><code>ov add-resource \
+  https://github.com/volcengine/OpenViking --wait</code></pre></div>
+          <div class="step"><div class="step-top"><span>06</span><span>Explore</span></div><h3>Browse and search</h3><p>Use the filesystem view to learn the shape of the context, then run a semantic query.</p><pre><code>ov tree viking://resources/volcengine -L 2
+ov find "what is openviking"</code></pre></div>
+        </div>
+        <div class="source-row"><a href="https://docs.openviking.ai/en/getting-started/02-quickstart" target="_blank" rel="noreferrer">Official Quick Start ↗</a><a href="https://docs.openviking.ai/en/guides/03-deployment" target="_blank" rel="noreferrer">Server Deployment ↗</a></div>
+        <div class="slide-control"><button type="button" data-prev>← Use cases</button><span class="counter">11 / 13</span><button type="button" data-next>Connect an agent →</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Connect an agent">
+      <div class="slide-inner">
+        <div class="kicker">After the first run</div>
+        <div class="grid-2">
+          <div>
+            <h2>Start with a context service.<br>Then give your agent a <span class="cyan">memory contract.</span></h2>
+            <p class="lede">OpenViking documents integrations for developer tools and agent frameworks including Claude Code, Codex, Cursor, OpenCode, Hermes, LangChain / LangGraph, MCP clients and more.</p>
+            <div class="closing-actions"><a class="cta" href="https://docs.openviking.ai/en/getting-started/04-integration-overview" target="_blank" rel="noreferrer">Read integrations ↗</a><button class="cta secondary" type="button" id="copySnippet">Copy a tiny SDK pattern</button></div>
+            <p class="small" id="copyStatus" aria-live="polite" style="margin-top:.75rem"></p>
+          </div>
+          <pre aria-label="Python SDK pattern"><code><span class="code-key">from</span> openviking_sdk <span class="code-key">import</span> SyncHTTPClient
+
+client = SyncHTTPClient(
+    url=<span class="code-string">"http://localhost:1933"</span>
+)
+client.initialize()
+
+results = client.find(
+    query=<span class="code-string">"how to use openviking"</span>,
+    target_uri=<span class="code-string">"viking://resources/"</span>
+)
+
+client.close()</code></pre>
+        </div>
+        <div class="rule"></div>
+        <div class="grid-3">
+          <div><div class="label">Make it useful</div><p>Decide what belongs in memory, resources and skills before you ingest everything.</p></div>
+          <div><div class="label">Make it testable</div><p>Evaluate retrieval quality, token usage, latency and the paths that produced results.</p></div>
+          <div><div class="label">Make it safe</div><p>Set provider, access, storage and privacy boundaries before a shared deployment.</p></div>
+        </div>
+        <div class="source-row"><a href="https://github.com/volcengine/OpenViking#use-it-with-your-agent" target="_blank" rel="noreferrer">Integrations listed in the repository ↗</a><a href="https://docs.openviking.ai/en/getting-started/02-quickstart" target="_blank" rel="noreferrer">SDK example in Quick Start ↗</a></div>
+        <div class="slide-control"><button type="button" data-prev>← How to implement</button><span class="counter">12 / 13</span><button type="button" data-next>Trade-offs and sources →</button></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Trade-offs">
+      <div class="slide-inner">
+        <div class="kicker">Use judgement</div>
+        <div class="watch">
+          <div>
+            <h2>Useful infrastructure still needs <span class="accent">boundaries.</span></h2>
+            <p class="lede">OpenViking makes context more navigable and observable. It does not remove the need for good ingestion, model selection, access control, evaluation or data governance.</p>
+          </div>
+          <div>
+            <ul class="watch-list">
+              <li><span><strong>Model services</strong><br>Semantic processing and retrieval quality depend on configured VLM, embedding and optional rerank services.</span></li>
+              <li><span><strong>Async processing</strong><br>After ingestion, semantic processing may need to finish before the context is ready to inspect.</span></li>
+              <li><span><strong>Deployment shape</strong><br>Local, standalone HTTP and Docker paths have different operational and network considerations.</span></li>
+              <li><span><strong>Licensing</strong><br>The repository states that its main project is AGPLv3, with different licences for some components.</span></li>
+            </ul>
+            <div class="license"><div class="label">Check before shipping</div><strong>Context is an operating surface.</strong><p class="small">Treat provenance, permissions, retention, prompt injection and benchmark design as first-class product work.</p></div>
+          </div>
+        </div>
+        <div class="source-row"><a href="https://github.com/volcengine/OpenViking#security-and-privacy" target="_blank" rel="noreferrer">Security and privacy ↗</a><a href="https://github.com/volcengine/OpenViking#license" target="_blank" rel="noreferrer">License details ↗</a><a href="https://docs.openviking.ai/en/guides/03-deployment" target="_blank" rel="noreferrer">Deployment docs ↗</a></div>
+        <div class="slide-control"><button type="button" data-prev>← Connect an agent</button><span class="counter">13 / 13</span><button type="button" data-next>Back to the beginning ↗</button></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const navDots = document.getElementById('navDots');
+      const progressBar = document.getElementById('progressBar');
+      const announcer = document.getElementById('announcer');
+      let current = 0;
+
+      slides.forEach((slide, index) => {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.setAttribute('aria-label', `Go to slide ${index + 1}: ${slide.dataset.title}`);
+        dot.addEventListener('click', () => goTo(index));
+        navDots.appendChild(dot);
+      });
+
+      function goTo(index) {
+        current = (index + slides.length) % slides.length;
+        slides.forEach((slide, i) => slide.classList.toggle('is-active', i === current));
+        [...navDots.children].forEach((dot, i) => dot.setAttribute('aria-current', i === current ? 'true' : 'false'));
+        progressBar.style.width = `${((current + 1) / slides.length) * 100}%`;
+        announcer.textContent = `Slide ${current + 1} of ${slides.length}: ${slides[current].dataset.title}`;
+        history.replaceState(null, '', `#${current + 1}`);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      document.querySelectorAll('[data-next]').forEach(button => button.addEventListener('click', () => goTo(current + 1)));
+      document.querySelectorAll('[data-prev]').forEach(button => button.addEventListener('click', () => goTo(current - 1)));
+      document.addEventListener('keydown', event => {
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+        if (['ArrowRight', 'PageDown', ' '].includes(event.key)) { event.preventDefault(); goTo(current + 1); }
+        if (['ArrowLeft', 'PageUp'].includes(event.key)) { event.preventDefault(); goTo(current - 1); }
+        if (event.key === 'Home') { event.preventDefault(); goTo(0); }
+        if (event.key === 'End') { event.preventDefault(); goTo(slides.length - 1); }
+      });
+      let touchStartX = 0;
+      document.addEventListener('touchstart', event => { touchStartX = event.changedTouches[0].screenX; }, { passive: true });
+      document.addEventListener('touchend', event => {
+        const delta = event.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(delta) > 55) goTo(current + (delta < 0 ? 1 : -1));
+      }, { passive: true });
+
+      const themeToggle = document.getElementById('themeToggle');
+      themeToggle.addEventListener('click', () => {
+        document.documentElement.classList.toggle('light');
+        const isLight = document.documentElement.classList.contains('light');
+        themeToggle.textContent = isLight ? 'Dark mode' : 'Light mode';
+        themeToggle.setAttribute('aria-label', `Switch to ${isLight ? 'dark' : 'light'} colour theme`);
+      });
+
+      document.getElementById('shareButton').addEventListener('click', async () => {
+        const shareData = { title: document.title, text: 'OpenViking — an interactive guide to context databases for AI agents.', url: window.location.href };
+        const status = document.getElementById('shareButton');
+        try {
+          if (navigator.share) await navigator.share(shareData);
+          else if (navigator.clipboard) { await navigator.clipboard.writeText(window.location.href); status.textContent = 'Link copied'; setTimeout(() => status.textContent = 'Share', 1600); }
+        } catch (error) { if (error.name !== 'AbortError') status.textContent = 'Copy the URL'; }
+      });
+
+      const contextData = {
+        resources: { path: 'viking://resources/', copy: 'Project docs, repositories, web pages and other source material the agent may need.', lines: ['├── my_project/', '├── docs/', '└── src/', '# directories carry semantic summaries'] },
+        memories: { path: 'viking://~/memories/', copy: 'User preferences and useful experience extracted from committed sessions.', lines: ['├── preferences/', '├── coding_habits', '└── working_style', '# memories can be recalled by an agent'] },
+        skills: { path: 'viking://~/skills/', copy: 'Reusable capabilities and instructions an agent can apply to a task.', lines: ['├── search_code/', '├── analyze_data/', '└── write_rfc/', '# skills are context the agent can use'] }
+      };
+      document.querySelectorAll('[data-context]').forEach(button => button.addEventListener('click', () => {
+        const data = contextData[button.dataset.context];
+        document.querySelectorAll('[data-context]').forEach(item => item.setAttribute('aria-pressed', item === button ? 'true' : 'false'));
+        document.getElementById('treePath').textContent = data.path;
+        document.getElementById('contextCopy').textContent = data.copy;
+        document.getElementById('treeList').innerHTML = data.lines.map((line, i) => `<div class="${line.startsWith('#') ? 'note' : line.includes('/') ? 'dir' : 'file'}" style="--indent:${i === 0 ? '0' : '1.2rem'}">${line}</div>`).join('');
+      }));
+
+      const tierData = {
+        L0: { name: 'L0 · Abstract', limit: '256 characters', copy: 'A quick relevance check. Enough to decide whether this directory is worth opening.' },
+        L1: { name: 'L1 · Overview', limit: '4,000 characters', copy: 'A broader directory summary for reranking, navigation and deciding whether to load the original.' },
+        L2: { name: 'L2 · Detail', limit: 'full content', copy: 'The original files and subdirectories, retained in source form and loaded only when needed.' }
+      };
+      document.querySelectorAll('[data-tier]').forEach(button => button.addEventListener('click', () => {
+        const data = tierData[button.dataset.tier];
+        document.querySelectorAll('[data-tier]').forEach(item => item.setAttribute('aria-pressed', item === button ? 'true' : 'false'));
+        document.getElementById('tierPanel').dataset.tier = button.dataset.tier;
+        document.getElementById('tierName').textContent = data.name;
+        document.getElementById('tierLimit').textContent = data.limit;
+        document.getElementById('tierCopy').textContent = data.copy;
+      }));
+
+      const retrievalData = {
+        find: { query: 'OAuth authentication', title: 'MatchedContext', copy: 'A ranked context with its URI, type, abstract and score — ready to inspect.', metric: 'low latency', sub: 'session not required', copyText: 'Use when you already know the kind of thing you want and need a lower-latency query.', bars: [78, 52, 34] },
+        search: { query: 'Help me create an RFC document', title: 'QueryPlan → MatchedContext', copy: 'Intent analysis can produce typed queries across memory, resources and skills before hierarchical retrieval.', metric: 'complex task', sub: 'session context required', copyText: 'Use for complex tasks where the agent needs intent analysis and a broader retrieval plan.', bars: [88, 74, 61] }
+      };
+      document.querySelectorAll('[data-retrieval]').forEach(button => button.addEventListener('click', () => {
+        const data = retrievalData[button.dataset.retrieval];
+        document.querySelectorAll('[data-retrieval]').forEach(item => item.setAttribute('aria-pressed', item === button ? 'true' : 'false'));
+        document.getElementById('queryText').textContent = data.query;
+        document.getElementById('resultTitle').textContent = data.title;
+        document.getElementById('resultCopy').textContent = data.copy;
+        document.getElementById('resultMetric').innerHTML = `${data.metric}<small>${data.sub}</small>`;
+        document.getElementById('retrievalCopy').textContent = data.copyText;
+        ['barOne', 'barTwo', 'barThree'].forEach((id, i) => document.getElementById(id).style.width = `${data.bars[i]}%`);
+      }));
+
+      const archDetails = {
+        Client: 'A unified entry point that delegates operations to the service layer.',
+        Agent: 'A caller that asks for context and commits useful session experience.',
+        Resources: 'Documents, repositories, web pages and media that become context.',
+        Retrieve: 'Intent analysis, hierarchical retrieval and optional reranking.',
+        Session: 'Message recording, compression, memory extraction and commit.',
+        Parse: 'Document parsing, tree building and asynchronous semantic generation.',
+        AGFS: 'Content storage for original files plus L0/L1/L2 representations.',
+        'Vector index': 'Index storage for URIs, vectors and metadata, not file content.',
+        Observer: 'Diagnostics for inspecting retrieval and agent interaction paths.'
+      };
+      document.querySelectorAll('[data-arch]').forEach(node => node.addEventListener('click', () => {
+        document.querySelectorAll('[data-arch]').forEach(item => item.classList.toggle('is-selected', item === node));
+        document.getElementById('archDetail').textContent = archDetails[node.dataset.arch];
+      }));
+
+      const cases = {
+        research: ['01 · Research notebook', '“Remember the work. Show me the path.”', 'Keep papers, notes, experiments and reusable analysis skills in one browseable context space — then retrieve the right level of detail for the next question.'],
+        coding: ['02 · Long-running coding agent', '“Know the repo before you change it.”', 'Store project conventions, repository docs, prior decisions and skills so the agent can orient itself before editing.'],
+        support: ['03 · Support or ops copilot', '“Find the runbook, then prove why.”', 'Combine runbooks, case history and agent experience, while keeping retrieval paths inspectable for review.'],
+        multimodal: ['04 · Multimodal knowledge base', '“Make mixed media searchable.”', 'Ingest documents and media, generate semantic summaries, then load the original asset only when the task requires it.']
+      };
+      document.querySelectorAll('[data-case]').forEach(button => button.addEventListener('click', () => {
+        const data = cases[button.dataset.case];
+        document.querySelectorAll('[data-case]').forEach(item => item.setAttribute('aria-pressed', item === button ? 'true' : 'false'));
+        document.getElementById('caseMeta').textContent = data[0];
+        document.getElementById('caseQuote').textContent = data[1];
+        document.getElementById('caseCopy').textContent = data[2];
+      }));
+
+      document.getElementById('copySnippet').addEventListener('click', async () => {
+        const snippet = 'from openviking_sdk import SyncHTTPClient\nclient = SyncHTTPClient(url="http://localhost:1933")\nclient.initialize()\nresults = client.find(query="how to use openviking", target_uri="viking://resources/")';
+        const status = document.getElementById('copyStatus');
+        try { await navigator.clipboard.writeText(snippet); status.textContent = 'SDK pattern copied'; }
+        catch (error) { status.textContent = 'Select the code block to copy it manually'; }
+      });
+
+      const hash = Number.parseInt(window.location.hash.slice(1), 10);
+      goTo(Number.isFinite(hash) && hash >= 1 && hash <= slides.length ? hash - 1 : 0);
+    })();
+  </script>
+</body>
+</html>

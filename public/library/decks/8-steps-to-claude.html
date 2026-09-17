@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8 Steps to Design Anything with Claude</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────
+   THEME TOKENS
+───────────────────────────────────────── */
+[data-theme="light"] {
+  --bg:           #f5f0e8;
+  --bg2:          #ede7d9;
+  --surface:      #faf7f2;
+  --surface-h:    #ffffff;
+  --border:       #ddd4c0;
+  --ink:          #1a1612;
+  --ink2:         #3d342c;
+  --muted:        #7a6e62;
+  --terra:        #c4622d;
+  --terra-lt:     #e8825a;
+  --terra-dim:    rgba(196,98,45,0.09);
+  --ghost-num:    #e8e0d0;
+  --code-bg:      rgba(196,98,45,0.10);
+  --code-txt:     #a04820;
+  --good-bg:      rgba(55,105,70,0.08);
+  --good-bd:      #3c6e4b;
+  --good-lbl:     #2d5c3a;
+  --bad-bg:       rgba(155,60,60,0.08);
+  --bad-bd:       #9e3f3f;
+  --bad-lbl:      #8a3030;
+  --hero-bg:      #1a1612;
+  --hero-txt:     #f5f0e8;
+  --strip-bg:     #1a1612;
+  --strip-txt:    #f5f0e8;
+  --strip-muted:  rgba(245,240,232,0.45);
+  --tog-bg:       #1a1612;
+  --tog-icon:     #f5f0e8;
+}
+
+[data-theme="dark"] {
+  --bg:           #100f0b;
+  --bg2:          #171510;
+  --surface:      #1c1a14;
+  --surface-h:    #232018;
+  --border:       #2c2820;
+  --ink:          #ede8de;
+  --ink2:         #c8bfb0;
+  --muted:        #8a7e6e;
+  --terra:        #de7a42;
+  --terra-lt:     #f09a6a;
+  --terra-dim:    rgba(222,122,66,0.11);
+  --ghost-num:    #201e18;
+  --code-bg:      rgba(222,122,66,0.13);
+  --code-txt:     #df9060;
+  --good-bg:      rgba(65,130,85,0.13);
+  --good-bd:      #4a8c5a;
+  --good-lbl:     #72c886;
+  --bad-bg:       rgba(170,65,65,0.13);
+  --bad-bd:       #b04848;
+  --bad-lbl:      #e07878;
+  --hero-bg:      #0a0906;
+  --hero-txt:     #ede8de;
+  --strip-bg:     #0a0906;
+  --strip-txt:    #ede8de;
+  --strip-muted:  rgba(237,232,222,0.40);
+  --tog-bg:       #ede8de;
+  --tog-icon:     #1a1612;
+}
+
+/* ─────────────────────────────────────────
+   BASE
+───────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  cursor: none;
+  overflow-x: hidden;
+  transition: background 0.38s, color 0.38s;
+}
+
+/* CURSOR */
+.cursor {
+  position: fixed;
+  width: 11px; height: 11px;
+  background: var(--terra);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%,-50%);
+  transition: width 0.22s, height 0.22s, background 0.22s;
+  mix-blend-mode: multiply;
+}
+[data-theme="dark"] .cursor { mix-blend-mode: screen; }
+.cursor.big { width: 40px; height: 40px; background: var(--terra-lt); }
+
+/* PROGRESS BAR */
+.progress-bar {
+  position: fixed; top: 0; left: 0;
+  height: 3px; background: var(--terra);
+  width: 0%; z-index: 300;
+  transition: width 0.08s linear, background 0.38s;
+}
+
+/* NOISE TEXTURE */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 1; opacity: 0.55;
+}
+
+.page { position: relative; z-index: 2; }
+
+/* ─────────────────────────────────────────
+   THEME TOGGLE
+───────────────────────────────────────── */
+.theme-toggle {
+  position: fixed;
+  top: 16px; right: 16px;
+  z-index: 500;
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--tog-bg);
+  border: none; cursor: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.05rem;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.20);
+  transition: background 0.38s, transform 0.2s;
+}
+.theme-toggle:hover { transform: scale(1.1) rotate(18deg); }
+
+/* ─────────────────────────────────────────
+   HERO
+───────────────────────────────────────── */
+.hero {
+  background: var(--hero-bg);
+  padding: 0 48px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  min-height: 92px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.38s;
+}
+.hero::before {
+  content: '';
+  position: absolute; right: -70px; top: -70px;
+  width: 240px; height: 240px;
+  background: var(--terra);
+  border-radius: 50%; opacity: 0.10;
+  transition: background 0.38s;
+}
+.hero-tagline {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.05rem, 2.2vw, 1.42rem);
+  font-weight: 700;
+  color: var(--hero-txt);
+  line-height: 1.3; padding: 30px 0;
+  transition: color 0.38s;
+}
+.hero-tagline em { font-style: italic; color: var(--terra-lt); transition: color 0.38s; }
+.hero-numeral {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(4.5rem, 11vw, 8rem);
+  font-weight: 900; line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 2px rgba(255,255,255,0.09);
+  user-select: none;
+  padding: 14px 0 14px 28px;
+}
+
+/* ─────────────────────────────────────────
+   TITLE
+───────────────────────────────────────── */
+.title-section {
+  display: grid;
+  grid-template-columns: 104px 1fr;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.38s;
+}
+.title-bar {
+  background: var(--terra);
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.38s;
+}
+.bar-text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.60rem; font-weight: 600;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: rgba(255,255,255,0.68);
+}
+.title-main { padding: 46px 52px; }
+
+.eyebrow {
+  font-size: 0.66rem; font-weight: 600;
+  letter-spacing: 0.24em; text-transform: uppercase;
+  color: var(--terra); margin-bottom: 12px;
+  transition: color 0.38s;
+}
+.title-h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.2rem, 4.8vw, 3.8rem);
+  font-weight: 900; line-height: 1.06;
+  color: var(--ink); letter-spacing: -1.5px;
+  transition: color 0.38s;
+}
+.title-h1 em { font-style: italic; color: var(--terra); transition: color 0.38s; }
+.title-sub {
+  margin-top: 14px; font-size: 0.92rem;
+  color: var(--muted); max-width: 500px; line-height: 1.72;
+  transition: color 0.38s;
+}
+
+/* ─────────────────────────────────────────
+   DIVIDER
+───────────────────────────────────────── */
+.divider {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px 40px;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.38s;
+}
+.div-line { flex: 1; height: 1px; background: var(--border); transition: background 0.38s; }
+.div-star { color: var(--terra); font-size: 1.05rem; animation: spin 14s linear infinite; transition: color 0.38s; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─────────────────────────────────────────
+   STEPS GRID
+───────────────────────────────────────── */
+.steps-section { padding: 0 40px 64px; }
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  transition: border-color 0.38s;
+}
+
+.step-card {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 26px 24px 22px;
+  background: var(--surface);
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; gap: 11px;
+  transition: background 0.28s, border-color 0.38s;
+  animation: fadeUp 0.48s ease both;
+}
+.step-card:nth-child(1){animation-delay:.04s}
+.step-card:nth-child(2){animation-delay:.09s}
+.step-card:nth-child(3){animation-delay:.14s}
+.step-card:nth-child(4){animation-delay:.19s}
+.step-card:nth-child(5){animation-delay:.24s}
+.step-card:nth-child(6){animation-delay:.29s}
+.step-card:nth-child(7){animation-delay:.34s}
+.step-card:nth-child(8){animation-delay:.39s}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.step-card:hover { background: var(--surface-h); }
+
+/* Ghost number */
+.step-card::before {
+  content: attr(data-num);
+  position: absolute; bottom: -18px; right: -5px;
+  font-family: 'Playfair Display', serif;
+  font-size: 6.5rem; font-weight: 900;
+  color: var(--ghost-num);
+  line-height: 1; user-select: none; pointer-events: none;
+  transition: color 0.32s;
+}
+.step-card:hover::before { color: var(--terra-dim); }
+
+/* Accent sweep */
+.step-card::after {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 0; height: 3px;
+  background: var(--terra);
+  transition: width 0.36s ease, background 0.38s;
+}
+.step-card:hover::after { width: 100%; }
+
+/* Meta row */
+.step-meta { display: flex; align-items: center; gap: 10px; }
+.step-pill {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--ink); color: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-weight: 700; font-size: 0.80rem; flex-shrink: 0;
+  transition: background 0.28s, color 0.28s;
+}
+.step-card:hover .step-pill { background: var(--terra); color: #fff; }
+
+.step-label {
+  font-size: 0.60rem; font-weight: 600;
+  letter-spacing: 0.20em; text-transform: uppercase;
+  color: var(--muted); transition: color 0.38s;
+}
+
+.step-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.16rem; font-weight: 700;
+  color: var(--ink); line-height: 1.22;
+  position: relative; z-index: 1;
+  transition: color 0.38s;
+}
+
+.step-body {
+  font-size: 0.82rem;
+  color: var(--ink2); line-height: 1.66;
+  position: relative; z-index: 1;
+  transition: color 0.38s;
+}
+.step-body ul { list-style: none; display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
+.step-body li { padding-left: 14px; position: relative; }
+.step-body li::before { content: '—'; position: absolute; left: 0; color: var(--terra); font-weight: 700; transition: color 0.38s; }
+.step-body strong { font-weight: 600; color: var(--ink); transition: color 0.38s; }
+.step-body p + p { margin-top: 8px; }
+
+code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.79rem;
+  background: var(--code-bg); color: var(--code-txt);
+  padding: 1px 5px; border-radius: 4px; font-weight: 600;
+  transition: background 0.38s, color 0.38s;
+}
+
+/* Example blocks */
+.ex {
+  border-left: 3px solid var(--terra);
+  border-radius: 0 6px 6px 0;
+  background: var(--terra-dim);
+  padding: 8px 12px;
+  font-size: 0.79rem; line-height: 1.55;
+  color: var(--ink2);
+  position: relative; z-index: 1;
+  transition: background 0.38s, border-color 0.38s, color 0.38s;
+}
+.ex.good { border-color: var(--good-bd); background: var(--good-bg); }
+.ex.bad  { border-color: var(--bad-bd);  background: var(--bad-bg); }
+.ex-lbl {
+  font-size: 0.60rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 3px;
+  transition: color 0.38s;
+}
+.ex-lbl.good { color: var(--good-lbl); }
+.ex-lbl.bad  { color: var(--bad-lbl); }
+
+/* Pull quote */
+.step-quote {
+  margin-top: auto; padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  font-family: 'Playfair Display', serif;
+  font-style: italic; font-size: 0.77rem;
+  color: var(--terra); line-height: 1.5;
+  position: relative; z-index: 1;
+  transition: color 0.38s, border-color 0.38s;
+}
+
+/* ─────────────────────────────────────────
+   BOTTOM STRIP
+───────────────────────────────────────── */
+.strip {
+  background: var(--strip-bg);
+  border-top: 3px solid var(--terra);
+  padding: 48px 56px;
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 32px; align-items: center;
+  transition: background 0.38s, border-color 0.38s;
+}
+.stat { text-align: center; }
+.stat-n {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.8rem; font-weight: 900;
+  color: var(--terra); line-height: 1; transition: color 0.38s;
+}
+.stat-l {
+  font-size: 0.68rem; color: var(--strip-muted);
+  text-transform: uppercase; letter-spacing: 0.13em; margin-top: 5px;
+  transition: color 0.38s;
+}
+.cta { text-align: center; }
+.cta-h {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.48rem; font-weight: 700;
+  color: var(--strip-txt); line-height: 1.22; margin-bottom: 6px;
+  transition: color 0.38s;
+}
+.cta-s { font-size: 0.77rem; color: var(--strip-muted); transition: color 0.38s; }
+
+/* ─────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────── */
+@media (max-width: 920px) {
+  .steps-grid { grid-template-columns: 1fr 1fr; }
+  .hero { padding: 0 28px; }
+  .hero-numeral { display: none; }
+  .title-section { grid-template-columns: 76px 1fr; }
+  .title-main { padding: 34px 28px; }
+  .strip { grid-template-columns: 1fr; gap: 22px; padding: 34px 28px; }
+  .steps-section { padding: 0 20px 48px; }
+  .divider { padding: 14px 20px; }
+}
+@media (max-width: 560px) {
+  .steps-grid { grid-template-columns: 1fr; }
+  .title-section { grid-template-columns: 1fr; }
+  .title-bar { height: 46px; writing-mode: initial; }
+  .bar-text { writing-mode: initial; transform: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light mode">
+  <span id="toggleIcon">🌙</span>
+</button>
+
+<div class="page">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-tagline">
+      Invest 30 minutes now.<br>
+      Ship mockups in <em>10-word prompts</em> forever.
+    </div>
+    <div class="hero-numeral">8</div>
+  </section>
+
+  <!-- TITLE -->
+  <section class="title-section">
+    <div class="title-bar">
+      <span class="bar-text">Design System · Claude · 2025</span>
+    </div>
+    <div class="title-main">
+      <div class="eyebrow">A practical guide</div>
+      <h1 class="title-h1">8 Steps to Design<br>Anything <em>with Claude</em></h1>
+      <p class="title-sub">A repeatable workflow for solo founders, designers, and builders who want production-quality UI without a team. No Figma license required.</p>
+    </div>
+  </section>
+
+  <!-- DIVIDER -->
+  <div class="divider">
+    <div class="div-line"></div>
+    <span class="div-star">✳</span>
+    <div class="div-line"></div>
+  </div>
+
+  <!-- STEPS -->
+  <section class="steps-section">
+    <div class="steps-grid">
+
+      <div class="step-card" data-num="1">
+        <div class="step-meta"><div class="step-pill">1</div><div class="step-label">Step One</div></div>
+        <div class="step-title">Open The Right Claude</div>
+        <div class="step-body">
+          <ul>
+            <li>Go to <strong>claude.ai</strong></li>
+            <li>You need a <strong>Pro plan</strong> (~$20/mo)</li>
+            <li>Pick <strong>Opus 4.7</strong></li>
+            <li>Turn on <strong>Artifacts</strong></li>
+          </ul>
+        </div>
+        <div class="step-quote">Wrong model = flat mockups.</div>
+      </div>
+
+      <div class="step-card" data-num="2">
+        <div class="step-meta"><div class="step-pill">2</div><div class="step-label">Step Two</div></div>
+        <div class="step-title">Drop A Screening</div>
+        <div class="step-body">
+          <p>Found a UI you love? <strong>Screenshot it.</strong> Drag it straight into Claude:</p>
+          <br>
+          <div class="ex">"Build this, but for [my project]."</div>
+        </div>
+        <div class="step-quote">Faster than 100 words of spec.</div>
+      </div>
+
+      <div class="step-card" data-num="3">
+        <div class="step-meta"><div class="step-pill">3</div><div class="step-label">Step Three</div></div>
+        <div class="step-title">Build Your Brand Folder</div>
+        <div class="step-body">
+          Create one folder: <code>Claude-Design</code>. Inside three:
+          <ul style="margin-top:8px">
+            <li><code>brand.md</code> — colors, fonts, voice</li>
+            <li><code>good/</code> — 5 screenshots you love</li>
+            <li><code>bad/</code> — 5 designs you've rejected</li>
+          </ul>
+        </div>
+        <div class="step-quote">Wait, I missed something.</div>
+      </div>
+
+      <div class="step-card" data-num="4">
+        <div class="step-meta"><div class="step-pill">4</div><div class="step-label">Step Four</div></div>
+        <div class="step-title">Fill In brand.md</div>
+        <div class="step-body">
+          Inside <code>brand.md</code>, write:
+          <ul style="margin-top:8px">
+            <li><strong>Hex codes</strong> (primary + secondary)</li>
+            <li><strong>Type scale</strong> (H1 → body)</li>
+            <li><strong>3 tone rules</strong> ("never corporate")</li>
+            <li><strong>3 brands</strong> you steal from</li>
+          </ul>
+          <br>
+          <div class="ex"><strong>One great file beats 20 Figma links.</strong></div>
+        </div>
+        <div class="step-quote">Aha! I found it.</div>
+      </div>
+
+      <div class="step-card" data-num="5">
+        <div class="step-meta"><div class="step-pill">5</div><div class="step-label">Step Five</div></div>
+        <div class="step-title">Write One Opening Prompt</div>
+        <div class="step-body">
+          <p>Paste this for every design task:</p>
+          <br>
+          <div class="ex">Read every file in this folder first. Build <strong>[TASK]</strong> with your brand. Ask questions before generating.</div>
+        </div>
+        <div class="step-quote">One prompt. Infinite reuse.</div>
+      </div>
+
+      <div class="step-card" data-num="6">
+        <div class="step-meta"><div class="step-pill">6</div><div class="step-label">Step Six</div></div>
+        <div class="step-title">Brief, Don't Spec</div>
+        <div class="step-body">
+          <div class="ex bad" style="margin-bottom:6px">
+            <div class="ex-lbl bad">✕ Bad</div>
+            "Use 12-col grid, auto-layout, 8px spacing."
+          </div>
+          <div class="ex good">
+            <div class="ex-lbl good">✓ Good</div>
+            "Landing page for my consulting biz. Big headline, 4 cards, booking button, footer."
+          </div>
+        </div>
+        <div class="step-quote">Describe what the user sees. Never the tool.</div>
+      </div>
+
+      <div class="step-card" data-num="7">
+        <div class="step-meta"><div class="step-pill">7</div><div class="step-label">Step Seven</div></div>
+        <div class="step-title">One Screen Per Prompt</div>
+        <div class="step-body">
+          <p>Don't dump 12 screens into one chat. <strong>Hero first.</strong> Get it right. Then pricing. Then the footer.</p>
+          <p>When something's off, screenshot it. Paste it back. <strong>Each chat is a sprint.</strong> One deliverable per prompt.</p>
+        </div>
+        <div class="step-quote">This is why $285B in software stocks disappeared.</div>
+      </div>
+
+      <div class="step-card" data-num="8">
+        <div class="step-meta"><div class="step-pill">8</div><div class="step-label">Step Eight</div></div>
+        <div class="step-title">Save A CLAUDE.md Memory</div>
+        <div class="step-body">
+          <p>Create <code>CLAUDE.md</code>. Save fonts, colors, components, screens, preferences.</p>
+          <p>Read it first next session.</p>
+          <br>
+          <div class="ex"><strong>Claude stops starting from zero.<br>Starts remembering.</strong></div>
+        </div>
+        <div class="step-quote">You don't need to clear. Claude links you to be.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- STRIP -->
+  <div class="strip">
+    <div class="stat">
+      <div class="stat-n">30</div>
+      <div class="stat-l">Minutes to set up</div>
+    </div>
+    <div class="cta">
+      <div class="cta-h">Ship mockups.<br>Skip the agency.</div>
+      <div class="cta-s">claude.ai · Pro plan · Artifacts on</div>
+    </div>
+    <div class="stat">
+      <div class="stat-n">∞</div>
+      <div class="stat-l">Prompts that follow</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Cursor
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top  = e.clientY + 'px';
+  });
+  document.querySelectorAll('.step-card, .theme-toggle').forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.classList.add('big'));
+    el.addEventListener('mouseleave', () => cursor.classList.remove('big'));
+  });
+
+  // Progress bar
+  const bar = document.getElementById('progressBar');
+  window.addEventListener('scroll', () => {
+    const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+    bar.style.width = pct + '%';
+  }, { passive: true });
+
+  // Theme toggle — persisted
+  const html = document.documentElement;
+  const btn  = document.getElementById('themeToggle');
+  const icon = document.getElementById('toggleIcon');
+
+  function applyTheme(t) {
+    html.setAttribute('data-theme', t);
+    icon.textContent = t === 'dark' ? '☀️' : '🌙';
+    try { localStorage.setItem('pref-theme', t); } catch(e) {}
+  }
+
+  // Respect saved preference, then system preference
+  const saved  = (() => { try { return localStorage.getItem('pref-theme'); } catch(e) { return null; } })();
+  const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  applyTheme(saved || system);
+
+  btn.addEventListener('click', () => {
+    applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+</script>
+</body>
+</html>
