@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Build Your Own CoworkOS</title>
+<title>Build Your Own CoworkOS — v5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -1307,6 +1307,162 @@ html, body {
   max-width: 380px; line-height: 1.65;
 }
 
+/* ═══════════════════════════════════
+   LAYOUT: CANONICAL DEFINITION  (s-def)
+═══════════════════════════════════ */
+.s-def { background: linear-gradient(150deg, #faf7fb 0%, #f1e7f3 100%); }
+
+.def-statement {
+  margin-top: 1.2rem; margin-bottom: 1.6rem;
+  padding: 1.9rem 2.2rem;
+  background: rgba(255,255,255,0.92);
+  border: 1.5px solid rgba(200,165,204,0.5);
+  border-left: 5px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  box-shadow: 0 6px 24px rgba(66,21,64,0.07);
+}
+
+.s-def .def-statement-main {
+  font-size: clamp(1.35rem, 2.6vw, 2rem);
+  font-weight: 700; color: #38183c;
+  line-height: 1.2; letter-spacing: -0.02em;
+  margin-bottom: 0.85rem;
+}
+
+.def-statement-sub {
+  font-size: 0.9rem; font-weight: 400;
+  color: #5a2d5f; line-height: 1.7; max-width: 780px;
+}
+
+.def-test-label {
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: #7d4d82; margin-bottom: 0.8rem;
+}
+
+.def-tests {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1rem; margin-bottom: 1.4rem;
+}
+
+.def-test {
+  padding: 1.15rem 1.3rem 1.3rem;
+  background: rgba(255,255,255,0.82);
+  border: 1.5px solid rgba(200,165,204,0.45);
+  border-radius: 8px;
+  display: flex; flex-direction: column; gap: 0.4rem;
+}
+
+.def-test-q {
+  font-size: 0.92rem; font-weight: 700;
+  color: #38183c; line-height: 1.3;
+}
+
+.def-test-a {
+  font-size: 0.78rem; color: #5a2d5f; line-height: 1.6;
+}
+
+.def-verdict {
+  display: flex; gap: 1px;
+  background: rgba(200,165,204,0.5);
+  border: 1.5px solid rgba(200,165,204,0.5);
+  border-radius: 8px; overflow: hidden;
+}
+
+.def-verdict-half {
+  flex: 1; padding: 0.95rem 1.3rem;
+  background: rgba(255,255,255,0.9);
+}
+
+.def-verdict-half--yes { background: rgba(66,21,64,0.07); }
+
+.def-verdict-lbl {
+  font-size: 0.56rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: #7d4d82; margin-bottom: 0.22rem;
+}
+
+.def-verdict-txt {
+  font-size: 0.82rem; color: #38183c;
+  font-weight: 500; line-height: 1.5;
+}
+
+.def-footnote {
+  font-size: 0.78rem; color: #7d4d82;
+  line-height: 1.6; margin-top: 1.1rem; font-style: italic;
+}
+
+/* ── Four-column comparison (extends s-tools) ── */
+.tools-columns--four { grid-template-columns: repeat(4, 1fr); gap: 0.7rem; }
+
+.tool-col--project::before { background: #7d4d82; }
+.tool-col--memory::before  { background: #E8762C; }
+
+.tool-col--project .tool-col-label,
+.tool-col--project .tool-trigger-label { color: #7d4d82; }
+.tool-col--memory  .tool-col-label,
+.tool-col--memory  .tool-trigger-label { color: #E8762C; }
+
+.tool-col--project .tool-trigger { background: rgba(125,77,130,0.09); border-left: 3px solid #7d4d82; }
+.tool-col--memory  .tool-trigger { background: rgba(232,118,44,0.08); border-left: 3px solid #E8762C; }
+
+.tool-col--project .tool-uc-dot { background: #7d4d82; }
+.tool-col--memory  .tool-uc-dot { background: #E8762C; }
+
+.tool-col--hero {
+  border-color: var(--accent);
+  background: rgba(66,21,64,0.045);
+  box-shadow: 0 4px 18px rgba(66,21,64,0.09);
+}
+
+.tools-migrate {
+  margin-top: 0.75rem; padding: 0.7rem 1rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+  font-size: 0.66rem; color: var(--text-mid); line-height: 1.6;
+}
+.tools-migrate strong { color: var(--accent); }
+
+/* ── Worked example ledger (extends s-two-col) ── */
+.mon-steps {
+  list-style: none; margin-top: 0.9rem;
+  display: flex; flex-direction: column; gap: 0.42rem;
+}
+
+.mon-steps li {
+  font-size: 0.79rem; color: var(--text-mid);
+  line-height: 1.5; padding-left: 1.5rem; position: relative;
+}
+
+.mon-steps li::before {
+  content: attr(data-n);
+  position: absolute; left: 0; top: 0;
+  font-size: 0.62rem; font-weight: 700;
+  color: var(--text-faint);
+}
+
+.mon-steps--win li::before { color: var(--accent); }
+
+.mon-clock {
+  display: inline-flex; align-items: baseline; gap: 0.4rem;
+  margin-top: 1.1rem; padding: 0.4rem 0.8rem;
+  border-radius: 4px; background: var(--surface-2);
+}
+.mon-clock--win { background: var(--accent-light); }
+
+.mon-clock-num {
+  font-size: 1.15rem; font-weight: 700; color: var(--text);
+  letter-spacing: -0.02em;
+}
+.mon-clock--win .mon-clock-num { color: var(--accent); }
+
+.mon-clock-lbl {
+  font-size: 0.62rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+
 </style>
 </head>
 <body>
@@ -1317,15 +1473,15 @@ html, body {
        SLIDE 1 — TITLE
   ══════════════════════════════════════════ -->
   <section class="slide s-title">
-    <div class="r title-eyebrow">BRG AI Enablement &nbsp;·&nbsp; July 2026</div>
+    <div class="r title-eyebrow">BRG AI Enablement &nbsp;·&nbsp; August 2026 &nbsp;·&nbsp; v5</div>
     <h1 class="r title-name">Build Your Own<br>CoworkOS</h1>
     <p class="r title-sub">Give Claude persistent memory, your voice, and custom workflows — in one afternoon.</p>
     <div class="r title-badge">Cowork &nbsp;·&nbsp; Claude Desktop App ·&nbsp; Brought to you by Vivid</div>
     <div class="r title-agenda">
-      <span>What CoworkOS is and why it matters</span>
-      <span>The three core files that power everything</span>
+      <span>What a workstation actually is — and how it differs from a project</span>
+      <span>Why CoworkOS matters and the three core files behind it</span>
       <span>Starter templates — copy and paste to get going</span>
-      <span>Prompts to bootstrap your setup and workstations</span>
+      <span>Prompts for your first scheduled task and your first workstation</span>
     </div>
   </section>
 
@@ -1542,7 +1698,196 @@ html, body {
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 4 — ARCHITECTURE
+       SLIDE 4 — THE ONE IDEA (canonical definition)
+  ══════════════════════════════════════════ -->
+  <section class="slide s-def">
+    <div class="r lbl">The One Idea</div>
+    <div class="r def-statement">
+      <h2 class="def-statement-main">A workstation is a specialist you brief once.</h2>
+      <p class="def-statement-sub">You explain the job properly one time — the files, the rules, the format, the people involved. From then on you just ask for the thing, and it already knows. Like a colleague who has done your bank rec forty times and doesn't need the background again.</p>
+    </div>
+
+    <div class="r def-test-label">Does this job deserve its own workstation? Three questions</div>
+    <div class="r def-tests">
+      <div class="def-test">
+        <div class="def-test-q">Does it come back?</div>
+        <div class="def-test-a">Weekly, monthly, every close. Not once. If you'll only ever do it again in theory, it's not a workstation.</div>
+      </div>
+      <div class="def-test">
+        <div class="def-test-q">Do you re-explain yourself?</div>
+        <div class="def-test-a">Same files, same rules, same "no, not like that" correction. If you're typing the same context each time, that's the brief you should be saving.</div>
+      </div>
+      <div class="def-test">
+        <div class="def-test-q">Does "done" look the same each time?</div>
+        <div class="def-test-a">A shape you'd recognise — same columns, same format, same checks. If every output is different, keep it in a normal chat.</div>
+      </div>
+    </div>
+
+    <div class="r def-verdict">
+      <div class="def-verdict-half def-verdict-half--yes">
+        <div class="def-verdict-lbl">Three yeses</div>
+        <div class="def-verdict-txt">Build a workstation. You'll get the hour back within a month.</div>
+      </div>
+      <div class="def-verdict-half">
+        <div class="def-verdict-lbl">Any no</div>
+        <div class="def-verdict-txt">Just ask Claude normally. No folder, no setup, no guilt.</div>
+      </div>
+    </div>
+
+    <p class="r def-footnote">Most of your work is not a workstation, and that's the point. They're for the five jobs you've already done a dozen times and will do a hundred more.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 5 — PROJECT vs WORKSTATION vs SKILL vs MEMORY
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tools">
+    <div class="tools-meta">
+      <div class="r tools-eyebrow">The Question Everyone Asks</div>
+      <div class="r tools-badge">READ THIS ONE TWICE</div>
+    </div>
+    <h2 class="r">The project is the context. The workstation is the do-er.</h2>
+    <p class="r tools-subtitle-line">Four things that sound similar and aren't. Nine out of ten mix up the first two.</p>
+
+    <div class="r tools-columns tools-columns--four">
+
+      <div class="tool-col tool-col--project">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Claude Project</div>
+          <div class="tool-col-name">The context</div>
+          <div class="tool-col-access">In claude.ai &nbsp;·&nbsp; a shared bucket</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Think of it as</div>
+          <div class="tool-trigger-text">A folder of background reading you hand Claude before a conversation.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">It holds</div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Reference documents</div><div class="tool-uc-sub">Policies, past reports, source files</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Standing instructions</div><div class="tool-uc-sub">Custom instructions for that topic</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">A chat history</div><div class="tool-uc-sub">Conversations grouped by subject</div></div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">It does not</div>
+          <div class="tool-not-for-text">Touch your local files, follow a workflow, or run on a schedule. It waits to be asked.</div>
+        </div>
+      </div>
+
+      <div class="tool-col tool-col--cowork tool-col--hero">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Workstation</div>
+          <div class="tool-col-name">The do-er</div>
+          <div class="tool-col-access">In CoworkOS &nbsp;·&nbsp; a folder that acts</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Think of it as</div>
+          <div class="tool-trigger-text">A specialist you brief once, who then does the job on request.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">It holds</div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">A workflow</div><div class="tool-uc-sub">The steps, in order, every time</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Its own rules and memory</div><div class="tool-uc-sub">What good looks like in this job</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">A place to put the output</div><div class="tool-uc-sub">Saved where you expect to find it</div></div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">It does not</div>
+          <div class="tool-not-for-text">Suit one-off work. If the job won't come back, you're doing setup for nothing.</div>
+        </div>
+      </div>
+
+      <div class="tool-col tool-col--chat">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Skill</div>
+          <div class="tool-col-name">The tool</div>
+          <div class="tool-col-access">Installed once &nbsp;·&nbsp; used anywhere</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Think of it as</div>
+          <div class="tool-trigger-text">A power tool on the bench. Any workstation can pick it up.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">It gives Claude</div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">One repeatable capability</div><div class="tool-uc-sub">Build a spreadsheet, write a Word doc</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Known-good method</div><div class="tool-uc-sub">Same technique whoever calls it</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Shareable packaging</div><div class="tool-uc-sub">Hand it to a colleague as one file</div></div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">It does not</div>
+          <div class="tool-not-for-text">Know your job, your files, or your standards. It's a capability, not a colleague.</div>
+        </div>
+      </div>
+
+      <div class="tool-col tool-col--memory">
+        <div class="tool-col-header">
+          <div class="tool-col-label">MEMORY.md</div>
+          <div class="tool-col-name">The notebook</div>
+          <div class="tool-col-access">One per workstation &nbsp;·&nbsp; plus a root one</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Think of it as</div>
+          <div class="tool-trigger-text">What the specialist wrote down so you'd never have to say it twice.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">It holds</div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Facts that change</div><div class="tool-uc-sub">Who owns what, which entity, which path</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Decisions and why</div><div class="tool-uc-sub">So last month's call still stands</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Corrections you've made</div><div class="tool-uc-sub">Say it once, it sticks</div></div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">It does not</div>
+          <div class="tool-not-for-text">Hold rules. "Always do X" belongs in CLAUDE.md. Memory is facts, not instructions.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="r tools-migrate">
+      <strong>Already built Claude Projects?</strong> Nothing is wasted. The reference files in your project become the workstation's Resources folder, and your custom instructions become its CLAUDE.md. Ask Cowork: <em>"I have a Claude Project for [topic] — help me turn it into a workstation and tell me what should stay a project."</em> You're moving context into a place that can act on it, not starting again.
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 6 — WORKED EXAMPLE: SAME MONDAY, TWICE
+  ══════════════════════════════════════════ -->
+  <section class="slide s-two-col">
+    <div class="r lbl">A Worked Example</div>
+    <h2 class="r">Same Monday, twice. One version takes four minutes.</h2>
+    <div class="r two-components">
+
+      <div class="component">
+        <div class="component-tag">Chat, or a project</div>
+        <h3>You do the explaining, every week</h3>
+        <ol class="mon-steps">
+          <li data-n="01">Find last week's file. Upload it.</li>
+          <li data-n="02">Explain which columns matter and which to ignore.</li>
+          <li data-n="03">Re-explain the tolerance rule you mentioned last time.</li>
+          <li data-n="04">Get output in the wrong format. Correct it.</li>
+          <li data-n="05">Copy the result somewhere you'll remember.</li>
+        </ol>
+        <div class="mon-clock"><span class="mon-clock-num">40 min</span><span class="mon-clock-lbl">and it resets next Monday</span></div>
+      </div>
+
+      <div class="component component-featured">
+        <div class="component-tag">A workstation</div>
+        <h3>You ask. It already knows.</h3>
+        <ol class="mon-steps mon-steps--win">
+          <li data-n="01">"Run this week's bank rec."</li>
+          <li data-n="02">It knows where the file lives and which columns matter.</li>
+          <li data-n="03">It applies the tolerance rule you set once, in month one.</li>
+          <li data-n="04">Output arrives in your format, saved to your Outputs folder.</li>
+          <li data-n="05">You check the exceptions. That's the actual job.</li>
+        </ol>
+        <div class="mon-clock mon-clock--win"><span class="mon-clock-num">4 min</span><span class="mon-clock-lbl">and next Monday is faster still</span></div>
+      </div>
+
+    </div>
+    <p class="r tools-note">Not hypothetical. An AR specialist in APAC built three reconciliation workstations that now run in live monthly use. A finance manager in Canada built five.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 7 — ARCHITECTURE
   ══════════════════════════════════════════ -->
   <section class="slide s-arch">
     <div class="r lbl">How It Works</div>
@@ -1575,17 +1920,17 @@ html, body {
       <div class="arch-layer arch-layer--bottom">
         <span class="arch-name">Workstations</span>
         <div class="arch-pills">
+          <span class="arch-pill">Bank Rec</span>
+          <span class="arch-pill">Month-End Close</span>
           <span class="arch-pill">Email HQ</span>
-          <span class="arch-pill">Presso Station</span>
-          <span class="arch-pill">Data Scientist</span>
-          <span class="arch-pill">UX Researcher</span>
-          <span class="arch-pill">Slack Buddy</span>
+          <span class="arch-pill">Weekly Report</span>
+          <span class="arch-pill">Slide Decks</span>
           <span class="arch-pill">+ yours</span>
         </div>
       </div>
 
     </div>
-    <p class="r arch-note">Think of each workstation as a sub-agent dedicated to a specific task. It has its own folder with a local CLAUDE.md, MEMORY.md, and Resources subfolder. The global files apply everywhere; the workstation files layer on top.</p>
+    <p class="r arch-note">Each workstation is one specialist, in one folder: a local CLAUDE.md for its rules, a MEMORY.md for what it has learned, and a Resources subfolder for its reference files. The global files apply everywhere; the workstation files layer on top.</p>
   </section>
 
 
@@ -1643,8 +1988,8 @@ html, body {
       <div class="phase-step">
         <div class="phase-step-ico">🏗️</div>
         <div class="phase-step-num">Phase 02</div>
-        <div class="phase-step-title">Build your workstations</div>
-        <div class="phase-step-sub">Add a workstation for each recurring task type — emails, decks, Jira tickets, Slack updates. Each one gets its own rules and memory.</div>
+        <div class="phase-step-title">Get one win, then build</div>
+        <div class="phase-step-sub">Start with one scheduled task that runs itself. Then turn your most repeated job into a workstation — its own rules, its own memory.</div>
       </div>
 
       <div class="phase-arr">→</div>
@@ -1867,23 +2212,23 @@ don't edit manually)
   ══════════════════════════════════════════ -->
   <section class="slide s-trust">
     <div class="r lbl">File 02 &nbsp;·&nbsp; Memory Routing</div>
-    <h2 class="r">Two places memories live. One simple rule.</h2>
-    <p class="r sub">Every workstation has its own MEMORY.md. Knowing which one to write to keeps things clean — and stops your root file from bloating.</p>
+    <h2 class="r">Two notebooks. One question tells you which.</h2>
+    <p class="r sub">Ask yourself: would this be useful in three different jobs, or only this one? Three jobs, it goes in the root notebook. Only this one, it goes in the workstation's own. That's the whole rule.</p>
     <div class="r trust-grid">
 
       <div class="trust">
         <h3>Root MEMORY.md</h3>
-        <p>Cross-cutting facts that apply everywhere — your role, key people, active projects, toolchain, personal preferences. If it would be useful in three different workstations, it lives here.</p>
+        <p>Things true no matter what you're working on — your role, the people you deal with, what you're currently on, how you like things done. Useful in three different jobs? It belongs here.</p>
       </div>
 
       <div class="trust trust--featured">
         <h3 class="trust-heading--featured">[Workstation]/MEMORY.md</h3>
-        <p>Domain-specific facts only relevant inside that workstation — contacts for that domain, build decisions, output paths, tool configs. If it only matters when you're doing that specific type of work, it goes here.</p>
+        <p>Things that only matter for one job — the contacts for it, the calls you've made, where the output goes, which entity or system it uses. If it's meaningless outside that job, it goes here.</p>
       </div>
 
       <div class="trust">
         <h3>CLAUDE.md (root or workstation)</h3>
-        <p>Behavioral rules — anything prescriptive: "always read voice-principles.md," "never start with a subject line," "before drafting, check for an existing thread." Rules belong in CLAUDE.md, not MEMORY.md.</p>
+        <p>Rules, not facts. Anything with an "always", "never" or "before you do X" in it. If you're telling Claude how to behave rather than what's true, it goes in CLAUDE.md instead.</p>
       </div>
 
       <div class="trust">
@@ -1950,19 +2295,66 @@ don't edit manually)
        SLIDE 12 — SECTION BREAK: PHASE 2
   ══════════════════════════════════════════ -->
   <section class="slide s-phase">
-    <div class="r phase-eyebrow">Phase 02 &nbsp;·&nbsp; Workstations</div>
-    <h2 class="r">Time to build your first workstation.</h2>
-    <p class="r phase-sub">A workstation is Claude with a specific job — its own rules, its own memory, its own lane. Pick the one recurring task that eats most of your week. That's where you start.</p>
+    <div class="r phase-eyebrow">Phase 02 &nbsp;·&nbsp; Get Something Running</div>
+    <h2 class="r">Win first. Build second.</h2>
+    <p class="r phase-sub">Don't start with a workstation. Start with one scheduled task that saves you a job you resent — it takes two minutes and it proves the whole idea. Build the workstation once you already believe it.</p>
   </section>
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 13 — WORKSTATION ANATOMY
+       SLIDE 17 — THE TWO-MINUTE WIN (scheduled task)
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tmpl">
+    <div class="r lbl lbl--phase">Phase 2 &nbsp;·&nbsp; Start Here</div>
+    <h2 class="r">The two-minute win: one job that runs itself</h2>
+    <div class="r tmpl-layout">
+
+      <div class="tmpl-desc">
+        <div class="tmpl-desc-tag">Before your first workstation</div>
+        <h3>Belief is cheaper to buy than to argue for</h3>
+        <p>A scheduled task is Cowork doing one small job on a timer, without being asked. No folders, no files, no setup. It is the fastest way to see the point.</p>
+        <p>Pick the check you do every morning out of habit — a balance, a queue, an inbox, a report that lands late. Tell Cowork to do it and message you the answer.</p>
+        <div class="tmpl-hint">
+          A credit manager who rated her own confidence 2 out of 5 shipped two of these in her first fortnight. One compares daily cash to forecast and posts the gap to Slack. Confidence followed the win, not the other way round.
+        </div>
+      </div>
+
+      <div class="tmpl-code-wrap">
+        <button class="copy-btn" data-target="tmpl-scheduled">Copy</button>
+        <pre class="tmpl-pre" id="tmpl-scheduled">Set up a scheduled task for me.
+
+What I check manually right now:
+[describe it plainly — e.g. "every morning I open
+the bank file and compare actual cash to the
+forecast, then flag anything more than $5k out"]
+
+When it should run:
+[e.g. "every weekday at 7am Sydney time"]
+
+How I want the answer:
+[e.g. "a short Slack message to me — just the
+variance and anything unusual, not a full report"]
+
+Before you set it up:
+- Tell me what you'll need access to
+- Run it once now so I can see the output
+- Then confirm the schedule with me
+
+If anything is ambiguous, ask me rather than
+guessing.</pre>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 18 — WORKSTATION ANATOMY
   ══════════════════════════════════════════ -->
   <section class="slide s-trust">
     <div class="r lbl lbl--phase">Phase 2 | Workstations</div>
-    <h2 class="r">Every workstation has the same four parts</h2>
-    <p class="r sub">A workstation is just a folder with three files. The four sections inside its CLAUDE.md define how Claude behaves when it's routing work there.</p>
+    <h2 class="r">Four things to tell your new specialist</h2>
+    <p class="r sub">This is the brief from slide 4, written down. Four short sections, in one file, so you never have to say any of it again.</p>
     <div class="r trust-grid">
 
       <div class="trust trust--featured">
@@ -1990,7 +2382,7 @@ don't edit manually)
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 13 — WORKSTATION CREATION PROMPT
+       SLIDE 19 — WORKSTATION CREATION PROMPT
   ══════════════════════════════════════════ -->
   <section class="slide s-tmpl">
     <div class="r lbl lbl--phase">Phase 2 | Workstations &nbsp;·&nbsp; Prompt Template</div>
@@ -1999,8 +2391,8 @@ don't edit manually)
 
       <div class="tmpl-desc">
         <div class="tmpl-desc-tag">New workstation</div>
-        <h3>30 seconds to a new capability</h3>
-        <p>Pick one recurring task type — emails, slide decks, Jira tickets, whatever takes up your time. Fill in the two brackets, paste, and Claude scaffolds the whole workstation.</p>
+        <h3>30 seconds to a new specialist</h3>
+        <p>Pick a job that passed all three questions on slide 4 — a reconciliation, a weekly report, a recurring email. Fill in the two brackets, paste, and Claude scaffolds the whole thing.</p>
         <div class="tmpl-hint">
           Good workstation triggers are specific: "draft, edit, or review any Slack message" rather than "Slack stuff." The routing map entry is what Claude matches against your request.
         </div>
@@ -2040,11 +2432,11 @@ Routing Map in root CLAUDE.md.</pre>
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 14 — ARCHITECTURE RECAP (copy of slide 4)
+       SLIDE 20 — ARCHITECTURE RECAP
   ══════════════════════════════════════════ -->
   <section class="slide s-arch">
     <div class="r lbl">A Quick Recap</div>
-    <h2 class="r">One folder to rule them all. Three layers that power CoworkOS.</h2>
+    <h2 class="r">One folder. A few global rules. As many specialists as you need.</h2>
     <div class="r arch-diagram">
 
       <div class="arch-layer arch-layer--top">
@@ -2073,17 +2465,17 @@ Routing Map in root CLAUDE.md.</pre>
       <div class="arch-layer arch-layer--bottom">
         <span class="arch-name">Workstations</span>
         <div class="arch-pills">
+          <span class="arch-pill">Bank Rec</span>
+          <span class="arch-pill">Month-End Close</span>
           <span class="arch-pill">Email HQ</span>
-          <span class="arch-pill">Presso Station</span>
-          <span class="arch-pill">Data Scientist</span>
-          <span class="arch-pill">UX Researcher</span>
-          <span class="arch-pill">Slack Buddy</span>
+          <span class="arch-pill">Weekly Report</span>
+          <span class="arch-pill">Slide Decks</span>
           <span class="arch-pill">+ yours</span>
         </div>
       </div>
 
     </div>
-    <p class="r arch-note">Think of each workstation as a sub-agent dedicated to a specific task. It has its own folder with a local CLAUDE.md, MEMORY.md, and Resources subfolder. The global files apply everywhere; the workstation files layer on top.</p>
+    <p class="r arch-note">If you remember one thing: a workstation is a specialist you brief once. The rest — folders, files, routing — is just how that brief gets stored so Claude can find it again next week.</p>
   </section>
 
 
@@ -2169,7 +2561,7 @@ on what's genuinely new from this session.</pre>
     <div class="r cta-layout">
 
       <div>
-        <p class="cta-q">Pick one task you repeat every week. That's your first workstation.</p>
+        <p class="cta-q">Pick the one job you resent repeating. That's your first workstation.</p>
         <p class="cta-sub">CoworkOS compounds. The more you use it, the more Claude knows you. Start small — one folder, three files — and add workstations as you go.</p>
         <p style="margin-top: 1.2rem; font-size: 0.78rem; color: var(--text-muted);">Questions? Find us in <strong style="color: var(--text-mid);">#bai-claude-ama</strong> on Slack.</p>
       </div>
@@ -2188,15 +2580,15 @@ on what's genuinely new from this session.</pre>
           <span class="inv-n">02</span>
           <div>
             <div class="inv-title">Paste the first-time setup prompt</div>
-            <div class="inv-desc">Slide 7 has the prompt — hit Copy, open Cowork, paste, let it run. Three files and a folder structure in under a minute.</div>
+            <div class="inv-desc">Slide 10 has the prompt — hit Copy, open Cowork, paste, let it run. Three files and a folder structure in under a minute.</div>
           </div>
         </div>
 
         <div class="inv">
           <span class="inv-n">03</span>
           <div>
-            <div class="inv-title">Customise and add your first workstation</div>
-            <div class="inv-desc">Fill in the brackets in your core files, then use the workstation prompt (Slide 14) to scaffold your first domain.</div>
+            <div class="inv-title">Get one win, then build one workstation</div>
+            <div class="inv-desc">Ship the scheduled task on slide 17 this week. Then use the workstation prompt on slide 19 for the job you repeat most.</div>
           </div>
         </div>
 
@@ -2369,7 +2761,12 @@ on what's genuinely new from this session.</pre>
 
       <div class="glossary-item">
         <span class="g-term">Workstation</span>
-        <span class="g-def">A CoworkOS folder dedicated to a specific task type. Has its own rules, memory, and resources. Claude auto-routes tasks to the right one based on your routing map.</span>
+        <span class="g-def">A specialist you brief once. A CoworkOS folder for one recurring job, holding its own rules, memory and resources. Claude routes work to the right one using your routing map.</span>
+      </div>
+
+      <div class="glossary-item">
+        <span class="g-term">Project (in claude.ai)</span>
+        <span class="g-def">A bucket of reference files and standing instructions for one topic, in the Claude web app. The project is the <strong>context</strong>; a workstation is the <strong>do-er</strong>. A project waits to be asked; a workstation runs a workflow on your local files.</span>
       </div>
 
       <div class="glossary-item">

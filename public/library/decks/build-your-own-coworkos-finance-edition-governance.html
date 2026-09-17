@@ -1053,6 +1053,162 @@ html, body {
   font-family: var(--font);
 }
 
+/* ═══════════════════════════════════
+   LAYOUT: CANONICAL DEFINITION  (s-def)
+═══════════════════════════════════ */
+.s-def { background: linear-gradient(150deg, #faf7fb 0%, #f1e7f3 100%); }
+
+.def-statement {
+  margin-top: 1.2rem; margin-bottom: 1.6rem;
+  padding: 1.9rem 2.2rem;
+  background: rgba(255,255,255,0.92);
+  border: 1.5px solid rgba(200,165,204,0.5);
+  border-left: 5px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  box-shadow: 0 6px 24px rgba(66,21,64,0.07);
+}
+
+.s-def .def-statement-main {
+  font-size: clamp(1.35rem, 2.6vw, 2rem);
+  font-weight: 700; color: #38183c;
+  line-height: 1.2; letter-spacing: -0.02em;
+  margin-bottom: 0.85rem;
+}
+
+.def-statement-sub {
+  font-size: 0.9rem; font-weight: 400;
+  color: #5a2d5f; line-height: 1.7; max-width: 780px;
+}
+
+.def-test-label {
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: #7d4d82; margin-bottom: 0.8rem;
+}
+
+.def-tests {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1rem; margin-bottom: 1.4rem;
+}
+
+.def-test {
+  padding: 1.15rem 1.3rem 1.3rem;
+  background: rgba(255,255,255,0.82);
+  border: 1.5px solid rgba(200,165,204,0.45);
+  border-radius: 8px;
+  display: flex; flex-direction: column; gap: 0.4rem;
+}
+
+.def-test-q {
+  font-size: 0.92rem; font-weight: 700;
+  color: #38183c; line-height: 1.3;
+}
+
+.def-test-a {
+  font-size: 0.78rem; color: #5a2d5f; line-height: 1.6;
+}
+
+.def-verdict {
+  display: flex; gap: 1px;
+  background: rgba(200,165,204,0.5);
+  border: 1.5px solid rgba(200,165,204,0.5);
+  border-radius: 8px; overflow: hidden;
+}
+
+.def-verdict-half {
+  flex: 1; padding: 0.95rem 1.3rem;
+  background: rgba(255,255,255,0.9);
+}
+
+.def-verdict-half--yes { background: rgba(66,21,64,0.07); }
+
+.def-verdict-lbl {
+  font-size: 0.56rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: #7d4d82; margin-bottom: 0.22rem;
+}
+
+.def-verdict-txt {
+  font-size: 0.82rem; color: #38183c;
+  font-weight: 500; line-height: 1.5;
+}
+
+.def-footnote {
+  font-size: 0.78rem; color: #7d4d82;
+  line-height: 1.6; margin-top: 1.1rem; font-style: italic;
+}
+
+/* ── Four-column comparison (extends s-tools) ── */
+.tools-columns--four { grid-template-columns: repeat(4, 1fr); gap: 0.7rem; }
+
+.tool-col--project::before { background: #7d4d82; }
+.tool-col--memory::before  { background: #E8762C; }
+
+.tool-col--project .tool-col-label,
+.tool-col--project .tool-trigger-label { color: #7d4d82; }
+.tool-col--memory  .tool-col-label,
+.tool-col--memory  .tool-trigger-label { color: #E8762C; }
+
+.tool-col--project .tool-trigger { background: rgba(125,77,130,0.09); border-left: 3px solid #7d4d82; }
+.tool-col--memory  .tool-trigger { background: rgba(232,118,44,0.08); border-left: 3px solid #E8762C; }
+
+.tool-col--project .tool-uc-dot { background: #7d4d82; }
+.tool-col--memory  .tool-uc-dot { background: #E8762C; }
+
+.tool-col--hero {
+  border-color: var(--accent);
+  background: rgba(66,21,64,0.045);
+  box-shadow: 0 4px 18px rgba(66,21,64,0.09);
+}
+
+.tools-migrate {
+  margin-top: 0.75rem; padding: 0.7rem 1rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+  font-size: 0.66rem; color: var(--text-mid); line-height: 1.6;
+}
+.tools-migrate strong { color: var(--accent); }
+
+/* ── Worked example ledger (extends s-two-col) ── */
+.mon-steps {
+  list-style: none; margin-top: 0.9rem;
+  display: flex; flex-direction: column; gap: 0.42rem;
+}
+
+.mon-steps li {
+  font-size: 0.79rem; color: var(--text-mid);
+  line-height: 1.5; padding-left: 1.5rem; position: relative;
+}
+
+.mon-steps li::before {
+  content: attr(data-n);
+  position: absolute; left: 0; top: 0;
+  font-size: 0.62rem; font-weight: 700;
+  color: var(--text-faint);
+}
+
+.mon-steps--win li::before { color: var(--accent); }
+
+.mon-clock {
+  display: inline-flex; align-items: baseline; gap: 0.4rem;
+  margin-top: 1.1rem; padding: 0.4rem 0.8rem;
+  border-radius: 4px; background: var(--surface-2);
+}
+.mon-clock--win { background: var(--accent-light); }
+
+.mon-clock-num {
+  font-size: 1.15rem; font-weight: 700; color: var(--text);
+  letter-spacing: -0.02em;
+}
+.mon-clock--win .mon-clock-num { color: var(--accent); }
+
+.mon-clock-lbl {
+  font-size: 0.62rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+
 </style>
 </head>
 <body>
@@ -1063,11 +1219,12 @@ html, body {
        SLIDE 1 — TITLE
   ══════════════════════════════════════════ -->
   <section class="slide s-title">
-    <div class="r title-eyebrow">BRG Finance &nbsp;·&nbsp; June 2026</div>
+    <div class="r title-eyebrow">BRG Finance &nbsp;·&nbsp; August 2026</div>
     <h1 class="r title-name">Build Your Own<br>CoworkOS</h1>
     <p class="r title-sub">Give Claude persistent memory, your finance context, and one governed process the whole team shares.</p>
     <div class="r title-badge">Finance · Governance Edition &nbsp;·&nbsp; Claude Desktop App ·&nbsp; Brought to you by Vivid</div>
     <div class="r title-agenda">
+      <span>What a workstation actually is — and how it differs from a project</span>
       <span>Why Claude needs your context to be useful</span>
       <span>The three core files that power everything</span>
       <span>How the Governance layer keeps the team on one process</span>
@@ -1288,6 +1445,195 @@ html, body {
 
 
   <!-- ══════════════════════════════════════════
+       SLIDE 3C — THE ONE IDEA (canonical definition)
+  ══════════════════════════════════════════ -->
+  <section class="slide s-def">
+    <div class="r lbl">The One Idea</div>
+    <div class="r def-statement">
+      <h2 class="def-statement-main">A workstation is a specialist you brief once.</h2>
+      <p class="def-statement-sub">You explain the job properly one time — the entities, the FX conventions, the format, the sign-off chain. From then on you just ask for the thing, and it already knows. Like an analyst who's run the FX consolidation forty times and doesn't need the background again.</p>
+    </div>
+
+    <div class="r def-test-label">Does this job deserve its own workstation? Three questions</div>
+    <div class="r def-tests">
+      <div class="def-test">
+        <div class="def-test-q">Does it come back?</div>
+        <div class="def-test-a">Every month-end, every re-forecast, every board pack. Not once. If you'll only do it again in theory, it's not a workstation.</div>
+      </div>
+      <div class="def-test">
+        <div class="def-test-q">Do you re-explain yourself?</div>
+        <div class="def-test-a">Same entities, same FX source, same "no, label it (U) not negative" correction. If you're typing the same context each cycle, that's the brief you should be saving.</div>
+      </div>
+      <div class="def-test">
+        <div class="def-test-q">Does "done" look the same each time?</div>
+        <div class="def-test-a">Same columns, same variance format, same sign-off. If every output looks different, keep it in a normal chat.</div>
+      </div>
+    </div>
+
+    <div class="r def-verdict">
+      <div class="def-verdict-half def-verdict-half--yes">
+        <div class="def-verdict-lbl">Three yeses</div>
+        <div class="def-verdict-txt">Build a workstation. You'll get the hour back within a month — and for governed tasks, it locks in the approved process too.</div>
+      </div>
+      <div class="def-verdict-half">
+        <div class="def-verdict-lbl">Any no</div>
+        <div class="def-verdict-txt">Just ask Claude normally. No folder, no setup, no guilt.</div>
+      </div>
+    </div>
+
+    <p class="r def-footnote">Most of your work is not a workstation, and that's the point. They're for the handful of finance cycles you've already run a dozen times and will run a hundred more — budgets, board packs, FX consolidation.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 3D — PROJECT vs WORKSTATION vs SKILL vs MEMORY
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tools">
+    <div class="tools-meta">
+      <div class="r tools-eyebrow">The Question Everyone Asks</div>
+      <div class="r tools-badge">READ THIS ONE TWICE</div>
+    </div>
+    <h2 class="r">The project is the context. The workstation is the do-er.</h2>
+    <p class="r tools-subtitle-line">Four things that sound similar and aren't. Nine out of ten mix up the first two.</p>
+
+    <div class="r tools-columns tools-columns--four">
+
+      <div class="tool-col tool-col--project">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Claude Project</div>
+          <div class="tool-col-name">The context</div>
+          <div class="tool-col-access">In claude.ai &nbsp;·&nbsp; a shared bucket</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Think of it as</div>
+          <div class="tool-trigger-text">A folder of background reading you hand Claude before a conversation.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">It holds</div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Reference documents</div><div class="tool-uc-sub">Policies, past board packs, source files</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Standing instructions</div><div class="tool-uc-sub">Custom instructions for that topic</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">A chat history</div><div class="tool-uc-sub">Conversations grouped by subject</div></div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">It does not</div>
+          <div class="tool-not-for-text">Touch your local models, follow a workflow, or run on a schedule. It waits to be asked.</div>
+        </div>
+      </div>
+
+      <div class="tool-col tool-col--cowork tool-col--hero">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Workstation</div>
+          <div class="tool-col-name">The do-er</div>
+          <div class="tool-col-access">In CoworkOS &nbsp;·&nbsp; a folder that acts</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Think of it as</div>
+          <div class="tool-trigger-text">A specialist you brief once, who then does the job on request.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">It holds</div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">A workflow</div><div class="tool-uc-sub">The steps, in order, every close</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Its own rules and memory</div><div class="tool-uc-sub">What good looks like in this job — governed ones inherit the locked process</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">A place to put the output</div><div class="tool-uc-sub">Saved to your Outputs folder</div></div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">It does not</div>
+          <div class="tool-not-for-text">Suit one-off work. If the job won't come back, you're doing setup for nothing.</div>
+        </div>
+      </div>
+
+      <div class="tool-col tool-col--chat">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Skill</div>
+          <div class="tool-col-name">The tool</div>
+          <div class="tool-col-access">Installed once &nbsp;·&nbsp; used anywhere</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Think of it as</div>
+          <div class="tool-trigger-text">A power tool on the bench. Any workstation can pick it up.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">It gives Claude</div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">One repeatable capability</div><div class="tool-uc-sub">Build an Excel model, write a board doc</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Known-good method</div><div class="tool-uc-sub">Same technique whoever calls it — incl. finance-shared for governed tasks</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Shareable packaging</div><div class="tool-uc-sub">Hand it to a colleague as one file</div></div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">It does not</div>
+          <div class="tool-not-for-text">Know your entities, your files, or your standards. It's a capability, not a colleague.</div>
+        </div>
+      </div>
+
+      <div class="tool-col tool-col--memory">
+        <div class="tool-col-header">
+          <div class="tool-col-label">MEMORY.md</div>
+          <div class="tool-col-name">The notebook</div>
+          <div class="tool-col-access">One per workstation &nbsp;·&nbsp; plus a root one</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Think of it as</div>
+          <div class="tool-trigger-text">What the specialist wrote down so you'd never have to say it twice.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">It holds</div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Facts that change</div><div class="tool-uc-sub">FX rates used, budget versions, which entity</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Decisions and why</div><div class="tool-uc-sub">So last month's assumption still stands</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Corrections you've made</div><div class="tool-uc-sub">Say it once, it sticks</div></div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">It does not</div>
+          <div class="tool-not-for-text">Hold rules. "Always label variance (F)/(U)" belongs in CLAUDE.md. Memory is facts, not instructions.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="r tools-migrate">
+      <strong>🔒 Governed workstations</strong> (Budget Modeller, FX &amp; Consolidation, Board Pack Builder) must call the finance-shared skill for the Skill column above — they don't get to pick their own. See the Governance section for how that's enforced.
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 3E — WORKED EXAMPLE: SAME MONTH-END, TWICE
+  ══════════════════════════════════════════ -->
+  <section class="slide s-two-col">
+    <div class="r lbl">A Worked Example</div>
+    <h2 class="r">Same month-end, twice. One version takes minutes.</h2>
+    <div class="r two-components">
+
+      <div class="component">
+        <div class="component-tag">Chat, or a project</div>
+        <h3>You do the explaining, every cycle</h3>
+        <ol class="mon-steps">
+          <li data-n="01">Find last month's variance file. Upload it.</li>
+          <li data-n="02">Explain which entities and FX rate source to use.</li>
+          <li data-n="03">Re-explain the materiality threshold you mentioned last time.</li>
+          <li data-n="04">Get commentary in the wrong format. Correct it.</li>
+          <li data-n="05">Copy the result somewhere you'll remember.</li>
+        </ol>
+        <div class="mon-clock"><span class="mon-clock-num">45 min</span><span class="mon-clock-lbl">and it resets next month</span></div>
+      </div>
+
+      <div class="component component-featured">
+        <div class="component-tag">A workstation</div>
+        <h3>You ask. It already knows.</h3>
+        <ol class="mon-steps mon-steps--win">
+          <li data-n="01">"Run this month's variance commentary."</li>
+          <li data-n="02">It knows the entity list and the standing FX rate source.</li>
+          <li data-n="03">It applies the materiality threshold you set once, in month one.</li>
+          <li data-n="04">Commentary arrives labelled (F)/(U), in board format, saved to Outputs.</li>
+          <li data-n="05">You check the exceptions and sign off. That's the actual job.</li>
+        </ol>
+        <div class="mon-clock mon-clock--win"><span class="mon-clock-num">5 min</span><span class="mon-clock-lbl">and next month is faster still</span></div>
+      </div>
+
+    </div>
+    <p class="r tools-note">Not hypothetical. An AR specialist in APAC built three reconciliation workstations that now run in live monthly use. A finance manager in Canada built five.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
        SLIDE 4 — ARCHITECTURE
   ══════════════════════════════════════════ -->
   <section class="slide s-arch">
@@ -1352,7 +1698,7 @@ html, body {
       </div>
 
     </div>
-    <p class="r arch-note">The <strong style="color: var(--accent);">Governance Agent</strong> sits between your context and your workstations. Governed workstations (budgets, FX, consolidation) must use the shared, locked process so every analyst does it the same approved way. Light-touch workstations (email, slides) stay flexible. Each workstation is still a sub-agent with its own folder, but the governed ones inherit the finance-shared rules they can't override.</p>
+    <p class="r arch-note">The <strong style="color: var(--accent);">Governance Agent</strong> sits between your context and your workstations. Governed workstations (budgets, FX, consolidation) must use the shared, locked process so every analyst does it the same approved way. Light-touch workstations (email, slides) stay flexible. Each workstation is still one specialist in its own folder, but the governed ones inherit the finance-shared rules they can't override.</p>
   </section>
 
 
@@ -1841,7 +2187,7 @@ Budget v2.1 approved 15 Mar 2026")</pre>
   <section class="slide s-phase">
     <div class="r phase-eyebrow">Phase 02 &nbsp;·&nbsp; Workstations</div>
     <h2 class="r">Time to build your first finance workstation.</h2>
-    <p class="r phase-sub">A workstation is Claude with a specific job — Budget Modeller, Board Pack Builder, FX Consolidation. Pick the one task that costs you the most time every month. That's where you start.</p>
+    <p class="r phase-sub">Remember the one idea: a workstation is a specialist you brief once — Budget Modeller, Board Pack Builder, FX Consolidation. Pick the one task that costs you the most time every month. That's where you start.</p>
   </section>
 
 
@@ -1851,7 +2197,7 @@ Budget v2.1 approved 15 Mar 2026")</pre>
   <section class="slide s-trust">
     <div class="r lbl lbl--phase">Phase 2 | Workstations</div>
     <h2 class="r">Every workstation has the same four parts</h2>
-    <p class="r sub">A workstation is just a folder with three files. The four sections inside its CLAUDE.md define how Claude behaves when routing finance work there.</p>
+    <p class="r sub">A workstation is a specialist you brief once — and structurally, it's just a folder with three files. The four sections inside its CLAUDE.md define how Claude behaves when routing finance work there.</p>
     <div class="r trust-grid">
 
       <div class="trust trust--featured">
@@ -2002,7 +2348,7 @@ in root CLAUDE.md.</pre>
       </div>
 
     </div>
-    <p class="r arch-note">Global files apply everywhere. The <strong style="color: var(--accent);">Governance Agent</strong> enforces the shared process on governed workstations, while light-touch ones stay flexible. The governed workstations layer on top but can't override the finance-shared rules.</p>
+    <p class="r arch-note">Global files apply everywhere. Each workstation is one specialist in one folder; the <strong style="color: var(--accent);">Governance Agent</strong> enforces the shared process on governed workstations, while light-touch ones stay flexible. The governed workstations layer on top but can't override the finance-shared rules.</p>
   </section>
 
 
@@ -2404,7 +2750,7 @@ on what's genuinely new from this session.</pre>
 
       <div class="glossary-item">
         <span class="g-term">Workstation</span>
-        <span class="g-def">A CoworkOS folder dedicated to a specific task type (e.g. Budget Modeller, Board Pack Builder). Has its own rules and memory. Claude auto-routes tasks to the right one.</span>
+        <span class="g-def">A specialist you brief once. A CoworkOS folder for one recurring finance job — Budget Modeller, Board Pack Builder — holding its own rules and memory. Claude routes work to the right one using your routing map; governed ones (🔒) also inherit the finance-shared locked process.</span>
       </div>
 
       <div class="glossary-item">
@@ -2419,7 +2765,7 @@ on what's genuinely new from this session.</pre>
 
       <div class="glossary-item">
         <span class="g-term">Skill</span>
-        <span class="g-def">A packaged workflow that gives Claude a specialised capability — creating Excel models, writing Word docs, pulling data. Install once, trigger by name.</span>
+        <span class="g-def">A packaged workflow that gives Claude a specialised capability — creating Excel models, writing Word docs, pulling data. Install once, trigger by name. Think of it as a power tool on the bench — any workstation can pick it up.</span>
       </div>
 
       <div class="glossary-item">

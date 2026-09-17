@@ -695,6 +695,172 @@ html, body {
 .tools-legend-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.58rem; color: var(--text-muted); }
 .tools-legend-dot  { width: 6px; height: 6px; border-radius: 50%; }
 
+.tools-badge {
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.2em; color: var(--accent);
+  border: 1px solid var(--accent-mid);
+  background: var(--accent-light);
+  padding: 0.25rem 0.7rem; border-radius: 3px;
+  flex-shrink: 0; white-space: nowrap;
+}
+
+
+/* ═══════════════════════════════════
+   LAYOUT: CANONICAL DEFINITION  (s-def)
+═══════════════════════════════════ */
+.s-def { background: linear-gradient(150deg, #f0fafd 0%, #dcf1f8 100%); }
+
+.def-statement {
+  margin-top: 1.2rem; margin-bottom: 1.6rem;
+  padding: 1.9rem 2.2rem;
+  background: rgba(255,255,255,0.92);
+  border: 1.5px solid rgba(0, 180, 216, 0.35);
+  border-left: 5px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  box-shadow: 0 6px 24px rgba(3, 4, 94, 0.08);
+}
+
+.s-def .def-statement-main {
+  font-size: clamp(1.35rem, 2.6vw, 2rem);
+  font-weight: 700; color: #03045e;
+  line-height: 1.2; letter-spacing: -0.02em;
+  margin-bottom: 0.85rem;
+}
+
+.def-statement-sub {
+  font-size: 0.9rem; font-weight: 400;
+  color: #024d7a; line-height: 1.7; max-width: 780px;
+}
+
+.def-test-label {
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: #0077b6; margin-bottom: 0.8rem;
+}
+
+.def-tests {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1rem; margin-bottom: 1.4rem;
+}
+
+.def-test {
+  padding: 1.15rem 1.3rem 1.3rem;
+  background: rgba(255,255,255,0.82);
+  border: 1.5px solid rgba(0, 180, 216, 0.3);
+  border-radius: 8px;
+  display: flex; flex-direction: column; gap: 0.4rem;
+}
+
+.def-test-q {
+  font-size: 0.92rem; font-weight: 700;
+  color: #03045e; line-height: 1.3;
+}
+
+.def-test-a {
+  font-size: 0.78rem; color: #024d7a; line-height: 1.6;
+}
+
+.def-verdict {
+  display: flex; gap: 1px;
+  background: rgba(0, 180, 216, 0.3);
+  border: 1.5px solid rgba(0, 180, 216, 0.3);
+  border-radius: 8px; overflow: hidden;
+}
+
+.def-verdict-half {
+  flex: 1; padding: 0.95rem 1.3rem;
+  background: rgba(255,255,255,0.9);
+}
+
+.def-verdict-half--yes { background: rgba(0, 119, 182, 0.08); }
+
+.def-verdict-lbl {
+  font-size: 0.56rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: #0077b6; margin-bottom: 0.22rem;
+}
+
+.def-verdict-txt {
+  font-size: 0.82rem; color: #03045e;
+  font-weight: 500; line-height: 1.5;
+}
+
+.def-footnote {
+  font-size: 0.78rem; color: #0077b6;
+  line-height: 1.6; margin-top: 1.1rem; font-style: italic;
+}
+
+/* ── Four-column comparison (extends s-tools) ── */
+.tools-columns--four { grid-template-columns: repeat(4, 1fr); gap: 0.7rem; }
+
+.tool-col--project::before { background: #0077b6; }
+.tool-col--memory::before  { background: #E8762C; }
+
+.tool-col--project .tool-col-label,
+.tool-col--project .tool-trigger-label { color: #0077b6; }
+.tool-col--memory  .tool-col-label,
+.tool-col--memory  .tool-trigger-label { color: #E8762C; }
+
+.tool-col--project .tool-trigger { background: rgba(0,119,182,0.09); border-left: 3px solid #0077b6; }
+.tool-col--memory  .tool-trigger { background: rgba(232,118,44,0.08); border-left: 3px solid #E8762C; }
+
+.tool-col--project .tool-uc-dot { background: #0077b6; }
+.tool-col--memory  .tool-uc-dot { background: #E8762C; }
+
+.tool-col--hero {
+  border-color: var(--accent);
+  background: rgba(0, 119, 182, 0.045);
+  box-shadow: 0 4px 18px rgba(3, 4, 94, 0.09);
+}
+
+.tools-migrate {
+  margin-top: 0.75rem; padding: 0.7rem 1rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 4px 4px 0;
+  font-size: 0.66rem; color: var(--text-mid); line-height: 1.6;
+}
+.tools-migrate strong { color: var(--accent); }
+
+/* ── Worked example ledger (extends s-two-col) ── */
+.mon-steps {
+  list-style: none; margin-top: 0.9rem;
+  display: flex; flex-direction: column; gap: 0.42rem;
+}
+
+.mon-steps li {
+  font-size: 0.79rem; color: var(--text-mid);
+  line-height: 1.5; padding-left: 1.5rem; position: relative;
+}
+
+.mon-steps li::before {
+  content: attr(data-n);
+  position: absolute; left: 0; top: 0;
+  font-size: 0.62rem; font-weight: 700;
+  color: var(--text-faint);
+}
+
+.mon-steps--win li::before { color: var(--accent); }
+
+.mon-clock {
+  display: inline-flex; align-items: baseline; gap: 0.4rem;
+  margin-top: 1.1rem; padding: 0.4rem 0.8rem;
+  border-radius: 4px; background: var(--surface-2);
+}
+.mon-clock--win { background: var(--accent-light); }
+
+.mon-clock-num {
+  font-size: 1.15rem; font-weight: 700; color: var(--text);
+  letter-spacing: -0.02em;
+}
+.mon-clock--win .mon-clock-num { color: var(--accent); }
+
+.mon-clock-lbl {
+  font-size: 0.62rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+
 
 /* ═══════════════════════════════════
    LAYOUT: SECTION PHASE BREAK (s-phase)
@@ -1212,7 +1378,196 @@ html, body {
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 4 — ARCHITECTURE
+       SLIDE 4 — THE ONE IDEA (canonical definition)
+  ══════════════════════════════════════════ -->
+  <section class="slide s-def">
+    <div class="r lbl">The One Idea</div>
+    <div class="r def-statement">
+      <h2 class="def-statement-main">A workstation is a specialist you brief once.</h2>
+      <p class="def-statement-sub">You explain the job properly one time — the files, the rules, the format, the people involved. From then on you just ask for the thing, and it already knows. Like a colleague who has done your bank rec forty times and doesn't need the background again.</p>
+    </div>
+
+    <div class="r def-test-label">Does this job deserve its own workstation? Three questions</div>
+    <div class="r def-tests">
+      <div class="def-test">
+        <div class="def-test-q">Does it come back?</div>
+        <div class="def-test-a">Weekly, monthly, every close. Not once. If you'll only ever do it again in theory, it's not a workstation.</div>
+      </div>
+      <div class="def-test">
+        <div class="def-test-q">Do you re-explain yourself?</div>
+        <div class="def-test-a">Same files, same rules, same "no, not like that" correction. If you're typing the same context each time, that's the brief you should be saving.</div>
+      </div>
+      <div class="def-test">
+        <div class="def-test-q">Does "done" look the same each time?</div>
+        <div class="def-test-a">A shape you'd recognise — same columns, same format, same checks. If every output is different, keep it in a normal chat.</div>
+      </div>
+    </div>
+
+    <div class="r def-verdict">
+      <div class="def-verdict-half def-verdict-half--yes">
+        <div class="def-verdict-lbl">Three yeses</div>
+        <div class="def-verdict-txt">Build a workstation. You'll get the hour back within a month.</div>
+      </div>
+      <div class="def-verdict-half">
+        <div class="def-verdict-lbl">Any no</div>
+        <div class="def-verdict-txt">Just ask Claude normally. No folder, no setup, no guilt.</div>
+      </div>
+    </div>
+
+    <p class="r def-footnote">Most of your work is not a workstation, and that's the point. They're for the five jobs you've already done a dozen times and will do a hundred more.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 5 — PROJECT vs WORKSTATION vs SKILL vs MEMORY
+  ══════════════════════════════════════════ -->
+  <section class="slide s-tools">
+    <div class="tools-meta">
+      <div class="r tools-eyebrow">The Question Everyone Asks</div>
+      <div class="r tools-badge">READ THIS ONE TWICE</div>
+    </div>
+    <h2 class="r">The project is the context. The workstation is the do-er.</h2>
+    <p class="r tools-subtitle-line">Four things that sound similar and aren't. Nine out of ten mix up the first two.</p>
+
+    <div class="r tools-columns tools-columns--four">
+
+      <div class="tool-col tool-col--project">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Claude Project</div>
+          <div class="tool-col-name">The context</div>
+          <div class="tool-col-access">In claude.ai &nbsp;·&nbsp; a shared bucket</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Think of it as</div>
+          <div class="tool-trigger-text">A folder of background reading you hand Claude before a conversation.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">It holds</div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Reference documents</div><div class="tool-uc-sub">Policies, past reports, source files</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Standing instructions</div><div class="tool-uc-sub">Custom instructions for that topic</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">A chat history</div><div class="tool-uc-sub">Conversations grouped by subject</div></div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">It does not</div>
+          <div class="tool-not-for-text">Touch your local files, follow a workflow, or run on a schedule. It waits to be asked.</div>
+        </div>
+      </div>
+
+      <div class="tool-col tool-col--cowork tool-col--hero">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Workstation</div>
+          <div class="tool-col-name">The do-er</div>
+          <div class="tool-col-access">In CoworkOS &nbsp;·&nbsp; a folder that acts</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Think of it as</div>
+          <div class="tool-trigger-text">A specialist you brief once, who then does the job on request.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">It holds</div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">A workflow</div><div class="tool-uc-sub">The steps, in order, every time</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Its own rules and memory</div><div class="tool-uc-sub">What good looks like in this job</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">A place to put the output</div><div class="tool-uc-sub">Saved where you expect to find it</div></div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">It does not</div>
+          <div class="tool-not-for-text">Suit one-off work. If the job won't come back, you're doing setup for nothing.</div>
+        </div>
+      </div>
+
+      <div class="tool-col tool-col--chat">
+        <div class="tool-col-header">
+          <div class="tool-col-label">Skill</div>
+          <div class="tool-col-name">The tool</div>
+          <div class="tool-col-access">Installed once &nbsp;·&nbsp; used anywhere</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Think of it as</div>
+          <div class="tool-trigger-text">A power tool on the bench. Any workstation can pick it up.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">It gives Claude</div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">One repeatable capability</div><div class="tool-uc-sub">Build a spreadsheet, write a Word doc</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Known-good method</div><div class="tool-uc-sub">Same technique whoever calls it</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Shareable packaging</div><div class="tool-uc-sub">Hand it to a colleague as one file</div></div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">It does not</div>
+          <div class="tool-not-for-text">Know your job, your files, or your standards. It's a capability, not a colleague.</div>
+        </div>
+      </div>
+
+      <div class="tool-col tool-col--memory">
+        <div class="tool-col-header">
+          <div class="tool-col-label">MEMORY.md</div>
+          <div class="tool-col-name">The notebook</div>
+          <div class="tool-col-access">One per workstation &nbsp;·&nbsp; plus a root one</div>
+        </div>
+        <div class="tool-trigger">
+          <div class="tool-trigger-label">Think of it as</div>
+          <div class="tool-trigger-text">What the specialist wrote down so you'd never have to say it twice.</div>
+        </div>
+        <div class="tool-use-cases">
+          <div class="tool-use-label">It holds</div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Facts that change</div><div class="tool-uc-sub">Who owns what, which entity, which path</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Decisions and why</div><div class="tool-uc-sub">So last month's call still stands</div></div></div>
+          <div class="tool-uc"><span class="tool-uc-dot"></span><div><div class="tool-uc-main">Corrections you've made</div><div class="tool-uc-sub">Say it once, it sticks</div></div></div>
+        </div>
+        <div class="tool-not-for">
+          <div class="tool-not-for-label">It does not</div>
+          <div class="tool-not-for-text">Hold rules. "Always do X" belongs in CLAUDE.md. Memory is facts, not instructions.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="r tools-migrate">
+      <strong>Already built Claude Projects?</strong> Nothing is wasted. The reference files in your project become the workstation's Resources folder, and your custom instructions become its CLAUDE.md. Ask Cowork: <em>"I have a Claude Project for [topic] — help me turn it into a workstation and tell me what should stay a project."</em> You're moving context into a place that can act on it, not starting again.
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 6 — WORKED EXAMPLE: SAME MONDAY, TWICE
+  ══════════════════════════════════════════ -->
+  <section class="slide s-two-col">
+    <div class="r lbl">A Worked Example</div>
+    <h2 class="r">Same Monday, twice. One version takes four minutes.</h2>
+    <div class="r two-components">
+
+      <div class="component">
+        <div class="component-tag">Chat, or a project</div>
+        <h3>You do the explaining, every week</h3>
+        <ol class="mon-steps">
+          <li data-n="01">Find last week's file. Upload it.</li>
+          <li data-n="02">Explain which columns matter and which to ignore.</li>
+          <li data-n="03">Re-explain the tolerance rule you mentioned last time.</li>
+          <li data-n="04">Get output in the wrong format. Correct it.</li>
+          <li data-n="05">Copy the result somewhere you'll remember.</li>
+        </ol>
+        <div class="mon-clock"><span class="mon-clock-num">40 min</span><span class="mon-clock-lbl">and it resets next Monday</span></div>
+      </div>
+
+      <div class="component component-featured">
+        <div class="component-tag">A workstation</div>
+        <h3>You ask. It already knows.</h3>
+        <ol class="mon-steps mon-steps--win">
+          <li data-n="01">"Run this week's bank rec."</li>
+          <li data-n="02">It knows where the file lives and which columns matter.</li>
+          <li data-n="03">It applies the tolerance rule you set once, in month one.</li>
+          <li data-n="04">Output arrives in your format, saved to your Outputs folder.</li>
+          <li data-n="05">You check the exceptions. That's the actual job.</li>
+        </ol>
+        <div class="mon-clock mon-clock--win"><span class="mon-clock-num">4 min</span><span class="mon-clock-lbl">and next Monday is faster still</span></div>
+      </div>
+
+    </div>
+    <p class="r tools-note">Not hypothetical. An AR specialist in APAC built three reconciliation workstations that now run in live monthly use. A finance manager in Canada built five.</p>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════
+       SLIDE 7 — ARCHITECTURE
   ══════════════════════════════════════════ -->
   <section class="slide s-arch">
     <div class="r lbl">How It Works</div>
@@ -1260,7 +1615,7 @@ html, body {
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 5 — THREE CORE FILES
+       SLIDE 8 — THREE CORE FILES
   ══════════════════════════════════════════ -->
   <section class="slide s-build">
     <div class="r lbl">The Core Files</div>
@@ -1293,7 +1648,7 @@ html, body {
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 6 — SECTION BREAK: PHASE 1
+       SLIDE 9 — SECTION BREAK: PHASE 1
   ══════════════════════════════════════════ -->
   <section class="slide s-phase">
     <div class="r phase-eyebrow">Setup Guide &nbsp;·&nbsp; Three Phases</div>
@@ -1331,7 +1686,7 @@ html, body {
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 7 — FIRST-TIME SETUP PROMPT
+       SLIDE 10 — FIRST-TIME SETUP PROMPT
   ══════════════════════════════════════════ -->
   <section class="slide s-tmpl">
     <div class="r lbl lbl--phase">Phase 1 | Getting Started &nbsp;·&nbsp; Prompt Template</div>
@@ -1380,7 +1735,7 @@ my role and working style.</pre>
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 8 — FOLDER REVEAL
+       SLIDE 11 — FOLDER REVEAL
   ══════════════════════════════════════════ -->
   <section class="slide s-phase s-folder-reveal">
 
@@ -1420,7 +1775,7 @@ my role and working style.</pre>
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 9 — CLAUDE.md TEMPLATE
+       SLIDE 12 — CLAUDE.md TEMPLATE
   ══════════════════════════════════════════ -->
   <section class="slide s-tmpl">
     <div class="r lbl">File 01 &nbsp;·&nbsp; Starter Template</div>
@@ -1484,7 +1839,7 @@ Never duplicate the same fact across both files.
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 10 — MEMORY.md TEMPLATE
+       SLIDE 13 — MEMORY.md TEMPLATE
   ══════════════════════════════════════════ -->
   <section class="slide s-tmpl">
     <div class="r lbl">File 02 &nbsp;·&nbsp; Starter Template</div>
@@ -1532,7 +1887,7 @@ don't edit manually)
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 11 — MEMORY ROUTING
+       SLIDE 14 — MEMORY ROUTING
   ══════════════════════════════════════════ -->
   <section class="slide s-trust">
     <div class="r lbl">File 02 &nbsp;·&nbsp; Memory Routing</div>
@@ -1565,7 +1920,7 @@ don't edit manually)
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 12 — VOICE-PRINCIPLES.md TEMPLATE
+       SLIDE 15 — VOICE-PRINCIPLES.md TEMPLATE
   ══════════════════════════════════════════ -->
   <section class="slide s-tmpl">
     <div class="r lbl">File 03 &nbsp;·&nbsp; Starter Template</div>
@@ -1616,7 +1971,7 @@ don't edit manually)
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 13 — SECTION BREAK: PHASE 2
+       SLIDE 16 — SECTION BREAK: PHASE 2
   ══════════════════════════════════════════ -->
   <section class="slide s-phase">
     <div class="r phase-eyebrow">Phase 02 &nbsp;·&nbsp; Workstations</div>
@@ -1626,7 +1981,7 @@ don't edit manually)
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 14 — WORKSTATION ANATOMY
+       SLIDE 17 — WORKSTATION ANATOMY
   ══════════════════════════════════════════ -->
   <section class="slide s-trust">
     <div class="r lbl lbl--phase">Phase 2 | Workstations</div>
@@ -1659,7 +2014,7 @@ don't edit manually)
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 15 — WORKSTATION CREATION PROMPT
+       SLIDE 18 — WORKSTATION CREATION PROMPT
   ══════════════════════════════════════════ -->
   <section class="slide s-tmpl">
     <div class="r lbl lbl--phase">Phase 2 | Workstations &nbsp;·&nbsp; Prompt Template</div>
@@ -1707,7 +2062,7 @@ Routing Map in root CLAUDE.md.</pre>
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 16 — ARCHITECTURE RECAP
+       SLIDE 19 — ARCHITECTURE RECAP
   ══════════════════════════════════════════ -->
   <section class="slide s-arch">
     <div class="r lbl">A Quick Recap</div>
@@ -1755,7 +2110,7 @@ Routing Map in root CLAUDE.md.</pre>
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 17 — SECTION BREAK: PHASE 3
+       SLIDE 20 — SECTION BREAK: PHASE 3
   ══════════════════════════════════════════ -->
   <section class="slide s-phase">
     <div class="r phase-eyebrow">Phase 03 &nbsp;·&nbsp; System Maintenance</div>
@@ -1765,7 +2120,7 @@ Routing Map in root CLAUDE.md.</pre>
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 18 — SYSTEM MAINTENANCE
+       SLIDE 21 — SYSTEM MAINTENANCE
   ══════════════════════════════════════════ -->
   <section class="slide s-tmpl">
     <div class="r lbl lbl--phase">Phase 3 | System Maintenance</div>
@@ -1822,7 +2177,7 @@ on what's genuinely new from this session.</pre>
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 19 — CTA
+       SLIDE 22 — CTA
   ══════════════════════════════════════════ -->
   <section class="slide s-cta">
     <div class="r lbl">Get Started</div>
@@ -1848,7 +2203,7 @@ on what's genuinely new from this session.</pre>
           <span class="inv-n">02</span>
           <div>
             <div class="inv-title">Paste the first-time setup prompt</div>
-            <div class="inv-desc">Slide 7 has the prompt — hit Copy, open Cowork, paste, let it run. Three files and a folder structure in under a minute.</div>
+            <div class="inv-desc">Slide 10 has the prompt — hit Copy, open Cowork, paste, let it run. Three files and a folder structure in under a minute.</div>
           </div>
         </div>
 
@@ -1856,7 +2211,7 @@ on what's genuinely new from this session.</pre>
           <span class="inv-n">03</span>
           <div>
             <div class="inv-title">Customise and add your first workstation</div>
-            <div class="inv-desc">Fill in the brackets in your core files, then use the workstation prompt (Slide 15) to scaffold your first domain.</div>
+            <div class="inv-desc">Fill in the brackets in your core files, then use the workstation prompt (Slide 18) to scaffold your first domain.</div>
           </div>
         </div>
 
@@ -1875,7 +2230,7 @@ on what's genuinely new from this session.</pre>
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 20 — EFFICIENCY
+       SLIDE 23 — EFFICIENCY
   ══════════════════════════════════════════ -->
   <section class="slide s-build">
     <div class="r lbl">Efficiency</div>
@@ -1910,7 +2265,7 @@ on what's genuinely new from this session.</pre>
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE — MODEL PICKER (which Claude, when)
+       SLIDE 24 — MODEL PICKER (which Claude, when)
   ══════════════════════════════════════════ -->
   <section class="slide s-models">
     <div class="r lbl lbl--phase">Reference &nbsp;·&nbsp; Choosing a Model</div>
@@ -2009,7 +2364,7 @@ on what's genuinely new from this session.</pre>
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 21 — GLOSSARY
+       SLIDE 25 — GLOSSARY
   ══════════════════════════════════════════ -->
   <section class="slide s-glossary">
     <div class="r lbl">Reference</div>
@@ -2077,7 +2432,7 @@ on what's genuinely new from this session.</pre>
 
 
   <!-- ══════════════════════════════════════════
-       SLIDE 22 — CLOSING
+       SLIDE 26 — CLOSING
   ══════════════════════════════════════════ -->
   <section class="slide s-closing">
     <div class="r closing-wrap">
@@ -2096,7 +2451,7 @@ on what's genuinely new from this session.</pre>
 </div><!-- /deck -->
 
 <div id="progress-bar"></div>
-<div id="counter">1 / 23</div>
+<div id="counter">1 / 26</div>
 <div id="kbd-hint">← → to navigate</div>
 
 <div class="nav-wrap is-prev">
