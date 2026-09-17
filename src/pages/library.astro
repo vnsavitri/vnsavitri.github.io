@@ -173,56 +173,65 @@ const CATEGORY_LABELS: Record<string, string> = {
 </style>
 
 <script>
-  // ponytail: counts come from a free, keyless counter API (countapi.xyz).
-  // No auth, no SLA — if it's down or rate-limited, counts just stay blank.
-  // Upgrade path if that ever matters: swap for an authenticated counter
-  // service and gate likes server-side instead of via localStorage.
+  // ponytail: counts come from a free, keyless counter API (abacus.jasoncameron.dev).
+  // No auth, no SLA, and a 30-req/10s rate limit per IP — if it's down or
+  // rate-limited, counts just stay blank. Upgrade path if that ever matters:
+  // swap for an authenticated counter service and gate likes server-side
+  // instead of via localStorage.
   const NAMESPACE = "veryvivid-library";
   const countApi = (action: "get" | "hit", key: string) =>
-    `https://api.countapi.xyz/${action}/${NAMESPACE}/${key}`;
+    `https://abacus.jasoncameron.dev/${action}/${NAMESPACE}/${key}`;
 
   const likedKey = (slug: string) => `lib-liked:${slug}`;
 
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  // ponytail: rate limit is 30 req/10s per IP. Two reads per card (73 cards)
+  // blows through that in one burst, and the resulting 429s were why the
+  // like button "didn't work" — its own click got queued behind the flood.
+  // 700ms between cards keeps us under 3 req/s, well inside the limit.
   async function loadCounts() {
-    const cards = document.querySelectorAll<HTMLElement>(".lib-card");
-    await Promise.all(
-      Array.from(cards).map(async (card) => {
-        const slug = card.querySelector<HTMLElement>("[data-slug]")?.dataset.slug;
-        if (!slug) return;
+    const cards = Array.from(document.querySelectorAll<HTMLElement>(".lib-card"));
+    for (const card of cards) {
+      const slug = card.querySelector<HTMLElement>("[data-slug]")?.dataset.slug;
+      if (!slug) continue;
 
-        const viewsEl = card.querySelector<HTMLElement>(".lib-views");
-        const likeBtn = card.querySelector<HTMLButtonElement>(".lib-like");
-        const likeCountEl = card.querySelector<HTMLElement>(".lib-like-count");
+      const viewsEl = card.querySelector<HTMLElement>(".lib-views");
+      const likeBtn = card.querySelector<HTMLButtonElement>(".lib-like");
+      const likeCountEl = card.querySelector<HTMLElement>(".lib-like-count");
 
-        try {
-          const res = await fetch(countApi("get", `${slug}-views`));
-          if (res.ok && viewsEl) {
-            const { value } = await res.json();
-            viewsEl.textContent = `${value} views`;
-          } else if (viewsEl) {
-            viewsEl.textContent = "";
-          }
-        } catch {
-          if (viewsEl) viewsEl.textContent = "";
+      try {
+        const res = await fetch(countApi("get", `${slug}-views`));
+        if (res.ok && viewsEl) {
+          const { value } = await res.json();
+          viewsEl.textContent = `${value} views`;
+        } else if (viewsEl) {
+          viewsEl.textContent = "";
         }
+      } catch {
+        if (viewsEl) viewsEl.textContent = "";
+      }
 
-        try {
-          const res = await fetch(countApi("get", `${slug}-likes`));
-          if (res.ok && likeCountEl) {
-            const { value } = await res.json();
-            likeCountEl.textContent = String(value);
-          }
-        } catch {
-          // leave default 0
-        }
+      await sleep(350);
 
-        if (likeBtn && localStorage.getItem(likedKey(slug))) {
-          likeBtn.setAttribute("aria-pressed", "true");
-          const icon = likeBtn.querySelector<HTMLElement>(".lib-like-icon");
-          if (icon) icon.textContent = "♥";
+      try {
+        const res = await fetch(countApi("get", `${slug}-likes`));
+        if (res.ok && likeCountEl) {
+          const { value } = await res.json();
+          likeCountEl.textContent = String(value);
         }
-      })
-    );
+      } catch {
+        // leave default 0
+      }
+
+      if (likeBtn && localStorage.getItem(likedKey(slug))) {
+        likeBtn.setAttribute("aria-pressed", "true");
+        const icon = likeBtn.querySelector<HTMLElement>(".lib-like-icon");
+        if (icon) icon.textContent = "♥";
+      }
+
+      await sleep(350);
+    }
   }
 
   function wireViewTracking() {
