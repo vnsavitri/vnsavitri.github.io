@@ -5,4 +5,6 @@ category: guides
 date: 2026-06-24
 file: /library/decks/build-your-own-kimios.html
 thumb: /library/thumbs/build-your-own-kimios.webp
+slideCount: 22
+sizeKb: 73
 ---

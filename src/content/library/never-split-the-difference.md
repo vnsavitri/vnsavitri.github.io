@@ -5,4 +5,6 @@ category: books
 date: 2026-06-04
 file: /library/decks/never-split-the-difference.html
 thumb: /library/thumbs/never-split-the-difference.webp
+slideCount: 0
+sizeKb: 45
 ---

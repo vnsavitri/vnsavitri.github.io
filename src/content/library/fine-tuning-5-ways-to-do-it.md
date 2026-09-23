@@ -5,4 +5,6 @@ category: architecture
 date: 2026-08-24
 file: /library/decks/fine-tuning-5-ways-to-do-it.html
 thumb: /library/thumbs/fine-tuning-5-ways-to-do-it.webp
+slideCount: 0
+sizeKb: 29
 ---

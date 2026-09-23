@@ -5,4 +5,6 @@ category: guides
 date: 2026-08-24
 file: /library/decks/whats-new-in-claude-code.html
 thumb: /library/thumbs/whats-new-in-claude-code.webp
+slideCount: 0
+sizeKb: 14
 ---

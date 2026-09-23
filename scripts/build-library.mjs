@@ -16,7 +16,7 @@ import { execSync } from "node:child_process";
 import { DECKS, SOURCE_DIR } from "./library-manifest.mjs";
 
 // Playwright is a global install (chromium already downloaded there), not a
-// project dependency — this script is a local content-import tool, not part
+// project dependency. This script is a local content-import tool, not part
 // of the deployed build.
 const globalRoot = execSync("npm root -g").toString().trim();
 const { chromium } = await import(`file://${join(globalRoot, "playwright/index.mjs")}`);
@@ -49,6 +49,11 @@ for (const deck of DECKS) {
   const html = readFileSync(srcPath);
   writeFileSync(join(decksDir, `${slug}.html`), html);
 
+  // Shelf geometry, same rule as scripts/add-book-data.mjs. Zero slides means
+  // a long-scrolling guide, which /library renders as a paperback.
+  const slideCount = (html.toString().match(/class="slide( [^"]*)?"/g) ?? []).length;
+  const sizeKb = Math.round(html.length / 1024);
+
   await page.goto(`file://${srcPath}`, { waitUntil: "load" });
   await page.waitForTimeout(400); // let fonts/canvas/JS-driven layouts settle
   const shot = await page.screenshot();
@@ -64,6 +69,8 @@ category: ${deck.category}
 date: ${deck.date}
 file: /library/decks/${slug}.html
 thumb: /library/thumbs/${slug}.webp
+slideCount: ${slideCount}
+sizeKb: ${sizeKb}
 ---
 `;
   writeFileSync(join(contentDir, `${slug}.md`), frontmatter);

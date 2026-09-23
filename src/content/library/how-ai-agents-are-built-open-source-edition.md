@@ -5,4 +5,6 @@ category: guides
 date: 2026-09-03
 file: /library/decks/how-ai-agents-are-built-open-source-edition.html
 thumb: /library/thumbs/how-ai-agents-are-built-open-source-edition.webp
+slideCount: 0
+sizeKb: 28
 ---

@@ -5,4 +5,6 @@ category: guides
 date: 2026-05-22
 file: /library/decks/how-to-build-effective-agents.html
 thumb: /library/thumbs/how-to-build-effective-agents.webp
+slideCount: 8
+sizeKb: 15
 ---

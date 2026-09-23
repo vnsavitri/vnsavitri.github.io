@@ -5,4 +5,6 @@ category: guides
 date: 2026-09-17
 file: /library/decks/build-your-own-workspaceos.html
 thumb: /library/thumbs/build-your-own-workspaceos.webp
+slideCount: 30
+sizeKb: 117
 ---

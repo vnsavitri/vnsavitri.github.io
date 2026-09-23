@@ -5,4 +5,6 @@ category: books
 date: 2026-06-04
 file: /library/decks/trillion-dollar-coach.html
 thumb: /library/thumbs/trillion-dollar-coach.webp
+slideCount: 0
+sizeKb: 41
 ---

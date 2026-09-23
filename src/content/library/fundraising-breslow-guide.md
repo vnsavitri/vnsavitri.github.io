@@ -5,4 +5,6 @@ category: books
 date: 2026-06-04
 file: /library/decks/fundraising-breslow-guide.html
 thumb: /library/thumbs/fundraising-breslow-guide.webp
+slideCount: 0
+sizeKb: 47
 ---

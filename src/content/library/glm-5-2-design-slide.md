@@ -5,4 +5,6 @@ category: slides
 date: 2026-06-28
 file: /library/decks/glm-5-2-design-slide.html
 thumb: /library/thumbs/glm-5-2-design-slide.webp
+slideCount: 8
+sizeKb: 18
 ---

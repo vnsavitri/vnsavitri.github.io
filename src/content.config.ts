@@ -30,6 +30,10 @@ const library = defineCollection({
     date: z.date(),
     file: z.string(),
     thumb: z.string(),
+    // Shelf geometry. slideCount 0 means the file is a long-scrolling guide
+    // rather than a deck, which the shelf renders as a paperback.
+    slideCount: z.number().optional(),
+    sizeKb: z.number().optional(),
   }),
 });
 
