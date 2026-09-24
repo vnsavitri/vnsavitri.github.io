@@ -31,28 +31,20 @@ const thickness = isHardcover
 // identical between builds.
 const height = isHardcover ? 224 + (slideCount % 5) * 6 : 206 + (sizeKb % 4) * 4;
 
-// Cloth is drawn only from existing site tokens. Coral is deliberately absent
-// as a field colour: at spine text sizes it fails contrast against both cream
-// and ink, so it appears only as the hairline band below.
-const CLOTHS = [
-  { bg: "var(--color-ink)", fg: "var(--color-cream)" },
-  { bg: "color-mix(in srgb, var(--color-ink) 88%, var(--color-accent))", fg: "var(--color-cream)" },
-  { bg: "var(--color-ink-soft)", fg: "var(--color-cream)" },
-  { bg: "var(--color-cream-deep)", fg: "var(--color-ink)" },
-  { bg: "var(--color-code-bg)", fg: "var(--color-ink)" },
-  { bg: "var(--color-rule)", fg: "var(--color-ink)" },
-];
-
-// Category sets where in the palette a section starts, so each section leans a
-// different way while still mixing dark and light spines like a real shelf.
-const CATEGORY_OFFSET: Record<string, number> = {
-  agents: 0,
-  models: 2,
-  building: 4,
-  books: 3,
+// Each category has its own brand cloth so a shelf section reads at a glance,
+// matching the dots on the filters and labels (--cat-* in global.css). Spines
+// vary in depth within a category, from the data, so the shelf isn't flat.
+// Coral uses the soft tint lifted towards white: full coral fails spine-text
+// contrast with both cream and ink. Every pairing here is 4.5:1 or better.
+const CLOTH: Record<string, { base: string; toward: string; depths: number[]; fg: string }> = {
+  agents: { base: "var(--cat-agents)", toward: "black", depths: [0, 12, 24], fg: "var(--color-cream)" },
+  models: { base: "var(--color-accent-soft)", toward: "white", depths: [20, 30, 40], fg: "var(--color-ink)" },
+  building: { base: "var(--cat-building)", toward: "white", depths: [0, 12, 24], fg: "var(--color-ink)" },
+  books: { base: "var(--cat-books)", toward: "black", depths: [0, 12, 24], fg: "var(--color-cream)" },
 };
-const cloth =
-  CLOTHS[((CATEGORY_OFFSET[category] ?? 0) + (isHardcover ? slideCount : sizeKb)) % CLOTHS.length];
+const c = CLOTH[category] ?? CLOTH.agents;
+const depth = c.depths[(isHardcover ? slideCount : sizeKb) % 3];
+const cloth = { bg: `color-mix(in srgb, ${c.base} ${100 - depth}%, ${c.toward})`, fg: c.fg };
 
 const typeLabel = isHardcover ? "Slide deck" : "Guide";
 const ariaLabel = isHardcover

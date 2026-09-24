@@ -11,6 +11,12 @@
   --color-accent: #f07167;
   --color-accent-soft: #f59589;
   --color-code-bg: #e4f2f2;
+  /* Library categories: book cloth and the matching dots. Navy, coral and
+     yellow come from the brand; teal is the deep end of the cream family. */
+  --cat-agents: var(--color-ink);
+  --cat-models: var(--color-accent);
+  --cat-building: #f0c808;
+  --cat-books: #1d6b64;
 
   /* Fonts: Bricolage Grotesque replaces Fraunces, Outfit replaces Inter */
   --font-display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
@@ -307,3 +313,17 @@
     vertical-align: top;
   }
 }
+
+.cat-dot {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-right: 0.45em;
+  border-radius: 50%;
+  vertical-align: 0.05em;
+  flex-shrink: 0;
+}
+.cat-dot--agents { background: var(--cat-agents); }
+.cat-dot--models { background: var(--cat-models); }
+.cat-dot--building { background: var(--cat-building); }
+.cat-dot--books { background: var(--cat-books); }

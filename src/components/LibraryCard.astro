@@ -23,7 +23,7 @@ const { slug, title, file, thumb, categoryLabel, category, id, badge } = Astro.p
     <img src={thumb} alt="" loading="lazy" width="640" height="400" class="lib-thumb" />
   </a>
   <div class="lib-body">
-    <span class="pill lib-cat-pill">{categoryLabel}</span>
+    <span class="pill lib-cat-pill">{category && <span class={`cat-dot cat-dot--${category}`} aria-hidden="true"></span>}{categoryLabel}</span>
     {badge && <span class="pill pill-accent lib-new-badge">New</span>}
     <a href={file} target="_blank" rel="noopener" class="lib-title-link" data-slug={slug}>
       <h3 class="lib-title">{title}</h3>

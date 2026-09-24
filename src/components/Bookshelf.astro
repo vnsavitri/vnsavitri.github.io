@@ -34,7 +34,7 @@ const sections = Object.entries(categoryLabels)
     <div class="shelf-run">
       {sections.map((section) => (
         <section class="shelf-section" id={`shelf-${section.category}`} data-section={section.category}>
-          <span class="shelf-section__label" aria-hidden="true">{section.label}</span>
+          <span class="shelf-section__label" aria-hidden="true"><span class={`cat-dot cat-dot--${section.category}`}></span>{section.label}</span>
           <span class="shelf-divider" aria-hidden="true"></span>
           <h3 class="shelf-sr-only">{section.label}</h3>
           <ul class="shelf-books">

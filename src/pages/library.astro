@@ -40,6 +40,7 @@ const CATEGORY_LABELS: Record<string, string> = {
           title={deck.data.title}
           file={deck.data.file}
           thumb={deck.data.thumb}
+          category={deck.data.category}
           categoryLabel={CATEGORY_LABELS[deck.data.category]}
           badge
         />
@@ -60,7 +61,7 @@ const CATEGORY_LABELS: Record<string, string> = {
     <div class="lib-filters" id="lib-filters">
       <button class="lib-filter-btn active" data-cat="all">All</button>
       {Object.entries(CATEGORY_LABELS).map(([cat, label]) => (
-        <button class="lib-filter-btn" data-cat={cat}>{label}</button>
+        <button class="lib-filter-btn" data-cat={cat}><span class={`cat-dot cat-dot--${cat}`} aria-hidden="true"></span>{label}</button>
       ))}
     </div>
   </section>
