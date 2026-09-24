@@ -92,6 +92,83 @@ html, body {
 .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
 .nav-btn:disabled { opacity: 0.2; pointer-events: none; }
 
+/* ── Utility toolbar (overview + fullscreen) ── */
+.deck-toolbar {
+  position: fixed; bottom: 3.6rem; right: 2.2vw;
+  z-index: 300; display: flex; gap: 0.5rem;
+}
+.util-btn {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--bg);
+  color: var(--text-muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.18s, color 0.18s, background 0.18s;
+}
+.util-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.util-btn svg { pointer-events: none; }
+.util-btn .ico-collapse { display: none; }
+.util-btn.is-fs .ico-expand { display: none; }
+.util-btn.is-fs .ico-collapse { display: block; }
+
+
+/* ═══════════════════════════════════
+   OVERVIEW / SLIDE INDEX
+═══════════════════════════════════ */
+.overview {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(26, 25, 23, 0.94);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  padding: 4.5vh 5vw;
+  display: flex; flex-direction: column;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s var(--ease);
+}
+.overview.is-open { opacity: 1; pointer-events: all; }
+
+.overview-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 1.8rem; flex-shrink: 0;
+}
+.overview-title {
+  font-size: 1rem; font-weight: 700; color: #fff; letter-spacing: -0.01em;
+}
+.overview-sub {
+  font-size: 0.7rem; color: rgba(255,255,255,0.45); margin-top: 0.3rem;
+}
+.overview-close {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.25); background: transparent;
+  color: rgba(255,255,255,0.7); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.overview-close:hover { border-color: #c8a5cc; color: #c8a5cc; background: rgba(200,165,204,0.1); }
+
+.overview-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.65rem; overflow-y: auto; padding-right: 0.4rem;
+}
+.overview-card {
+  text-align: left; cursor: pointer; font-family: var(--font);
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04); border-radius: 8px;
+  padding: 0.8rem 0.95rem; display: flex; flex-direction: column; gap: 0.28rem;
+  transition: all 0.15s;
+}
+.overview-card:hover { background: rgba(255,255,255,0.09); border-color: rgba(200,165,204,0.5); }
+.overview-card.is-current { border-color: #c8a5cc; background: rgba(200,165,204,0.16); }
+.overview-card-n {
+  font-size: 0.56rem; font-weight: 700; letter-spacing: 0.14em;
+  color: #c8a5cc;
+}
+.overview-card-lbl {
+  font-size: 0.54rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+}
+.overview-card-title {
+  font-size: 0.76rem; font-weight: 600; line-height: 1.35; color: #fff;
+}
+
 
 /* ═══════════════════════════════════
    SLIDE ENGINE
@@ -1473,7 +1550,7 @@ html, body {
        SLIDE 1 — TITLE
   ══════════════════════════════════════════ -->
   <section class="slide s-title">
-    <div class="r title-eyebrow">BRG AI Enablement &nbsp;·&nbsp; August 2026 &nbsp;·&nbsp; v5</div>
+    <div class="r title-eyebrow">BRG AI Enablement &nbsp;·&nbsp; September 2026 &nbsp;·&nbsp; v5</div>
     <h1 class="r title-name">Build Your Own<br>CoworkOS</h1>
     <p class="r title-sub">Give Claude persistent memory, your voice, and custom workflows — in one afternoon.</p>
     <div class="r title-badge">Cowork &nbsp;·&nbsp; Claude Desktop App ·&nbsp; Brought to you by Vivid</div>
@@ -2631,7 +2708,7 @@ on what's genuinely new from this session.</pre>
         <div class="build-card-num">Rule 3</div>
         <div class="build-card-heading">Default to <strong>Sonnet 5</strong></div>
         <p><strong>Sonnet 5</strong> handles 80% of daily tasks — it's faster and cheaper. Reserve <strong>Opus 5</strong> for complex workflows with three or more interdependent steps.</p>
-        <p style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);"><strong>Haiku 4.5</strong> for small, lightweight tasks; <strong>Fable 5</strong> only for long-horizon autonomous agents. See the model slide for the full picture.</p>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted);"><strong>Haiku 4.5</strong> for small, lightweight tasks; <strong>Fable 5.1</strong> only for long-horizon autonomous agents. See the model slide for the full picture.</p>
       </div>
 
     </div>
@@ -2716,7 +2793,8 @@ on what's genuinely new from this session.</pre>
       <div class="model-col model-col--fable">
         <div class="model-col-header">
           <div class="model-tier">Mythos-class · above Opus</div>
-          <div class="model-name">Fable 5</div>
+          <div class="model-name">Fable 5.1</div>
+          <span class="model-default-flag" style="background:#38183c;">Sep 2026</span>
         </div>
         <div class="model-when">
           <div class="model-when-label">Reach for it when</div>
@@ -2729,13 +2807,13 @@ on what's genuinely new from this session.</pre>
           <div class="model-good-item">State-of-the-art finance &amp; vision tasks</div>
           <div class="model-good-item">Not everyday human-in-the-loop work</div>
         </div>
-        <div class="model-cost"><strong>$10 / $50 per M · 30-day data retention.</strong> Overkill for daily work — weigh retention for sensitive data.</div>
+        <div class="model-cost"><strong>$10 / $50 per M · 30-day data retention.</strong> Cache reads now 75% cheaper than Fable 5 — still overkill for daily work.</div>
       </div>
 
     </div>
 
     <div class="r models-footer">
-      <strong>Rule of thumb:</strong> default to Sonnet 5, drop to Haiku for simple high-volume jobs, step up to Opus for complex reasoning, and reserve Fable 5 for autonomous agents that run for hours. &nbsp;·&nbsp; Unsure? Ask the <strong>model-picker</strong> skill for a cost estimate.
+      <strong>Rule of thumb:</strong> default to Sonnet 5, drop to Haiku for simple high-volume jobs, step up to Opus for complex reasoning, and reserve Fable 5.1 for autonomous agents that run for hours. &nbsp;·&nbsp; Unsure? Ask the <strong>model-picker</strong> skill for a cost estimate.
     </div>
   </section>
 
@@ -2750,7 +2828,7 @@ on what's genuinely new from this session.</pre>
 
       <div class="glossary-item glossary-item--full">
         <span class="g-term">Model</span>
-        <span class="g-def">The underlying AI engine. Claude's current lineup: <strong>Haiku 4.5</strong> is fastest and cheapest for lightweight jobs; <strong>Sonnet 5</strong> covers ~80% of daily work; <strong>Opus 5</strong> is for complex, multi-step tasks with many interdependent decisions; <strong>Fable 5</strong> is the Mythos-class model above Opus, reserved for long-horizon autonomous agent runs.</span>
+        <span class="g-def">The underlying AI engine. Claude's current lineup: <strong>Haiku 4.5</strong> is fastest and cheapest for lightweight jobs; <strong>Sonnet 5</strong> covers ~80% of daily work; <strong>Opus 5</strong> is for complex, multi-step tasks with many interdependent decisions; <strong>Fable 5.1</strong> is the Mythos-class model above Opus, reserved for long-horizon autonomous agent runs.</span>
         <span class="g-note">⚡ Default to Sonnet 5. Reaching for Opus (or Fable) reflexively just burns tokens — and slows you down. Most tasks don't need it. Don't be a #TokkenMaxxer. Think of the environment.</span>
       </div>
 
@@ -2830,7 +2908,7 @@ on what's genuinely new from this session.</pre>
 <!-- Chrome -->
 <div id="progress-bar"></div>
 <div id="counter">1 / 23</div>
-<div id="kbd-hint">← → to navigate</div>
+<div id="kbd-hint">← → navigate &nbsp;·&nbsp; O overview &nbsp;·&nbsp; F fullscreen</div>
 
 <div class="nav-wrap is-prev">
   <button class="nav-btn" id="prevBtn" disabled aria-label="Previous">
@@ -2846,6 +2924,42 @@ on what's genuinely new from this session.</pre>
       <path d="M4.5 2l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   </button>
+</div>
+
+<!-- Utility toolbar: overview + fullscreen -->
+<div class="deck-toolbar">
+  <button class="util-btn" id="overviewBtn" aria-label="Slide overview" title="Slide overview (O)">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+      <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.4"/>
+      <rect x="9" y="1.5" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.4"/>
+      <rect x="1.5" y="9" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.4"/>
+      <rect x="9" y="9" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.4"/>
+    </svg>
+  </button>
+  <button class="util-btn" id="fsBtn" aria-label="Toggle fullscreen" title="Fullscreen (F)">
+    <svg class="ico-expand" width="15" height="15" viewBox="0 0 16 16" fill="none">
+      <path d="M1.5 5.5V2.5a1 1 0 0 1 1-1h3M14.5 5.5V2.5a1 1 0 0 0-1-1h-3M1.5 10.5v3a1 1 0 0 0 1 1h3M14.5 10.5v3a1 1 0 0 1-1 1h-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <svg class="ico-collapse" width="15" height="15" viewBox="0 0 16 16" fill="none">
+      <path d="M5.5 1.5v3a1 1 0 0 1-1 1h-3M10.5 1.5v3a1 1 0 0 0 1 1h3M5.5 14.5v-3a1 1 0 0 0-1-1h-3M10.5 14.5v-3a1 1 0 0 1 1-1h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+<!-- Overview / slide index -->
+<div class="overview" id="overview" role="dialog" aria-label="Slide overview">
+  <div class="overview-head">
+    <div>
+      <div class="overview-title">Slide overview</div>
+      <div class="overview-sub">Click any slide to jump straight to it.</div>
+    </div>
+    <button class="overview-close" id="overviewCloseBtn" aria-label="Close overview">
+      <svg width="13" height="13" viewBox="0 0 12 12" fill="none">
+        <path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+  <div class="overview-grid" id="overviewGrid"></div>
 </div>
 
 <script>
@@ -2873,16 +2987,25 @@ function goTo(n) {
   counter.textContent = (cur + 1) + ' / ' + total;
   prevBtn.disabled = (cur === 0);
   nextBtn.disabled = (cur === total - 1);
+  updateOverviewHighlight();
 }
 
 prevBtn.addEventListener('click', () => goTo(cur - 1));
 nextBtn.addEventListener('click', () => goTo(cur + 1));
 
 document.addEventListener('keydown', e => {
+  // Overview open: only Esc / O / arrows-to-select should act
+  if (document.getElementById('overview').classList.contains('is-open')) {
+    if (e.key === 'Escape') { e.preventDefault(); closeOverview(); }
+    if (e.key.toLowerCase() === 'o') { e.preventDefault(); closeOverview(); }
+    return;
+  }
   if (['ArrowRight', ' ', 'ArrowDown'].includes(e.key)) { e.preventDefault(); goTo(cur + 1); }
   if (['ArrowLeft', 'ArrowUp'].includes(e.key))         { e.preventDefault(); goTo(cur - 1); }
   if (e.key === 'Home') { e.preventDefault(); goTo(0); }
   if (e.key === 'End')  { e.preventDefault(); goTo(total - 1); }
+  if (e.key.toLowerCase() === 'o') { e.preventDefault(); openOverview(); }
+  if (e.key.toLowerCase() === 'f') { e.preventDefault(); toggleFullscreen(); }
 });
 
 // Click left/right half to navigate (ignore copy button clicks)
@@ -2890,6 +3013,91 @@ document.querySelector('.deck').addEventListener('click', e => {
   if (e.target.closest('button')) return;
   if (e.target.closest('.tmpl-pre')) return;
   goTo(e.clientX > window.innerWidth * 0.6 ? cur + 1 : cur - 1);
+});
+
+// ── Slide overview / index ─────────────────────
+const slideMeta = [
+  'Title — Build Your Own CoworkOS',
+  'Claude Tools — When to Use What',
+  'The Problem — Without a System, Cowork Forgets You',
+  'The One Idea — A Workstation Is a Specialist You Brief Once',
+  'Project vs Workstation vs Skill vs Memory',
+  'A Worked Example — Same Monday, Twice',
+  'How It Works — Three Layers That Power CoworkOS',
+  'The Core Files — Three Files, One System',
+  'Setup Guide — Let\'s Get Started',
+  'Phase 1 — Prompt: Build Your CoworkOS From Scratch',
+  'After Running the Setup — What You Just Created',
+  'File 01 — CLAUDE.md: the Global Constitution',
+  'File 02 — MEMORY.md: the Persistent Brain',
+  'Memory Routing — Two Notebooks, One Question',
+  'File 03 — voice-principles.md: Your Writing Voice',
+  'Win First, Build Second',
+  'Phase 2 — The Two-Minute Win',
+  'Phase 2 — Four Things to Tell Your New Specialist',
+  'Phase 2 — Prompt: Create a New Workstation',
+  'Quick Recap — One Folder, A Few Rules, Many Specialists',
+  'Phase 3 — Last Bit: Make It Compound',
+  'Phase 3 — System Maintenance',
+  'CTA — Scale Your Workstation',
+  'Efficiency — Keep CoworkOS Fast and Cheap',
+  'Reference — Which Claude Model, and When',
+  'Reference — Glossary of Terms',
+  'Thank You'
+];
+
+const overviewEl   = document.getElementById('overview');
+const overviewGrid = document.getElementById('overviewGrid');
+const overviewBtn  = document.getElementById('overviewBtn');
+const overviewCloseBtn = document.getElementById('overviewCloseBtn');
+
+slideMeta.forEach((title, i) => {
+  const card = document.createElement('button');
+  card.className = 'overview-card';
+  card.dataset.idx = i;
+  const parts = title.split(' — ');
+  const lbl = parts.length > 1 ? parts[0] : '';
+  const main = parts.length > 1 ? parts.slice(1).join(' — ') : parts[0];
+  card.innerHTML =
+    '<span class="overview-card-n">' + String(i + 1).padStart(2, '0') + ' / ' + slideMeta.length + '</span>' +
+    (lbl ? '<span class="overview-card-lbl">' + lbl + '</span>' : '') +
+    '<span class="overview-card-title">' + main + '</span>';
+  card.addEventListener('click', () => { goTo(i); closeOverview(); });
+  overviewGrid.appendChild(card);
+});
+
+function updateOverviewHighlight() {
+  overviewGrid.querySelectorAll('.overview-card').forEach((card, i) => {
+    card.classList.toggle('is-current', i === cur);
+  });
+}
+
+function openOverview() {
+  updateOverviewHighlight();
+  overviewEl.classList.add('is-open');
+  const current = overviewGrid.querySelector('.overview-card.is-current');
+  if (current) current.scrollIntoView({ block: 'nearest' });
+}
+function closeOverview() { overviewEl.classList.remove('is-open'); }
+
+overviewBtn.addEventListener('click', e => { e.stopPropagation(); openOverview(); });
+overviewCloseBtn.addEventListener('click', e => { e.stopPropagation(); closeOverview(); });
+overviewEl.addEventListener('click', e => { if (e.target === overviewEl) closeOverview(); });
+
+// ── Fullscreen toggle ───────────────────────────
+const fsBtn = document.getElementById('fsBtn');
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+fsBtn.addEventListener('click', e => { e.stopPropagation(); toggleFullscreen(); });
+document.addEventListener('fullscreenchange', () => {
+  fsBtn.classList.toggle('is-fs', !!document.fullscreenElement);
+  fsBtn.title = document.fullscreenElement ? 'Exit fullscreen (F)' : 'Fullscreen (F)';
 });
 
 // ── Copy-to-clipboard ──────────────────────────

@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="An interactive deep dive into Self-Harness: harnesses that improve themselves." />
+  <title>Self-Harness — Deep Dive</title>
+  <style>
+    :root {
+      --ink: #15211f;
+      --muted: #61706c;
+      --paper: #f5f7f3;
+      --paper-2: #eaf0eb;
+      --line: #cbd7ce;
+      --green: #1d6b55;
+      --green-2: #2e9270;
+      --mint: #cfe9d6;
+      --orange: #d96d43;
+      --orange-soft: #f6dfd3;
+      --blue: #4d7590;
+      --blue-soft: #dceaf1;
+      --yellow: #e7bb4e;
+      --shadow: 0 18px 50px rgba(26, 49, 40, .10);
+      --radius: 18px;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #dfe7e1;
+      font-family: var(--sans);
+      overflow: hidden;
+    }
+    button { font: inherit; }
+    .deck { height: 100dvh; position: relative; overflow: hidden; }
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 32px 5vw 26px;
+      background: var(--paper);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(24px);
+      transition: opacity .35s ease, transform .35s ease, visibility .35s;
+      overflow: auto;
+      scrollbar-color: var(--green) transparent;
+    }
+    .slide.active { opacity: 1; visibility: visible; transform: translateX(0); z-index: 2; }
+    .slide.prev { transform: translateX(-24px); }
+    .slide.dark { background: var(--ink); color: #f2f6f0; }
+    .slide.orange { background: var(--orange); color: #fffaf4; }
+    .slide.blue { background: var(--blue); color: #f4f8fa; }
+    .slide-inner { width: min(1160px, 100%); margin: 0 auto; min-height: 0; align-self: center; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); font-weight: 800; }
+    .dark .brand, .orange .brand, .blue .brand { color: rgba(255,255,255,.65); }
+    .page-count { font: 12px var(--mono); color: var(--muted); }
+    .dark .page-count, .orange .page-count, .blue .page-count { color: rgba(255,255,255,.7); }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: clamp(42px, 7vw, 92px); line-height: .96; letter-spacing: -.055em; max-width: 850px; }
+    h2 { font-size: clamp(30px, 4.5vw, 64px); line-height: 1; letter-spacing: -.045em; max-width: 880px; }
+    h3 { font-size: clamp(17px, 2vw, 25px); line-height: 1.05; letter-spacing: -.025em; }
+    p { font-size: clamp(15px, 1.35vw, 19px); line-height: 1.48; max-width: 72ch; }
+    .lede { font-size: clamp(19px, 2.1vw, 29px); line-height: 1.22; letter-spacing: -.025em; max-width: 780px; color: var(--muted); }
+    .dark .lede, .orange .lede, .blue .lede { color: rgba(255,255,255,.78); }
+    .source { font: 11px/1.35 var(--mono); color: var(--muted); max-width: 88ch; }
+    .dark .source, .orange .source, .blue .source { color: rgba(255,255,255,.6); }
+    .source a { color: inherit; }
+    .title-block { display: grid; gap: 20px; align-content: start; }
+    .title-block .rule { width: 86px; height: 5px; background: var(--green); border-radius: 5px; }
+    .dark .title-block .rule { background: var(--mint); }
+    .orange .title-block .rule { background: #fffaf4; }
+    .bottom { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding-top: 22px; }
+    .note { color: var(--muted); font-size: 13px; line-height: 1.35; }
+    .dark .note, .orange .note, .blue .note { color: rgba(255,255,255,.7); }
+    .visual { min-height: 0; display: grid; align-content: center; gap: 24px; }
+    .split { display: grid; grid-template-columns: 1.05fr .95fr; gap: clamp(28px, 6vw, 90px); align-items: center; }
+    .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .four { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .rail { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; position: relative; }
+    .rail:before { content: ""; position: absolute; top: 30px; left: 8%; right: 8%; height: 2px; background: var(--line); z-index: 0; }
+    .step { position: relative; z-index: 1; display: grid; gap: 10px; padding-right: 22px; }
+    .step:last-child { padding-right: 0; }
+    .step .number { width: 60px; height: 60px; display: grid; place-items: center; border-radius: 50%; background: var(--paper); border: 2px solid var(--green); color: var(--green); font-weight: 900; font-size: 20px; }
+    .step p { font-size: 14px; color: var(--muted); }
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
+    .panel.soft { background: var(--paper-2); box-shadow: none; }
+    .dark .panel { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.18); box-shadow: none; }
+    .dark .panel.soft { background: rgba(255,255,255,.11); }
+    .orange .panel { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.38); box-shadow: none; }
+    .panel h3 { margin-bottom: 10px; }
+    .panel p { font-size: 14px; color: var(--muted); }
+    .dark .panel p, .orange .panel p, .blue .panel p { color: rgba(255,255,255,.76); }
+    .tag { display: inline-flex; align-items: center; gap: 6px; border-radius: 99px; padding: 6px 10px; background: var(--mint); color: var(--green); font: 11px var(--mono); font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+    .tag.orange { background: var(--orange-soft); color: #914325; }
+    .tag.blue { background: var(--blue-soft); color: #315a70; }
+    .tag.ink { background: rgba(21,33,31,.12); color: var(--ink); }
+    .dark .tag.ink { background: rgba(255,255,255,.13); color: #fff; }
+    .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .metric { border-top: 2px solid var(--line); padding-top: 13px; }
+    .metric strong { display: block; font-size: clamp(34px, 4.5vw, 66px); line-height: .95; letter-spacing: -.06em; color: var(--green); }
+    .metric span { display: block; margin-top: 8px; font: 12px/1.35 var(--mono); color: var(--muted); }
+    .dark .metric { border-color: rgba(255,255,255,.22); }
+    .dark .metric strong { color: var(--mint); }
+    .dark .metric span { color: rgba(255,255,255,.67); }
+    .loop-svg { width: 100%; max-height: 420px; overflow: visible; }
+    .loop-svg .orbit { fill: none; stroke: var(--green); stroke-width: 2; stroke-dasharray: 6 9; animation: spin 24s linear infinite; transform-origin: center; }
+    .loop-svg .node { fill: #fff; stroke: var(--green); stroke-width: 2; }
+    .loop-svg text { font-family: var(--sans); fill: var(--ink); font-weight: 800; font-size: 13px; }
+    .loop-svg .small { font-size: 10px; font-weight: 600; fill: var(--muted); }
+    .dark .loop-svg .node { fill: #244039; }
+    .dark .loop-svg text { fill: #f2f6f0; }
+    .dark .loop-svg .small { fill: rgba(255,255,255,.7); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .paradigm { min-height: 240px; display: grid; align-content: space-between; border-top: 4px solid var(--ink); padding-top: 16px; }
+    .paradigm.self { border-color: var(--green); }
+    .paradigm .glyph { height: 90px; display: grid; place-items: center; }
+    .paradigm svg { width: 110px; height: 82px; }
+    .paradigm p { font-size: 14px; color: var(--muted); }
+    .dark .paradigm { border-color: rgba(255,255,255,.35); }
+    .dark .paradigm.self { border-color: var(--mint); }
+    .dark .paradigm p { color: rgba(255,255,255,.72); }
+    .flow { display: flex; align-items: stretch; gap: 12px; }
+    .flow-node { flex: 1; padding: 18px; border: 1px solid var(--line); background: #fff; border-radius: 14px; display: grid; gap: 9px; align-content: start; }
+    .flow-node strong { font-size: 15px; }
+    .flow-node p { font-size: 13px; color: var(--muted); }
+    .flow-arrow { align-self: center; color: var(--green); font-size: 25px; }
+    .dark .flow-node { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); }
+    .dark .flow-node p { color: rgba(255,255,255,.7); }
+    .callout { border-left: 3px solid var(--green); padding: 10px 0 10px 16px; display: grid; gap: 8px; }
+    .callout strong { font-size: 18px; }
+    .callout p { font-size: 14px; color: var(--muted); }
+    .dark .callout { border-color: var(--mint); }
+    .dark .callout p { color: rgba(255,255,255,.75); }
+    .signature { display: grid; gap: 12px; }
+    .signature-row { display: grid; grid-template-columns: minmax(150px, .8fr) 24px minmax(170px, 1fr); align-items: center; gap: 14px; }
+    .signature-row .from { text-align: right; font: 12px/1.35 var(--mono); color: var(--muted); }
+    .signature-row .to { padding: 12px 14px; border-radius: 10px; background: var(--paper-2); font-size: 14px; }
+    .signature-row .arrow { color: var(--green); font-size: 20px; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    table { width: 100%; border-collapse: collapse; min-width: 740px; font-size: 13px; }
+    th, td { padding: 10px 12px; text-align: right; border-bottom: 1px solid #e7eee9; white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; }
+    th { background: var(--paper-2); color: var(--muted); font: 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; }
+    tr.group td { font: 11px var(--mono); color: var(--green); background: #f5faf6; text-align: left; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+    td.final { background: #e9f6ea; color: var(--green); font-weight: 800; }
+    .bar-grid { display: grid; gap: 14px; }
+    .bar-row { display: grid; grid-template-columns: 190px 1fr 54px; gap: 12px; align-items: center; }
+    .bar-label { font: 12px/1.2 var(--mono); color: var(--muted); }
+    .bar-track { height: 22px; display: flex; background: var(--paper-2); border-radius: 4px; overflow: hidden; }
+    .bar-before { background: #9bb3a4; }
+    .bar-after { background: var(--green); }
+    .bar-val { text-align: right; font: 12px var(--mono); color: var(--green); font-weight: 800; }
+    .code { margin: 0; padding: 18px; background: #10201c; color: #d9f0dd; border-radius: 14px; font: 12px/1.55 var(--mono); overflow: auto; white-space: pre; max-height: 420px; }
+    .code .kw { color: #f3bf70; }.code .fn { color: #9dd3ef; }.code .cm { color: #759d89; }
+    .checklist { display: grid; gap: 10px; }
+    .check { display: grid; grid-template-columns: 24px 1fr; gap: 12px; align-items: start; }
+    .check svg { color: var(--green); margin-top: 2px; }
+    .check p { font-size: 14px; }
+    .check strong { display: block; margin-bottom: 2px; }
+    .risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .risk { padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    .risk h3 { font-size: 15px; margin-bottom: 7px; }
+    .risk p { font-size: 13px; color: var(--muted); }
+    .risk.warn { border-color: #e7b39e; background: #fff8f4; }
+    .risk.good { border-color: #a8d4b4; background: #f4fbf5; }
+    .controls { position: fixed; z-index: 20; bottom: 20px; right: 28px; display: flex; gap: 8px; align-items: center; }
+    .control { width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(21,33,31,.18); background: rgba(245,247,243,.92); color: var(--ink); display: grid; place-items: center; cursor: pointer; box-shadow: 0 8px 22px rgba(26,49,40,.13); transition: transform .2s ease, background .2s ease; }
+    .control:hover { transform: translateY(-2px); background: #fff; }
+    .control:focus-visible { outline: 3px solid var(--yellow); outline-offset: 3px; }
+    .dark ~ .controls .control, .orange ~ .controls .control, .blue ~ .controls .control { background: rgba(255,255,255,.9); }
+    .progress { position: fixed; z-index: 21; left: 0; bottom: 0; height: 3px; width: 0; background: var(--green); transition: width .3s ease; }
+    .overview { position: fixed; inset: 0; z-index: 50; background: rgba(21,33,31,.86); padding: 5vh 5vw; opacity: 0; visibility: hidden; transition: opacity .2s ease; overflow: auto; }
+    .overview.open { opacity: 1; visibility: visible; }
+    .overview-head { display: flex; align-items: center; justify-content: space-between; color: #fff; margin-bottom: 20px; }
+    .overview-head h2 { font-size: 34px; }
+    .overview-grid { width: min(1180px, 100%); margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+    .thumb { min-height: 125px; padding: 15px; border-radius: 13px; background: var(--paper); border: 2px solid transparent; cursor: pointer; text-align: left; display: grid; align-content: space-between; gap: 10px; color: var(--ink); }
+    .thumb:hover, .thumb.current { border-color: var(--mint); }
+    .thumb small { font: 10px var(--mono); color: var(--muted); }
+    .thumb strong { font-size: 15px; line-height: 1.1; letter-spacing: -.02em; }
+    .hint { position: fixed; z-index: 15; left: 28px; bottom: 29px; color: rgba(21,33,31,.55); font: 11px var(--mono); }
+    .dark ~ .hint, .orange ~ .hint, .blue ~ .hint { color: rgba(255,255,255,.55); }
+    .cursor { cursor: pointer; }
+    .pulse { animation: pulse 2.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+    @media (max-width: 800px) {
+      .slide { padding: 22px 6vw 26px; }
+      .split, .three, .four, .metric-row, .risk-grid { grid-template-columns: 1fr; }
+      .rail { grid-template-columns: 1fr; gap: 20px; }
+      .rail:before { left: 29px; top: 30px; bottom: 30px; width: 2px; height: auto; right: auto; }
+      .step { grid-template-columns: 60px 1fr; padding: 0; gap: 14px; }
+      .step h3, .step p { grid-column: 2; }
+      .step .number { grid-row: 1 / span 2; }
+      .flow { flex-direction: column; }
+      .flow-arrow { transform: rotate(90deg); align-self: center; }
+      .signature-row { grid-template-columns: 1fr; gap: 5px; }
+      .signature-row .from { text-align: left; }
+      .signature-row .arrow { display: none; }
+      .bar-row { grid-template-columns: 125px 1fr 45px; gap: 8px; }
+      .controls { right: 16px; bottom: 14px; }
+      .hint { left: 16px; bottom: 25px; }
+      .source { font-size: 10px; }
+      .visual { align-content: start; overflow: auto; padding-bottom: 12px; }
+      .loop-svg { max-height: 300px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" id="deck" aria-live="polite">
+    <section class="slide active" data-title="Cover" data-source="Paper cover and abstract">
+      <div class="topbar"><div class="brand">Research deep dive · 20 August 2026</div><div class="page-count">01 / 22</div></div>
+      <div class="slide-inner visual split">
+        <div class="title-block">
+          <div class="rule"></div>
+          <h1>Self-Harness</h1>
+          <p class="lede">Harnesses that improve themselves.</p>
+          <p>The idea is simple: let an agent study its own execution failures, propose small changes to the scaffolding around it, and keep only edits that survive regression tests.</p>
+          <div><span class="tag">Paper explainer</span></div>
+        </div>
+        <svg class="loop-svg" viewBox="0 0 520 440" role="img" aria-label="A three-stage self-harness loop">
+          <circle class="orbit" cx="260" cy="220" r="145" />
+          <path d="M260 77 l-10 20 l20 0 z" fill="var(--green)" transform="rotate(25 260 220)" />
+          <circle class="node" cx="260" cy="70" r="48"/><text x="260" y="66" text-anchor="middle">Mine</text><text class="small" x="260" y="83" text-anchor="middle">weaknesses</text>
+          <circle class="node" cx="390" cy="295" r="48"/><text x="390" y="291" text-anchor="middle">Propose</text><text class="small" x="390" y="308" text-anchor="middle">small edits</text>
+          <circle class="node" cx="130" cy="295" r="48"/><text x="130" y="291" text-anchor="middle">Validate</text><text class="small" x="130" y="308" text-anchor="middle">regressions</text>
+          <circle cx="260" cy="220" r="68" fill="var(--mint)" opacity=".75"/><text x="260" y="215" text-anchor="middle" font-size="18">same</text><text x="260" y="238" text-anchor="middle" font-size="18">model</text>
+        </svg>
+      </div>
+      <div class="bottom"><div class="note">A plain-English guide to the paper’s mechanism, evidence and practical implementation.</div><div class="source">Zhang et al., “Self-Harness: Harnesses That Improve Themselves” · <a href="https://arxiv.org/abs/2606.09498" target="_blank">arXiv:2606.09498v3</a></div></div>
+    </section>
+
+    <section class="slide" data-title="TL;DR" data-source="Paper abstract; §§1, 5">
+      <div class="topbar"><div class="brand">The short version</div><div class="page-count">02 / 22</div></div>
+      <div class="slide-inner visual">
+        <div class="title-block"><div class="rule"></div><h2>An agent can improve its operating system without changing its brain.</h2><p class="lede">Self-Harness keeps the model weights fixed. It evolves the surrounding protocol: prompts, tools, runtime controls, verification and recovery.</p></div>
+        <div class="rail">
+          <div class="step"><div class="number">1</div><h3>Mine</h3><p>Run tasks. Use verifier-grounded traces to cluster recurring failure mechanisms.</p></div>
+          <div class="step"><div class="number">2</div><h3>Propose</h3><p>Ask the same model for diverse, minimal edits tied to those mechanisms.</p></div>
+          <div class="step"><div class="number">3</div><h3>Validate</h3><p>Regression-test each candidate on held-in and held-out tasks. Promote only non-regressive gains.</p></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric"><strong>9/9</strong><span>model–benchmark combinations improved</span></div>
+          <div class="metric"><strong>+40.6pp</strong><span>largest absolute gain: GLM-5 on AppWorld</span></div>
+          <div class="metric"><strong>+132%</strong><span>largest relative gain: Qwen3.5 on AppWorld</span></div>
+        </div>
+      </div>
+      <div class="bottom"><div class="note">Beginner lens: think “test-driven self-tuning for the agent scaffold”.</div><div class="source">Source: abstract; §§1 and 5; Table 1.</div></div>
+    </section>
+
+    <section class="slide" data-title="Why harnesses matter" data-source="Paper §§1–2">
+      <div class="topbar"><div class="brand">The problem</div><div class="page-count">03 / 22</div></div>
+      <div class="slide-inner visual split">
+        <div class="title-block"><div class="rule"></div><h2>Agent performance is more than model capability.</h2><p class="lede">The harness is the layer that decides what the model sees, what it can do, when it checks its work and how it recovers.</p><div class="callout"><strong>Same model ≠ same agent.</strong><p>Two harnesses can produce different outcomes because execution protocol changes behaviour over long horizons.</p></div></div>
+        <div class="panel soft">
+          <svg viewBox="0 0 520 350" width="100%" role="img" aria-label="Model inside two different harnesses">
+            <rect x="25" y="35" width="205" height="270" rx="18" fill="#fff" stroke="#cbd7ce"/><rect x="290" y="35" width="205" height="270" rx="18" fill="#fff" stroke="#cbd7ce"/>
+            <text x="128" y="68" text-anchor="middle" fill="#61706c" font-size="12" font-weight="800">HARNESS A</text><text x="392" y="68" text-anchor="middle" fill="#1d6b55" font-size="12" font-weight="800">HARNESS B</text>
+            <rect x="76" y="110" width="102" height="58" rx="14" fill="#eaf0eb"/><text x="127" y="143" text-anchor="middle" fill="#15211f" font-size="16" font-weight="800">MODEL</text>
+            <rect x="341" y="110" width="102" height="58" rx="14" fill="#cfe9d6"/><text x="392" y="143" text-anchor="middle" fill="#15211f" font-size="16" font-weight="800">MODEL</text>
+            <text x="127" y="203" text-anchor="middle" fill="#61706c" font-size="12">loops · late artefact</text><text x="392" y="203" text-anchor="middle" fill="#1d6b55" font-size="12">checks · recovery · stop</text>
+            <path d="M127 172v30M392 172v30" stroke="#d96d43" stroke-width="3"/><circle cx="127" cy="255" r="25" fill="#f6dfd3"/><text x="127" y="260" text-anchor="middle" fill="#914325" font-size="14" font-weight="800">FAIL</text><circle cx="392" cy="255" r="25" fill="#cfe9d6"/><text x="392" y="260" text-anchor="middle" fill="#1d6b55" font-size="14" font-weight="800">PASS</text>
+          </svg>
+        </div>
+      </div>
+      <div class="bottom"><div class="note">Harness = prompts + tools + memory/state + verification + policies + runtime control.</div><div class="source">Source: §§1–2.</div></div>
+    </section>
+
+    <section class="slide dark" data-title="Three paradigms" data-source="Paper Figure 1; §1">
+      <div class="topbar"><div class="brand">Section break · the shift</div><div class="page-count">04 / 22</div></div>
+      <div class="slide-inner visual">
+        <div class="title-block"><div class="rule"></div><h2>Who gets to improve the harness?</h2><p class="lede">Self-Harness moves improvement inside the evaluated agent, while keeping the model and evaluator fixed.</p></div>
+        <div class="three">
+          <div class="paradigm"><div class="glyph"><svg viewBox="0 0 110 82"><circle cx="27" cy="32" r="12" fill="none" stroke="white" stroke-width="3"/><path d="M27 45v25M9 58h36M27 70L16 80M27 70l11 10" stroke="white" stroke-width="3"/><rect x="57" y="23" width="40" height="35" rx="5" fill="none" stroke="white" stroke-width="3"/><path d="M77 58v15M66 73h22" stroke="white" stroke-width="3"/></svg></div><h3>Human engineering</h3><p>Experts inspect failures and manually revise the scaffold.</p></div>
+          <div class="paradigm"><div class="glyph"><svg viewBox="0 0 110 82"><rect x="13" y="20" width="38" height="32" rx="5" fill="none" stroke="white" stroke-width="3"/><path d="M32 52v17M23 69h18" stroke="white" stroke-width="3"/><path d="M62 41h30M78 25l14 16-14 16" fill="none" stroke="white" stroke-width="3"/></svg></div><h3>Meta-Harness</h3><p>A stronger external agent guides improvement of a weaker target.</p></div>
+          <div class="paradigm self"><div class="glyph"><svg viewBox="0 0 110 82"><circle cx="55" cy="41" r="28" fill="none" stroke="var(--mint)" stroke-width="3" stroke-dasharray="5 5"/><rect x="39" y="28" width="32" height="25" rx="5" fill="none" stroke="var(--mint)" stroke-width="3"/><path d="M55 53v14M47 67h16M19 41h14M77 41h14" stroke="var(--mint)" stroke-width="3"/></svg></div><h3>Self-Harness</h3><p>The evaluated agent improves the very harness it runs through.</p></div>
+        </div>
+      </div>
+      <div class="bottom"><div class="note">The paper studies a bounded middle ground, not open-ended recursive self-improvement.</div><div class="source">Source: Figure 1; §1.</div></div>
+    </section>
+
+    <section class="slide" data-title="The core loop" data-source="Paper Figure 2; §§3.1–3.4">
+      <div class="topbar"><div class="brand">Deep dive · mechanism</div><div class="page-count">05 / 22</div></div>
+      <div class="slide-inner visual">
+        <div class="title-block"><div class="rule"></div><h2>Evidence becomes a harness state transition.</h2><p class="lede">Every round starts with a current harness hₜ and ends with either a tested update hₜ₊₁ or no change.</p></div>
+        <div class="flow">
+          <div class="flow-node"><span class="tag blue">01 · observe</span><strong>Weakness mining</strong><p>Run the fixed model. Collect traces and verifier outcomes. Cluster recurring failure signatures.</p></div><div class="flow-arrow">→</div>
+          <div class="flow-node"><span class="tag orange">02 · hypothesise</span><strong>Harness proposal</strong><p>Generate several diverse but minimal edits, each tied to one mechanism and one editable surface.</p></div><div class="flow-arrow">→</div>
+          <div class="flow-node"><span class="tag">03 · gate</span><strong>Proposal validation</strong><p>Regression-test held-in and held-out tasks. Reject trade-offs; merge compatible winners.</p></div>
+        </div>
+        <div class="panel soft"><p><strong>Fixed throughout:</strong> model weights, evaluator, task protocol, non-editable runtime settings. <strong>Allowed to change:</strong> the surrounding harness.</p></div>
+      </div>
+      <div class="bottom"><div class="note">This separation is the paper’s causal story: if only the harness changes, measured gains are attributable to that layer within the protocol.</div><div class="source">Source: Figure 2; §§3.1–3.4.</div></div>
+    </section>
+
+    <section class="slide" data-title="Weakness mining" data-source="Paper §3.2">
+      <div class="topbar"><div class="brand">Deep dive · stage 1</div><div class="page-count">06 / 22</div></div>
+      <div class="slide-inner visual split">
+        <div class="title-block"><div class="rule"></div><h2>Don’t cluster symptoms. Cluster mechanisms.</h2><p class="lede">A timeout, missing file or assertion failure is only the verifier’s surface-level verdict.</p><p>The evaluation system attributes the relevant agent behaviour and groups failures only when the verifier cause, causal status and reusable mechanism agree.</p></div>
+        <div class="signature">
+          <div class="panel soft"><span class="tag blue">trace record</span><p style="margin-top:12px;font-family:var(--mono);font-size:13px">task · messages · tool calls · output · verifier outcome</p></div>
+          <div class="signature-row"><div class="from">“missing output”<br/>“timeout”<br/>“bad state”</div><div class="arrow">→</div><div class="to"><strong>failure signature φ(rᵢ)</strong><br/><span style="color:var(--muted);font:12px var(--mono)">cause · causal status · mechanism</span></div></div>
+          <div class="panel"><span class="tag">evidence bundle</span><p style="margin-top:12px">Recurring patterns, representative tasks, shared symptoms, verifier evidence and an actionable mechanism.</p></div>
+        </div>
+      </div>
+      <div class="bottom"><div class="note">Design implication: failure mining must preserve enough trace provenance to justify a harness edit.</div><div class="source">Source: §3.2.</div></div>
+    </section>
+
+    <section class="slide" data-title="Harness proposal" data-source="Paper §3.3">
+      <div class="topbar"><div class="brand">Deep dive · stage 2</div><div class="page-count">07 / 22</div></div>
+      <div class="slide-inner visual split">
+        <div class="title-block"><div class="rule"></div><h2>The proposer explores, but it doesn’t get a blank cheque.</h2><p class="lede">The same fixed model is invoked in a proposer role with a bounded context.</p><div class="checklist">
+          <div class="check"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-9" stroke="currentColor" stroke-width="2.5"/></svg><p><strong>Distinct branches</strong>Several candidates should test different mechanisms or surfaces.</p></div>
+          <div class="check"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-9" stroke="currentColor" stroke-width="2.5"/></svg><p><strong>Minimal edits</strong>Change only what is needed; preserve unrelated behaviour.</p></div>
+          <div class="check"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-9" stroke="currentColor" stroke-width="2.5"/></svg><p><strong>Audit record</strong>Each proposal names its target, surface, expected effect and risks.</p></div>
+        </div></div>
+        <div class="panel soft"><h3>Editable surfaces</h3><div class="four" style="margin-top:18px"><div class="panel"><span class="tag">prompt</span><p style="margin-top:12px">bootstrap, execution, verification</p></div><div class="panel"><span class="tag orange">tools</span><p style="margin-top:12px">availability, adapters, schemas</p></div><div class="panel"><span class="tag blue">runtime</span><p style="margin-top:12px">loops, budgets, middleware</p></div><div class="panel"><span class="tag ink">state</span><p style="margin-top:12px">memory, recovery, persistence</p></div></div><p style="margin-top:20px">The proposal stage is deliberately narrower than “redesign the agent”.</p></div>
+      </div>
+      <div class="bottom"><div class="note">Practical test: if you can’t name the failure mechanism and the exact surface to edit, don’t propose the patch.</div><div class="source">Source: §3.3.</div></div>
+    </section>
+
+    <section class="slide" data-title="Proposal validation" data-source="Paper §3.4; Algorithm 1">
+      <div class="topbar"><div class="brand">Deep dive · stage 3</div><div class="page-count">08 / 22</div></div>
+      <div class="slide-inner visual split">
+        <div class="title-block"><div class="rule"></div><h2>Promotion is conservative by design.</h2><p class="lede">A candidate must improve at least one split without degrading the other.</p><div class="panel soft"><p style="font-family:var(--mono);font-size:16px;color:var(--ink)">Δ<sub>in</sub> ≥ 0 &nbsp; and &nbsp; Δ<sub>ho</sub> ≥ 0<br/>and max(Δ<sub>in</sub>, Δ<sub>ho</sub>) &gt; 0</p></div><p class="note">When evaluation is stochastic, the paper repeats candidate evaluation and applies the rule to aggregate pass counts.</p></div>
+        <div class="visual" style="gap:14px">
+          <div class="panel"><span class="tag">accept</span><h3 style="margin-top:14px">Better on held-in, no worse held-out.</h3><p>Or better on held-out, no worse held-in. Compatible winners can be merged.</p></div>
+          <div class="panel"><span class="tag orange">reject</span><h3 style="margin-top:14px">Trade-off, invalid surface or failed evaluation.</h3><p>Rejected candidates stay logged. The active harness does not change.</p></div>
+          <div class="panel soft"><p><strong>Why it matters:</strong> the gate is the paper’s defence against overfitting the proposer to the failures it has seen.</p></div>
+        </div>
+      </div>
+      <div class="bottom"><div class="note">This is a promotion rule, not a guarantee of safety outside the measured protocol.</div><div class="source">Source: §3.4; Algorithm 1.</div></div>
+    </section>
+
+    <section class="slide blue" data-title="What was tested" data-source="Paper §4.1; Appendix A.2">
+      <div class="topbar"><div class="brand">Evidence · experimental design</div><div class="page-count">09 / 22</div></div>
+      <div class="slide-inner visual">
+        <div class="title-block"><div class="rule"></div><h2>Three models. Three agentic environments. One controlled comparison.</h2><p class="lede">The model backend, tool set, budget, benchmark environment and evaluator stay fixed within each comparison.</p></div>
+        <div class="three">
+          <div class="panel"><span class="tag blue">terminal</span><h3 style="margin-top:15px">Terminal-Bench 2.0</h3><p>64-case fixed subset of containerised terminal tasks: artefacts, commands, verification and recovery.</p></div>
+          <div class="panel"><span class="tag blue">software repair</span><h3 style="margin-top:15px">SWE-bench Verified</h3><p>100 cases: repository inspection, patch implementation and repository tests.</p></div>
+          <div class="panel"><span class="tag blue">multi-app</span><h3 style="margin-top:15px">AppWorld</h3><p>180 examples: application APIs and state-based grading across workflows.</p></div>
+        </div>
+        <div class="panel"><p><strong>Models:</strong> MiniMax M2.5 · Qwen3.5-35B-A3B · GLM-5 &nbsp; | &nbsp; <strong>Splits:</strong> held-in evidence + held-out regression gate &nbsp; | &nbsp; <strong>Metric:</strong> Pass (%) across two repeated attempts unless otherwise specified.</p></div>
+      </div>
+      <div class="bottom"><div class="note">The paper reports within-model comparisons, not a ranking of model capability.</div><div class="source">Source: §4.1; Appendix A.2.</div></div>
+    </section>
+
+    <section class="slide" data-title="Results at a glance" data-source="Paper Table 1; §4.2">
+      <div class="topbar"><div class="brand">Evidence · results</div><div class="page-count">10 / 22</div></div>
+      <div class="slide-inner visual">
+        <div class="title-block"><div class="rule"></div><h2>Every final harness improved both splits.</h2><p class="lede">Across all nine model–benchmark combinations, the promoted harness beat or matched the starting harness on held-in and held-out performance.</p></div>
+        <div class="metric-row"><div class="metric"><strong>9 / 9</strong><span>combinations improved overall</span></div><div class="metric"><strong>85.0%</strong><span>GLM-5 + AppWorld final overall pass</span></div><div class="metric"><strong>+40.6pp</strong><span>largest absolute overall gain</span></div></div>
+        <div class="bar-grid">
+          <div class="bar-row"><div class="bar-label">Qwen · AppWorld</div><div class="bar-track"><div class="bar-before" style="width:22.5%"></div><div class="bar-after" style="width:52.2%"></div></div><div class="bar-val">+132%</div></div>
+          <div class="bar-row"><div class="bar-label">GLM-5 · AppWorld</div><div class="bar-track"><div class="bar-before" style="width:44.4%"></div><div class="bar-after" style="width:85%"></div></div><div class="bar-val">+40.6pp</div></div>
+          <div class="bar-row"><div class="bar-label">Qwen · SWE-bench</div><div class="bar-track"><div class="bar-before" style="width:19.5%"></div><div class="bar-after" style="width:41.5%"></div></div><div class="bar-val">+113%</div></div>
+          <div class="bar-row"><div class="bar-label">MiniMax · Terminal</div><div class="bar-track"><div class="bar-before" style="width:42.2%"></div><div class="bar-after" style="width:53.9%"></div></div><div class="bar-val">+28%</div></div>
+        </div>
+        <div class="note"><span style="display:inline-block;width:14px;height:14px;background:#9bb3a4;vertical-align:-2px;margin-right:5px"></span>initial harness &nbsp; <span style="display:inline-block;width:14px;height:14px;background:var(--green);vertical-align:-2px;margin-right:5px"></span>Self-Harness final. Bars are pass rates; labels show the paper’s reported relative or absolute gain.</div>
+      </div>
+      <div class="bottom"><div class="note">The headline result is broad within this test protocol, not universal proof of transfer.</div><div class="source">Source: Table 1; §4.2.</div></div>
+    </section>
+
+    <section class="slide" data-title="Exact results" data-source="Paper Table 1">
+      <div class="topbar"><div class="brand">Evidence · exact values</div><div class="page-count">11 / 22</div></div>
+      <div class="slide-inner visual">
+        <div class="title-block"><div class="rule"></div><h2>The gains show up on held-out tasks too.</h2><p class="lede">Use the table as a calibration point: the largest improvements are concentrated in weaker starting harness/model combinations.</p></div>
+        <div class="table-wrap">
+          <table aria-label="Initial and final harness pass rates from the paper">
+            <thead><tr><th>Benchmark · model</th><th>Initial in</th><th>Initial out</th><th>Initial overall</th><th>Final in</th><th>Final out</th><th>Final overall</th></tr></thead>
+            <tbody>
+              <tr class="group"><td colspan="7">Terminal-Bench 2.0</td></tr>
+              <tr><td>MiniMax M2.5</td><td>43.0</td><td>40.5</td><td>42.2</td><td class="final">50.0</td><td class="final">61.9</td><td class="final">53.9</td></tr>
+              <tr><td>Qwen3.5-35B-A3B</td><td>15.1</td><td>23.8</td><td>18.0</td><td class="final">36.0</td><td class="final">38.1</td><td class="final">36.7</td></tr>
+              <tr><td>GLM-5</td><td>47.7</td><td>42.9</td><td>46.1</td><td class="final">57.0</td><td class="final">57.1</td><td class="final">57.0</td></tr>
+              <tr class="group"><td colspan="7">SWE-bench Verified</td></tr>
+              <tr><td>MiniMax M2.5</td><td>51.5</td><td>34.8</td><td>46.0</td><td class="final">58.2</td><td class="final">40.9</td><td class="final">52.5</td></tr>
+              <tr><td>Qwen3.5-35B-A3B</td><td>20.1</td><td>18.2</td><td>19.5</td><td class="final">42.5</td><td class="final">39.4</td><td class="final">41.5</td></tr>
+              <tr><td>GLM-5</td><td>53.7</td><td>48.5</td><td>52.0</td><td class="final">58.2</td><td class="final">50.0</td><td class="final">55.5</td></tr>
+              <tr class="group"><td colspan="7">AppWorld</td></tr>
+              <tr><td>MiniMax M2.5</td><td>51.7</td><td>45.6</td><td>48.6</td><td class="final">62.8</td><td class="final">55.0</td><td class="final">58.9</td></tr>
+              <tr><td>Qwen3.5-35B-A3B</td><td>25.0</td><td>20.0</td><td>22.5</td><td class="final">60.0</td><td class="final">44.4</td><td class="final">52.2</td></tr>
+              <tr><td>GLM-5</td><td>47.8</td><td>41.1</td><td>44.4</td><td class="final">92.2</td><td class="final">77.8</td><td class="final">85.0</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="bottom"><div class="note">Pass rates are percentages. “In” = held-in; “out” = held-out.</div><div class="source">Source: Table 1.</div></div>
+    </section>
+
+    <section class="slide" data-title="What changed" data-source="Paper §§4.3; Figures 4–9">
+      <div class="topbar"><div class="brand">Evidence · mechanism, not magic</div><div class="page-count">12 / 22</div></div>
+      <div class="slide-inner visual">
+        <div class="title-block"><div class="rule"></div><h2>The retained edits are workflow interventions.</h2><p class="lede">The paper reports targeted changes, not simply longer prompts.</p></div>
+        <div class="three">
+          <div class="panel"><span class="tag orange">MiniMax M2.5</span><h3 style="margin-top:14px">Create earlier. Handle schemas. Stop loops.</h3><p>Edits target missing required artefacts, structured tool content and stalled tool-use loops.</p></div>
+          <div class="panel"><span class="tag blue">Qwen3.5</span><h3 style="margin-top:14px">Precheck. Retry with discipline. Recover.</h3><p>Edits target dependencies, repeated failed commands, exploration cycles and artefact recovery.</p></div>
+          <div class="panel"><span class="tag">GLM-5</span><h3 style="margin-top:14px">Persist state. Move to implementation.</h3><p>Edits target environment persistence and the transition from exploration to testing.</p></div>
+        </div>
+        <div class="panel soft"><p><strong>Interpretation:</strong> the same base model family can benefit from different harness mechanisms because its failure patterns differ in context.</p></div>
+      </div>
+      <div class="bottom"><div class="note">Evidence level: quantitative benchmark results plus qualitative trace/code analysis; no claim of general-purpose autonomy.</div><div class="source">Source: §§4.3; Figures 4–9.</div></div>
+    </section>
+
+    <section class="slide" data-title="Why held-out matters" data-source="Paper §§3.4, 4.1–4.2; conclusion">
+      <div class="topbar"><div class="brand">Evidence · what the controls buy you</div><div class="page-count">13 / 22</div></div>
+      <div class="slide-inner visual split">
+        <div class="title-block"><div class="rule"></div><h2>Held-out regression is the difference between a patch and a reusable mechanism.</h2><p class="lede">The proposer sees failure evidence from held-in tasks. Held-out tasks are kept behind the promotion gate.</p></div>
+        <div class="visual" style="gap:14px">
+          <div class="panel"><span class="tag blue">visible to proposer</span><h3 style="margin-top:12px">Held-in split</h3><p>Trajectories, verifier outcomes and clustered failure evidence motivate the candidate.</p></div>
+          <div style="text-align:center;color:var(--green);font-size:25px">↓</div>
+          <div class="panel"><span class="tag">hidden from proposer</span><h3 style="margin-top:12px">Held-out split</h3><p>Regression gate checks whether the edit transfers without degrading unseen cases.</p></div>
+          <div class="callout"><strong>Still a bounded claim.</strong><p>The paper says accepted edits may remain benchmark-specific. Higher-stakes changes need stronger gates than pass-rate non-regression.</p></div>
+        </div>
+      </div>
+      <div class="bottom"><div class="note">This is the paper’s strongest practical lesson: self-improvement needs an externalised test boundary.</div><div class="source">Source: §§3.4, 4.1–4.2; conclusion.</div></div>
+    </section>
+
+    <section class="slide orange" data-title="From paper to practice" data-source="Practical adaptation based on paper mechanism">
+      <div class="topbar"><div class="brand">Section break · implementation</div><div class="page-count">14 / 22</div></div>
+      <div class="slide-inner visual split">
+        <div class="title-block"><div class="rule"></div><h2>Build the smallest safe self-improvement loop.</h2><p class="lede">You don’t need a frontier benchmark to borrow the pattern. You do need observable failures, declared edit surfaces and a promotion gate.</p></div>
+        <svg viewBox="0 0 520 360" width="100%" role="img" aria-label="Implementation loop with safety gates">
+          <circle cx="260" cy="180" r="124" fill="none" stroke="#fffaf4" stroke-opacity=".45" stroke-width="2" stroke-dasharray="5 9"/>
+          <circle cx="260" cy="180" r="62" fill="#fffaf4" fill-opacity=".18"/><text x="260" y="176" text-anchor="middle" fill="#fff" font-size="18" font-weight="800">harness</text><text x="260" y="198" text-anchor="middle" fill="#fff" font-size="12">version</text>
+          <g fill="#fffaf4" fill-opacity=".16" stroke="#fffaf4" stroke-width="2"><circle cx="260" cy="56" r="42"/><circle cx="368" cy="243" r="42"/><circle cx="152" cy="243" r="42"/></g>
+          <g fill="#fff" font-size="12" font-weight="800"><text x="260" y="60" text-anchor="middle">OBSERVE</text><text x="368" y="247" text-anchor="middle">PROPOSE</text><text x="152" y="247" text-anchor="middle">GATE</text></g>
+        </svg>
+      </div>
+      <div class="bottom"><div class="note">Practical adaptation: the steps that follow are an implementation guide, not a reproduction claim.</div><div class="source">Recommendation derived from the paper’s §§3–4.</div></div>
+    </section>
+
+    <section class="slide" data-title="1. Set the substrate" data-source="Practical adaptation; paper §§3.1, 4.1">
+      <div class="topbar"><div class="brand">How-to · step 1</div><div class="page-count">15 / 22</div></div>
+      <div class="slide-inner visual split">
+        <div class="title-block"><div class="rule"></div><h2>Start with an evaluation substrate you can trust.</h2><p class="lede">Before self-improvement, make agent behaviour measurable and replayable.</p><div class="checklist">
+          <div class="check"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-9" stroke="currentColor" stroke-width="2.5"/></svg><p><strong>Task set</strong>Freeze representative tasks and a separate regression split.</p></div>
+          <div class="check"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-9" stroke="currentColor" stroke-width="2.5"/></svg><p><strong>Verifier</strong>Return structured pass/fail reasons, not only a score.</p></div>
+          <div class="check"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-9" stroke="currentColor" stroke-width="2.5"/></svg><p><strong>Trace schema</strong>Store task, messages, tool calls, outputs, state and verifier evidence.</p></div>
+          <div class="check"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-9" stroke="currentColor" stroke-width="2.5"/></svg><p><strong>Repeatability</strong>Fix non-editable budgets, tools, environments and evaluator versions.</p></div>
+        </div></div>
+        <div class="panel soft"><span class="tag">minimum record</span><pre class="code" style="margin-top:15px;max-height:260px">{
+  "task_id": "...",
+  "harness_version": "h_003",
+  "trace": { "messages": [], "tools": [] },
+  "output": "...",
+  "verifier": {
+    "status": "fail",
+    "cause": "missing_artifact",
+    "evidence": "..."
+  }
+}</pre></div>
+      </div>
+      <div class="bottom"><div class="note">If you can’t explain why a task failed from the record, don’t let the model optimise from it.</div><div class="source">Recommendation based on §§3.1–3.2 and §4.1.</div></div>
+    </section>
+
+    <section class="slide" data-title="2. Declare edit surfaces" data-source="Practical adaptation; paper Figure 3">
+      <div class="topbar"><div class="brand">How-to · step 2</div><div class="page-count">16 / 22</div></div>
+      <div class="slide-inner visual">
+        <div class="title-block"><div class="rule"></div><h2>Make the harness editable, bounded and reversible.</h2><p class="lede">Put configuration points behind a versioned interface. The proposer edits declarations, not arbitrary production infrastructure.</p></div>
+        <div class="flow">
+          <div class="flow-node"><span class="tag">prompt</span><strong>Instructions</strong><p>bootstrap, execution, verification, recovery</p></div><div class="flow-arrow">+</div>
+          <div class="flow-node"><span class="tag orange">runtime</span><strong>Control policies</strong><p>loop breakers, message budgets, middleware</p></div><div class="flow-arrow">+</div>
+          <div class="flow-node"><span class="tag blue">state</span><strong>Memory + tools</strong><p>sources, adapters, schemas, persistence</p></div><div class="flow-arrow">=</div>
+          <div class="flow-node"><span class="tag ink">version</span><strong>Harness hₜ</strong><p>diffable, testable, rollback-ready</p></div>
+        </div>
+        <div class="panel soft"><p><strong>Promotion boundary:</strong> candidate edits are applied in an isolated branch, evaluated, then merged only after the gate passes. Keep every proposal and decision in an append-only lineage.</p></div>
+      </div>
+      <div class="bottom"><div class="note">Paper analogue: a minimal DeepAgent-based harness with declared configuration points.</div><div class="source">Source: Figure 3; §4.1. Implementation framing is adapted.</div></div>
+    </section>
+
+    <section class="slide" data-title="3. Mine failures" data-source="Practical adaptation; paper §3.2">
+      <div class="topbar"><div class="brand">How-to · step 3</div><div class="page-count">17 / 22</div></div>
+      <div class="slide-inner visual split">
+        <div class="title-block"><div class="rule"></div><h2>Turn traces into an evidence bundle.</h2><p class="lede">Ask an analysis pass to find repeated, actionable mechanisms across failed runs.</p><div class="panel soft"><p><strong>Good pattern:</strong> “The agent repeatedly deletes or never creates the verifier-required artefact after a tool error.”</p><p style="margin-top:10px"><strong>Weak pattern:</strong> “The agent timed out.”</p></div></div>
+        <div class="visual" style="gap:12px">
+          <div class="panel"><span class="tag blue">1 · filter</span><p style="margin-top:10px">Select failed records with verifier evidence.</p></div>
+          <div class="panel"><span class="tag blue">2 · attribute</span><p style="margin-top:10px">Separate terminal cause from agent-side behaviour.</p></div>
+          <div class="panel"><span class="tag blue">3 · cluster</span><p style="margin-top:10px">Group only when cause + causal status + mechanism agree.</p></div>
+          <div class="panel"><span class="tag">4 · rank</span><p style="margin-top:10px">Order by support and likely actionability.</p></div>
+        </div>
+      </div>
+      <div class="bottom"><div class="note">Keep the evidence bundle separate from the edit: diagnosis should not silently prescribe the fix.</div><div class="source">Source: §3.2; implementation framing is adapted.</div></div>
+    </section>
+
+    <section class="slide" data-title="4. Propose and validate" data-source="Practical adaptation; paper §§3.3–3.4; Algorithm 1">
+      <div class="topbar"><div class="brand">How-to · step 4</div><div class="page-count">18 / 22</div></div>
+      <div class="slide-inner visual">
+        <div class="title-block"><div class="rule"></div><h2>Generate candidates in parallel. Promote them like code.</h2><p class="lede">A proposal is a hypothesis about behaviour. Evaluation decides whether it becomes part of the harness.</p></div>
+        <div class="flow">
+          <div class="flow-node"><span class="tag orange">propose</span><strong>Candidate Δ₁</strong><p>Target: missing artefact<br/>Surface: bootstrap instruction</p></div><div class="flow-node"><span class="tag orange">propose</span><strong>Candidate Δ₂</strong><p>Target: tool loop<br/>Surface: runtime middleware</p></div><div class="flow-node"><span class="tag orange">propose</span><strong>Candidate Δ₃</strong><p>Target: bad recovery<br/>Surface: error policy</p></div>
+        </div>
+        <div class="split" style="align-items:stretch">
+          <div class="panel soft"><h3>Evaluate each branch</h3><p style="margin-top:9px">Run current and candidate harnesses on the same held-in and held-out tasks. Record split-wise deltas, repeats, changed surfaces and decision.</p></div>
+          <div class="panel"><h3>Merge only compatible winners</h3><p style="margin-top:9px">If all candidates fail, keep hₜ. If several pass and don’t conflict, merge into hₜ₊₁. Log rejected branches for future analysis.</p></div>
+        </div>
+      </div>
+      <div class="bottom"><div class="note">Treat the harness lineage as a testable artefact, not a hidden prompt file.</div><div class="source">Source: §§3.3–3.4; Algorithm 1.</div></div>
+    </section>
+
+    <section class="slide" data-title="Reference loop" data-source="Paper Algorithm 1; practical pseudocode adaptation">
+      <div class="topbar"><div class="brand">How-to · reference pseudocode</div><div class="page-count">19 / 22</div></div>
+      <div class="slide-inner visual split">
+        <div class="title-block"><div class="rule"></div><h2>One implementation shape.</h2><p class="lede">Keep the orchestration boring. The intelligence belongs in the evidence, proposal and verifier interfaces.</p><div class="panel soft"><p><strong>Important:</strong> this is a practical adaptation of the paper’s algorithm, not a drop-in library.</p></div></div>
+        <div><pre class="code"><span class="kw">for</span> round <span class="kw">in</span> rounds:
+  baseline = evaluate(model, harness, tasks, verifier)
+  evidence = mine_failures(baseline.failures)
+
+  proposals = propose_parallel(
+      model, harness, evidence,
+      editable_surfaces, width=K)
+
+  accepted = []
+  <span class="kw">for</span> proposal <span class="kw">in</span> proposals:
+    candidate = apply(harness, proposal.edit)
+    result = evaluate(model, candidate, tasks, verifier)
+    <span class="kw">if</span> non_regressive(result, baseline):
+      accepted.append(proposal)
+    <span class="kw">else</span>:
+      log_rejection(proposal, result)
+
+  harness = merge(harness, accepted)
+  save_lineage(harness, accepted)</pre><button class="control" style="margin:12px 0 0 auto;border-radius:10px;width:auto;padding:0 14px;display:flex;gap:8px" id="copyCode" aria-label="Copy pseudocode"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="11" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="2"/></svg>Copy</button></div>
+      </div>
+      <div class="bottom"><div class="note">Implementation advice: make every function emit structured logs and versioned artefacts.</div><div class="source">Source: Algorithm 1; adaptation for teaching.</div></div>
+    </section>
+
+    <section class="slide" data-title="Use cases" data-source="Practical adaptation based on paper mechanism">
+      <div class="topbar"><div class="brand">How-to · where it fits</div><div class="page-count">20 / 22</div></div>
+      <div class="slide-inner visual">
+        <div class="title-block"><div class="rule"></div><h2>Where this pattern is useful.</h2><p class="lede">Choose environments with repeatable tasks, meaningful verifiers and a harness you actually control.</p></div>
+        <div class="three">
+          <div class="panel"><span class="tag">coding agents</span><h3 style="margin-top:14px">Repository repair and local tooling</h3><p>Detect loops, missing patches, skipped tests or broken recovery. Promote narrow verification and runtime changes.</p><p class="note" style="margin-top:14px">Example: a coding harness that learns to run the targeted test before declaring success.</p></div>
+          <div class="panel"><span class="tag blue">research agents</span><h3 style="margin-top:14px">Evidence and provenance workflows</h3><p>Detect unsupported claims, missing citations or incomplete extraction. Promote provenance checks and source-of-truth retrieval.</p><p class="note" style="margin-top:14px">Example: an agent that learns to attach a source note before finalising a literature brief.</p></div>
+          <div class="panel"><span class="tag orange">ops agents</span><h3 style="margin-top:14px">Tool-driven product operations</h3><p>Detect stale state, repeated failed actions or partial writes. Promote confirmation, recovery and bounded retry policies.</p><p class="note" style="margin-top:14px">Example: an agent that learns to re-read state after a write and stop after a fixed retry budget.</p></div>
+        </div>
+        <div class="panel soft"><p><strong>Not a fit yet:</strong> open-ended creative work without reliable verifiers, high-stakes changes without strong approval gates, or environments where traces contain sensitive data you can’t safely process.</p></div>
+      </div>
+      <div class="bottom"><div class="note">Use-case examples are recommendations, not experiments reported by the paper.</div><div class="source">Practical adaptation based on the paper’s mechanism and limitations.</div></div>
+    </section>
+
+    <section class="slide" data-title="Limits and safeguards" data-source="Paper conclusion; §§3.4, 4.1">
+      <div class="topbar"><div class="brand">Boundaries</div><div class="page-count">21 / 22</div></div>
+      <div class="slide-inner visual">
+        <div class="title-block"><div class="rule"></div><h2>Self-improvement is only as good as its boundary conditions.</h2><p class="lede">The paper’s acceptance rule is useful, but it is not a complete safety case.</p></div>
+        <div class="risk-grid">
+          <div class="risk warn"><h3>Benchmark overfitting</h3><p>Accepted edits may encode benchmark-specific failure patterns. Add cross-domain, temporal or adversarial regression tasks.</p></div>
+          <div class="risk warn"><h3>Verifier weakness</h3><p>A weak or gameable verifier can reward the wrong behaviour. Validate the evaluator independently.</p></div>
+          <div class="risk warn"><h3>Trace contamination</h3><p>Proposer context can leak held-out information or sensitive data. Enforce split isolation and redaction.</p></div>
+          <div class="risk good"><h3>Reversible promotion</h3><p>Version every harness, keep rejected candidates, require approvals for high-impact surfaces and make rollback cheap.</p></div>
+          <div class="risk good"><h3>Stronger gates</h3><p>For consequential workflows, add invariants, human review, canary runs, policy checks and failure budgets.</p></div>
+          <div class="risk good"><h3>Auditability</h3><p>Store the evidence, proposal rationale, diff, evaluation repeats and accept/reject decision for every transition.</p></div>
+        </div>
+      </div>
+      <div class="bottom"><div class="note">The paper itself says higher-stakes harness changes need stronger acceptance gates than pass-rate non-regression.</div><div class="source">Source: conclusion; §§3.4 and 4.1.</div></div>
+    </section>
+
+    <section class="slide dark" data-title="Takeaways" data-source="Paper abstract; conclusion">
+      <div class="topbar"><div class="brand">Takeaways</div><div class="page-count">22 / 22</div></div>
+      <div class="slide-inner visual split">
+        <div class="title-block"><div class="rule"></div><h2>Build agents that can learn from their own execution, with receipts.</h2><p class="lede">The useful unit of progress is not a clever prompt. It’s a reversible, evidence-backed harness transition.</p></div>
+        <div class="visual" style="gap:14px">
+          <div class="panel"><span class="tag">1</span><h3 style="margin-top:12px">Observe behaviour</h3><p>Record traces and verifier-grounded failure mechanisms.</p></div>
+          <div class="panel"><span class="tag">2</span><h3 style="margin-top:12px">Change the scaffold</h3><p>Propose diverse, minimal edits to declared surfaces.</p></div>
+          <div class="panel"><span class="tag">3</span><h3 style="margin-top:12px">Earn promotion</h3><p>Regress on what the proposer didn’t see. Keep the diff, evidence and decision.</p></div>
+          <div class="source">Paper: <a href="https://arxiv.org/abs/2606.09498" target="_blank">arXiv:2606.09498v3</a> · Hangfan Zhang et al., Shanghai Artificial Intelligence Laboratory · PDF supplied for this deck.</div>
+        </div>
+      </div>
+      <div class="bottom"><div class="note">A practical starting point: add a held-out regression gate to one agent harness you already own.</div><div class="source">End of deck · use overview or arrow controls to revisit any slide.</div></div>
+    </section>
+  </main>
+
+  <div class="controls" aria-label="Deck controls">
+    <button class="control" id="prev" aria-label="Previous slide" title="Previous slide"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button class="control" id="next" aria-label="Next slide" title="Next slide"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button class="control" id="overviewBtn" aria-label="Open slide overview" title="Slide overview"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="4" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/><rect x="4" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="6" height="6" rx="1" stroke="currentColor" stroke-width="2"/></svg></button>
+    <button class="control" id="fullscreen" aria-label="Enter full screen" title="Full screen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+  </div>
+  <div class="hint">← → navigate · O overview · F full screen</div>
+  <div class="progress" id="progress"></div>
+  <aside class="overview" id="overview" aria-label="Slide overview" aria-hidden="true">
+    <div class="overview-head"><h2>Slide overview</h2><button class="control" id="closeOverview" aria-label="Close overview" title="Close overview"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div>
+    <div class="overview-grid" id="overviewGrid"></div>
+  </aside>
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const progress = document.getElementById('progress');
+      const overview = document.getElementById('overview');
+      const overviewGrid = document.getElementById('overviewGrid');
+      let current = 0;
+      let touchStartX = null;
+
+      slides.forEach((slide, i) => {
+        const thumb = document.createElement('button');
+        thumb.className = 'thumb';
+        thumb.type = 'button';
+        thumb.innerHTML = `<small>${String(i + 1).padStart(2, '0')} / ${slides.length}</small><strong>${slide.dataset.title}</strong>`;
+        thumb.addEventListener('click', () => { go(i); closeOverview(); });
+        overviewGrid.appendChild(thumb);
+      });
+      const thumbs = [...overviewGrid.children];
+
+      function go(index, updateHash = true) {
+        const next = (index + slides.length) % slides.length;
+        slides.forEach((s, i) => {
+          s.classList.toggle('active', i === next);
+          s.classList.toggle('prev', i < next);
+        });
+        thumbs.forEach((t, i) => t.classList.toggle('current', i === next));
+        current = next;
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        if (updateHash) history.replaceState(null, '', `#${current + 1}`);
+        slides[current].focus({preventScroll:true});
+      }
+      function next() { go(current + 1); }
+      function prev() { go(current - 1); }
+      function openOverview() { overview.classList.add('open'); overview.setAttribute('aria-hidden', 'false'); }
+      function closeOverview() { overview.classList.remove('open'); overview.setAttribute('aria-hidden', 'true'); }
+
+      document.getElementById('next').addEventListener('click', next);
+      document.getElementById('prev').addEventListener('click', prev);
+      document.getElementById('overviewBtn').addEventListener('click', openOverview);
+      document.getElementById('closeOverview').addEventListener('click', closeOverview);
+      document.getElementById('fullscreen').addEventListener('click', async () => {
+        if (!document.fullscreenElement) await document.documentElement.requestFullscreen?.();
+        else await document.exitFullscreen?.();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); next(); }
+        if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); prev(); }
+        if (e.key.toLowerCase() === 'o') openOverview();
+        if (e.key.toLowerCase() === 'f') document.getElementById('fullscreen').click();
+        if (e.key === 'Escape') closeOverview();
+        if (e.key === 'Home') go(0);
+        if (e.key === 'End') go(slides.length - 1);
+      });
+      document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, {passive:true});
+      document.addEventListener('touchend', (e) => {
+        if (touchStartX === null) return;
+        const dx = e.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(dx) > 50) dx < 0 ? next() : prev();
+        touchStartX = null;
+      }, {passive:true});
+      window.addEventListener('hashchange', () => { const n = Number(location.hash.slice(1)); if (n >= 1 && n <= slides.length) go(n - 1, false); });
+
+      const code = document.querySelector('.code')?.innerText || '';
+      document.getElementById('copyCode')?.addEventListener('click', async (e) => {
+        await navigator.clipboard?.writeText(code);
+        e.currentTarget.lastChild.textContent = 'Copied';
+        setTimeout(() => e.currentTarget.lastChild.textContent = 'Copy', 1400);
+      });
+      slides.forEach(s => s.setAttribute('tabindex', '-1'));
+      const initial = Number(location.hash.slice(1));
+      go(initial >= 1 && initial <= slides.length ? initial - 1 : 0, false);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b0f17" />
+  <title>Code as Agent Harness — Deep Dive</title>
+  <style>
+    :root {
+      --ink: #f4f7fb;
+      --muted: #aab5c7;
+      --muted-2: #728096;
+      --bg: #0b0f17;
+      --panel: #111827;
+      --panel-2: #151e2d;
+      --line: rgba(255,255,255,.12);
+      --cyan: #68e5d1;
+      --cyan-2: #b7fff2;
+      --amber: #ffc86b;
+      --violet: #aa9bff;
+      --rose: #ff8e9e;
+      --green: #8ee7a6;
+      --shadow: 0 30px 80px rgba(0,0,0,.32);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); }
+    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; overflow: hidden; }
+    button, a { font: inherit; }
+    button { color: inherit; }
+    a { color: inherit; }
+    .deck { position: relative; min-height: 100vh; overflow: hidden; }
+    .slide {
+      position: absolute; inset: 0; min-height: 100vh; padding: 6.8vh 7vw 10vh;
+      display: none; overflow: auto; background:
+        radial-gradient(circle at 92% 4%, rgba(104,229,209,.12), transparent 30%),
+        radial-gradient(circle at 6% 90%, rgba(170,155,255,.09), transparent 28%), var(--bg);
+    }
+    .slide.active { display: block; animation: in .42s ease both; }
+    @keyframes in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .slide-inner { max-width: 1220px; min-height: 78vh; margin: 0 auto; position: relative; }
+    .kicker { color: var(--cyan); text-transform: uppercase; letter-spacing: .16em; font-size: .72rem; font-weight: 800; margin-bottom: 1.4rem; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(3rem, 7.8vw, 8rem); line-height: .91; letter-spacing: -.075em; max-width: 900px; margin-bottom: 1.6rem; }
+    h2 { font-size: clamp(2.2rem, 5.2vw, 5.2rem); line-height: .96; letter-spacing: -.065em; max-width: 900px; margin-bottom: 1.4rem; }
+    h3 { font-size: 1.15rem; letter-spacing: -.02em; margin-bottom: .65rem; }
+    .lead { font-size: clamp(1.08rem, 1.65vw, 1.42rem); line-height: 1.45; max-width: 760px; color: var(--muted); }
+    .small { font-size: .88rem; line-height: 1.45; color: var(--muted); }
+    .micro { font-size: .72rem; line-height: 1.45; color: var(--muted-2); }
+    .accent { color: var(--cyan); }
+    .amber { color: var(--amber); }
+    .violet { color: var(--violet); }
+    .rose { color: var(--rose); }
+    .green { color: var(--green); }
+    .rule { height: 1px; background: var(--line); margin: 1.8rem 0; }
+    .source { position: absolute; left: 0; bottom: -1.4rem; color: var(--muted-2); font-size: .68rem; line-height: 1.4; max-width: 90%; }
+    .source a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+    .grid { display: grid; gap: 1rem; }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0,1fr)); }
+    .card { background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.025)); border: 1px solid var(--line); border-radius: 22px; padding: 1.35rem; box-shadow: 0 12px 35px rgba(0,0,0,.12); }
+    .card p:last-child { margin-bottom: 0; }
+    .pill { display: inline-flex; align-items: center; gap: .35rem; border: 1px solid var(--line); border-radius: 999px; padding: .38rem .68rem; font-size: .76rem; color: var(--muted); }
+    .tag { display: inline-block; color: var(--bg); background: var(--cyan); border-radius: 999px; padding: .26rem .58rem; font-weight: 800; font-size: .7rem; }
+    .quote { border-left: 3px solid var(--cyan); padding: .2rem 0 .2rem 1.1rem; font-size: clamp(1.35rem, 2.8vw, 2.35rem); line-height: 1.12; letter-spacing: -.035em; max-width: 780px; }
+    .metric { font-size: 2.6rem; line-height: 1; letter-spacing: -.06em; color: var(--cyan); margin-bottom: .35rem; }
+    .hero { display: grid; grid-template-columns: 1.08fr .92fr; gap: 4vw; align-items: center; min-height: 72vh; }
+    .hero-mark { min-height: 480px; position: relative; display: grid; place-items: center; }
+    .orb { width: min(34vw, 420px); aspect-ratio: 1; border: 1px solid rgba(104,229,209,.5); border-radius: 50%; position: relative; box-shadow: 0 0 0 30px rgba(104,229,209,.035), 0 0 0 70px rgba(104,229,209,.025), inset 0 0 80px rgba(104,229,209,.12); }
+    .orb:before, .orb:after { content:""; position:absolute; inset: 12%; border: 1px dashed rgba(170,155,255,.5); border-radius: 50%; transform: rotate(32deg) scaleX(.36); }
+    .orb:after { transform: rotate(-32deg) scaleX(.36); border-color: rgba(255,200,107,.5); }
+    .orb-core { position:absolute; inset: 38%; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 60px rgba(104,229,209,.7); }
+    .orbit { position:absolute; inset: 0; animation: spin 12s linear infinite; }
+    .orbit i { position:absolute; width: 11px; height: 11px; border-radius: 50%; background: var(--amber); top: 1%; left: 50%; box-shadow: 0 0 20px var(--amber); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .hero-note { position: absolute; bottom: 1.5rem; right: 2rem; max-width: 260px; color: var(--muted); font-size: .78rem; line-height: 1.4; }
+    .section-break { display: grid; place-items: center; text-align: center; background: linear-gradient(140deg, #121b2b, #0b0f17 58%); }
+    .section-break .section-number { font-size: clamp(5rem, 16vw, 13rem); line-height: .8; font-weight: 900; letter-spacing: -.12em; color: transparent; -webkit-text-stroke: 1px rgba(104,229,209,.35); margin-bottom: 1.2rem; }
+    .section-break h2 { margin-left: auto; margin-right: auto; }
+    .section-break .lead { margin-left: auto; margin-right: auto; }
+    .timeline { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; margin: 2rem 0; }
+    .timeline > div { position: relative; padding: 1.25rem 1.2rem 1.1rem; border-top: 2px solid var(--line); }
+    .timeline > div:not(:last-child):after { content:""; position:absolute; right:-7px; top:-7px; width:12px; height:12px; border-radius:50%; background:var(--cyan); box-shadow:0 0 0 5px var(--bg); }
+    .num { font-size: .72rem; color: var(--cyan); font-weight: 900; letter-spacing: .12em; text-transform: uppercase; margin-bottom: .8rem; }
+    .flow { display: flex; align-items: stretch; gap: .8rem; margin: 2rem 0; }
+    .flow-item { flex: 1; min-height: 145px; border: 1px solid var(--line); border-radius: 18px; padding: 1rem; position: relative; background: rgba(255,255,255,.045); }
+    .flow-item:not(:last-child):after { content:"→"; position:absolute; right:-1.25rem; top:50%; transform: translateY(-50%); color: var(--cyan); font-size: 1.6rem; z-index: 2; }
+    .flow-item .icon { font-size: 1.7rem; margin-bottom: .8rem; }
+    .diagram { border: 1px solid var(--line); border-radius: 24px; padding: 1.25rem; background: rgba(17,24,39,.72); overflow: hidden; }
+    .diagram svg { width: 100%; height: auto; display: block; }
+    .tabbar { display:flex; gap:.5rem; flex-wrap:wrap; margin: 1.2rem 0; }
+    .tab { background: transparent; border: 1px solid var(--line); border-radius:999px; padding:.55rem .85rem; cursor:pointer; color:var(--muted); }
+    .tab.active, .tab:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(104,229,209,.08); }
+    .tabpanel { display:none; }
+    .tabpanel.active { display:block; animation: in .25s ease both; }
+    .steps { counter-reset: step; display:grid; gap:.75rem; }
+    .step { counter-increment: step; display:grid; grid-template-columns: 2.6rem 1fr; gap: .9rem; align-items:start; padding: 1rem 0; border-bottom:1px solid var(--line); }
+    .step:before { content: counter(step); display:grid; place-items:center; width:2.2rem; height:2.2rem; border-radius:50%; border:1px solid var(--cyan); color:var(--cyan); font-weight:900; }
+    .step p { margin-bottom: 0; }
+    pre { margin: 0; white-space: pre-wrap; overflow:auto; color: #d9e7ff; font: .78rem/1.58 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    code { color: var(--cyan-2); }
+    .codebox { border:1px solid var(--line); border-radius:18px; background:#0a0e15; padding:1.1rem; }
+    .code-comment { color: #6d7d96; }
+    .matrix { display:grid; grid-template-columns: 1.15fr repeat(3,1fr); border:1px solid var(--line); border-radius:18px; overflow:hidden; }
+    .matrix > div { padding:.82rem; border-right:1px solid var(--line); border-bottom:1px solid var(--line); font-size:.82rem; color:var(--muted); }
+    .matrix > div:nth-child(4n) { border-right:0; }
+    .matrix .head { background:rgba(104,229,209,.1); color:var(--ink); font-weight:800; }
+    .matrix .rowhead { color:var(--ink); font-weight:700; }
+    .checklist { display:grid; gap:.6rem; }
+    .check { display:flex; align-items:flex-start; gap:.7rem; color:var(--muted); }
+    .check:before { content:"✓"; color:var(--green); font-weight:900; }
+    .risk { display:flex; gap: 1rem; align-items:flex-start; padding: .9rem 0; border-bottom:1px solid var(--line); }
+    .risk:last-child { border-bottom:0; }
+    .risk-icon { width:2rem; height:2rem; flex:none; display:grid; place-items:center; border:1px solid currentColor; border-radius:10px; }
+    .footerline { position: fixed; left: 7vw; right: 7vw; bottom: 2.2rem; display:flex; justify-content:space-between; align-items:center; pointer-events:none; z-index:20; }
+    .progress { height: 2px; background: rgba(255,255,255,.12); flex:1; max-width: 260px; }
+    .progress span { display:block; height:100%; background:var(--cyan); transition:width .3s ease; }
+    .slide-count { color: var(--muted-2); font-size:.72rem; letter-spacing:.12em; }
+    .controls { display:flex; align-items:center; gap:.42rem; pointer-events:auto; }
+    .icon-btn { width: 2.25rem; height:2.25rem; display:grid; place-items:center; border-radius: 11px; border:1px solid var(--line); background: rgba(15,22,35,.86); cursor:pointer; color:var(--muted); }
+    .icon-btn:hover { border-color:var(--cyan); color:var(--cyan); }
+    .icon-btn svg { width:1rem; height:1rem; }
+    .overview { position: fixed; inset: 0; z-index:50; display:none; background: rgba(6,9,14,.94); backdrop-filter: blur(14px); padding: 7vh 7vw; overflow:auto; }
+    .overview.open { display:block; animation: in .22s ease both; }
+    .overview-head { display:flex; align-items:baseline; justify-content:space-between; gap:1rem; margin-bottom:2rem; }
+    .overview h2 { font-size:clamp(2rem,4vw,4rem); margin-bottom:0; }
+    .overview-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:.8rem; max-width:1200px; margin:auto; }
+    .thumb { text-align:left; min-height:125px; border:1px solid var(--line); border-radius:16px; padding:1rem; background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.025)); cursor:pointer; color:var(--muted); }
+    .thumb:hover, .thumb.current { border-color:var(--cyan); color:var(--ink); transform:translateY(-2px); }
+    .thumb-num { color:var(--cyan); font-weight:900; font-size:.68rem; letter-spacing:.1em; margin-bottom:.7rem; }
+    .thumb-title { font-size:.92rem; line-height:1.15; }
+    .toast { position: fixed; left:50%; bottom:5rem; transform:translateX(-50%) translateY(12px); opacity:0; pointer-events:none; background:var(--ink); color:var(--bg); border-radius:999px; padding:.55rem .9rem; font-size:.78rem; transition:.2s; z-index:80; }
+    .toast.show { opacity:1; transform:translateX(-50%); }
+    @media (max-width: 820px) {
+      body { overflow:auto; }
+      .slide { padding: 3.8rem 1.15rem 7rem; }
+      .slide-inner { min-height: auto; }
+      .hero { grid-template-columns:1fr; min-height:auto; gap:1rem; }
+      .hero-mark { min-height:280px; order:-1; }
+      .orb { width:min(66vw,300px); }
+      .hero-note { right:0; bottom:0; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns:1fr; }
+      .timeline { grid-template-columns:1fr; gap:.8rem; }
+      .timeline > div { border-top:0; border-left:2px solid var(--line); padding:0 0 1rem 1rem; }
+      .timeline > div:not(:last-child):after { left:-7px; right:auto; top:0; }
+      .flow { flex-direction:column; }
+      .flow-item:not(:last-child):after { content:"↓"; right:auto; left:50%; top:auto; bottom:-1.2rem; transform:translateX(-50%); }
+      .matrix { grid-template-columns:1fr; }
+      .matrix > div { border-right:0 !important; }
+      .matrix .head:not(:first-child) { display:none; }
+      h1 { font-size: clamp(3.1rem, 15vw, 6rem); }
+      h2 { font-size: clamp(2.5rem, 12vw, 5rem); }
+      .footerline { left:1.15rem; right:1.15rem; bottom:1.2rem; }
+      .progress { max-width:100px; }
+      .source { position:relative; bottom:auto; margin-top:2rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *:before, *:after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-live="polite">
+    <section class="slide active" data-title="Cover">
+      <div class="slide-inner hero">
+        <div>
+          <div class="kicker">Deep dive · arXiv:2605.18747v1 · 18 May 2026</div>
+          <h1>Code as<br><span class="accent">Agent Harness</span></h1>
+          <p class="lead">Toward executable, verifiable and stateful agent systems.</p>
+          <div class="rule"></div>
+          <p class="small">A beginner-friendly guide to the paper’s core idea, system taxonomy and practical build path.</p>
+        </div>
+        <div class="hero-mark" aria-hidden="true">
+          <div class="orb"><div class="orb-core"></div><div class="orbit"><i></i></div></div>
+          <div class="hero-note">Code is not only the thing an agent delivers. It can become the medium through which the agent thinks, acts, remembers and proves.</div>
+        </div>
+        <div class="source">Source: Ning et al., <a href="https://arxiv.org/pdf/2605.18747v1" target="_blank" rel="noreferrer">Code as Agent Harness</a>, arXiv:2605.18747v1.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="The one-minute version">
+      <div class="slide-inner">
+        <div class="kicker">01 · TL;DR</div>
+        <h2>The agent gets better when its work becomes <span class="accent">executable</span>.</h2>
+        <p class="lead">Instead of asking a model to remember everything and declare success in prose, give it a governed workspace where it can write plans, run tools, inspect state, test changes and recover from failure.</p>
+        <div class="grid grid-3" style="margin-top:2rem">
+          <div class="card"><div class="metric">01</div><h3>Executable</h3><p class="small">Intent becomes a program, tool call, test or workflow that can actually run.</p></div>
+          <div class="card"><div class="metric">02</div><h3>Inspectable</h3><p class="small">Plans, diffs, traces, logs and test results expose what happened between prompt and outcome.</p></div>
+          <div class="card"><div class="metric">03</div><h3>Stateful</h3><p class="small">The system can preserve useful state across steps, sessions, agents and context resets.</p></div>
+        </div>
+        <div class="quote" style="margin-top:2.3rem">The practical shift: build the runtime around <span class="accent">evidence</span>, not just generation.</div>
+        <div class="source">Paper pp. 1–4: abstract, introduction, survey scope and contributions.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Why it matters">
+      <div class="slide-inner">
+        <div class="kicker">02 · Why it matters</div>
+        <h2>Long-horizon autonomy is mostly a <span class="amber">systems problem</span>.</h2>
+        <div class="grid grid-2" style="margin-top:2rem">
+          <div class="card"><span class="tag">Without a harness</span><h3 style="margin-top:1rem">A stateless model improvises</h3><p class="small">It may lose the thread, hallucinate an API, repeat a failed action, or stop because the answer sounds plausible.</p></div>
+          <div class="card"><span class="tag" style="background:var(--amber)">With a harness</span><h3 style="margin-top:1rem">A controlled system learns from state</h3><p class="small">It can decompose work, use tools, persist evidence, run checks, route failures and ask for approval at the right boundary.</p></div>
+        </div>
+        <div class="timeline">
+          <div><div class="num">Model</div><h3>Judgement</h3><p class="small">Reason, interpret, propose.</p></div>
+          <div><div class="num">Harness</div><h3>Control surface</h3><p class="small">Expose tools, memory, permissions and feedback.</p></div>
+          <div><div class="num">Environment</div><h3>Evidence</h3><p class="small">Return observable state, outcomes and constraints.</p></div>
+        </div>
+        <div class="source">Paper pp. 2–4 and p. 16: distinction between model capability, harness infrastructure and agent-initiated code.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Use cases">
+      <div class="slide-inner">
+        <div class="kicker">03 · Benefits and use cases</div>
+        <h2>One idea, many <span class="violet">agentic worlds</span>.</h2>
+        <p class="lead">The paper uses code as the common interface across environments that look very different on the surface.</p>
+        <div class="grid grid-3" style="margin-top:2rem">
+          <div class="card"><h3>Software engineering</h3><p class="small">Repository state, diffs, tests and CI become the agent’s working world.</p><p class="micro">Example: resolve an issue, run tests, produce a reviewable patch.</p></div>
+          <div class="card"><h3>GUI and OS automation</h3><p class="small">DOM state, accessibility trees, screenshots and executable checks ground actions.</p><p class="micro">Example: update a record, verify the UI changed as intended.</p></div>
+          <div class="card"><h3>Scientific discovery</h3><p class="small">Hypotheses, simulations, lab protocols and analysis pipelines form a program world.</p><p class="micro">Example: propose an experiment, run the pipeline, inspect results.</p></div>
+          <div class="card"><h3>Embodied agents</h3><p class="small">Policies, skills, simulators and sensor feedback connect intent to physical action.</p><p class="micro">Example: compose a skill, simulate it, then execute under constraints.</p></div>
+          <div class="card"><h3>Personalisation</h3><p class="small">Preference state and feedback loops turn recommendations into editable policies.</p><p class="micro">Example: respect explicit constraints, remember corrections, show rationale.</p></div>
+          <div class="card"><h3>DevOps and enterprise</h3><p class="small">Workflows, permissions, approvals and audit logs govern consequential changes.</p><p class="micro">Example: investigate an incident, propose a change, gate deployment.</p></div>
+        </div>
+        <div class="source">Paper pp. 4–6 and 49–61: application domains and emerging fields.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="The agent loop">
+      <div class="slide-inner">
+        <div class="kicker">04 · The mental model</div>
+        <h2>Code sits in the loop between <span class="accent">intent</span> and <span class="accent">evidence</span>.</h2>
+        <div class="diagram" style="margin-top:2rem">
+          <svg viewBox="0 0 1100 350" role="img" aria-label="Agent produces code, harness executes it, environment returns feedback, and the loop repeats">
+            <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#68e5d1"/></marker></defs>
+            <rect x="35" y="120" width="170" height="90" rx="18" fill="#151e2d" stroke="#68e5d1"/><text x="120" y="158" fill="#f4f7fb" text-anchor="middle" font-size="18" font-weight="700">Agent</text><text x="120" y="184" fill="#aab5c7" text-anchor="middle" font-size="13">intent · judgement</text>
+            <rect x="275" y="80" width="230" height="170" rx="22" fill="#151e2d" stroke="#aa9bff"/><text x="390" y="120" fill="#f4f7fb" text-anchor="middle" font-size="18" font-weight="700">Harness</text><text x="390" y="150" fill="#aa9bff" text-anchor="middle" font-size="13">plan · tools · memory</text><text x="390" y="176" fill="#aa9bff" text-anchor="middle" font-size="13">permissions · validators</text><text x="390" y="202" fill="#aa9bff" text-anchor="middle" font-size="13">traces · state</text>
+            <rect x="575" y="120" width="210" height="90" rx="18" fill="#151e2d" stroke="#ffc86b"/><text x="680" y="158" fill="#f4f7fb" text-anchor="middle" font-size="18" font-weight="700">Code / tools</text><text x="680" y="184" fill="#aab5c7" text-anchor="middle" font-size="13">execute · change · inspect</text>
+            <rect x="855" y="120" width="210" height="90" rx="18" fill="#151e2d" stroke="#8ee7a6"/><text x="960" y="158" fill="#f4f7fb" text-anchor="middle" font-size="18" font-weight="700">Environment</text><text x="960" y="184" fill="#aab5c7" text-anchor="middle" font-size="13">tests · logs · outcomes</text>
+            <path d="M205 165 H268" stroke="#68e5d1" stroke-width="2" marker-end="url(#arrow)"/><path d="M505 165 H568" stroke="#68e5d1" stroke-width="2" marker-end="url(#arrow)"/><path d="M785 165 H848" stroke="#68e5d1" stroke-width="2" marker-end="url(#arrow)"/>
+            <path d="M960 220 C960 305 120 305 120 220" fill="none" stroke="#68e5d1" stroke-width="2" stroke-dasharray="7 7" marker-end="url(#arrow)"/><text x="540" y="326" fill="#68e5d1" text-anchor="middle" font-size="14" font-weight="700">feedback becomes the next decision</text>
+          </svg>
+        </div>
+        <div class="grid grid-3" style="margin-top:1rem"><div class="pill">reasoning → executable</div><div class="pill">action → bounded</div><div class="pill">state → inspectable</div></div>
+        <div class="source">Paper pp. 7–15: Harness Interface; Figure 2 adapted as an original explanatory visual.</div>
+      </div>
+    </section>
+
+    <section class="slide section-break" data-title="Section break: deep dive">
+      <div class="slide-inner"><div class="section-number">02</div><div class="kicker">Section two</div><h2>Deep dive</h2><p class="lead">From interface, to mechanisms, to a shared substrate for multi-agent systems.</p></div>
+    </section>
+
+    <section class="slide" data-title="Three-layer taxonomy">
+      <div class="slide-inner">
+        <div class="kicker">05 · Taxonomy</div>
+        <h2>The paper’s map has <span class="accent">three connected layers</span>.</h2>
+        <div class="flow">
+          <div class="flow-item"><div class="icon accent">↔</div><div class="num">Layer 1</div><h3>Harness interface</h3><p class="small">How code connects the model to reasoning, action and environment state.</p></div>
+          <div class="flow-item"><div class="icon violet">◌</div><div class="num">Layer 2</div><h3>Harness mechanisms</h3><p class="small">How planning, memory, tools, control and optimisation sustain execution.</p></div>
+          <div class="flow-item"><div class="icon amber">⌘</div><div class="num">Layer 3</div><h3>Scaling the harness</h3><p class="small">How agents coordinate through shared code, state, feedback and verification.</p></div>
+        </div>
+        <div class="card" style="margin-top:1.3rem"><h3>The unifying question</h3><p class="quote" style="font-size:1.55rem">What must be executable, inspectable and persistent so the system can keep moving without losing control?</p></div>
+        <div class="source">Paper pp. 3–6 and Figure 1: the three-layer organisation of the survey.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Harness interface">
+      <div class="slide-inner">
+        <div class="kicker">06 · Layer 1</div>
+        <h2>Three roles for code at the <span class="accent">interface</span>.</h2>
+        <div class="grid grid-3" style="margin-top:2rem">
+          <div class="card"><div class="metric">R</div><h3>Code for reasoning</h3><p class="small">Externalise computation into programs, traces, symbolic solvers or proof scripts that can be checked.</p><div class="rule"></div><p class="micro">Useful when arithmetic, logic, search or intermediate state needs stronger grounding than prose.</p></div>
+          <div class="card"><div class="metric">A</div><h3>Code for acting</h3><p class="small">Translate intent into API calls, GUI actions, robot policies, behaviour trees or reusable skills.</p><div class="rule"></div><p class="micro">Useful when actions need affordance checks, constraints or feedback-driven retry.</p></div>
+          <div class="card"><div class="metric">E</div><h3>Code for environment</h3><p class="small">Represent repositories, simulators, tests, logs and state transitions as queryable program worlds.</p><div class="rule"></div><p class="micro">Useful when the agent must inspect what changed and predict what happens next.</p></div>
+        </div>
+        <div class="quote" style="margin-top:2rem">The interface is not just a prompt. It is a <span class="accent">contract with reality</span>.</div>
+        <div class="source">Paper pp. 7–16: Sections 2.1–2.3.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Harness mechanisms">
+      <div class="slide-inner">
+        <div class="kicker">07 · Layer 2</div>
+        <h2>Reliability comes from <span class="violet">mechanisms</span>, not one clever prompt.</h2>
+        <div class="grid grid-5 grid-3" style="margin-top:2rem">
+          <div class="card"><h3>Planning</h3><p class="small">Decompose, search, structure and orchestrate.</p></div>
+          <div class="card"><h3>Memory</h3><p class="small">Manage working state, evidence, experience and shared context.</p></div>
+          <div class="card"><h3>Tool use</h3><p class="small">Expose governed APIs, shells, repos, sandboxes and validators.</p></div>
+          <div class="card"><h3>Control</h3><p class="small">Turn feedback into bounded state transitions through PEV.</p></div>
+          <div class="card"><h3>Optimisation</h3><p class="small">Use telemetry and replay to improve the harness itself.</p></div>
+        </div>
+        <div class="grid grid-2" style="margin-top:1.2rem">
+          <div class="card"><h3>Design implication</h3><p class="small">Every mechanism should answer: what state does it read, what state does it change, and what evidence says the change worked?</p></div>
+          <div class="card"><h3>Failure implication</h3><p class="small">If the system cannot replay a failure, locate its cause or roll back the change, it is difficult to improve safely.</p></div>
+        </div>
+        <div class="source">Paper pp. 16–33: Harness Mechanisms and Agentic Harness Engineering.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Plan Execute Verify">
+      <div class="slide-inner">
+        <div class="kicker">08 · The control loop</div>
+        <h2>Use <span class="accent">Plan → Execute → Verify</span> as the system’s heartbeat.</h2>
+        <div class="tabbar" role="tablist"><button class="tab active" data-tab="plan">Plan</button><button class="tab" data-tab="execute">Execute</button><button class="tab" data-tab="verify">Verify</button></div>
+        <div class="tabpanel active" id="tab-plan"><div class="grid grid-2"><div class="card"><div class="metric">P</div><h3>Make intent explicit</h3><p class="small">Write the change contract: files, invariants, validation commands, risk tier, rollback point and acceptance criteria.</p></div><div class="card"><h3>Ask before acting</h3><div class="checklist"><div class="check">What is the smallest safe next transition?</div><div class="check">Which evidence must be retrieved first?</div><div class="check">What would falsify this plan?</div></div></div></div></div>
+        <div class="tabpanel" id="tab-execute"><div class="grid grid-2"><div class="card"><div class="metric">E</div><h3>Apply a bounded transition</h3><p class="small">Run the planned actions inside a sandbox with explicit permissions, resource limits and trace capture.</p></div><div class="card"><h3>Keep the action observable</h3><div class="checklist"><div class="check">Record tool arguments, diffs and outputs.</div><div class="check">Persist full logs; summarise only for active context.</div><div class="check">Pause or escalate when the risk tier changes.</div></div></div></div></div>
+        <div class="tabpanel" id="tab-verify"><div class="grid grid-2"><div class="card"><div class="metric">V</div><h3>Let evidence decide</h3><p class="small">Use tests, compilers, linters, static analysis, runtime traces, fuzzers and human review as sensors.</p></div><div class="card"><h3>Choose the next state</h3><div class="checklist"><div class="check">Accept if the contract is satisfied.</div><div class="check">Revise if diagnostics localise a recoverable failure.</div><div class="check">Escalate or roll back if evidence is weak or risk is high.</div></div></div></div></div>
+        <div class="quote" style="margin-top:2rem">Debugging becomes <span class="accent">control over executable state</span>, not a post-hoc repair ritual.</div>
+        <div class="source">Paper pp. 28–32: Plan–Execute–Verify loop, permission tiers and deterministic sensors.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Memory as state management">
+      <div class="slide-inner">
+        <div class="kicker">09 · Memory</div>
+        <h2>Memory is not a bigger context window. It is <span class="amber">state management</span>.</h2>
+        <div class="matrix" style="margin-top:2rem">
+          <div class="head">Memory layer</div><div class="head">Keeps</div><div class="head">Best for</div><div class="head">Main risk</div>
+          <div class="rowhead">Working</div><div>Current plan, open files, next action</div><div>Grounding the next step</div><div>Context overload</div>
+          <div class="rowhead">Semantic</div><div>Repo structure, APIs, docs, dependencies</div><div>Evidence retrieval</div><div>Irrelevant or stale context</div>
+          <div class="rowhead">Experiential</div><div>Past failures, fixes, strategies</div><div>Cross-task transfer</div><div>Error propagation</div>
+          <div class="rowhead">Long-term</div><div>Validated reusable knowledge</div><div>Continual improvement</div><div>Drift and contamination</div>
+          <div class="rowhead">Multi-agent</div><div>Shared intentions, artifacts, history</div><div>Coordination</div><div>Flooding and divergence</div>
+        </div>
+        <div class="grid grid-2" style="margin-top:1.1rem"><div class="card"><h3>Compaction</h3><p class="small">Keep decision-relevant evidence active while preserving a full-fidelity handle to logs, traces and diffs.</p></div><div class="card"><h3>Governance</h3><p class="small">Store less, but store better: provenance, validation status, freshness and who or what approved it.</p></div></div>
+        <div class="source">Paper pp. 21–24: working, semantic, experiential, long-term and multi-agent memory; context compaction and state offloading.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Harness optimisation">
+      <div class="slide-inner">
+        <div class="kicker">10 · Agentic Harness Engineering</div>
+        <h2>Once you can observe the harness, you can <span class="green">improve the harness</span>.</h2>
+        <div class="diagram" style="margin-top:2rem">
+          <svg viewBox="0 0 1000 270" role="img" aria-label="Telemetry feeds diagnosis, candidate revision, replay evaluation and governed promotion">
+            <defs><marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#8ee7a6"/></marker></defs>
+            <g font-family="system-ui">
+              <rect x="30" y="70" width="175" height="105" rx="18" fill="#151e2d" stroke="#8ee7a6"/><text x="117" y="106" fill="#f4f7fb" text-anchor="middle" font-size="17" font-weight="700">Deep telemetry</text><text x="117" y="133" fill="#aab5c7" text-anchor="middle" font-size="12">traces · costs · tools</text><text x="117" y="153" fill="#aab5c7" text-anchor="middle" font-size="12">tests · permissions</text>
+              <rect x="270" y="70" width="175" height="105" rx="18" fill="#151e2d" stroke="#aa9bff"/><text x="357" y="106" fill="#f4f7fb" text-anchor="middle" font-size="17" font-weight="700">Diagnose</text><text x="357" y="133" fill="#aab5c7" text-anchor="middle" font-size="12">find recurring waste</text><text x="357" y="153" fill="#aab5c7" text-anchor="middle" font-size="12">attribute failure</text>
+              <rect x="510" y="70" width="175" height="105" rx="18" fill="#151e2d" stroke="#ffc86b"/><text x="597" y="106" fill="#f4f7fb" text-anchor="middle" font-size="17" font-weight="700">Revise</text><text x="597" y="133" fill="#aab5c7" text-anchor="middle" font-size="12">tools · prompts · gates</text><text x="597" y="153" fill="#aab5c7" text-anchor="middle" font-size="12">memory · topology</text>
+              <rect x="750" y="70" width="205" height="105" rx="18" fill="#151e2d" stroke="#68e5d1"/><text x="852" y="106" fill="#f4f7fb" text-anchor="middle" font-size="17" font-weight="700">Replay + promote</text><text x="852" y="133" fill="#aab5c7" text-anchor="middle" font-size="12">held-out tasks · regressions</text><text x="852" y="153" fill="#aab5c7" text-anchor="middle" font-size="12">human approval when needed</text>
+              <path d="M207 122 H262 M447 122 H502 M687 122 H742" stroke="#8ee7a6" stroke-width="2" marker-end="url(#arrow2)"/>
+              <path d="M852 181 C852 240 117 240 117 181" fill="none" stroke="#8ee7a6" stroke-width="2" stroke-dasharray="7 7" marker-end="url(#arrow2)"/>
+            </g>
+          </svg>
+        </div>
+        <p class="lead" style="margin-top:1.3rem">The paper’s important caveat: harness evolution is a code change to a safety-critical runtime. Every mutation needs a contract, replay, regression checks and a rollback path.</p>
+        <div class="source">Paper pp. 31–33 and 63: telemetry, Evolution Agents and governed harness mutation.</div>
+      </div>
+    </section>
+
+    <section class="slide section-break" data-title="Section break: scaling">
+      <div class="slide-inner"><div class="section-number">03</div><div class="kicker">Section three</div><h2>Scaling the harness</h2><p class="lead">Multi-agent coordination is a shared-state problem before it is a topology problem.</p></div>
+    </section>
+
+    <section class="slide" data-title="Multi-agent substrate">
+      <div class="slide-inner">
+        <div class="kicker">11 · Layer 3</div>
+        <h2>Agents coordinate better when they share <span class="accent">artifacts and oracles</span>.</h2>
+        <div class="grid grid-2" style="margin-top:2rem">
+          <div class="card"><h3>Specialised roles</h3><p class="small">Manager · planner · coder · reviewer · tester · executor. Each role owns a slice of the workflow, but the substrate keeps them aligned.</p><div class="rule"></div><p class="micro">The tester should be as independent as possible from the coder to reduce circular validation.</p></div>
+          <div class="card"><h3>Artifact-mediated interaction</h3><p class="small">Files, diffs, tests, logs, schemas, blackboards and workflow state are more durable than conversational hand-offs.</p><div class="rule"></div><p class="micro">The key question is which artefact is authoritative when channels disagree.</p></div>
+        </div>
+        <div class="flow" style="margin-top:1.3rem"><div class="flow-item"><div class="num">01</div><h3>Plan</h3><p class="small">Translate intent into obligations.</p></div><div class="flow-item"><div class="num">02</div><h3>Build</h3><p class="small">Create or revise the programme.</p></div><div class="flow-item"><div class="num">03</div><h3>Challenge</h3><p class="small">Test, fuzz, review or debate.</p></div><div class="flow-item"><div class="num">04</div><h3>Converge</h3><p class="small">Accept, revise, merge or escalate.</p></div></div>
+        <div class="source">Paper pp. 34–43: role specialisation, shared code-centric substrate and interaction modes.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Four state representations">
+      <div class="slide-inner">
+        <div class="kicker">12 · Shared state</div>
+        <h2>Four ways to represent the <span class="violet">shared harness</span>.</h2>
+        <div class="grid grid-2" style="margin-top:2rem">
+          <div class="card"><div class="metric">01</div><h3>Implicit / file-only</h3><p class="small">Simple and common. But agents reconstruct state from the latest context, so belief can silently diverge from reality.</p></div>
+          <div class="card"><div class="metric">02</div><h3>Repository-based</h3><p class="small">Navigable files, dependencies, call graphs and version history. Stronger structure, still weaker on runtime behaviour.</p></div>
+          <div class="card"><div class="metric">03</div><h3>Execution-based</h3><p class="small">What matters is what the programme does: tests, traces, security findings, performance and simulation results.</p></div>
+          <div class="card"><div class="metric">04</div><h3>Blackboard / shared state</h3><p class="small">A persistent, queryable store that all roles can read and update. Closest to a formal harness substrate.</p></div>
+        </div>
+        <div class="quote" style="margin-top:2rem">The paper’s central gap: most systems use code, but few formalise the <span class="accent">shared substrate</span> that code creates.</div>
+        <div class="source">Paper pp. 43–47: shared harness representation and harness-state convergence.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Open problems">
+      <div class="slide-inner">
+        <div class="kicker">13 · Limits and open problems</div>
+        <h2>Executable feedback helps. It does not make the oracle <span class="rose">true</span>.</h2>
+        <div class="grid grid-2" style="margin-top:2rem">
+          <div class="card"><div class="risk rose"><div class="risk-icon">!</div><div><h3>Weak verification</h3><p class="small">A green test can still miss the real specification, unsafe intermediate actions or scientific validity.</p></div></div><div class="risk amber"><div class="risk-icon">↻</div><div><h3>Regression-prone evolution</h3><p class="small">A harness change can improve a benchmark while weakening safety, cost or rare-case behaviour.</p></div></div><div class="risk violet"><div class="risk-icon">≋</div><div><h3>Semantic conflicts</h3><p class="small">Agents can share files while disagreeing about assumptions, freshness or user intent.</p></div></div></div>
+          <div class="card"><div class="risk green"><div class="risk-icon">◎</div><div><h3>Safety as durable state</h3><p class="small">Permissions, approvals, denials and corrections should become auditable state, not one-off interruptions.</p></div></div><div class="risk accent"><div class="risk-icon">◉</div><div><h3>Multimodal grounding</h3><p class="small">Screenshots, sensor readings and physical states need persistent evidence, action grounding and calibrated uncertainty.</p></div></div><div class="risk violet"><div class="risk-icon">△</div><div><h3>Harness-level evaluation</h3><p class="small">Measure trajectory efficiency, recovery, state consistency, safety compliance and replayability, not only final success.</p></div></div></div>
+        </div>
+        <div class="source">Paper pp. 61–66: open problems in evaluation, semantic verification, evolution, shared state, safety and multimodality.</div>
+      </div>
+    </section>
+
+    <section class="slide section-break" data-title="Section break: implementation">
+      <div class="slide-inner"><div class="section-number">01</div><div class="kicker">Deep Dive</div><h2>Code as Agent Harness</h2><p class="lead">A practical, governed path from one reliable loop to a reusable harness.</p></div>
+    </section>
+
+    <section class="slide" data-title="Implementation guide">
+      <div class="slide-inner">
+        <div class="kicker">14 · Step-by-step guide</div>
+        <h2>Start with one <span class="accent">verifiable workflow</span>.</h2>
+        <div class="steps" style="margin-top:1.6rem">
+          <div class="step"><div><h3>Choose a bounded task</h3><p class="small">Pick a workflow with observable inputs, reversible actions and a clear definition of done.</p></div></div>
+          <div class="step"><div><h3>Define the state model</h3><p class="small">Name the source of truth: files, database rows, issue state, test results, traces or a shared blackboard.</p></div></div>
+          <div class="step"><div><h3>Write the PEV contract</h3><p class="small">Specify the plan schema, allowed tools, validation checks, stop conditions and escalation rules.</p></div></div>
+          <div class="step"><div><h3>Put execution in a sandbox</h3><p class="small">Separate read-only inspection, sandbox edits and full-access actions. Capture every transition.</p></div></div>
+          <div class="step"><div><h3>Add independent verification</h3><p class="small">Prefer deterministic tests, static checks, traces or domain validators. Document what each oracle cannot see.</p></div></div>
+          <div class="step"><div><h3>Replay before you optimise</h3><p class="small">Build a small golden set, replay failures, and change one harness component at a time.</p></div></div>
+        </div>
+        <div class="source">Implementation guidance synthesised from the paper’s PEV, memory, tool-use, safety and harness-evolution sections. It is a recommendation, not a reported experiment.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Reference architecture">
+      <div class="slide-inner">
+        <div class="kicker">15 · Reference architecture</div>
+        <h2>Keep the first harness <span class="amber">small enough to inspect</span>.</h2>
+        <div class="grid grid-2" style="margin-top:2rem; align-items:start">
+          <div class="codebox"><pre><span class="code-comment"># a minimal code-centric harness</span>
+state/
+  task.json          <span class="code-comment"># goal + risk tier</span>
+  plan.md            <span class="code-comment"># change contract</span>
+  evidence/          <span class="code-comment"># retrieved facts</span>
+  traces/            <span class="code-comment"># full-fidelity logs</span>
+  approvals.jsonl    <span class="code-comment"># durable gates</span>
+workspace/
+  repo/              <span class="code-comment"># sandboxed worktree</span>
+validators/
+  tests/
+  static_checks/
+  policies/
+run.py               <span class="code-comment"># P → E → V loop</span></pre></div>
+          <div class="card"><h3>Minimal loop</h3><pre><code>plan = agent.propose(state)
+check_plan(plan)
+
+result = sandbox.execute(
+  plan.actions,
+  permissions=plan.risk_tier
+)
+
+evidence = validators.run(result)
+state.record(plan, result, evidence)
+
+if evidence.accepted:
+    promote(state)
+elif evidence.recoverable:
+    revise(state, evidence)
+else:
+    escalate(state, evidence)</code></pre></div>
+        </div>
+        <p class="small" style="margin-top:1.2rem">The point is not this exact folder layout. The point is that plans, actions, evidence, permissions and approvals are first-class artefacts.</p>
+        <div class="source">Implementation pattern derived from paper pp. 16, 28–33, 43–47 and 63–64; example code is original synthesis.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Safety and permissions">
+      <div class="slide-inner">
+        <div class="kicker">16 · Safety by construction</div>
+        <h2>Permission tiers are part of the <span class="rose">agent state</span>.</h2>
+        <div class="grid grid-3" style="margin-top:2rem">
+          <div class="card"><span class="tag" style="background:var(--green)">Tier 1 · Read</span><h3 style="margin-top:1rem">Observe</h3><p class="small">Browse files, inspect logs, retrieve documentation, run static analysis.</p><p class="micro">No external side effects.</p></div>
+          <div class="card"><span class="tag" style="background:var(--amber)">Tier 2 · Sandbox edit</span><h3 style="margin-top:1rem">Experiment</h3><p class="small">Patch a disposable worktree, run tests, install temporary dependencies under limits.</p><p class="micro">Reversible and isolated.</p></div>
+          <div class="card"><span class="tag" style="background:var(--rose)">Tier 3 · Full access</span><h3 style="margin-top:1rem">Affect reality</h3><p class="small">Network access, credentials, deployment, publishing, destructive changes or physical action.</p><p class="micro">Human approval, audit trail and rollback required.</p></div>
+        </div>
+        <div class="quote" style="margin-top:2rem">The harness should be able to <span class="rose">veto</span> the model.</div>
+        <div class="grid grid-2" style="margin-top:1.2rem"><div class="card"><h3>Approval record</h3><p class="small">What was proposed? What evidence was shown? What risk was surfaced? Who approved it? What changed afterwards?</p></div><div class="card"><h3>Context-sensitive policy</h3><p class="small">A command’s risk depends on its arguments, environment, data sensitivity and expected side effects, not only its tool name.</p></div></div>
+        <div class="source">Paper pp. 30–31 and 64–65: permission tiers, HITL gates and executable accountability.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Use it in your projects">
+      <div class="slide-inner">
+        <div class="kicker">17 · Applied examples</div>
+        <h2>Translate the idea into <span class="accent">your own agent work</span>.</h2>
+        <div class="grid grid-2" style="margin-top:2rem">
+          <div class="card"><span class="pill">Koinaku / CoworkOS</span><h3 style="margin-top:1rem">Shared project memory as a substrate</h3><p class="small">Make plans, decisions, artefacts, provenance and validation state queryable. Let agents work through durable files and explicit hand-offs rather than hidden chat history.</p><p class="micro">First experiment: a task ledger with read/write sets, evidence links and a PEV status.</p></div>
+          <div class="card"><span class="pill">Breville AI transformation</span><h3 style="margin-top:1rem">Governed workflow agents</h3><p class="small">Treat product, data and engineering workflows as executable state machines with role-based permissions, evaluation gates and replayable traces.</p><p class="micro">First experiment: one low-risk workflow with a golden set and a human approval checkpoint.</p></div>
+          <div class="card"><span class="pill">Otto / Espresso Horoscope</span><h3 style="margin-top:1rem">Tool use with observable outcomes</h3><p class="small">Keep tool schemas typed, persist tool outputs, and attach deterministic checks to the agent’s generated action plan.</p><p class="micro">First experiment: record the plan, tool call, result, validator and repair attempt as one trace.</p></div>
+          <div class="card"><span class="pill">VAI Santé showcase</span><h3 style="margin-top:1rem">Provenance as a safety surface</h3><p class="small">Represent evidence, confidence, missing data and review status as explicit state. Keep high-stakes actions behind escalation gates.</p><p class="micro">First experiment: require an evidence bundle before an answer can be promoted.</p></div>
+        </div>
+        <div class="source">Applied examples are recommendations based on the paper’s framework and the project context provided in this conversation; they are not claims from the paper.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Validation scorecard">
+      <div class="slide-inner">
+        <div class="kicker">18 · Evaluation</div>
+        <h2>Measure the <span class="green">harness</span>, not just the answer.</h2>
+        <div class="grid grid-3" style="margin-top:2rem">
+          <div class="card"><div class="metric">01</div><h3>Outcome</h3><p class="small">Did the task satisfy the actual specification, not only the visible proxy?</p></div>
+          <div class="card"><div class="metric">02</div><h3>Trajectory</h3><p class="small">How many tokens, tool calls, edits, retries, executions and minutes were needed?</p></div>
+          <div class="card"><div class="metric">03</div><h3>Recovery</h3><p class="small">Can the system diagnose and repair an injected failure?</p></div>
+          <div class="card"><div class="metric">04</div><h3>State</h3><p class="small">Do memory, repository, traces and agent beliefs remain synchronised?</p></div>
+          <div class="card"><div class="metric">05</div><h3>Safety</h3><p class="small">Were permissions, sandboxes, approvals and data boundaries respected?</p></div>
+          <div class="card"><div class="metric">06</div><h3>Replayability</h3><p class="small">Can another person reconstruct what happened and why the system stopped?</p></div>
+        </div>
+        <div class="quote" style="margin-top:2rem">A good harness leaves behind <span class="accent">evidence of its own competence</span>.</div>
+        <div class="source">Paper pp. 61–62: proposed harness-level evaluation dimensions.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Takeaways">
+      <div class="slide-inner">
+        <div class="kicker">19 · Takeaways</div>
+        <h2>Build agents as <span class="accent">closed-loop systems</span>.</h2>
+        <div class="steps" style="margin-top:1.4rem">
+          <div class="step"><div><h3>Make important reasoning executable</h3><p class="small">Turn fragile prose into code, tools, tests, structured plans or formal contracts.</p></div></div>
+          <div class="step"><div><h3>Make every transition inspectable</h3><p class="small">Persist the plan, action, evidence, decision and permission boundary.</p></div></div>
+          <div class="step"><div><h3>Make state explicit</h3><p class="small">Decide what is authoritative, what is derived and how stale state is detected.</p></div></div>
+          <div class="step"><div><h3>Make verification plural</h3><p class="small">Tests are powerful, but no single oracle sees the whole specification.</p></div></div>
+          <div class="step"><div><h3>Make improvement reversible</h3><p class="small">Evolve the harness through telemetry, held-out replay, regression checks and human governance.</p></div></div>
+        </div>
+        <div class="source">Synthesis of the paper’s conclusion: executable, inspectable, stateful and governed agentic systems.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Sources">
+      <div class="slide-inner">
+        <div class="kicker">20 · Sources</div>
+        <h2>Read the paper as a <span class="violet">systems map</span>.</h2>
+        <div class="grid grid-2" style="margin-top:2rem">
+          <div class="card"><h3>Primary source</h3><p class="small">Ning, X. et al. <em>Code as Agent Harness: Toward Executable, Verifiable, and Stateful Agent Systems.</em> arXiv:2605.18747v1, 18 May 2026.</p><p><a class="accent" href="https://arxiv.org/pdf/2605.18747v1" target="_blank" rel="noreferrer">Open the paper ↗</a></p></div>
+          <div class="card"><h3>Paper-linked reading map</h3><p class="small">The authors maintain a curated collection of work on code as agent harness, including planning, memory, tool use, execution feedback and multi-agent coordination.</p><p><a class="accent" href="https://github.com/YennNing/Awesome-Code-as-Agent-Harness-Papers" target="_blank" rel="noreferrer">Open the GitHub collection ↗</a></p></div>
+        </div>
+        <div class="rule"></div>
+        <p class="lead">Deck note: claims about the paper are paraphrased and page-linked. Implementation patterns and project examples are clearly labelled as synthesis or recommendation.</p>
+        <p class="small" style="margin-top:2rem">Built as a self-contained interactive HTML deck. Use the overview button to jump to any slide, or the full-screen button for presentation mode.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="footerline" aria-label="Deck controls">
+    <div style="display:flex;align-items:center;gap:1rem"><div class="progress"><span id="progressBar"></span></div><div class="slide-count" id="slideCount">01 / 24</div></div>
+    <div class="controls">
+      <button class="icon-btn" id="prevBtn" title="Previous slide" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button>
+      <button class="icon-btn" id="nextBtn" title="Next slide" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button>
+      <button class="icon-btn" id="overviewBtn" title="Slide overview" aria-label="Slide overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+      <button class="icon-btn" id="fullBtn" title="Full screen" aria-label="Full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5"/></svg></button>
+    </div>
+  </div>
+
+  <aside class="overview" id="overview" aria-label="Slide overview" aria-hidden="true">
+    <div class="overview-head"><h2>Slide overview</h2><button class="icon-btn" id="closeOverview" title="Close overview" aria-label="Close overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="overview-grid" id="overviewGrid"></div>
+  </aside>
+  <div class="toast" id="toast">Full screen toggled</div>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const overview = document.getElementById('overview');
+      const overviewGrid = document.getElementById('overviewGrid');
+      const count = document.getElementById('slideCount');
+      const bar = document.getElementById('progressBar');
+      let index = 0;
+
+      slides.forEach((slide, i) => {
+        const b = document.createElement('button');
+        b.className = 'thumb'; b.dataset.index = i;
+        b.innerHTML = `<div class="thumb-num">${String(i+1).padStart(2,'0')}</div><div class="thumb-title">${slide.dataset.title}</div>`;
+        b.addEventListener('click', () => { go(i); closeOverview(); });
+        overviewGrid.appendChild(b);
+      });
+
+      function go(next) {
+        index = (next + slides.length) % slides.length;
+        slides.forEach((s, i) => s.classList.toggle('active', i === index));
+        document.querySelectorAll('.thumb').forEach((b, i) => b.classList.toggle('current', i === index));
+        count.textContent = `${String(index+1).padStart(2,'0')} / ${String(slides.length).padStart(2,'0')}`;
+        bar.style.width = `${((index+1)/slides.length)*100}%`;
+        history.replaceState(null, '', `#${index+1}`);
+        window.scrollTo({top:0, behavior:'instant'});
+      }
+      function next() { go(index + 1); }
+      function prev() { go(index - 1); }
+      function openOverview() { overview.classList.add('open'); overview.setAttribute('aria-hidden','false'); }
+      function closeOverview() { overview.classList.remove('open'); overview.setAttribute('aria-hidden','true'); }
+      function toast(message) { const t = document.getElementById('toast'); t.textContent = message; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1300); }
+
+      document.getElementById('nextBtn').addEventListener('click', next);
+      document.getElementById('prevBtn').addEventListener('click', prev);
+      document.getElementById('overviewBtn').addEventListener('click', openOverview);
+      document.getElementById('closeOverview').addEventListener('click', closeOverview);
+      document.getElementById('fullBtn').addEventListener('click', async () => {
+        try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); else await document.exitFullscreen(); toast('Full screen toggled'); }
+        catch { toast('Full screen is unavailable in this browser'); }
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && overview.classList.contains('open')) { closeOverview(); return; }
+        if (overview.classList.contains('open')) return;
+        if (['ArrowRight','PageDown',' '].includes(e.key)) { e.preventDefault(); next(); }
+        if (['ArrowLeft','PageUp'].includes(e.key)) { e.preventDefault(); prev(); }
+        if (e.key === 'Home') { e.preventDefault(); go(0); }
+        if (e.key === 'End') { e.preventDefault(); go(slides.length-1); }
+        if (e.key.toLowerCase() === 'o') openOverview();
+        if (e.key.toLowerCase() === 'f') document.getElementById('fullBtn').click();
+      });
+      let touchStart = null;
+      document.addEventListener('touchstart', e => { touchStart = e.changedTouches[0].clientX; }, {passive:true});
+      document.addEventListener('touchend', e => { if (touchStart === null) return; const dx = e.changedTouches[0].clientX - touchStart; if (Math.abs(dx) > 55) dx < 0 ? next() : prev(); touchStart = null; }, {passive:true});
+
+      document.querySelectorAll('.tabbar').forEach(barEl => {
+        barEl.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+          const parent = barEl.parentElement;
+          barEl.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+          parent.querySelectorAll('.tabpanel').forEach(panel => panel.classList.toggle('active', panel.id === `tab-${tab.dataset.tab}`));
+        }));
+      });
+
+      const hash = Number(location.hash.slice(1));
+      go(Number.isFinite(hash) && hash > 0 && hash <= slides.length ? hash - 1 : 0);
+    })();
+  </script>
+</body>
+</html>

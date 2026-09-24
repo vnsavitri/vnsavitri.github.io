@@ -6,6 +6,21 @@ export const SOURCE_DIR = "/Users/vividm4/Documents/CoworkOS/00_Outputs";
 
 export const DECKS = [
   // --- Slide decks ---
+  { file: "Agent-me Deep Dive.html", title: "Agent-Me: Your AI Agent Twin", category: "slides", date: "2026-09-23" },
+  { file: "Claude Financial Services Deck.html", title: "Claude for Financial Services", category: "slides", date: "2026-09-23" },
+  { file: "Code as Agent Harness Deck.html", title: "Code as Agent Harness", category: "slides", date: "2026-09-23" },
+  { file: "Last AI Built By Human Deck.html", title: "The Last AI Built by Humans", category: "slides", date: "2026-09-23" },
+  { file: "LinkedIn Skills Deep Dive.html", title: "LinkedIn Skills Deep Dive", category: "slides", date: "2026-09-23" },
+  { file: "Minimind Deep Dive.html", title: "MiniMind Deep Dive", category: "slides", date: "2026-09-23" },
+  { file: "OpenMaic Slide Preview.html", title: "OpenMAIC Deep Dive", category: "slides", date: "2026-09-23" },
+  { file: "OpenAgents Deck.html", title: "OpenAgents: The Collaboration OS for AI Agents", category: "slides", date: "2026-09-23" },
+  { file: "OpenClaude Deep Dive.html", title: "OpenClaude Deep Dive", category: "slides", date: "2026-09-23" },
+  { file: "OpenCut Slide Deck.html", title: "OpenCut Deep Dive", category: "slides", date: "2026-09-23" },
+  { file: "Rowboat Slide Deck.html", title: "Rowboat: The Multiplayer Personal Assistant for Work", category: "slides", date: "2026-09-23" },
+  { file: "Scientific Agent Skills Deep Dive.html", title: "Scientific Agent Skills Deep Dive", category: "slides", date: "2026-09-18" },
+  { file: "Self Harness Deep Dive.html", title: "Self-Harness Deep Dive", category: "slides", date: "2026-09-23" },
+  { file: "Tel Agent Slide Deck.html", title: "Tel-Agent Deep Dive", category: "slides", date: "2026-09-23" },
+  { file: "Unsloth Deep Dive Slide Deck.html", title: "Unsloth: Run, Tune, Deploy", category: "slides", date: "2026-09-18" },
   { file: "AI in Science Slide.html", title: "AI in Science: Early Insights", category: "slides", date: "2026-09-17" },
   { file: "Cosmos 3 Slide Deck.html", title: "Cosmos 3: Omnimodal World Models for Physical AI", category: "slides", date: "2026-09-17" },
   { file: "Dream RSI Interactive Deck.html", title: "Dream-RSI: Recursive Self-Improvement through Evolving Worlds", category: "slides", date: "2026-09-17" },
@@ -57,6 +72,8 @@ export const DECKS = [
   { file: "WikiSkill Explainer.html", title: "WikiSkill Explainer", category: "guides", date: "2026-09-01" },
 
   // --- Architecture & tech ---
+  { file: "Claude Code Deep Dive.html", title: "Claude Code from Source: Architecture, Patterns and Practice", category: "architecture", date: "2026-09-23" },
+  { file: "Litho DeepWiki Slide.html", title: "Litho: Codebase to Architecture Wiki", category: "architecture", date: "2026-09-18" },
   { file: "Compare Voice AI Platforms.html", title: "Voice Stack Field Guide", category: "architecture", date: "2026-09-17" },
   { file: "GPT vs Claude Comparison.html", title: "ChatGPT Work vs Claude Cowork", category: "architecture", date: "2026-09-17" },
   { file: "Language Models Control Attention.html", title: "Declarative Attention: Language Models Control Their Own Attention", category: "architecture", date: "2026-09-17" },
@@ -85,4 +102,5 @@ export const DECKS = [
   { file: "Think Faster Talk Smarter.html", title: "Think Faster, Talk Smarter", category: "books", date: "2026-06-22" },
   { file: "How-Countries-Go-Broke.html", title: "How Countries Go Broke: The Big Cycle", category: "books", date: "2026-07-03" },
   { file: "Why Countries Go Broke - Ray D.html", title: "Why Countries Go Broke: Ray Dalio", category: "books", date: "2026-07-03" },
+  { file: "Thinking Fast and Slow Deep Dive.html", title: "Thinking, Fast and Slow: A Practical Field Guide", category: "books", date: "2026-09-23" },
 ];

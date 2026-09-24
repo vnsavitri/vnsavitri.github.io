@@ -7,6 +7,7 @@
  * Needs a global Playwright install (chromium already downloaded there) so
  * this doesn't add a browser-automation dependency to the site itself.
  * Run: npm run library
+ * Import only some: npm run library -- "Deck One.html" "Deck Two.html"
  */
 import sharp from "sharp";
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
@@ -38,7 +39,11 @@ const slugify = (title) =>
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 
-for (const deck of DECKS) {
+// Optional file-name filter so adding a few decks doesn't re-shoot every thumb.
+const only = process.argv.slice(2);
+const todo = only.length ? DECKS.filter((d) => only.includes(d.file)) : DECKS;
+
+for (const deck of todo) {
   const slug = slugify(deck.title);
   const srcPath = join(SOURCE_DIR, deck.file);
   if (!existsSync(srcPath)) {
@@ -78,4 +83,4 @@ sizeKb: ${sizeKb}
 }
 
 await browser.close();
-console.log(`\n${DECKS.length} decks imported.`);
+console.log(`\n${todo.length} decks imported.`);

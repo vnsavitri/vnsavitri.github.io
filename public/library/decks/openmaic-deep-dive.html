@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="OpenMAIC: a deep dive into the open-source multi-agent interactive classroom." />
+  <title>OpenMAIC — Deep Dive</title>
+  <style>
+    :root {
+      --paper: #f6f5f0;
+      --paper-2: #ebeae3;
+      --ink: #15171b;
+      --muted: #5f6470;
+      --line: rgba(21, 23, 27, .13);
+      --indigo: #4c49d8;
+      --indigo-deep: #25235e;
+      --teal: #1c8b87;
+      --coral: #e36d57;
+      --gold: #c8922e;
+      --white: #fffefb;
+      --shadow: 0 20px 70px rgba(33, 32, 67, .13);
+      --radius: 24px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --serif: Iowan Old Style, Baskerville, "Times New Roman", serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--paper); color: var(--ink); font-family: var(--sans); }
+    body { overflow: hidden; }
+    a { color: inherit; }
+    button { font: inherit; }
+
+    .deck { position: relative; height: 100svh; overflow: hidden; }
+    .slide {
+      position: absolute; inset: 0; display: none; overflow: auto; padding: 42px 54px 90px;
+      background: var(--paper); isolation: isolate;
+    }
+    .slide.active { display: block; animation: reveal .35s ease both; }
+    .slide-inner { width: min(1220px, 100%); min-height: calc(100svh - 132px); margin: 0 auto; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 1; }
+    .slide.cover { background: var(--indigo-deep); color: var(--white); overflow: hidden; }
+    .slide.cover::before { content: ""; position: absolute; width: 60vw; height: 60vw; max-width: 760px; max-height: 760px; right: -15vw; top: -20vw; border-radius: 50%; background: radial-gradient(circle, rgba(91, 240, 221, .28), rgba(91, 240, 221, 0) 68%); }
+    .slide.cover::after { content: ""; position: absolute; left: -12vw; bottom: -28vw; width: 60vw; height: 60vw; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; box-shadow: 0 0 0 44px rgba(255,255,255,.035), 0 0 0 88px rgba(255,255,255,.025); }
+    .cover-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 7vw; align-items: center; }
+    .eyebrow { font-size: .77rem; letter-spacing: .15em; text-transform: uppercase; font-weight: 760; color: var(--teal); margin-bottom: 18px; }
+    .cover .eyebrow { color: #72e3d1; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(3.4rem, 8vw, 8.6rem); line-height: .91; letter-spacing: -.075em; margin-bottom: 30px; max-width: 820px; }
+    h2 { font-size: clamp(2rem, 4.5vw, 4.6rem); line-height: .98; letter-spacing: -.06em; margin-bottom: 18px; max-width: 980px; }
+    h3 { font-size: 1.05rem; line-height: 1.15; letter-spacing: -.025em; margin-bottom: 8px; }
+    .lead { font-size: clamp(1.12rem, 1.7vw, 1.5rem); line-height: 1.42; max-width: 720px; color: var(--muted); }
+    .cover .lead { color: rgba(255,255,255,.78); max-width: 680px; }
+    .meta { color: var(--muted); font-size: .88rem; }
+    .cover .meta { color: rgba(255,255,255,.62); }
+    .cover-line { width: 100%; height: 1px; background: rgba(255,255,255,.24); margin: 40px 0 18px; }
+    .cover-mark { width: min(34vw, 420px); aspect-ratio: 1; border-radius: 38% 62% 56% 44% / 46% 40% 60% 54%; background: linear-gradient(140deg, #7b7bf4 0%, #4c49d8 43%, #213a80 100%); box-shadow: inset 30px -34px 70px rgba(0,0,0,.17), 0 28px 90px rgba(0,0,0,.23); position: relative; transform: rotate(9deg); }
+    .cover-mark::before, .cover-mark::after { content: ""; position: absolute; border: 1px solid rgba(255,255,255,.62); border-radius: 50%; }
+    .cover-mark::before { width: 70%; height: 70%; top: 15%; left: 15%; }
+    .cover-mark::after { width: 28%; height: 28%; top: 36%; left: 36%; background: #84f0dc; border: 0; box-shadow: 0 0 45px rgba(132,240,220,.55); }
+    .cover-pill { display: inline-flex; align-items: center; gap: 9px; border: 1px solid rgba(255,255,255,.26); border-radius: 999px; padding: 9px 13px; font-size: .8rem; color: rgba(255,255,255,.8); }
+
+    .topline { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
+    .kicker { font-size: .75rem; text-transform: uppercase; letter-spacing: .15em; color: var(--muted); font-weight: 750; }
+    .tag { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 11px; color: var(--muted); font-size: .77rem; white-space: nowrap; }
+    .tag strong { color: var(--ink); }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .card { background: rgba(255,254,251,.7); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: 0 8px 28px rgba(30,30,40,.035); }
+    .card.dark { background: var(--indigo-deep); color: white; border-color: transparent; }
+    .card.accent { background: var(--indigo); color: white; border-color: transparent; }
+    .card.soft { background: var(--paper-2); }
+    .card p:last-child { margin-bottom: 0; }
+    .card p { color: var(--muted); line-height: 1.45; font-size: .94rem; }
+    .card.dark p, .card.accent p { color: rgba(255,255,255,.74); }
+    .number { font-family: var(--serif); font-size: 3.1rem; line-height: .9; color: var(--indigo); margin-bottom: 18px; }
+    .dark .number, .accent .number { color: #78e7d6; }
+    .icon { width: 30px; height: 30px; display: inline-block; color: currentColor; }
+    .icon-wrap { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px; background: rgba(76,73,216,.11); color: var(--indigo); margin-bottom: 18px; }
+    .dark .icon-wrap { background: rgba(255,255,255,.12); color: #8cf0df; }
+    .section-break { color: white; background: var(--indigo-deep); overflow: hidden; }
+    .section-break::before { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 0 45%, rgba(132,240,220,.13) 45% 50%, transparent 50%), radial-gradient(circle at 80% 30%, rgba(76,73,216,.9), transparent 44%); z-index: -1; }
+    .section-break .section-index { font-family: var(--serif); font-size: clamp(7rem, 24vw, 18rem); line-height: .7; color: rgba(255,255,255,.08); letter-spacing: -.1em; position: absolute; right: 0; bottom: 0; }
+    .section-break .lead { color: rgba(255,255,255,.72); }
+    .section-break h2 { max-width: 700px; }
+    .callout { border-left: 4px solid var(--teal); padding: 4px 0 4px 18px; margin: 20px 0; font-size: 1.03rem; line-height: 1.45; }
+    .callout strong { color: var(--indigo-deep); }
+    .small { font-size: .78rem; color: var(--muted); line-height: 1.4; }
+    .source { font-size: .7rem; color: var(--muted); margin-top: auto; padding-top: 20px; line-height: 1.35; }
+    .source a { text-decoration: none; border-bottom: 1px solid rgba(76,73,216,.32); }
+    .source a:hover { color: var(--indigo); }
+    .rule { height: 1px; background: var(--line); margin: 22px 0; }
+
+    .compare { display: grid; grid-template-columns: 1fr 56px 1fr; align-items: stretch; gap: 14px; margin: 20px 0; }
+    .compare-card { border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; background: rgba(255,254,251,.65); }
+    .compare-card.highlight { background: var(--indigo-deep); color: white; border-color: transparent; }
+    .compare-arrow { display: grid; place-items: center; border-radius: 50%; width: 50px; height: 50px; align-self: center; background: var(--teal); color: var(--indigo-deep); font-weight: 800; font-size: 1.3rem; }
+    .compare ul, .clean-list { margin: 12px 0 0; padding-left: 18px; }
+    .compare li, .clean-list li { margin: 9px 0; line-height: 1.35; color: var(--muted); }
+    .highlight li { color: rgba(255,255,255,.76); }
+
+    .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; align-items: stretch; margin: 24px 0; }
+    .flow-step { position: relative; padding: 16px; border-radius: 18px; background: var(--paper-2); border: 1px solid var(--line); min-height: 130px; }
+    .flow-step:not(:last-child)::after { content: "→"; position: absolute; right: -16px; top: 50%; transform: translateY(-50%); color: var(--teal); font-size: 1.35rem; z-index: 2; }
+    .flow-step .step-no { color: var(--indigo); font-size: .74rem; font-weight: 800; letter-spacing: .1em; }
+    .flow-step p { font-size: .85rem; color: var(--muted); line-height: 1.35; margin-bottom: 0; }
+    .flow-step strong { display: block; margin: 6px 0; }
+
+    .architecture { display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 14px; align-items: center; margin: 24px 0; }
+    .arch-col { display: grid; gap: 10px; }
+    .arch-node { display: flex; align-items: center; gap: 11px; padding: 14px 15px; background: rgba(255,254,251,.72); border: 1px solid var(--line); border-radius: 17px; min-height: 60px; }
+    .arch-node .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--teal); flex: 0 0 auto; }
+    .arch-node p { font-size: .82rem; color: var(--muted); margin: 4px 0 0; }
+    .arch-centre { background: var(--indigo-deep); color: white; border-radius: 26px; padding: 27px; text-align: center; box-shadow: var(--shadow); }
+    .arch-centre .big { font-family: var(--serif); font-size: 3.8rem; line-height: .9; margin: 8px 0 14px; }
+    .arch-centre p { color: rgba(255,255,255,.73); line-height: 1.4; font-size: .9rem; }
+    .connector { text-align: center; color: var(--teal); font-size: 1.5rem; }
+
+    .bars { display: grid; gap: 14px; margin: 16px 0; }
+    .bar-row { display: grid; grid-template-columns: 150px 1fr 50px; gap: 10px; align-items: center; font-size: .82rem; }
+    .bar-label { color: var(--muted); }
+    .bar-track { height: 12px; border-radius: 99px; background: var(--paper-2); overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--indigo), #8b83f8); }
+    .bar-fill.teal { background: linear-gradient(90deg, var(--teal), #76ded0); }
+    .bar-fill.coral { background: linear-gradient(90deg, var(--coral), #f5a073); }
+    .bar-value { font-weight: 800; color: var(--indigo-deep); text-align: right; }
+    .metric-big { font-size: clamp(3rem, 7vw, 6rem); letter-spacing: -.08em; line-height: .85; color: var(--indigo); font-family: var(--serif); }
+
+    .code { background: #191a24; color: #ecf1f8; border-radius: 20px; padding: 18px 20px; font: .78rem/1.55 var(--mono); overflow: auto; white-space: pre-wrap; border: 1px solid rgba(255,255,255,.07); }
+    .code .comment { color: #8a93aa; }
+    .code .key { color: #8cebdc; }
+    .code .value { color: #ffc78b; }
+    .decision { width: 100%; border-collapse: collapse; font-size: .8rem; margin-top: 16px; }
+    .decision th, .decision td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .decision th { color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .1em; }
+    .decision td strong { color: var(--indigo-deep); }
+    .check { color: var(--teal); font-weight: 900; }
+    .warn { color: var(--coral); font-weight: 900; }
+    .step-list { counter-reset: steps; display: grid; gap: 12px; margin: 18px 0 0; }
+    .step-item { display: grid; grid-template-columns: 44px 1fr; gap: 14px; align-items: start; }
+    .step-item::before { counter-increment: steps; content: counter(steps, decimal-leading-zero); width: 40px; height: 40px; display: grid; place-items: center; border-radius: 13px; background: var(--indigo); color: white; font-weight: 800; font-size: .76rem; }
+    .step-item p { color: var(--muted); line-height: 1.4; margin-bottom: 0; font-size: .9rem; }
+    .step-item strong { display: block; margin-bottom: 3px; }
+
+    .takeaway { display: grid; grid-template-columns: 1.2fr .8fr; gap: 22px; align-items: stretch; }
+    .takeaway-box { background: var(--indigo-deep); color: white; border-radius: 28px; padding: 32px; display: flex; flex-direction: column; justify-content: space-between; }
+    .takeaway-box h3 { font-size: 1.55rem; }
+    .takeaway-box p { color: rgba(255,255,255,.74); line-height: 1.45; }
+    .quote { font-family: var(--serif); font-size: clamp(1.7rem, 3vw, 3.2rem); line-height: 1.03; letter-spacing: -.04em; }
+    .open-questions { display: grid; gap: 10px; }
+    .open-q { padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,254,251,.7); }
+    .open-q span { color: var(--coral); font-weight: 800; margin-right: 8px; }
+
+    .controls { position: fixed; z-index: 20; right: 24px; bottom: 18px; display: flex; gap: 7px; align-items: center; padding: 7px; background: rgba(21,23,27,.91); border-radius: 18px; box-shadow: 0 15px 40px rgba(0,0,0,.2); }
+    .control-btn { width: 38px; height: 38px; display: grid; place-items: center; border: 0; border-radius: 12px; background: transparent; color: #f8f7f0; cursor: pointer; }
+    .control-btn:hover, .control-btn:focus-visible { background: rgba(255,255,255,.14); outline: none; }
+    .control-btn:disabled { opacity: .33; cursor: default; }
+    .control-btn .icon { width: 20px; height: 20px; }
+    .counter { color: rgba(255,255,255,.65); font-size: .75rem; min-width: 54px; text-align: center; font-variant-numeric: tabular-nums; }
+    .progress { position: fixed; z-index: 19; left: 0; top: 0; height: 4px; background: var(--teal); width: 0; transition: width .25s ease; }
+    .index-modal { position: fixed; z-index: 30; inset: 0; display: none; padding: 6vh 6vw; background: rgba(22,22,33,.86); backdrop-filter: blur(12px); overflow: auto; }
+    .index-modal.open { display: block; }
+    .index-panel { width: min(1000px, 100%); margin: auto; background: var(--paper); border-radius: 28px; padding: 26px; box-shadow: var(--shadow); }
+    .index-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 18px; }
+    .index-head h3 { font-size: 1.5rem; margin: 0; }
+    .index-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+    .index-item { text-align: left; border: 1px solid var(--line); background: var(--white); padding: 13px; border-radius: 16px; cursor: pointer; min-height: 76px; }
+    .index-item:hover, .index-item:focus-visible { border-color: var(--indigo); outline: none; transform: translateY(-1px); }
+    .index-item.current { background: var(--indigo-deep); color: white; border-color: var(--indigo-deep); }
+    .index-item small { display: block; opacity: .55; font-weight: 800; margin-bottom: 6px; }
+    .index-item span { font-size: .82rem; line-height: 1.2; }
+    .close-index { border: 0; background: var(--paper-2); border-radius: 12px; width: 38px; height: 38px; cursor: pointer; display: grid; place-items: center; }
+    .close-index:hover { background: #dddcd3; }
+
+    @keyframes reveal { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+    @media (max-width: 900px) {
+      body { overflow: auto; }
+      .slide { padding: 32px 24px 90px; }
+      .slide-inner { min-height: calc(100svh - 122px); }
+      .cover-grid, .takeaway { grid-template-columns: 1fr; }
+      .cover-mark { width: min(52vw, 310px); margin: 0 auto; }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .architecture { grid-template-columns: 1fr; }
+      .connector { transform: rotate(90deg); height: 12px; }
+      .flow { grid-template-columns: 1fr; }
+      .flow-step:not(:last-child)::after { content: "↓"; right: 50%; top: auto; bottom: -19px; transform: translateX(50%); }
+      .compare { grid-template-columns: 1fr; }
+      .compare-arrow { margin: -2px auto; transform: rotate(90deg); }
+    }
+    @media (max-width: 580px) {
+      h1 { font-size: clamp(3.2rem, 17vw, 5.4rem); }
+      h2 { font-size: clamp(2.15rem, 11vw, 3.7rem); }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .bar-row { grid-template-columns: 112px 1fr 42px; font-size: .74rem; }
+      .decision { font-size: .72rem; }
+      .decision th, .decision td { padding: 9px 6px; }
+      .controls { right: 14px; bottom: 12px; }
+      .counter { min-width: 42px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-live="polite">
+    <section class="slide cover active" data-title="OpenMAIC">
+      <div class="slide-inner cover-grid">
+        <div>
+          <div class="cover-pill"><span>THU-MAIC</span><span>•</span><span>repo + paper deep dive</span></div>
+          <div class="eyebrow" style="margin-top:28px">Open Multi-Agent Interactive Classroom</div>
+          <h1>Teach with a room full of agents.</h1>
+          <p class="lead">OpenMAIC turns a topic or source material into an interactive classroom: lessons, quizzes, simulations, project work, voices, whiteboards and AI classmates — with a path from one-click generation to a steerable course-building workbench.</p>
+          <div class="cover-line"></div>
+          <p class="meta">Deep dive • evidence • architecture • implementation guide<br>Prepared 19 September 2026</p>
+        </div>
+        <div style="display:grid;place-items:center">
+          <div class="cover-mark" aria-label="Abstract OpenMAIC mark"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="TL;DR">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">01 / Plain English</span><span class="tag"><strong>TL;DR</strong> beginner first</span></div>
+        <h2>It is a classroom generator that can keep teaching after the first draft.</h2>
+        <p class="lead">Give OpenMAIC a topic, slides or other materials. It can build a structured course, populate it with different AI roles, and let a learner interrupt, ask, explore, practise and export the result.</p>
+        <div class="grid-3" style="margin-top:26px">
+          <div class="card"><div class="icon-wrap"><svg class="icon"><use href="#i-spark"></use></svg></div><h3>Build faster</h3><p>Move from a prompt or source pack to a usable lesson rather than starting with a blank page.</p></div>
+          <div class="card"><div class="icon-wrap"><svg class="icon"><use href="#i-users"></use></svg></div><h3>Make learning social</h3><p>Use teacher, assistant, manager and classmate roles to create a more alive learning loop.</p></div>
+          <div class="card"><div class="icon-wrap"><svg class="icon"><use href="#i-compass"></use></svg></div><h3>Keep steering</h3><p>In Pro mode, sessions can be resumed, redirected and revised instead of regenerated from scratch.</p></div>
+        </div>
+        <div class="callout"><strong>The core idea:</strong> MOOCs optimise distribution. MAIC adds an adaptive, multi-agent layer around the course so the learner can shape the session as it unfolds.</div>
+        <div class="source">Source: <a href="https://github.com/THU-MAIC/OpenMAIC" target="_blank" rel="noreferrer">OpenMAIC repository</a> · <a href="https://doi.org/10.1007/s11390-025-6000-0" target="_blank" rel="noreferrer">MAIC paper</a></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Why it matters">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">02 / The opportunity</span><span class="tag">scalability × adaptivity</span></div>
+        <h2>The tension is simple: reach many people without teaching everyone the same way.</h2>
+        <div class="compare">
+          <div class="compare-card"><div class="eyebrow">MOOC pattern</div><h3>One course, many learners</h3><ul><li>Pre-recorded content is efficient to distribute.</li><li>Everyone gets roughly the same pace and explanation.</li><li>Personal support is expensive and often missing.</li></ul></div>
+          <div class="compare-arrow">→</div>
+          <div class="compare-card highlight"><div class="eyebrow" style="color:#80ecdc">MAIC pattern</div><h3>One learner, many agents</h3><ul><li>Course material becomes structured, searchable and actionable.</li><li>Agents can explain, question, manage, encourage and analyse.</li><li>The learner can interrupt and steer the classroom.</li></ul></div>
+        </div>
+        <p class="small">The paper frames this as a design goal, not a solved problem: balancing scalability with adaptivity through LLM-driven multi-agent systems.</p>
+        <div class="source">Source: <a href="https://keg.cs.tsinghua.edu.cn/persons/xubin/papers/From-MOOC-to-MAIC.pdf" target="_blank" rel="noreferrer">From MOOC to MAIC, pp. 1–3</a></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Benefits + use cases">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">03 / What you get</span><span class="tag">practical upside</span></div>
+        <h2>Useful when the learning experience needs more than a document and a chatbot.</h2>
+        <div class="grid-2" style="margin-top:22px">
+          <div class="card accent"><div class="number">01</div><h3>Course authoring</h3><p>Turn slides, documents, audio or video into a structured course with scenes, scripts and activities.</p></div>
+          <div class="card dark"><div class="number">02</div><h3>Hands-on learning</h3><p>Use simulations, games, mind maps, coding and project-based learning to make concepts observable.</p></div>
+          <div class="card soft"><div class="number">03</div><h3>Agentic facilitation</h3><p>Give different roles distinct jobs: explain, challenge, summarise, keep order, or decide what happens next.</p></div>
+          <div class="card soft"><div class="number">04</div><h3>Shareable outputs</h3><p>Export editable PowerPoint, interactive HTML or a classroom archive for backup and sharing.</p></div>
+        </div>
+        <div class="rule"></div>
+        <div class="grid-4">
+          <div><h3>AI onboarding</h3><p class="small">Teach a new team how an internal system works through guided scenes and Q&A.</p></div>
+          <div><h3>Research reading</h3><p class="small">Turn a paper into a debate, quiz, visual explanation and implementation exercise.</p></div>
+          <div><h3>Technical training</h3><p class="small">Build a Python, data or agent-harness course with runnable activities.</p></div>
+          <div><h3>Community learning</h3><p class="small">Create a reusable classroom for workshops, meetups or a distributed cohort.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide section-break" data-title="Deep dive">
+      <div class="slide-inner">
+        <div class="eyebrow" style="color:#80ecdc">Section I</div>
+        <h2>Deep dive<br><span style="color:#80ecdc">under the classroom</span></h2>
+        <p class="lead">The interesting part is not “many agents” by itself. It is the combination of structured course material, explicit actions, role design and a controller that keeps the room moving.</p>
+        <div class="section-index">I</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Read → Plan">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">04 / Deep dive</span><span class="tag">paper architecture</span></div>
+        <h2>The preparation workflow has two passes: understand the material, then make it teachable.</h2>
+        <div class="flow">
+          <div class="flow-step"><span class="step-no">01 READ</span><strong>Extract</strong><p>Capture textual and visual content from each page.</p></div>
+          <div class="flow-step"><span class="step-no">02 READ</span><strong>Describe</strong><p>Generate a usable description for the slide or source unit.</p></div>
+          <div class="flow-step"><span class="step-no">03 READ</span><strong>Structure</strong><p>Build a knowledge-aware tree across the material.</p></div>
+          <div class="flow-step"><span class="step-no">04 PLAN</span><strong>Review</strong><p>Let educators proofread and refine the machine output.</p></div>
+          <div class="flow-step"><span class="step-no">05 PLAN</span><strong>Compose</strong><p>Attach actions, scripts and agent roles to the course.</p></div>
+        </div>
+        <div class="grid-2" style="margin-top:10px">
+          <div class="card"><h3>Why structure matters</h3><p>A slide deck is not yet a learning system. OpenMAIC converts pages into descriptions, knowledge units and action-ready material that agents can retrieve and use.</p></div>
+          <div class="card soft"><h3>Human checkpoint</h3><p>The paper keeps educators in the loop for proofreading and refinement. That is a crucial product choice: generation is accelerated, not made unquestionable.</p></div>
+        </div>
+        <div class="source">Source: <a href="https://keg.cs.tsinghua.edu.cn/persons/xubin/papers/From-MOOC-to-MAIC.pdf" target="_blank" rel="noreferrer">MAIC paper, §3.1 and Figure 2</a></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Agent roles">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">05 / Deep dive</span><span class="tag">1 learner + N agents</span></div>
+        <h2>Roles give the room a division of labour.</h2>
+        <div class="architecture">
+          <div class="arch-col">
+            <div class="arch-node"><span class="dot" style="background:var(--indigo)"></span><div><strong>Teacher</strong><p>Explains, asks, advances the lesson.</p></div></div>
+            <div class="arch-node"><span class="dot" style="background:var(--coral)"></span><div><strong>Assistant</strong><p>Supports, clarifies and helps manage.</p></div></div>
+            <div class="arch-node"><span class="dot" style="background:var(--gold)"></span><div><strong>Classmates</strong><p>Challenge, react, summarise or energise.</p></div></div>
+          </div>
+          <div class="arch-centre"><div class="eyebrow" style="color:#80ecdc">session controller</div><div class="big">Who<br>speaks next?</div><p>Reads the current state, available actions, class roles and learner input, then advances the classroom.</p></div>
+          <div class="arch-col">
+            <div class="arch-node"><span class="dot" style="background:var(--teal)"></span><div><strong>Manager</strong><p>Maintains flow, timing and classroom order.</p></div></div>
+            <div class="arch-node"><span class="dot" style="background:#7e72f0"></span><div><strong>Analyzer</strong><p>Reads signals from behaviour and outcomes.</p></div></div>
+            <div class="arch-node"><span class="dot" style="background:#63a8e6"></span><div><strong>Learner</strong><p>Interrupts, asks, steers and chooses depth.</p></div></div>
+          </div>
+        </div>
+        <div class="callout"><strong>Product insight:</strong> role design is a UX primitive. It makes behaviour legible, lets users choose the social texture of a class, and gives routing decisions something concrete to optimise.</div>
+        <div class="source">Source: <a href="https://keg.cs.tsinghua.edu.cn/persons/xubin/papers/From-MOOC-to-MAIC.pdf" target="_blank" rel="noreferrer">MAIC paper, §3.2</a> · <a href="https://github.com/THU-MAIC/OpenMAIC#-features" target="_blank" rel="noreferrer">OpenMAIC features</a></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Actions + playback">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">06 / Deep dive</span><span class="tag">from text to behaviour</span></div>
+        <h2>The classroom is a sequence of explicit actions, not just a stream of chat.</h2>
+        <div class="grid-2" style="align-items:stretch">
+          <div class="card dark">
+            <div class="eyebrow" style="color:#80ecdc">Example action language</div>
+            <div class="code"><span class="comment">// Each action is configurable</span>
+<span class="key">type</span>: <span class="value">"ReadScript"</span>
+<span class="key">value</span>: <span class="value">"Explain the diagram in plain English"</span>
+
+<span class="key">type</span>: <span class="value">"AskQuestion"</span>
+<span class="key">value</span>: <span class="value">"What changes if the input doubles?"</span>
+
+<span class="key">type</span>: <span class="value">"ShowFile"</span>
+<span class="key">value</span>: <span class="value">"next-slide"</span></div>
+          </div>
+          <div class="card">
+            <div class="eyebrow">Why this is useful</div>
+            <div class="step-list">
+              <div class="step-item"><div><strong>Inspectable</strong><p>You can see what the system is trying to do instead of debugging a blob of prose.</p></div></div>
+              <div class="step-item"><div><strong>Composable</strong><p>New teaching behaviours can be added as actions and attached to course context.</p></div></div>
+              <div class="step-item"><div><strong>Playable</strong><p>The playback engine can pause, wait for input, execute effects and resume.</p></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="small" style="margin-top:18px">Current repository implementation expands this idea into slides, quizzes, interactive HTML, PBL, whiteboard actions, audio, media and export pipelines.</div>
+        <div class="source">Source: <a href="https://keg.cs.tsinghua.edu.cn/persons/xubin/papers/From-MOOC-to-MAIC.pdf" target="_blank" rel="noreferrer">MAIC paper, §3.1.2</a> · <a href="https://github.com/THU-MAIC/OpenMAIC#-classroom-components" target="_blank" rel="noreferrer">OpenMAIC classroom components</a></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Current repo architecture">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">07 / Deep dive</span><span class="tag">repository map</span></div>
+        <h2>OpenMAIC has evolved from a concept into a fairly complete product surface.</h2>
+        <div class="grid-3" style="margin-top:24px">
+          <div class="card"><div class="icon-wrap"><svg class="icon"><use href="#i-layers"></use></svg></div><h3>Generation</h3><p>Two-stage outline → scene generation, with multimodal materials, scripts, media and classroom scenes.</p></div>
+          <div class="card"><div class="icon-wrap"><svg class="icon"><use href="#i-network"></use></svg></div><h3>Orchestration</h3><p>LangGraph-based multi-agent discussions, playback state, action execution and interactive classroom control.</p></div>
+          <div class="card"><div class="icon-wrap"><svg class="icon"><use href="#i-database"></use></svg></div><h3>Persistence</h3><p>Browser-first by default, with optional PostgreSQL-backed documents, assets, materials, sessions and skills.</p></div>
+          <div class="card soft"><h3>Editor + renderer</h3><p>Versioned DSL, slide editor, scene renderers, PPTX importer and HTML/PPTX export packages.</p></div>
+          <div class="card soft"><h3>Media surface</h3><p>Pluggable providers for LLMs, search, images, video, TTS and ASR, including local options.</p></div>
+          <div class="card soft"><h3>Agent workbench</h3><p>Chat-first Pro mode with durable sessions, follow-up steering, materials and reusable course skills.</p></div>
+        </div>
+        <p class="small" style="margin-top:18px">Read this as a system boundary: OpenMAIC is not one prompt wrapper. It is an authoring, runtime, playback, storage and export stack.</p>
+        <div class="source">Source: <a href="https://github.com/THU-MAIC/OpenMAIC#contributing" target="_blank" rel="noreferrer">OpenMAIC project structure and key architecture</a></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Interactivity + providers">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">08 / Deep dive</span><span class="tag">open by design</span></div>
+        <h2>Rich learning does not have to mean one fixed model or one fixed modality.</h2>
+        <div class="grid-2">
+          <div class="card dark"><div class="eyebrow" style="color:#80ecdc">Interactive scenes</div><div class="grid-2" style="gap:10px;margin-top:15px"><div class="card" style="padding:14px;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.12)"><strong>3D</strong><p style="font-size:.76rem">Visualise structures.</p></div><div class="card" style="padding:14px;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.12)"><strong>Simulations</strong><p style="font-size:.76rem">Change variables.</p></div><div class="card" style="padding:14px;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.12)"><strong>Games</strong><p style="font-size:.76rem">Practise recall.</p></div><div class="card" style="padding:14px;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.12)"><strong>Code</strong><p style="font-size:.76rem">Write and run.</p></div></div></div>
+          <div class="card"><div class="eyebrow">Provider-neutral infrastructure</div><p>Bring your own model, media, search provider and storage backend. The repo documents support for hosted and local providers, including OpenAI-compatible endpoints, Ollama, Lemonade and FunASR paths.</p><div class="rule"></div><p class="small"><span class="check">✓</span> Good for experimentation and regional/provider choice<br><span class="warn">!</span> The server-side configuration is yours to secure and operate</p></div>
+        </div>
+        <div class="callout"><strong>Design implication:</strong> modality becomes a course decision. A concept might need a diagram, a simulator, a voice explanation or a short project, not just another paragraph.</div>
+        <div class="source">Source: <a href="https://github.com/THU-MAIC/OpenMAIC#deep-interactive-mode-new" target="_blank" rel="noreferrer">OpenMAIC Deep Interactive Mode</a> · <a href="https://github.com/THU-MAIC/OpenMAIC#-quick-start" target="_blank" rel="noreferrer">provider support and quick start</a></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Evidence + limits">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">09 / Deep dive</span><span class="tag">evidence, not hype</span></div>
+        <h2>The evidence is encouraging, but the paper itself calls it preliminary.</h2>
+        <div class="grid-2" style="margin-top:18px">
+          <div class="card">
+            <div class="eyebrow">Teaching-side evaluation · 5-point scale</div>
+            <div class="bars">
+              <div class="bar-row"><span class="bar-label">MAIC-FuncGen</span><span class="bar-track"><span class="bar-fill" style="width:80%"></span></span><span class="bar-value">4.00</span></div>
+              <div class="bar-row"><span class="bar-label">SCP baseline</span><span class="bar-track"><span class="bar-fill teal" style="width:78%"></span></span><span class="bar-value">3.90</span></div>
+              <div class="bar-row"><span class="bar-label">Human baseline</span><span class="bar-track"><span class="bar-fill coral" style="width:77.2%"></span></span><span class="bar-value">3.86</span></div>
+              <div class="bar-row"><span class="bar-label">w/o visual</span><span class="bar-track"><span class="bar-fill coral" style="width:72.2%"></span></span><span class="bar-value">3.61</span></div>
+            </div>
+            <p class="small">MAIC-FuncGen scored highest overall in the paper’s script-generation comparison. Visual input and prior context mattered.</p>
+          </div>
+          <div class="card soft">
+            <div class="eyebrow">Behavioural study</div>
+            <div class="grid-2" style="align-items:end"><div><div class="metric-big">61%</div><p>of observed student activity involved asking questions or seeking knowledge.</p></div><div><div class="metric-big" style="color:var(--teal)">11%</div><p>involved managing progress or agent roles.</p></div></div>
+            <div class="rule"></div><p class="small">The study covered more than 500 students and 100,000 learning records across two courses. These are observations and associations, not a randomised proof of causation.</p>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-top:18px">
+          <div class="card"><h3>What seems to work</h3><p>Structured visual context, role descriptions, immediate Q&A and explicit classroom actions.</p></div>
+          <div class="card"><h3>What remains weak</h3><p>Controller accuracy, deep discussion, personal adaptation and the risk of mechanical teaching.</p></div>
+          <div class="card"><h3>What to measure next</h3><p>Direct assessments of critical thinking, problem solving, retention and transfer, not only perceptions.</p></div>
+        </div>
+        <div class="source">Source: <a href="https://keg.cs.tsinghua.edu.cn/persons/xubin/papers/From-MOOC-to-MAIC.pdf" target="_blank" rel="noreferrer">MAIC paper, §§4–5</a></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Product takeaways">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">10 / Deep dive</span><span class="tag">what to borrow</span></div>
+        <h2>The strongest idea is not “replace teachers”. It is “make learning stateful, inspectable and steerable”.</h2>
+        <div class="grid-3" style="margin-top:24px">
+          <div class="card accent"><div class="number">A</div><h3>Make the state explicit</h3><p>Track current scene, learner signals, role availability, pending actions and course context.</p></div>
+          <div class="card dark"><div class="number">B</div><h3>Give agents boundaries</h3><p>Use role descriptions, tools and routing rules so each agent has a job it can perform well.</p></div>
+          <div class="card soft"><div class="number">C</div><h3>Design for interruption</h3><p>Let people pause, ask for a simpler explanation, change pace or revisit a previous step.</p></div>
+        </div>
+        <div class="callout"><strong>For an AI product team:</strong> the opportunity is an orchestration layer around content, not just a better prompt. The evaluation target becomes the quality of the learning loop.</div>
+        <div class="source">Interpretation based on the paper and repository architecture. See <a href="https://github.com/THU-MAIC/OpenMAIC#-agent-workbench-and-pro-mode-v100" target="_blank" rel="noreferrer">agent workbench</a> and <a href="https://keg.cs.tsinghua.edu.cn/persons/xubin/papers/From-MOOC-to-MAIC.pdf" target="_blank" rel="noreferrer">MAIC paper</a>.</div>
+      </div>
+    </section>
+
+    <section class="slide section-break" data-title="How to implement">
+      <div class="slide-inner">
+        <div class="eyebrow" style="color:#80ecdc">Section II</div>
+        <h2>How to implement<br><span style="color:#80ecdc">without overbuilding</span></h2>
+        <p class="lead">Start with one classroom, one provider and one measurable learning outcome. Add the multi-agent and persistence layers only when they solve a real bottleneck.</p>
+        <div class="section-index">II</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Choose your path">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">11 / Implementation</span><span class="tag">three sensible paths</span></div>
+        <h2>Choose the smallest setup that matches your goal.</h2>
+        <table class="decision">
+          <thead><tr><th>Path</th><th>Use it when</th><th>What you do</th><th>Trade-off</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Hosted demo</strong></td><td>Explore the experience quickly.</td><td>Get an access code and use the live deployment.</td><td>Fastest start; less control.</td></tr>
+            <tr><td><strong>Local dev</strong></td><td>Build a course or prototype locally.</td><td>Clone, install, configure one LLM provider, run <code>pnpm dev</code>.</td><td>More setup; easiest to debug.</td></tr>
+            <tr><td><strong>Extend / deploy</strong></td><td>Own the product surface or run shared sessions.</td><td>Use the SDK/packages, agent runtime, PostgreSQL and a production deployment.</td><td>More control; security and operations become your job.</td></tr>
+          </tbody>
+        </table>
+        <div class="grid-2" style="margin-top:24px">
+          <div class="card"><h3>My recommendation</h3><p>Use local dev for a first serious prototype. Keep the hosted demo for experience testing. Add server-backed persistence only once sessions or assets need to survive devices and restarts.</p></div>
+          <div class="card soft"><h3>Do not skip</h3><p>Decide who owns learner data, which providers receive source materials, and whether generated classrooms are public, private or access-code protected.</p></div>
+        </div>
+        <div class="source">Source: <a href="https://github.com/THU-MAIC/OpenMAIC#-quick-start" target="_blank" rel="noreferrer">OpenMAIC Quick Start</a> · <a href="https://github.com/THU-MAIC/OpenMAIC/blob/main/skills/openmaic/references/startup-modes.md" target="_blank" rel="noreferrer">startup modes</a></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Local quick start">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">12 / Implementation</span><span class="tag">local dev path</span></div>
+        <h2>Get a first classroom running in four moves.</h2>
+        <div class="grid-2" style="align-items:start">
+          <div class="step-list">
+            <div class="step-item"><div><strong>Clone and install</strong><p>Use Node.js ≥ 22.19 and pnpm ≥ 10, then install the workspace dependencies.</p></div></div>
+            <div class="step-item"><div><strong>Configure one provider</strong><p>Copy <code>.env.example</code> to <code>.env.local</code> and set a provider key plus an explicit <code>DEFAULT_MODEL</code>.</p></div></div>
+            <div class="step-item"><div><strong>Start locally</strong><p>Run <code>pnpm dev</code>, then open the local app and create a small test course.</p></div></div>
+            <div class="step-item"><div><strong>Verify the loop</strong><p>Check outline quality, scene transitions, questions, exports and what source data is retained.</p></div></div>
+          </div>
+          <div class="code"><span class="comment"># prerequisites: Node.js >= 22.19, pnpm >= 10</span>
+git clone https://github.com/THU-MAIC/OpenMAIC.git
+cd OpenMAIC
+pnpm install
+
+cp .env.example .env.local
+
+<span class="comment"># edit .env.local yourself</span>
+<span class="key">OPENAI_API_KEY</span>=<span class="value">sk-...</span>
+<span class="key">DEFAULT_MODEL</span>=<span class="value">openai:gpt-...</span>
+
+pnpm dev
+
+<span class="comment"># health check</span>
+curl -fsS http://localhost:3000/api/health</div>
+        </div>
+        <div class="callout"><strong>Important:</strong> OpenMAIC’s own setup guidance says it does not automatically reuse another agent’s key or model. Configure the server-side provider explicitly.</div>
+        <div class="source">Source: <a href="https://github.com/THU-MAIC/OpenMAIC#-quick-start" target="_blank" rel="noreferrer">repository Quick Start</a> · <a href="https://github.com/THU-MAIC/OpenMAIC/blob/main/skills/openmaic/references/provider-keys.md" target="_blank" rel="noreferrer">provider guidance</a></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Build your first course">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">13 / Implementation</span><span class="tag">a repeatable recipe</span></div>
+        <h2>Use a narrow learning outcome, then let the system earn more complexity.</h2>
+        <div class="flow">
+          <div class="flow-step"><span class="step-no">01</span><strong>Outcome</strong><p>“Learner can explain X and use it in Y.”</p></div>
+          <div class="flow-step"><span class="step-no">02</span><strong>Source pack</strong><p>Slides, notes, links, examples or a short paper.</p></div>
+          <div class="flow-step"><span class="step-no">03</span><strong>Course shape</strong><p>Lecture → check → interaction → practice.</p></div>
+          <div class="flow-step"><span class="step-no">04</span><strong>Role design</strong><p>Teacher, challenger, summariser, manager.</p></div>
+          <div class="flow-step"><span class="step-no">05</span><strong>Evaluation</strong><p>Task, rubric, retention and transfer.</p></div>
+        </div>
+        <div class="grid-3" style="margin-top:18px">
+          <div class="card"><h3>Example: paper club</h3><p>Input: one paper. Output: visual summary, “find the assumption” quiz, debate and reproduce-the-method exercise.</p></div>
+          <div class="card"><h3>Example: AI onboarding</h3><p>Input: product docs. Output: role-based walkthrough, scenario questions, troubleshooting simulation and short assessment.</p></div>
+          <div class="card"><h3>Example: maker workshop</h3><p>Input: project brief. Output: milestones, assistant feedback, peer critique and a final demo rubric.</p></div>
+        </div>
+        <div class="source">Source: implementation recommendation grounded in <a href="https://github.com/THU-MAIC/OpenMAIC#lesson-generation" target="_blank" rel="noreferrer">lesson generation</a>, <a href="https://github.com/THU-MAIC/OpenMAIC#classroom-components" target="_blank" rel="noreferrer">classroom components</a> and the paper’s Read → Plan workflow.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Go beyond the prototype">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">14 / Implementation</span><span class="tag">when it becomes a system</span></div>
+        <h2>For shared or long-running classrooms, persistence and security change the design.</h2>
+        <div class="grid-2" style="align-items:stretch">
+          <div class="card dark"><div class="eyebrow" style="color:#80ecdc">Optional production layers</div><ul class="clean-list"><li>PostgreSQL-backed course documents and runtime state.</li><li>Durable agent sessions with leases, heartbeats, resume and cancellation.</li><li>Asset registry and storage, with retention and quota decisions.</li><li>Access code or real user authentication for shared deployments.</li><li>Render service for MP4 export when required.</li></ul></div>
+          <div class="card"><div class="eyebrow">Guardrail checklist</div><div class="step-list"><div class="step-item"><div><strong>Data boundaries</strong><p>Do not send private course or learner material to an unapproved provider.</p></div></div><div class="step-item"><div><strong>Action boundaries</strong><p>Keep consequential operations explicit, logged and reversible where possible.</p></div></div><div class="step-item"><div><strong>Learning boundaries</strong><p>Measure actual skill transfer, not only pleasant interaction or message volume.</p></div></div></div></div>
+        </div>
+        <div class="callout"><strong>Read the repo’s warning carefully:</strong> the development persistence token is not meaningful confidentiality or user isolation. Treat the reference server as a local/trusted-network setup until you add real identity and authorisation.</div>
+        <div class="source">Source: <a href="https://github.com/THU-MAIC/OpenMAIC#server-backed-persistence-postgresql" target="_blank" rel="noreferrer">server-backed persistence notes</a> · <a href="https://github.com/THU-MAIC/OpenMAIC#optional-agent-workbench-and-runtime" target="_blank" rel="noreferrer">agent runtime</a></div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Adapt it to your work">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">15 / Implementation</span><span class="tag">possible adaptations</span></div>
+        <h2>Where this gets interesting for an AI product and research practice.</h2>
+        <div class="grid-2" style="margin-top:22px">
+          <div class="card accent"><div class="eyebrow" style="color:#80ecdc">AI transformation at Breville</div><h3>Internal capability classroom</h3><p>Turn platform decisions, evaluation patterns and governance playbooks into scenario-based learning for product, design and engineering teams.</p><p class="small" style="color:rgba(255,255,255,.65)">Measure: decision quality, time-to-first-prototype, and safe use of internal tools.</p></div>
+          <div class="card dark"><div class="eyebrow" style="color:#80ecdc">FlavourMind / PhD</div><h3>Research methods tutor</h3><p>Use a paper or methods corpus to create a provenance-aware seminar: explain, challenge assumptions, compare methods and test replication risk.</p><p class="small" style="color:rgba(255,255,255,.65)">Measure: methods extraction accuracy, source traceability and transfer to a new case.</p></div>
+          <div class="card"><div class="eyebrow">Koinaku / agent harness</div><h3>Agent-workflow dojo</h3><p>Teach a team how to use memory, tools, evals and handoffs through an interactive workshop with a manager agent and adversarial classmate.</p></div>
+          <div class="card soft"><div class="eyebrow">Kingdom of Hype</div><h3>Design-systems playground</h3><p>Let learners prototype branching narrative, nemesis logic or game economy rules in a simulation rather than only read design docs.</p></div>
+        </div>
+        <div class="source">These are proposed adaptations, not claims about the OpenMAIC project. Repository basis: <a href="https://github.com/THU-MAIC/OpenMAIC#-use-cases" target="_blank" rel="noreferrer">use cases</a> and <a href="https://github.com/THU-MAIC/OpenMAIC#deep-interactive-mode-new" target="_blank" rel="noreferrer">interactive mode</a>.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Final takeaways">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">16 / Close</span><span class="tag">the short version</span></div>
+        <div class="takeaway">
+          <div class="takeaway-box"><div><div class="eyebrow" style="color:#80ecdc">One sentence</div><div class="quote">OpenMAIC is a course runtime where content, agents and learner intent can move together.</div></div><p style="margin-bottom:0">The next product frontier is not just generating more lessons. It is making the learning loop observable, steerable and genuinely useful.</p></div>
+          <div class="open-questions"><div class="open-q"><span>01</span>Can the system sustain deep thinking, not just fluent explanation?</div><div class="open-q"><span>02</span>How should human educators inspect and override agent decisions?</div><div class="open-q"><span>03</span>What evidence proves transfer beyond self-report and chat activity?</div><div class="open-q"><span>04</span>Which modalities improve learning, and which are only decoration?</div></div>
+        </div>
+        <div class="source">A practical reading: borrow the explicit state, roles, actions and evaluation discipline. Treat the “AI classroom” metaphor as a design space, not a guarantee.</div>
+      </div>
+    </section>
+
+    <section class="slide" data-title="Sources">
+      <div class="slide-inner">
+        <div class="topline"><span class="kicker">17 / Sources</span><span class="tag">read the originals</span></div>
+        <h2>Source notes</h2>
+        <div class="grid-2" style="margin-top:20px">
+          <div class="card"><div class="eyebrow">Repository</div><h3>THU-MAIC / OpenMAIC</h3><p>Current README, project structure, quick start, features, agent workbench, persistence and deployment notes.</p><p class="small"><a href="https://github.com/THU-MAIC/OpenMAIC" target="_blank" rel="noreferrer">github.com/THU-MAIC/OpenMAIC</a></p></div>
+          <div class="card"><div class="eyebrow">Research paper</div><h3>From MOOC to MAIC</h3><p>Yu et al. Journal of Computer Science and Technology, 41(1), 394–414, 2026. DOI: 10.1007/s11390-025-6000-0.</p><p class="small"><a href="https://doi.org/10.1007/s11390-025-6000-0" target="_blank" rel="noreferrer">doi.org/10.1007/s11390-025-6000-0</a></p></div>
+          <div class="card soft"><div class="eyebrow">Preprint PDF</div><h3>Technical detail</h3><p>The deck uses the openly accessible preprint for the Read → Plan workflow, agent roles, controller, evaluation and limitations.</p><p class="small"><a href="https://keg.cs.tsinghua.edu.cn/persons/xubin/papers/From-MOOC-to-MAIC.pdf" target="_blank" rel="noreferrer">technical PDF</a></p></div>
+          <div class="card soft"><div class="eyebrow">Scope note</div><h3>What this deck is</h3><p>An evidence-grounded explainer and implementation guide. It is not a reproduction of the paper’s experiments or a security review of a live deployment.</p></div>
+        </div>
+        <div class="callout"><strong>Licensing note:</strong> the repository states MIT licensing at the root, while bundled components may retain their own terms. Check the package-level licences before redistributing a derivative system.</div>
+        <p class="meta" style="margin-top:28px">OpenMAIC deep dive · responsive self-contained HTML · Australian English</p>
+      </div>
+    </section>
+
+    <section class="slide section-break" data-title="Thank you">
+      <div class="slide-inner">
+        <div class="eyebrow" style="color:#80ecdc">Thank you</div>
+        <h2>Keep the classroom human.<br><span style="color:#80ecdc">Make the system useful.</span></h2>
+        <p class="lead">Questions, ideas or a better way to build this?</p>
+        <div class="cover-line" style="max-width:460px"></div>
+        <p class="meta">Reach out to Vivid / Lilly via Slack.</p>
+        <div class="section-index">+</div>
+      </div>
+    </section>
+  </main>
+
+  <div class="progress" aria-hidden="true"></div>
+  <nav class="controls" aria-label="Slide controls">
+    <button class="control-btn" id="homeBtn" title="Back to cover" aria-label="Back to cover"><svg class="icon"><use href="#i-home"></use></svg></button>
+    <button class="control-btn" id="prevBtn" title="Previous slide" aria-label="Previous slide"><svg class="icon"><use href="#i-left"></use></svg></button>
+    <div class="counter" id="counter">01 / 21</div>
+    <button class="control-btn" id="nextBtn" title="Next slide" aria-label="Next slide"><svg class="icon"><use href="#i-right"></use></svg></button>
+    <button class="control-btn" id="indexBtn" title="Slide overview" aria-label="Open slide overview"><svg class="icon"><use href="#i-grid"></use></svg></button>
+    <button class="control-btn" id="fullBtn" title="Full-screen presentation" aria-label="Enter full-screen presentation"><svg class="icon"><use href="#i-expand"></use></svg></button>
+  </nav>
+
+  <div class="index-modal" id="indexModal" role="dialog" aria-modal="true" aria-labelledby="indexTitle">
+    <div class="index-panel">
+      <div class="index-head"><h3 id="indexTitle">Slide overview</h3><button class="close-index" id="closeIndex" aria-label="Close slide overview"><svg class="icon" style="width:18px;height:18px"><use href="#i-close"></use></svg></button></div>
+      <div class="index-grid" id="indexGrid"></div>
+    </div>
+  </div>
+
+  <svg aria-hidden="true" width="0" height="0" style="position:absolute">
+    <defs>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="m4 11 8-7 8 7M6.5 10v9h11v-9M10 19v-5h4v5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-left" viewBox="0 0 24 24"><path d="M14.5 5 7.5 12l7 7M8 12h9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-right" viewBox="0 0 24 24"><path d="m9.5 5 7 7-7 7M16 12H7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="14" y="4" width="6" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="4" y="14" width="6" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="14" y="14" width="6" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+      <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M4 16v4h4M4 4l6 6M20 4l-6 6M4 20l6-6M20 20l-6-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+      <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3ZM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 19c.3-3.3 2.2-5 5.5-5s5.2 1.7 5.5 5M17 10.5a2.5 2.5 0 1 0 0-5M16 14c2.8 0 4.3 1.5 4.5 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+      <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m15.7 8.3-2.2 5.2-5.2 2.2 2.2-5.2 5.2-2.2Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+      <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 4 8 4-8 4-8-4 8-4ZM4 12l8 4 8-4M4 16l8 4 8-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+      <symbol id="i-network" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18.5" cy="5" r="2.2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="18.5" cy="19" r="2.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m7 11 9.3-5M7 13l9.3 5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+      <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="7" ry="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 5.5v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6M5 11.5v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    </defs>
+  </svg>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const homeBtn = document.getElementById('homeBtn');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const indexBtn = document.getElementById('indexBtn');
+      const fullBtn = document.getElementById('fullBtn');
+      const counter = document.getElementById('counter');
+      const progress = document.querySelector('.progress');
+      const modal = document.getElementById('indexModal');
+      const indexGrid = document.getElementById('indexGrid');
+      const closeIndex = document.getElementById('closeIndex');
+      let current = 0;
+      let touchStartX = null;
+
+      const pad = (n) => String(n).padStart(2, '0');
+      const renderIndex = () => {
+        indexGrid.innerHTML = slides.map((slide, i) => `<button class="index-item ${i === current ? 'current' : ''}" data-index="${i}"><small>${pad(i + 1)}</small><span>${slide.dataset.title}</span></button>`).join('');
+        indexGrid.querySelectorAll('[data-index]').forEach(btn => btn.addEventListener('click', () => { goTo(Number(btn.dataset.index)); closeOverview(); }));
+      };
+      const goTo = (index) => {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+        counter.textContent = `${pad(current + 1)} / ${pad(slides.length)}`;
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        prevBtn.disabled = current === 0;
+        nextBtn.disabled = current === slides.length - 1;
+        renderIndex();
+        history.replaceState(null, '', `#slide=${current + 1}`);
+      };
+      const next = () => goTo(current + 1);
+      const prev = () => goTo(current - 1);
+      const openOverview = () => { modal.classList.add('open'); closeIndex.focus(); };
+      const closeOverview = () => { modal.classList.remove('open'); indexBtn.focus(); };
+
+      homeBtn.addEventListener('click', () => goTo(0));
+      prevBtn.addEventListener('click', prev);
+      nextBtn.addEventListener('click', next);
+      indexBtn.addEventListener('click', openOverview);
+      closeIndex.addEventListener('click', closeOverview);
+      modal.addEventListener('click', (e) => { if (e.target === modal) closeOverview(); });
+      fullBtn.addEventListener('click', async () => {
+        try {
+          if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+          else await document.exitFullscreen();
+        } catch (_) { /* Full-screen can be unavailable in embedded viewers. */ }
+      });
+      document.addEventListener('keydown', (e) => {
+        if (modal.classList.contains('open')) { if (e.key === 'Escape') closeOverview(); return; }
+        if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); next(); }
+        if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); prev(); }
+        if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+        if (e.key === 'End') { e.preventDefault(); goTo(slides.length - 1); }
+        if (e.key.toLowerCase() === 'o') openOverview();
+        if (e.key.toLowerCase() === 'f') fullBtn.click();
+      });
+      document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].clientX; }, {passive:true});
+      document.addEventListener('touchend', (e) => { if (touchStartX === null) return; const dx = e.changedTouches[0].clientX - touchStartX; if (Math.abs(dx) > 55) dx < 0 ? next() : prev(); touchStartX = null; }, {passive:true});
+      const hash = Number(new URLSearchParams(location.hash.replace(/^#/, '')).get('slide'));
+      goTo(Number.isFinite(hash) && hash > 0 ? hash - 1 : 0);
+    })();
+  </script>
+</body>
+</html>

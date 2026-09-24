@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101827" />
+  <title>Thinking, Fast and Slow · A practical field guide</title>
+  <style>
+    :root {
+      --ink: #101827;
+      --muted: #667085;
+      --paper: #f7f8f5;
+      --white: #ffffff;
+      --line: #dde2e8;
+      --accent: #ec6b4f;
+      --accent-dark: #b84633;
+      --soft: #eef1ed;
+      --blue: #5377a8;
+      --blue-soft: #e9eff7;
+      --green: #4b806b;
+      --green-soft: #eaf2ee;
+      --gold: #c49239;
+      --gold-soft: #fbf2df;
+      --shadow: 0 20px 60px rgba(16, 24, 39, .14);
+      --radius: 24px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--ink); color: var(--ink); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { overflow: hidden; }
+    button { font: inherit; }
+    .app { min-height: 100vh; position: relative; overflow: hidden; }
+    .stage { min-height: 100vh; padding: 40px 40px 108px; display: grid; place-items: center; position: relative; }
+    .slide { width: min(1180px, 100%); height: min(720px, calc(100vh - 148px)); min-height: 520px; border-radius: var(--radius); background: var(--paper); box-shadow: var(--shadow); padding: clamp(28px, 5vw, 68px); display: none; position: relative; overflow: hidden; }
+    .slide.active { display: block; animation: enter .32s ease both; }
+    @keyframes enter { from { opacity: 0; transform: translateY(8px) scale(.99); } to { opacity: 1; transform: none; } }
+    .slide.dark { background: var(--ink); color: var(--paper); }
+    .slide.section { background: var(--accent); color: #fffaf7; }
+    .slide.section .eyebrow, .slide.section .source { color: rgba(255,255,255,.72); }
+    .slide.section h1 { max-width: 800px; font-size: clamp(48px, 8vw, 104px); line-height: .94; letter-spacing: -.065em; margin: 20px 0; }
+    .slide.cover { background: var(--ink); color: #f7f8f5; }
+    .slide.cover::before { content: ""; position: absolute; width: 640px; height: 640px; right: -220px; bottom: -250px; border: 1px solid rgba(255,255,255,.15); border-radius: 50%; box-shadow: 0 0 0 70px rgba(255,255,255,.025), 0 0 0 140px rgba(255,255,255,.018); }
+    .slide.cover::after { content: ""; position: absolute; width: 250px; height: 250px; right: 180px; top: 110px; background: var(--accent); border-radius: 54% 46% 40% 60%; opacity: .95; transform: rotate(24deg); }
+    .cover-content { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+    .cover h1 { max-width: 760px; font-size: clamp(48px, 8vw, 108px); line-height: .9; letter-spacing: -.075em; margin: 22px 0; }
+    .cover .dek { max-width: 560px; color: rgba(247,248,245,.72); font-size: clamp(18px, 2vw, 26px); line-height: 1.35; }
+    .cover-footer { display: flex; justify-content: space-between; align-items: end; gap: 24px; color: rgba(247,248,245,.6); font-size: 13px; text-transform: uppercase; letter-spacing: .12em; }
+    .eyebrow { color: var(--accent-dark); text-transform: uppercase; letter-spacing: .14em; font-size: 12px; font-weight: 800; }
+    .slide h2 { font-size: clamp(34px, 5vw, 64px); line-height: .98; letter-spacing: -.06em; margin: 14px 0 24px; max-width: 900px; }
+    .slide h3 { font-size: 20px; letter-spacing: -.025em; margin: 0 0 10px; }
+    .lead { font-size: clamp(19px, 2.2vw, 29px); line-height: 1.27; max-width: 840px; margin: 0; }
+    .body { font-size: 16px; line-height: 1.5; color: var(--muted); }
+    .dark .body, .dark .muted { color: rgba(247,248,245,.68); }
+    .source { position: absolute; bottom: 27px; left: clamp(28px, 5vw, 68px); color: #8a93a1; font-size: 11px; letter-spacing: .02em; max-width: calc(100% - 180px); }
+    .source a { color: inherit; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .cards { margin-top: 34px; }
+    .card { border: 1px solid var(--line); border-radius: 18px; padding: 20px; background: rgba(255,255,255,.64); }
+    .dark .card { border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.055); }
+    .card p { margin: 8px 0 0; color: var(--muted); line-height: 1.45; }
+    .dark .card p { color: rgba(247,248,245,.65); }
+    .card .tag { display: inline-flex; padding: 6px 9px; border-radius: 999px; background: var(--soft); color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 14px; }
+    .card .tag.orange { color: var(--accent-dark); background: #f9e6e1; }
+    .card .tag.blue { color: var(--blue); background: var(--blue-soft); }
+    .card .tag.gold { color: #8a651e; background: var(--gold-soft); }
+    .big-number { font-size: clamp(64px, 9vw, 128px); line-height: .8; letter-spacing: -.08em; color: var(--accent); font-weight: 800; }
+    .split { display: grid; grid-template-columns: .9fr 1.1fr; gap: 44px; align-items: center; height: calc(100% - 72px); }
+    .system-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch; margin-top: 32px; }
+    .system { border-radius: 20px; padding: 24px; min-height: 220px; }
+    .system.fast { background: #f9e6e1; border: 1px solid #f1c5bb; }
+    .system.slow { background: var(--blue-soft); border: 1px solid #c8d6ea; }
+    .system .glyph { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; margin-bottom: 24px; }
+    .fast .glyph { background: var(--accent); color: white; }
+    .slow .glyph { background: var(--blue); color: white; }
+    .system ul, .checklist, .steps { padding-left: 19px; margin: 12px 0 0; color: var(--muted); line-height: 1.55; }
+    .dark .system ul { color: rgba(247,248,245,.7); }
+    .flow { display: flex; align-items: center; gap: 12px; margin-top: 34px; flex-wrap: wrap; }
+    .flow .node { border-radius: 16px; padding: 18px 20px; background: var(--soft); min-width: 140px; }
+    .flow .node strong { display: block; font-size: 15px; }
+    .flow .node span { display: block; font-size: 12px; color: var(--muted); margin-top: 5px; }
+    .flow .arrow { color: var(--accent); font-size: 25px; }
+    .quote { border-left: 4px solid var(--accent); padding: 4px 0 4px 22px; font-size: clamp(24px, 3.2vw, 42px); line-height: 1.08; letter-spacing: -.04em; max-width: 840px; }
+    .quote small { display: block; font-size: 13px; line-height: 1.4; letter-spacing: 0; color: var(--muted); margin-top: 18px; }
+    .bias-table { width: 100%; border-collapse: collapse; margin-top: 25px; font-size: 14px; }
+    .bias-table th, .bias-table td { text-align: left; border-bottom: 1px solid var(--line); padding: 13px 11px; vertical-align: top; }
+    .bias-table th { color: var(--accent-dark); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; }
+    .bias-table td:first-child { font-weight: 800; width: 23%; }
+    .dark .bias-table th, .dark .bias-table td { border-color: rgba(255,255,255,.15); }
+    .dark .bias-table th { color: #f5b3a7; }
+    .dark .bias-table td { color: rgba(247,248,245,.75); }
+    .anchor-demo { margin-top: 30px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; align-items: end; }
+    .anchor-bar { border-radius: 15px 15px 5px 5px; background: var(--accent); height: var(--h); padding: 13px; color: white; font-weight: 800; display: flex; flex-direction: column; justify-content: end; }
+    .anchor-bar small { font-weight: 500; opacity: .8; margin-top: 4px; }
+    .mini-note { font-size: 12px; color: var(--muted); line-height: 1.45; }
+    .dark .mini-note { color: rgba(247,248,245,.6); }
+    .decision-loop { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 30px; counter-reset: item; }
+    .decision-loop .step { position: relative; padding: 22px 17px 18px; border-radius: 16px; background: var(--blue-soft); min-height: 160px; }
+    .decision-loop .step::before { counter-increment: item; content: counter(item, decimal-leading-zero); display: block; color: var(--blue); font-size: 12px; font-weight: 900; margin-bottom: 22px; }
+    .decision-loop .step strong { display: block; font-size: 15px; }
+    .decision-loop .step p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .protocol { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 28px; }
+    .protocol .row { display: grid; grid-template-columns: 38px 1fr; gap: 12px; align-items: start; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.65); }
+    .protocol .num { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--ink); color: white; font-size: 12px; font-weight: 800; }
+    .protocol p { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .callout { margin-top: 28px; background: var(--ink); color: var(--paper); padding: 22px 24px; border-radius: 18px; display: flex; gap: 15px; align-items: flex-start; }
+    .callout strong { color: #f5b3a7; }
+    .callout p { margin: 0; color: rgba(247,248,245,.75); font-size: 14px; line-height: 1.45; }
+    .limitations { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 30px; }
+    .limitations .card { min-height: 180px; }
+    .footerline { position: absolute; top: 26px; right: clamp(28px, 5vw, 68px); color: #8a93a1; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+    .dark .footerline { color: rgba(247,248,245,.45); }
+    .controls { position: fixed; right: 28px; bottom: 26px; display: flex; gap: 8px; z-index: 20; }
+    .control { width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.23); background: rgba(16,24,39,.9); color: white; border-radius: 12px; display: grid; place-items: center; cursor: pointer; transition: .2s ease; }
+    .control:hover { background: var(--accent); border-color: var(--accent); transform: translateY(-2px); }
+    .control:disabled { opacity: .35; cursor: default; transform: none; }
+    .progress { position: fixed; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255,255,255,.12); z-index: 20; }
+    .progress-fill { height: 100%; background: var(--accent); width: 0; transition: width .3s ease; }
+    .status { position: fixed; left: 28px; bottom: 33px; color: rgba(255,255,255,.62); z-index: 20; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+    .overlay { position: fixed; inset: 0; background: rgba(16,24,39,.88); backdrop-filter: blur(14px); z-index: 50; display: none; padding: 36px; overflow: auto; }
+    .overlay.open { display: block; }
+    .overlay-inner { max-width: 1080px; margin: 0 auto; }
+    .overlay-head { color: white; display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 24px; }
+    .overlay-head h2 { margin: 0; font-size: 28px; letter-spacing: -.04em; }
+    .close { border: 0; background: rgba(255,255,255,.12); color: white; width: 42px; height: 42px; border-radius: 12px; cursor: pointer; }
+    .index-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .index-item { text-align: left; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.07); color: white; border-radius: 16px; padding: 16px; min-height: 105px; cursor: pointer; transition: .2s ease; }
+    .index-item:hover, .index-item.current { background: var(--accent); border-color: var(--accent); transform: translateY(-2px); }
+    .index-item .index-no { display: block; font-size: 11px; opacity: .65; margin-bottom: 18px; }
+    .index-item .index-title { display: block; font-size: 14px; line-height: 1.25; }
+    .kbd { display: inline-flex; border: 1px solid rgba(255,255,255,.24); padding: 3px 6px; border-radius: 5px; font-size: 11px; color: rgba(255,255,255,.65); }
+    .tip { margin-top: 22px; color: rgba(255,255,255,.58); font-size: 12px; }
+    .fullscreen body { background: var(--ink); }
+    @media (max-width: 860px) {
+      .stage { padding: 18px 14px 94px; }
+      .slide { height: calc(100vh - 112px); min-height: 560px; padding: 30px 24px 56px; border-radius: 20px; overflow-y: auto; }
+      .grid-3, .limitations, .decision-loop { grid-template-columns: 1fr; }
+      .grid-2, .split, .protocol { grid-template-columns: 1fr; gap: 14px; }
+      .split { height: auto; display: block; }
+      .split > * + * { margin-top: 24px; }
+      .system-wrap { grid-template-columns: 1fr; }
+      .system { min-height: auto; }
+      .bias-table { font-size: 12px; }
+      .bias-table th, .bias-table td { padding: 10px 6px; }
+      .index-grid { grid-template-columns: repeat(2, 1fr); }
+      .overlay { padding: 22px 14px; }
+      .controls { right: 14px; bottom: 18px; }
+      .status { left: 14px; bottom: 26px; }
+      .source { bottom: 18px; max-width: calc(100% - 50px); }
+      .footerline { top: 18px; right: 24px; }
+      .cover::after { right: -60px; top: 145px; width: 180px; height: 180px; }
+    }
+    @media (max-width: 560px) {
+      .slide h2 { font-size: 39px; }
+      .lead { font-size: 20px; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .flow { gap: 7px; }
+      .flow .node { min-width: 0; flex: 1 1 40%; padding: 14px; }
+      .flow .arrow { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="Thinking, Fast and Slow interactive deck">
+    <div class="stage" id="stage">
+      <section class="slide cover active" data-title="Cover" data-section="Start">
+        <div class="cover-content">
+          <div>
+            <div class="eyebrow" style="color:#f5b3a7">A practical field guide</div>
+            <h1>Thinking,<br>Fast and Slow</h1>
+            <p class="dek">How intuition, attention, memory and choice shape the decisions we make, and how to build better decision environments.</p>
+          </div>
+          <div class="cover-footer"><span>Daniel Kahneman · distilled</span><span>Interactive deep dive · 2026</span></div>
+        </div>
+        <div class="source" style="color:rgba(247,248,245,.55)">Source: <a href="https://dn790002.ca.archive.org/0/items/DanielKahnemanThinkingFastAndSlow/Daniel%20Kahneman-Thinking%2C%20Fast%20and%20Slow%20%20.pdf" target="_blank" rel="noreferrer">supplied PDF</a> · Chapter references follow the book’s structure.</div>
+      </section>
+
+      <section class="slide" data-title="The one-minute version" data-section="TL;DR">
+        <div class="footerline">01 · TL;DR</div>
+        <div class="eyebrow">The one-minute version</div>
+        <h2>Your mind is efficient, not neutral.</h2>
+        <p class="lead">Most of the time, we use quick impressions and familiar patterns. That works brilliantly in everyday life, but it can also turn a guess into a belief before we notice.</p>
+        <div class="cards grid-3">
+          <div class="card"><span class="tag orange">Notice</span><h3>Fast is the default</h3><p>Intuition generates the first answer: a feeling, story, estimate or impulse.</p></div>
+          <div class="card"><span class="tag blue">Test</span><h3>Slow is a scarce resource</h3><p>Careful reasoning can correct the first answer, but it needs attention, time and motivation.</p></div>
+          <div class="card"><span class="tag gold">Design</span><h3>Good systems help</h3><p>Checklists, base rates, defaults and premortems make better thinking easier at the point of choice.</p></div>
+        </div>
+        <div class="callout"><strong>Use the book for:</strong><p>spotting when a confident story is built from too little evidence, then changing the decision process rather than relying on willpower alone.</p></div>
+        <div class="source">Book · Introduction; ch. 1–3; Conclusions</div>
+      </section>
+
+      <section class="slide section" data-title="Why this matters" data-section="Section break">
+        <div class="eyebrow">Section 01</div>
+        <h1>Why this matters</h1>
+        <p class="lead" style="color:rgba(255,250,247,.82)">The point isn’t to distrust every intuition. It’s to know when intuition deserves a second look.</p>
+        <div class="source">A practical interpretation of the book’s central argument.</div>
+      </section>
+
+      <section class="slide" data-title="Where it pays off" data-section="Why this matters">
+        <div class="footerline">02 · BENEFITS</div>
+        <div class="eyebrow">Where it pays off</div>
+        <h2>Better decisions come from better conditions.</h2>
+        <div class="grid-2 cards">
+          <div class="card"><span class="tag orange">Product</span><h3>Roadmaps and bets</h3><p>Separate what the team knows from the story it is telling about customers, competitors and timing.</p></div>
+          <div class="card"><span class="tag blue">AI / ML</span><h3>Model and eval choices</h3><p>Use base rates, held-out tests and explicit uncertainty instead of choosing the most fluent demo.</p></div>
+          <div class="card"><span class="tag green">Research</span><h3>Evidence and replication</h3><p>Expect noise in small samples. Pre-specify what would change your mind before seeing the result.</p></div>
+          <div class="card"><span class="tag gold">Life</span><h3>Time and trade-offs</h3><p>Distinguish how an experience feels while it happens from the story you will later remember about it.</p></div>
+        </div>
+        <div class="source">Book · ch. 10, 18, 23, 31, 35–38</div>
+      </section>
+
+      <section class="slide dark" data-title="Two characters, one mind" data-section="Deep dive">
+        <div class="footerline">03 · CORE MODEL</div>
+        <div class="eyebrow" style="color:#f5b3a7">The core model</div>
+        <h2>Two characters, one mind.</h2>
+        <div class="system-wrap">
+          <div class="system fast"><div class="glyph">1</div><h3>System 1 · automatic</h3><ul><li>Fast, associative and effortless</li><li>Produces impressions, feelings and first answers</li><li>Excellent with familiar patterns</li></ul></div>
+          <div class="system slow"><div class="glyph">2</div><h3>System 2 · effortful</h3><ul><li>Attention-demanding and sequential</li><li>Handles computation, rules and self-control</li><li>Can check System 1, but tires easily</li></ul></div>
+        </div>
+        <p class="body" style="margin-top:24px">These are useful labels for modes of processing, not literal brain modules. The practical question is: <strong style="color:#fff">what would make a check happen here?</strong></p>
+        <div class="source">Book · ch. 1–3; Conclusions, “Two Systems”</div>
+      </section>
+
+      <section class="slide" data-title="The hand-off" data-section="Deep dive">
+        <div class="footerline">04 · MECHANISM</div>
+        <div class="eyebrow">The hand-off</div>
+        <h2>System 1 proposes. System 2 usually approves.</h2>
+        <div class="flow">
+          <div class="node"><strong>Signal</strong><span>Something familiar, salient or surprising</span></div><div class="arrow">→</div>
+          <div class="node"><strong>Story</strong><span>A coherent interpretation arrives</span></div><div class="arrow">→</div>
+          <div class="node"><strong>Shortcut</strong><span>An easier question replaces the hard one</span></div><div class="arrow">→</div>
+          <div class="node"><strong>Choice</strong><span>Confidence can feel like evidence</span></div>
+        </div>
+        <div class="quote" style="margin-top:44px">“What you see is all there is” is the recurring failure mode: missing information rarely feels missing.<small>Book · ch. 7; ch. 24. This slide paraphrases the book’s WYSIATI concept.</small></div>
+        <div class="source">Book · ch. 7–9, 19–24</div>
+      </section>
+
+      <section class="slide" data-title="Cognitive ease" data-section="Deep dive">
+        <div class="footerline">05 · COGNITIVE EASE</div>
+        <div class="eyebrow">Cognitive ease</div>
+        <h2>Easy to process can feel like true.</h2>
+        <p class="lead">Familiarity, repetition, clear presentation and a good mood can make an idea feel more credible or more obvious, even when they are not evidence for the claim.</p>
+        <div class="grid-2 cards">
+          <div class="card"><h3>Useful side</h3><p>Clear language and legible design reduce needless friction. People can understand the important thing faster.</p></div>
+          <div class="card"><h3>Risky side</h3><p>A repeated claim can borrow the feeling of familiarity. A polished demo can borrow the feeling of competence.</p></div>
+        </div>
+        <div class="callout"><strong>Design check:</strong><p>Make the interface easy to use, but make the evidence hard to fake. Keep provenance, uncertainty and counter-evidence visible.</p></div>
+        <div class="source">Book · ch. 5; ch. 7; ch. 10–13</div>
+      </section>
+
+      <section class="slide" data-title="The shortcut catalogue" data-section="Deep dive">
+        <div class="footerline">06 · HEURISTICS</div>
+        <div class="eyebrow">The shortcut catalogue</div>
+        <h2>Common shortcuts, translated into plain English.</h2>
+        <table class="bias-table">
+          <thead><tr><th>Shortcut</th><th>What it does</th><th>Where it bites</th></tr></thead>
+          <tbody>
+            <tr><td>Availability</td><td>Judges likelihood by how easily examples come to mind.</td><td>Recent incidents, vivid demos, news cycles.</td></tr>
+            <tr><td>Representativeness</td><td>Matches a case to a prototype and neglects base rates.</td><td>Hiring, diagnosis, user research, “this feels like a winner”.</td></tr>
+            <tr><td>Substitution</td><td>Answers an easier question than the one asked.</td><td>“How good is this strategy?” becomes “Do I like the story?”</td></tr>
+            <tr><td>Anchoring</td><td>Starts from a number and adjusts too little.</td><td>Pricing, estimates, targets and negotiations.</td></tr>
+          </tbody>
+        </table>
+        <p class="mini-note" style="margin-top:18px">A heuristic is not automatically a mistake. The risk is using a shortcut in a setting where the cues are noisy, the stakes are high or the base rate is ignored.</p>
+        <div class="source">Book · ch. 8–18; Appendix A</div>
+      </section>
+
+      <section class="slide" data-title="Anchors bend the estimate" data-section="Deep dive">
+        <div class="footerline">07 · ANCHORING</div>
+        <div class="eyebrow">Anchoring</div>
+        <h2>The first number can bend the next number.</h2>
+        <p class="lead">Kahneman and Tversky found that even arbitrary numbers can pull estimates towards them. People may adjust deliberately, but they often stop too soon.</p>
+        <div class="anchor-demo">
+          <div class="anchor-bar" style="--h:120px">Low anchor<small>estimate pulled down</small></div>
+          <div class="anchor-bar" style="--h:205px;background:var(--blue)">Neutral process<small>independent estimate</small></div>
+          <div class="anchor-bar" style="--h:285px;background:var(--gold)">High anchor<small>estimate pulled up</small></div>
+        </div>
+        <div class="grid-2" style="margin-top:26px"><div class="card"><h3>Before estimating</h3><p>Write your independent range first. Separate assumptions from the number already on the table.</p></div><div class="card"><h3>When negotiating</h3><p>Don’t merely counter an extreme anchor. Explain why it is irrelevant and bring evidence from the outside view.</p></div></div>
+        <div class="source">Book · ch. 11, “Anchors”</div>
+      </section>
+
+      <section class="slide dark" data-title="Small samples, big stories" data-section="Deep dive">
+        <div class="footerline">08 · STATISTICS</div>
+        <div class="eyebrow" style="color:#f5b3a7">Statistical intuition</div>
+        <h2>Small samples produce extreme results more often.</h2>
+        <div class="split">
+          <div><div class="big-number">n</div><p class="lead">The smaller the sample, the more noise can masquerade as a pattern.</p></div>
+          <div><div class="card" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)"><h3>Kidney-cancer counties</h3><p class="body">In the book’s example, both the highest and lowest rates appeared disproportionately in small, rural counties. The shared feature was small sample size, not a rural causal explanation.</p></div><div class="card" style="margin-top:14px;background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)"><h3>Practical implication</h3><p class="body">Treat a striking result as a prompt to ask: how much data produced this? What happens on replication? What is the comparison group?</p></div></div>
+        </div>
+        <div class="source">Book · ch. 10, “The Law of Small Numbers”; source example is presented as a teaching illustration.</div>
+      </section>
+
+      <section class="slide" data-title="Overconfidence and the outside view" data-section="Deep dive">
+        <div class="footerline">09 · FORECASTING</div>
+        <div class="eyebrow">Forecasting</div>
+        <h2>Confidence follows the story, not necessarily the evidence.</h2>
+        <div class="grid-2 cards">
+          <div class="card"><span class="tag orange">Inside view</span><h3>“Our plan makes sense.”</h3><p>Focuses on the particular case: our team, our product, our advantages and our intended path.</p></div>
+          <div class="card"><span class="tag blue">Outside view</span><h3>“What happened to similar cases?”</h3><p>Starts with a reference class, distribution of outcomes and the obstacles that affected comparable efforts.</p></div>
+        </div>
+        <div class="protocol" style="margin-top:26px">
+          <div class="row"><div class="num">1</div><div><h3>Make a forecast</h3><p>Give a range, not just a point estimate.</p></div></div>
+          <div class="row"><div class="num">2</div><div><h3>Find the reference class</h3><p>Use comparable projects, not only your own narrative.</p></div></div>
+          <div class="row"><div class="num">3</div><div><h3>Run a premortem</h3><p>Assume the plan failed and write the history of how.</p></div></div>
+          <div class="row"><div class="num">4</div><div><h3>Record the prediction</h3><p>Review calibration later. Memory edits the past.</p></div></div>
+        </div>
+        <div class="source">Book · ch. 19–24, especially ch. 23 “The Outside View”</div>
+      </section>
+
+      <section class="slide section" data-title="Choices under uncertainty" data-section="Section break">
+        <div class="eyebrow">Section 02</div>
+        <h1>Choices under uncertainty</h1>
+        <p class="lead" style="color:rgba(255,250,247,.82)">We don’t evaluate gains and losses symmetrically. The frame and the reference point matter.</p>
+        <div class="source">Book · Part IV, “Choices”</div>
+      </section>
+
+      <section class="slide" data-title="Prospect theory in plain English" data-section="Choices">
+        <div class="footerline">10 · PROSPECT THEORY</div>
+        <div class="eyebrow">Prospect theory</div>
+        <h2>Losses usually feel larger than equivalent gains.</h2>
+        <p class="lead">The value of an outcome is judged relative to a reference point. As the outcome moves farther away, sensitivity tends to flatten.</p>
+        <div class="grid-2 cards">
+          <div class="card"><span class="tag orange">Reference point</span><h3>“Where am I starting?”</h3><p>A price, current state, expectation or previous outcome can become the baseline that defines gain and loss.</p></div>
+          <div class="card"><span class="tag blue">Asymmetry</span><h3>“How would I feel about losing it?”</h3><p>The emotional impact of giving something up can outweigh the pleasure of receiving the same thing.</p></div>
+        </div>
+        <div class="callout"><strong>Product implication:</strong><p>When introducing change, understand the user’s reference point. A “benefit” can still feel like a loss if it removes a familiar capability or control.</p></div>
+        <div class="source">Book · ch. 25–29, especially ch. 26 “Prospect Theory”</div>
+      </section>
+
+      <section class="slide" data-title="Framing changes the choice" data-section="Choices">
+        <div class="footerline">11 · FRAMING</div>
+        <div class="eyebrow">Framing</div>
+        <h2>Same facts. Different frame. Different choice.</h2>
+        <div class="grid-2 cards">
+          <div class="card" style="background:var(--green-soft);border-color:#c9dfd2"><span class="tag" style="color:var(--green)">Gain frame</span><h3>“90% fat-free”</h3><p>Highlights what remains as a positive attribute.</p></div>
+          <div class="card" style="background:#f9e6e1;border-color:#f1c5bb"><span class="tag orange">Loss frame</span><h3>“10% fat”</h3><p>Highlights what is given up or at risk.</p></div>
+        </div>
+        <div class="decision-loop">
+          <div class="step"><strong>State the decision</strong><p>What choice is actually being made?</p></div>
+          <div class="step"><strong>Flip the frame</strong><p>Write the same option as gain and loss.</p></div>
+          <div class="step"><strong>Check invariance</strong><p>Would a neutral description change your preference?</p></div>
+          <div class="step"><strong>Choose deliberately</strong><p>Explain the trade-off in plain language.</p></div>
+        </div>
+        <div class="source">Book · ch. 34 “Frames and Reality”; ch. 31 “Risk Policies”</div>
+      </section>
+
+      <section class="slide" data-title="The two selves" data-section="Deep dive">
+        <div class="footerline">12 · MEMORY</div>
+        <div class="eyebrow">Memory and well-being</div>
+        <h2>The self that experiences is not the self that remembers.</h2>
+        <div class="grid-2 cards">
+          <div class="card"><span class="tag orange">Experiencing self</span><h3>“How does it feel now?”</h3><p>Tracks the moment-by-moment experience. Duration matters because moments accumulate.</p></div>
+          <div class="card"><span class="tag blue">Remembering self</span><h3>“How was it overall?”</h3><p>Builds a compact story, strongly influenced by the peak and the end. Duration can disappear from the summary.</p></div>
+        </div>
+        <div class="flow" style="margin-top:28px"><div class="node"><strong>Live experience</strong><span>Many moments over time</span></div><div class="arrow">→</div><div class="node"><strong>Memory</strong><span>Peak + ending + story</span></div><div class="arrow">→</div><div class="node"><strong>Future choice</strong><span>Repeat, avoid or recommend</span></div></div>
+        <div class="source">Book · ch. 35 “Two Selves”; ch. 36 “Life as a Story”; ch. 37 “Experienced Well-Being”</div>
+      </section>
+
+      <section class="slide dark" data-title="Peak-end and duration neglect" data-section="Deep dive">
+        <div class="footerline">13 · PEAK-END</div>
+        <div class="eyebrow" style="color:#f5b3a7">Peak-end rule</div>
+        <h2>A good ending can improve the memory of a long experience.</h2>
+        <div class="grid-2" style="margin-top:28px">
+          <div class="card"><h3 style="color:#f5b3a7">What the experience contains</h3><p class="body">A whole curve: high and low moments, plus the time spent in each state.</p><div style="height:90px;margin-top:14px;border-bottom:2px solid rgba(255,255,255,.35);position:relative"><svg viewBox="0 0 500 110" width="100%" height="100%" preserveAspectRatio="none" aria-label="Experience curve"><path d="M0 78 C45 54 75 94 120 65 S190 28 230 68 S300 88 355 42 S425 62 500 55" fill="none" stroke="#f5b3a7" stroke-width="6" stroke-linecap="round"/></svg></div></div>
+          <div class="card"><h3 style="color:#a9c1e2">What the memory keeps</h3><p class="body">A compressed judgement that overweights the most intense moment and the ending.</p><div style="height:90px;margin-top:14px;display:flex;align-items:end;gap:8px"><span style="height:38%;flex:1;background:#5377a8;border-radius:8px 8px 0 0"></span><span style="height:92%;flex:1;background:#ec6b4f;border-radius:8px 8px 0 0"></span><span style="height:22%;flex:1;background:#5377a8;border-radius:8px 8px 0 0"></span><span style="height:76%;flex:1;background:#4b806b;border-radius:8px 8px 0 0"></span></div></div>
+        </div>
+        <p class="body" style="margin-top:24px">Before improving an experience, decide which outcome matters: lower total burden, a better memory, or both. They can point to different interventions.</p>
+        <div class="source">Book · ch. 35; colonoscopy and cold-hand studies described in the source.</div>
+      </section>
+
+      <section class="slide" data-title="What the book does not say" data-section="Deep dive">
+        <div class="footerline">14 · LIMITS</div>
+        <div class="eyebrow">Important limits</div>
+        <h2>Use the model as a prompt, not a verdict.</h2>
+        <div class="limitations">
+          <div class="card"><span class="tag orange">Not literal</span><h3>System 1 and 2 aren’t brain boxes.</h3><p>They are shorthand for automatic and effortful operations. The book says this explicitly in its conclusion.</p></div>
+          <div class="card"><span class="tag blue">Not universal</span><h3>Intuition isn’t always a bias.</h3><p>In stable environments with repeated practice and fast feedback, expert intuition can be valuable.</p></div>
+          <div class="card"><span class="tag gold">Not magic</span><h3>A checklist can still fail.</h3><p>Good process reduces predictable error; it doesn’t remove uncertainty, incentives or bad data.</p></div>
+        </div>
+        <div class="callout"><strong>Evidence discipline:</strong><p>Ask what is directly supported by the source, what is a reasonable interpretation, and what is a recommendation for your context.</p></div>
+        <div class="source">Book · ch. 22 “Expert Intuition”; Conclusions, “Two Systems” and “Econs and Humans”</div>
+      </section>
+
+      <section class="slide section" data-title="A decision hygiene protocol" data-section="Section break">
+        <div class="eyebrow">Section 03</div>
+        <h1>A decision hygiene protocol</h1>
+        <p class="lead" style="color:rgba(255,250,247,.82)">A lightweight routine for slowing down only where slowing down is worth the cost.</p>
+        <div class="source">Implementation guide · derived from the book’s decision principles.</div>
+      </section>
+
+      <section class="slide" data-title="Before the meeting" data-section="How-to guide">
+        <div class="footerline">15 · STEP 01</div>
+        <div class="eyebrow">Step 01 · Before the meeting</div>
+        <h2>Define the decision before discussing the story.</h2>
+        <div class="protocol">
+          <div class="row"><div class="num">A</div><div><h3>Write the question</h3><p>“Which option should we choose?” not “Do we like option A?”</p></div></div>
+          <div class="row"><div class="num">B</div><div><h3>Name the stakes</h3><p>What is reversible, what is costly and what has a deadline?</p></div></div>
+          <div class="row"><div class="num">C</div><div><h3>Set the reference point</h3><p>What is the baseline, current alternative or default?</p></div></div>
+          <div class="row"><div class="num">D</div><div><h3>Record the first estimate</h3><p>Capture your range before other people’s numbers become anchors.</p></div></div>
+        </div>
+        <div class="source">Implementation recommendation · informed by Book ch. 11, 23, 31 and 34.</div>
+      </section>
+
+      <section class="slide" data-title="During the meeting" data-section="How-to guide">
+        <div class="footerline">16 · STEP 02</div>
+        <div class="eyebrow">Step 02 · During the meeting</div>
+        <h2>Make the hidden shortcuts visible.</h2>
+        <div class="decision-loop">
+          <div class="step"><strong>Base rate</strong><p>What happened in comparable cases?</p></div>
+          <div class="step"><strong>Sample size</strong><p>How much data supports this pattern?</p></div>
+          <div class="step"><strong>Alternative story</strong><p>What else could explain the same evidence?</p></div>
+          <div class="step"><strong>Frame flip</strong><p>Would the decision survive a gain/loss rewrite?</p></div>
+        </div>
+        <div class="callout"><strong>Meeting move:</strong><p>Ask for a “consider-the-opposite” pass before asking for consensus. It is easier to notice a blind spot before the group has publicly committed.</p></div>
+        <div class="source">Implementation recommendation · informed by Book ch. 7–18 and ch. 31–34.</div>
+      </section>
+
+      <section class="slide" data-title="Before committing" data-section="How-to guide">
+        <div class="footerline">17 · STEP 03</div>
+        <div class="eyebrow">Step 03 · Before committing</div>
+        <h2>Use a premortem to release dissent.</h2>
+        <p class="lead">Imagine the plan has failed one year from now. Each person has five to ten minutes to write the history of the failure.</p>
+        <div class="grid-2 cards">
+          <div class="card"><span class="tag orange">Prompt</span><h3>“It failed because…”</h3><p>What obstacle, dependency, incentive or assumption did we underestimate?</p></div>
+          <div class="card"><span class="tag blue">Output</span><h3>Risk register, not theatre</h3><p>Turn each credible failure mode into an owner, an early signal and a mitigation.</p></div>
+        </div>
+        <div class="flow"><div class="node"><strong>Plan</strong><span>Intended path</span></div><div class="arrow">→</div><div class="node"><strong>Failure story</strong><span>Competing narrative</span></div><div class="arrow">→</div><div class="node"><strong>Mitigation</strong><span>Change the plan or measure</span></div></div>
+        <div class="source">Book · ch. 24, “The Premortem: A Partial Remedy”</div>
+      </section>
+
+      <section class="slide" data-title="After the decision" data-section="How-to guide">
+        <div class="footerline">18 · STEP 04</div>
+        <div class="eyebrow">Step 04 · After the decision</div>
+        <h2>Keep a record so confidence can meet reality.</h2>
+        <div class="grid-2 cards">
+          <div class="card"><h3>Prediction log</h3><p>Record the date, forecast, range, assumptions, reference class and confidence.</p><pre style="white-space:pre-wrap;font:12px ui-monospace,monospace;color:var(--blue);background:var(--blue-soft);padding:12px;border-radius:10px;margin-top:14px">Outcome: ______
+Range: ________
+Confidence: ___%
+Base rate: _____</pre></div>
+          <div class="card"><h3>Review loop</h3><ol class="steps"><li>Compare outcome with forecast.</li><li>Separate luck from process quality.</li><li>Update the reference class.</li><li>Adjust the next estimate.</li></ol></div>
+        </div>
+        <div class="callout"><strong>Don’t rewrite history:</strong><p>Keep the original prediction. Retrospective coherence is one of the reasons overconfidence survives.</p></div>
+        <div class="source">Implementation recommendation · informed by Book ch. 19–24.</div>
+      </section>
+
+      <section class="slide" data-title="Apply it to AI product work" data-section="How-to guide">
+        <div class="footerline">19 · USE CASE</div>
+        <div class="eyebrow">Example · AI product leadership</div>
+        <h2>Turn the book into an AI decision checklist.</h2>
+        <table class="bias-table">
+          <thead><tr><th>Decision moment</th><th>Likely trap</th><th>Countermeasure</th></tr></thead>
+          <tbody>
+            <tr><td>Model selection</td><td>Fluent demo becomes “best model”.</td><td>Blind task set, fixed rubric, cost/latency and failure taxonomy.</td></tr>
+            <tr><td>Launch forecast</td><td>Inside view and competitor neglect.</td><td>Reference class: comparable launches, adoption funnel and disconfirming signals.</td></tr>
+            <tr><td>Eval result</td><td>Small sample or vivid success story.</td><td>Power/sample check, held-out cases, confidence range and replication.</td></tr>
+            <tr><td>UX change</td><td>Loss aversion and default bias.</td><td>Frame flip, user baseline, opt-out test and reversible rollout.</td></tr>
+          </tbody>
+        </table>
+        <div class="source">Applied example · recommendation derived from the book; not a claim made by the source itself.</div>
+      </section>
+
+      <section class="slide" data-title="The one-page field card" data-section="Takeaways">
+        <div class="footerline">20 · FIELD CARD</div>
+        <div class="eyebrow">The one-page field card</div>
+        <h2>When the decision matters, ask these seven questions.</h2>
+        <ol class="checklist" style="font-size:18px;line-height:1.75;color:var(--ink)">
+          <li>What is the actual question?</li>
+          <li>What first impression or number is anchoring me?</li>
+          <li>What is the base rate and how large is the sample?</li>
+          <li>What evidence would disconfirm my story?</li>
+          <li>What does the outside view say?</li>
+          <li>How does the frame change the choice?</li>
+          <li>Will I later judge the experience by the peak and the end?</li>
+        </ol>
+        <div class="source">Synthesis · Book Parts I–V and Conclusions.</div>
+      </section>
+
+      <section class="slide" data-title="Closing takeaways" data-section="Takeaways">
+        <div class="footerline">21 · CLOSE</div>
+        <div class="eyebrow">Closing takeaways</div>
+        <h2>Don’t aim to think slowly all the time.</h2>
+        <p class="lead">Aim to recognise the moments when a quick answer is expensive, when uncertainty is being hidden, or when the environment is nudging the choice for you.</p>
+        <div class="grid-3 cards">
+          <div class="card"><h3>Slow down selectively</h3><p>Use effort where the stakes, uncertainty or irreversibility justify it.</p></div>
+          <div class="card"><h3>Design the process</h3><p>Base rates, defaults, logs and premortems beat heroic vigilance.</p></div>
+          <div class="card"><h3>Stay humble</h3><p>Confidence is a feeling about the story. Calibration is a relationship with outcomes.</p></div>
+        </div>
+        <div class="callout"><strong>Thank you.</strong><p>Share this deck with anyone who makes decisions under uncertainty. Source: Daniel Kahneman, <em>Thinking, Fast and Slow</em>, 2011. This deck is a concise educational synthesis, not a substitute for reading the book or checking original studies.</p></div>
+        <div class="source">Source PDF · <a href="https://dn790002.ca.archive.org/0/items/DanielKahnemanThinkingFastAndSlow/Daniel%20Kahneman-Thinking%2C%20Fast%20and%20Slow%20%20.pdf" target="_blank" rel="noreferrer">open source</a> · deck by Vivid</div>
+      </section>
+    </div>
+
+    <div class="status"><span id="slideNo">01</span> / <span id="slideTotal">21</span></div>
+    <div class="controls" aria-label="Deck controls">
+      <button class="control" id="prev" aria-label="Previous slide" title="Previous slide"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+      <button class="control" id="next" aria-label="Next slide" title="Next slide"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+      <button class="control" id="overview" aria-label="Open slide overview" title="Slide overview"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+      <button class="control" id="fullscreen" aria-label="Toggle full screen" title="Full screen"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+    </div>
+    <div class="progress" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-label="Slide overview">
+      <div class="overlay-inner">
+        <div class="overlay-head"><h2>Slide overview</h2><button class="close" id="closeOverview" aria-label="Close overview">×</button></div>
+        <div class="index-grid" id="indexGrid"></div>
+        <div class="tip">Keyboard: <span class="kbd">←</span> <span class="kbd">→</span> navigate · <span class="kbd">O</span> overview · <span class="kbd">F</span> full screen · <span class="kbd">Esc</span> close</div>
+      </div>
+    </div>
+  </main>
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const prev = document.getElementById('prev');
+      const next = document.getElementById('next');
+      const overview = document.getElementById('overview');
+      const fullscreen = document.getElementById('fullscreen');
+      const overlay = document.getElementById('overlay');
+      const closeOverview = document.getElementById('closeOverview');
+      const indexGrid = document.getElementById('indexGrid');
+      const slideNo = document.getElementById('slideNo');
+      const slideTotal = document.getElementById('slideTotal');
+      const progressFill = document.getElementById('progressFill');
+      let current = 0;
+      let touchStartX = null;
+
+      slideTotal.textContent = String(slides.length).padStart(2, '0');
+      slides.forEach((slide, i) => {
+        const item = document.createElement('button');
+        item.className = 'index-item';
+        item.dataset.index = i;
+        item.innerHTML = `<span class="index-no">${String(i + 1).padStart(2, '0')} · ${slide.dataset.section || ''}</span><span class="index-title">${slide.dataset.title || 'Slide ' + (i + 1)}</span>`;
+        item.addEventListener('click', () => { goTo(i); closeIndex(); });
+        indexGrid.appendChild(item);
+      });
+
+      function goTo(index) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((s, i) => s.classList.toggle('active', i === current));
+        document.querySelectorAll('.index-item').forEach((item, i) => item.classList.toggle('current', i === current));
+        slideNo.textContent = String(current + 1).padStart(2, '0');
+        progressFill.style.width = `${((current + 1) / slides.length) * 100}%`;
+        prev.disabled = current === 0;
+        next.disabled = current === slides.length - 1;
+        history.replaceState(null, '', `#${current + 1}`);
+      }
+      function nextSlide() { goTo(current + 1); }
+      function prevSlide() { goTo(current - 1); }
+      function openIndex() { overlay.classList.add('open'); closeOverview.focus(); }
+      function closeIndex() { overlay.classList.remove('open'); overview.focus(); }
+      async function toggleFullscreen() {
+        try {
+          if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+          else await document.exitFullscreen();
+        } catch (e) { document.body.classList.toggle('fullscreen'); }
+      }
+      prev.addEventListener('click', prevSlide);
+      next.addEventListener('click', nextSlide);
+      overview.addEventListener('click', openIndex);
+      closeOverview.addEventListener('click', closeIndex);
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) closeIndex(); });
+      fullscreen.addEventListener('click', toggleFullscreen);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && overlay.classList.contains('open')) { closeIndex(); return; }
+        if (['ArrowRight', ' ', 'PageDown'].includes(e.key)) { e.preventDefault(); nextSlide(); }
+        if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); prevSlide(); }
+        if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+        if (e.key === 'End') { e.preventDefault(); goTo(slides.length - 1); }
+        if (e.key.toLowerCase() === 'o') openIndex();
+        if (e.key.toLowerCase() === 'f') toggleFullscreen();
+      });
+      document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive:true});
+      document.addEventListener('touchend', e => {
+        if (touchStartX === null) return;
+        const dx = e.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(dx) > 55) dx < 0 ? nextSlide() : prevSlide();
+        touchStartX = null;
+      }, {passive:true});
+      const hash = Number(location.hash.slice(1));
+      goTo(Number.isFinite(hash) && hash > 0 ? hash - 1 : 0);
+    })();
+  </script>
+</body>
+</html>

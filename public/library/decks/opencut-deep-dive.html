@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenCut — Deep Dive</title>
+  <meta name="description" content="An interactive deep dive into OpenCut, the open-source CapCut alternative and its ground-up rewrite." />
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --panel: #12161b;
+      --panel-2: #171c22;
+      --text: #f1f3f5;
+      --muted: #a5adb7;
+      --dim: #6e7885;
+      --line: rgba(255,255,255,.11);
+      --accent: #ff674e;
+      --accent-2: #d4ff4f;
+      --blue: #8db7ff;
+      --shadow: 0 30px 80px rgba(0,0,0,.35);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { overflow: hidden; }
+    button { font: inherit; }
+    a { color: inherit; }
+    .app { height: 100svh; position: relative; overflow: hidden; }
+    .noise { position: fixed; inset: 0; pointer-events: none; opacity: .06; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.34'/%3E%3C/svg%3E"); z-index: 20; }
+    .topbar { position: fixed; top: 0; left: 0; right: 0; height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 26px; z-index: 10; border-bottom: 1px solid rgba(255,255,255,.07); background: linear-gradient(180deg, rgba(11,13,16,.95), rgba(11,13,16,.35)); backdrop-filter: blur(18px); }
+    .brand { display: flex; align-items: center; gap: 11px; font-size: 13px; font-weight: 750; letter-spacing: .01em; }
+    .brand-mark { width: 24px; height: 24px; border-radius: 8px; background: var(--accent); display: grid; place-items: center; color: #17100d; box-shadow: 0 0 0 4px rgba(255,103,78,.12); }
+    .brand-mark svg { width: 15px; height: 15px; }
+    .top-actions { display: flex; gap: 8px; align-items: center; }
+    .icon-btn { width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 12px; color: var(--muted); background: rgba(255,255,255,.04); display: grid; place-items: center; cursor: pointer; transition: .2s ease; }
+    .icon-btn:hover, .icon-btn:focus-visible { color: var(--text); border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.09); outline: none; transform: translateY(-1px); }
+    .icon-btn svg { width: 17px; height: 17px; }
+    .progress { position: fixed; top: 71px; left: 0; height: 2px; background: var(--accent); z-index: 12; width: 0; transition: width .35s ease; }
+    .deck { height: 100%; display: flex; transition: transform .5s cubic-bezier(.22,.78,.25,1); }
+    .slide { flex: 0 0 100vw; height: 100svh; padding: 112px 8vw 98px; position: relative; overflow: auto; display: grid; align-content: center; }
+    .slide::before { content: attr(data-num); position: absolute; top: 116px; right: 8vw; color: rgba(255,255,255,.2); font-size: 11px; letter-spacing: .12em; }
+    .slide-inner { width: min(1120px, 100%); margin: 0 auto; }
+    .eyebrow { color: var(--accent); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; font-weight: 800; margin-bottom: 18px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(46px, 7.6vw, 104px); line-height: .93; letter-spacing: -.075em; max-width: 800px; margin-bottom: 24px; }
+    h2 { font-size: clamp(34px, 5vw, 70px); line-height: .98; letter-spacing: -.06em; max-width: 850px; margin-bottom: 25px; }
+    h3 { font-size: 20px; letter-spacing: -.025em; margin-bottom: 9px; }
+    p { color: var(--muted); line-height: 1.6; max-width: 720px; }
+    .lede { font-size: clamp(17px, 2vw, 23px); line-height: 1.35; max-width: 720px; color: #d4d8dc; }
+    .subtle { color: var(--dim); }
+    .source { position: absolute; bottom: 28px; left: 8vw; right: 8vw; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; color: var(--dim); font-size: 11px; z-index: 2; }
+    .source a { color: var(--muted); text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.25); }
+    .source a:hover { color: var(--accent-2); border-color: var(--accent-2); }
+    .pill { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; color: var(--muted); font-size: 12px; background: rgba(255,255,255,.04); }
+    .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-2); box-shadow: 0 0 0 4px rgba(212,255,79,.1); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+    .card { border: 1px solid var(--line); background: linear-gradient(145deg, rgba(255,255,255,.075), rgba(255,255,255,.025)); border-radius: 20px; padding: 22px; box-shadow: var(--shadow); }
+    .card p { font-size: 14px; margin-bottom: 0; }
+    .card small { color: var(--dim); text-transform: uppercase; font-size: 10px; letter-spacing: .12em; font-weight: 800; }
+    .tag { display: inline-block; color: var(--accent-2); font-size: 11px; border: 1px solid rgba(212,255,79,.25); background: rgba(212,255,79,.07); padding: 5px 8px; border-radius: 7px; margin-bottom: 14px; }
+    .accent { color: var(--accent); }
+    .lime { color: var(--accent-2); }
+    .blue { color: var(--blue); }
+    .cover { background: radial-gradient(circle at 75% 45%, rgba(255,103,78,.17), transparent 25%), radial-gradient(circle at 84% 76%, rgba(212,255,79,.08), transparent 21%); }
+    .cover-layout { display: grid; grid-template-columns: 1.1fr .9fr; align-items: center; gap: 50px; }
+    .cover-meta { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 28px; }
+    .orbit { min-height: 420px; position: relative; display: grid; place-items: center; }
+    .orbit::before, .orbit::after { content: ""; position: absolute; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; transform: rotate(-22deg); }
+    .orbit::before { width: 360px; height: 220px; }
+    .orbit::after { width: 240px; height: 420px; transform: rotate(58deg); border-color: rgba(255,103,78,.35); }
+    .lens { width: 260px; height: 260px; border-radius: 52px; background: linear-gradient(145deg, #ff795f, #aa302b 55%, #11191d); position: relative; display: grid; place-items: center; box-shadow: 20px 30px 70px rgba(255,103,78,.2), inset 0 1px 0 rgba(255,255,255,.4); transform: rotate(-8deg); }
+    .lens::before, .lens::after { content: ""; position: absolute; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); }
+    .lens::before { width: 120px; height: 120px; }
+    .lens::after { width: 70px; height: 70px; border-color: rgba(212,255,79,.8); }
+    .film { position: absolute; width: 86px; height: 22px; background: var(--accent-2); border-radius: 6px; transform: rotate(34deg) translate(140px,-115px); box-shadow: 0 0 30px rgba(212,255,79,.22); }
+    .film::before, .film::after { content: ""; position: absolute; top: 4px; width: 11px; height: 14px; background: #1b231b; border-radius: 2px; box-shadow: 19px 0 #1b231b, 38px 0 #1b231b, 57px 0 #1b231b; }
+    .film::before { left: 6px; } .film::after { top: 23px; left: 18px; }
+    .section { background: linear-gradient(135deg, #1a1411, #0b0d10 58%); }
+    .section .section-mark { font-size: clamp(100px, 22vw, 310px); color: rgba(255,103,78,.12); font-weight: 900; letter-spacing: -.1em; position: absolute; right: 6vw; bottom: 2vh; line-height: .7; }
+    .section h2 { max-width: 700px; }
+    .stat { font-size: 44px; letter-spacing: -.07em; font-weight: 800; color: var(--text); display: block; margin-bottom: 5px; }
+    .stat-label { color: var(--muted); font-size: 13px; line-height: 1.35; }
+    .list { display: grid; gap: 11px; margin: 20px 0 0; padding: 0; list-style: none; }
+    .list li { color: #d9dde1; line-height: 1.45; display: flex; gap: 10px; }
+    .list li::before { content: "↗"; color: var(--accent); font-weight: 800; }
+    .arch { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 14px; align-items: center; margin-top: 24px; }
+    .arch-col { display: grid; gap: 12px; }
+    .arch-node { border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: rgba(255,255,255,.045); min-height: 102px; }
+    .arch-node strong { display: block; margin-bottom: 6px; }
+    .arch-node span { color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .arch-core { border: 1px solid rgba(255,103,78,.5); background: linear-gradient(145deg, rgba(255,103,78,.18), rgba(255,103,78,.04)); border-radius: 22px; padding: 28px; min-height: 220px; display: grid; place-items: center; text-align: center; box-shadow: 0 0 60px rgba(255,103,78,.08); }
+    .arch-core strong { font-size: 24px; letter-spacing: -.04em; }
+    .arch-core span { font-size: 13px; color: #f4beb4; }
+    .code { background: #0a0c0f; border: 1px solid var(--line); border-radius: 17px; padding: 20px; overflow: auto; color: #d6dbe0; font: 12px/1.7 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; }
+    .code .prompt { color: var(--accent-2); } .code .comment { color: #6e7885; }
+    .timeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 26px; border-top: 1px solid var(--line); }
+    .step { position: relative; padding: 20px 18px 0 0; border-right: 1px solid var(--line); margin-right: 18px; }
+    .step:last-child { border-right: 0; margin-right: 0; }
+    .step::before { content: ""; display: block; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); margin-top: -26px; margin-bottom: 15px; box-shadow: 0 0 0 5px #0b0d10; }
+    .step b { display: block; font-size: 13px; margin-bottom: 8px; } .step p { font-size: 12px; margin: 0; }
+    .checklist { display: grid; gap: 10px; margin-top: 20px; }
+    .check { display: flex; gap: 12px; align-items: flex-start; padding: 13px 15px; border-radius: 13px; background: rgba(255,255,255,.045); border: 1px solid var(--line); }
+    .check-icon { color: var(--accent-2); font-weight: 900; }
+    .check span { color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .notes { display: grid; gap: 9px; max-height: 330px; overflow: auto; padding-right: 8px; }
+    .notes a { color: var(--muted); font-size: 13px; line-height: 1.4; text-decoration: none; }
+    .notes a:hover { color: var(--accent-2); }
+    .footer-nav { position: fixed; left: 26px; right: 26px; bottom: 20px; z-index: 11; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+    .footer-nav > * { pointer-events: auto; }
+    .counter { color: var(--dim); font-size: 12px; letter-spacing: .06em; }
+    .nav-buttons { display: flex; gap: 8px; }
+    .nav-btn { width: 42px; height: 38px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 12px; color: var(--text); background: rgba(18,22,27,.85); cursor: pointer; }
+    .nav-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .nav-btn:disabled { opacity: .3; cursor: not-allowed; }
+    .overview { position: fixed; inset: 0; z-index: 30; background: rgba(5,7,9,.86); backdrop-filter: blur(20px); padding: 84px 7vw 50px; overflow: auto; opacity: 0; pointer-events: none; transition: .25s ease; }
+    .overview.open { opacity: 1; pointer-events: auto; }
+    .overview-head { display: flex; justify-content: space-between; align-items: start; margin-bottom: 26px; }
+    .overview h2 { font-size: 40px; margin-bottom: 8px; }
+    .slide-index { display: grid; grid-template-columns: repeat(4, 1fr); gap: 13px; max-width: 1200px; margin: auto; }
+    .index-card { text-align: left; min-height: 118px; border: 1px solid var(--line); background: rgba(255,255,255,.04); border-radius: 16px; padding: 15px; color: var(--muted); cursor: pointer; transition: .2s ease; }
+    .index-card:hover, .index-card.active { border-color: var(--accent); background: rgba(255,103,78,.1); color: var(--text); transform: translateY(-2px); }
+    .index-no { display: block; color: var(--accent); font-size: 11px; letter-spacing: .12em; margin-bottom: 17px; }
+    .index-title { font-size: 14px; line-height: 1.25; font-weight: 700; }
+    .index-type { display: block; margin-top: 8px; color: var(--dim); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+    @media (max-width: 800px) {
+      body { overflow: hidden; }
+      .topbar { height: 60px; padding: 0 16px; } .progress { top: 59px; }
+      .slide { padding: 86px 22px 90px; align-content: start; overflow-y: auto; } .slide::before { top: 87px; right: 22px; }
+      .source { left: 22px; right: 22px; bottom: 17px; font-size: 10px; max-height: 32px; overflow: hidden; }
+      .cover-layout, .grid-2, .grid-3, .arch { grid-template-columns: 1fr; gap: 14px; }
+      .orbit { min-height: 250px; order: -1; } .lens { width: 180px; height: 180px; border-radius: 38px; } .orbit::before { width: 260px; height: 160px; } .orbit::after { width: 180px; height: 290px; }
+      .film { transform: rotate(34deg) translate(100px,-75px); }
+      h1 { font-size: clamp(44px, 16vw, 76px); } h2 { font-size: clamp(36px, 12vw, 60px); }
+      .arch-core { min-height: 150px; } .arch-col { grid-template-columns: 1fr 1fr; } .arch-node { min-height: 90px; padding: 13px; }
+      .timeline { grid-template-columns: 1fr 1fr; gap: 10px; } .step { border-right: 0; margin: 0; padding-right: 0; }
+      .slide-index { grid-template-columns: repeat(2, 1fr); } .overview { padding: 76px 18px 30px; } .overview h2 { font-size: 34px; }
+      .footer-nav { left: 16px; right: 16px; bottom: 13px; } .counter { font-size: 11px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="noise"></div>
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 6h7a5 5 0 0 1 0 10H9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M9 10h5a5 5 0 0 1 0 10H7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span> OpenCut / deep dive</div>
+      <div class="top-actions">
+        <button class="icon-btn" id="overviewBtn" aria-label="Open slide overview" title="Slide overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></button>
+        <button class="icon-btn" id="fullscreenBtn" aria-label="Enter fullscreen" title="Fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/></svg></button>
+      </div>
+    </header>
+    <div class="progress" id="progress"></div>
+
+    <main class="deck" id="deck" aria-live="polite">
+      <section class="slide cover" data-title="OpenCut" data-type="Cover" data-num="01 / 16">
+        <div class="slide-inner cover-layout">
+          <div>
+            <div class="eyebrow">Open-source creator tooling</div>
+            <h1>OpenCut is building the editor <span class="accent">after</span> CapCut.</h1>
+            <p class="lede">A deep dive into the ground-up rewrite: what’s real today, what the architecture is aiming for, and how to get the repository running.</p>
+            <div class="cover-meta"><span class="pill"><span class="dot"></span> Rewrite in progress</span><span class="pill">Web · desktop · API</span><span class="pill">Snapshot: 20 Sep 2026</span></div>
+          </div>
+          <div class="orbit" aria-hidden="true"><div class="lens"></div><div class="film"></div></div>
+        </div>
+        <div class="source">Repository <a href="https://github.com/OpenCut-app/OpenCut" target="_blank" rel="noreferrer">github.com/OpenCut-app/OpenCut</a> · checked-out commit <a href="https://github.com/OpenCut-app/OpenCut/commit/400f097" target="_blank" rel="noreferrer">400f097</a></div>
+      </section>
+
+      <section class="slide" data-title="TL;DR" data-type="TL;DR" data-num="02 / 16">
+        <div class="slide-inner">
+          <div class="eyebrow">Plain English</div>
+          <h2>OpenCut wants to be a <span class="lime">cross-surface, extensible</span> video editor.</h2>
+          <div class="grid-3">
+            <div class="card"><span class="tag">The idea</span><h3>One editor, many surfaces</h3><p>The rewrite is organised around a Rust core that can support browser, desktop and mobile experiences from one codebase.</p></div>
+            <div class="card"><span class="tag">The leverage</span><h3>Automate the boring parts</h3><p>The README points towards an Editor API, headless mode, scripting, and an MCP server for AI agents.</p></div>
+            <div class="card"><span class="tag">The reality</span><h3>Still early</h3><p>The checked-out rewrite has a minimal web app, a tiny API, and an early GPUI desktop shell. The classic version is the usable product today.</p></div>
+          </div>
+        </div>
+        <div class="source">Source: <a href="https://github.com/OpenCut-app/OpenCut#status" target="_blank" rel="noreferrer">README · Status</a> · interpretation is labelled through wording such as “wants” and “points towards”</div>
+      </section>
+
+      <section class="slide" data-title="Why it matters" data-type="Benefits" data-num="03 / 16">
+        <div class="slide-inner">
+          <div class="eyebrow">Why it matters</div>
+          <h2>Open source changes the <span class="accent">control surface</span> of editing.</h2>
+          <div class="grid-2">
+            <div class="card"><span class="stat">01</span><h3>Own the workflow</h3><p>For teams, a programmable editor can be shaped around brand rules, review loops, asset stores and delivery targets.</p></div>
+            <div class="card"><span class="stat">02</span><h3>Compose instead of copy</h3><p>A plugin-first architecture creates a place for integrations: effects, importers, generators, automations and internal tools.</p></div>
+            <div class="card"><span class="stat">03</span><h3>Make agents useful</h3><p>An MCP server and scripting surface could let an agent inspect, edit, render and hand work back into a human editor.</p></div>
+            <div class="card"><span class="stat">04</span><h3>Reduce platform lock-in</h3><p>MIT licensing and self-hostable building blocks make the project easier to study, fork and adapt, subject to the repository’s maturity.</p></div>
+          </div>
+        </div>
+        <div class="source">Source-backed foundation: <a href="https://github.com/OpenCut-app/OpenCut#status" target="_blank" rel="noreferrer">planned rewrite capabilities</a> · “benefits” are practical implications, not shipped features</div>
+      </section>
+
+      <section class="slide" data-title="Use cases" data-type="Use cases" data-num="04 / 16">
+        <div class="slide-inner">
+          <div class="eyebrow">Use case canvas</div>
+          <h2>Where this could become more than a video editor.</h2>
+          <div class="grid-3">
+            <div class="card"><small>Creator workflows</small><h3>Short-form repurposing</h3><p>Import a long recording, cut a set of vertical clips, apply a brand template and export a review pack.</p><p class="subtle">Best fit: scripting + headless rendering, once available.</p></div>
+            <div class="card"><small>Product teams</small><h3>Branded content ops</h3><p>Build an internal panel that assembles approved footage, copy, captions and product shots into repeatable edits.</p><p class="subtle">Best fit: Editor API + plugins, as proposed by the README.</p></div>
+            <div class="card"><small>AI prototyping</small><h3>Human-in-the-loop agents</h3><p>Let an agent propose edits, explain its choices and hand a structured project back to a person for review.</p><p class="subtle">Best fit: MCP server + visible editor state.</p></div>
+          </div>
+          <div class="card" style="margin-top:15px"><span class="tag">Important boundary</span><p style="margin:0">These are design opportunities inferred from the planned architecture. They are not evidence that the rewrite already supports these workflows.</p></div>
+        </div>
+        <div class="source">Source: <a href="https://github.com/OpenCut-app/OpenCut#status" target="_blank" rel="noreferrer">README · “What’s coming”</a></div>
+      </section>
+
+      <section class="slide section" data-title="Deep dive" data-type="Section break" data-num="05 / 16">
+        <div class="section-mark">02</div>
+        <div class="slide-inner"><div class="eyebrow">Section 02</div><h2>Deep dive: read the repo as a product architecture.</h2><p class="lede">The most useful signal is not the number of folders. It’s the boundary between what is implemented, what is scaffolded, and what is promised.</p></div>
+        <div class="source">OpenCut repository snapshot · <a href="https://github.com/OpenCut-app/OpenCut" target="_blank" rel="noreferrer">source on GitHub</a></div>
+      </section>
+
+      <section class="slide" data-title="What exists now" data-type="Deep dive" data-num="06 / 16">
+        <div class="slide-inner">
+          <div class="eyebrow">Evidence before aspiration</div>
+          <h2>The current rewrite is <span class="accent">scaffolding</span>, not a finished editor.</h2>
+          <div class="grid-3">
+            <div class="card"><span class="stat">Web</span><h3>Shell present</h3><p>The home route renders “hello world!” and the editor route says “Coming soon.” The app is wired with TanStack Start/Router and Vite.</p></div>
+            <div class="card"><span class="stat">API</span><h3>Minimal service</h3><p>The Cloudflare Worker exposes a status route, a health route and a typed echo endpoint through Elysia.</p></div>
+            <div class="card"><span class="stat">Desktop</span><h3>Window + panels</h3><p>The GPUI app opens an OpenCut window with browser, preview, inspector and timeline entities. Its own README calls it “Very early”.</p></div>
+          </div>
+          <div class="card" style="margin-top:15px"><span class="tag">Read this correctly</span><p style="margin:0">OpenCut is interesting because the seams are being designed early. It is not yet a drop-in replacement for a mature editor.</p></div>
+        </div>
+        <div class="source">Sources: <a href="https://github.com/OpenCut-app/OpenCut/tree/main/apps/web/src/routes" target="_blank" rel="noreferrer">web routes</a> · <a href="https://github.com/OpenCut-app/OpenCut/blob/main/apps/api/src/index.ts" target="_blank" rel="noreferrer">API entry point</a> · <a href="https://github.com/OpenCut-app/OpenCut/blob/main/apps/desktop/README.md" target="_blank" rel="noreferrer">desktop README</a></div>
+      </section>
+
+      <section class="slide" data-title="Repo map" data-type="Deep dive" data-num="07 / 16">
+        <div class="slide-inner">
+          <div class="eyebrow">Repository map</div>
+          <h2>Four layers, one <span class="lime">development loop</span>.</h2>
+          <div class="arch">
+            <div class="arch-col"><div class="arch-node"><strong>apps/web</strong><span>React 19 · TanStack Start/Router · Vite · Cloudflare deployment</span></div><div class="arch-node"><strong>apps/api</strong><span>Elysia on the Cloudflare adapter · typed routes</span></div></div>
+            <div class="arch-core"><div><strong>OpenCut</strong><br /><span>shared product direction<br />across client surfaces</span></div></div>
+            <div class="arch-col"><div class="arch-node"><strong>apps/desktop</strong><span>Rust 2024 · GPUI 0.2.2 · native shell</span></div><div class="arch-node"><strong>workspace</strong><span>Moon tasks · proto-pinned tools · Bun · Cargo lockfile</span></div></div>
+          </div>
+          <p style="margin-top:22px">The important architectural bet is cross-surface consistency: the product can evolve as a system instead of three unrelated editors.</p>
+        </div>
+        <div class="source">Sources: <a href="https://github.com/OpenCut-app/OpenCut/tree/main/apps" target="_blank" rel="noreferrer">apps/</a> · <a href="https://github.com/OpenCut-app/OpenCut/blob/main/.prototools" target="_blank" rel="noreferrer">.prototools</a> · <a href="https://github.com/OpenCut-app/OpenCut/blob/main/moon.yml" target="_blank" rel="noreferrer">Moon workspace config</a></div>
+      </section>
+
+      <section class="slide" data-title="Surface by surface" data-type="Deep dive" data-num="08 / 16">
+        <div class="slide-inner">
+          <div class="eyebrow">Surface by surface</div>
+          <h2>Each surface already tells us <span class="blue">how to think</span> about the product.</h2>
+          <div class="grid-3">
+            <div class="card"><span class="tag">Browser</span><h3>Fast distribution</h3><p>TanStack Start and Cloudflare tooling point towards a web-first experience that can be deployed without asking users to install a native app.</p><ul class="list"><li>quick iteration</li><li>shareable entry point</li><li>edge-hosting path</li></ul></div>
+            <div class="card"><span class="tag">Desktop</span><h3>Native control</h3><p>GPUI gives the rewrite a Rust-native shell and a route to high-performance interaction on the desktop.</p><ul class="list"><li>native window</li><li>Rust ownership model</li><li>platform-specific runtime</li></ul></div>
+            <div class="card"><span class="tag">API</span><h3>Automation boundary</h3><p>The API is tiny today, but a separate service boundary creates a natural home for project, render and agent operations later.</p><ul class="list"><li>typed request boundary</li><li>health endpoint</li><li>Cloudflare Worker shape</li></ul></div>
+          </div>
+        </div>
+        <div class="source">Sources: <a href="https://github.com/OpenCut-app/OpenCut/blob/main/apps/web/package.json" target="_blank" rel="noreferrer">web package</a> · <a href="https://github.com/OpenCut-app/OpenCut/blob/main/apps/desktop/Cargo.toml" target="_blank" rel="noreferrer">desktop Cargo.toml</a> · <a href="https://github.com/OpenCut-app/OpenCut/blob/main/apps/api/src/index.ts" target="_blank" rel="noreferrer">API source</a></div>
+      </section>
+
+      <section class="slide" data-title="The future contract" data-type="Deep dive" data-num="09 / 16">
+        <div class="slide-inner">
+          <div class="eyebrow">Planned contract</div>
+          <h2>The rewrite is aiming for <span class="accent">composability</span>, not only features.</h2>
+          <div class="grid-2">
+            <div class="card"><span class="tag">Planned</span><h3>Editor API</h3><p>A stable surface for manipulating projects and editor state from tools, plugins or other applications.</p></div>
+            <div class="card"><span class="tag">Planned</span><h3>Third-party plugins</h3><p>Extensions are meant to be first-class, enabled by a plugin-first architecture.</p></div>
+            <div class="card"><span class="tag">Planned</span><h3>MCP server</h3><p>A bridge for AI agents to work with the editor through structured tools and context.</p></div>
+            <div class="card"><span class="tag">Planned</span><h3>Headless + scripting</h3><p>Automation and a scripting tab would let repeatable editing workflows run with less manual clicking.</p></div>
+          </div>
+          <div class="card" style="margin-top:15px"><span class="tag">Design implication</span><p style="margin:0">The product’s long-term advantage could come from a shared project model and clear capability boundaries. That is an architectural opportunity, not yet a validated product outcome.</p></div>
+        </div>
+        <div class="source">Source: <a href="https://github.com/OpenCut-app/OpenCut#status" target="_blank" rel="noreferrer">README · Status / What’s coming</a></div>
+      </section>
+
+      <section class="slide" data-title="Trade-offs" data-type="Deep dive" data-num="10 / 16">
+        <div class="slide-inner">
+          <div class="eyebrow">Trade-offs to watch</div>
+          <h2>OpenCut’s promise depends on <span class="lime">hard problems</span> it hasn’t solved yet.</h2>
+          <div class="grid-2">
+            <div class="card"><h3>Cross-platform parity</h3><p>One codebase reduces divergence, but browser, desktop and mobile still have different media, GPU and filesystem constraints.</p></div>
+            <div class="card"><h3>Plugin trust</h3><p>Plugins increase capability and risk. Permissions, sandboxing, versioning and review become product features.</p></div>
+            <div class="card"><h3>Agent reliability</h3><p>MCP access is only useful if edits are observable, reversible, grounded in project state and safe to render.</p></div>
+            <div class="card"><h3>Media performance</h3><p>Editing workloads are dominated by decoding, compositing, audio timing, GPU acceleration and export correctness.</p></div>
+          </div>
+          <p style="margin-top:22px">The repository gives evidence of the intended direction. It does not yet establish production performance, feature parity or ecosystem adoption.</p>
+        </div>
+        <div class="source">Evidence boundary: <a href="https://github.com/OpenCut-app/OpenCut" target="_blank" rel="noreferrer">repository README and checked-out source</a></div>
+      </section>
+
+      <section class="slide section" data-title="How to implement" data-type="Section break" data-num="11 / 16">
+        <div class="section-mark">03</div>
+        <div class="slide-inner"><div class="eyebrow">Section 03</div><h2>How to implement: from <span class="lime">clone</span> to contribution.</h2><p class="lede">The current implementation path is a workspace setup and inspection loop. Feature development comes after you understand which surface owns the behaviour.</p></div>
+        <div class="source">Implementation steps follow the repository’s documented development commands · <a href="https://github.com/OpenCut-app/OpenCut#development" target="_blank" rel="noreferrer">README · Development</a></div>
+      </section>
+
+      <section class="slide" data-title="Prerequisites" data-type="How-to" data-num="12 / 16">
+        <div class="slide-inner">
+          <div class="eyebrow">Step 01 · Prepare</div>
+          <h2>Install the tools the repo expects.</h2>
+          <div class="grid-2">
+            <div class="card"><span class="tag">Pinned by proto</span><h3>Workspace toolchain</h3><div class="code"><span class="comment"># .prototools</span>
+moon = <span class="lime">2.3.3</span>
+bun  = <span class="lime">1.3.11</span>
+rust = <span class="lime">1.97.0</span></div></div>
+            <div class="card"><span class="tag">Platform note</span><h3>Desktop dependencies</h3><p>Web development is the easiest starting point. Desktop builds use GPUI and may require platform graphics packages, especially on Linux.</p><p class="subtle">The desktop README lists macOS, Windows, Linux and WSL2/WSLg requirements.</p></div>
+          </div>
+          <div class="code" style="margin-top:15px"><span class="prompt">$</span> bash &lt;(curl -fsSL https://moonrepo.dev/install/proto.sh)
+<span class="prompt">$</span> proto use</div>
+        </div>
+        <div class="source">Sources: <a href="https://github.com/OpenCut-app/OpenCut#development" target="_blank" rel="noreferrer">README · Development</a> · <a href="https://github.com/OpenCut-app/OpenCut/blob/main/.prototools" target="_blank" rel="noreferrer">.prototools</a> · <a href="https://github.com/OpenCut-app/OpenCut/blob/main/apps/desktop/README.md" target="_blank" rel="noreferrer">desktop requirements</a></div>
+      </section>
+
+      <section class="slide" data-title="Run the surfaces" data-type="How-to" data-num="13 / 16">
+        <div class="slide-inner">
+          <div class="eyebrow">Step 02 · Run</div>
+          <h2>Start with the surface you want to learn.</h2>
+          <div class="grid-3">
+            <div class="card"><small>Web</small><h3>Browser shell</h3><div class="code"><span class="prompt">$</span> moon run web:dev
+<span class="comment"># localhost:5173</span></div><p>Use this to inspect routing, UI composition and the future editor entry point.</p></div>
+            <div class="card"><small>API</small><h3>Worker service</h3><div class="code"><span class="prompt">$</span> moon run api:dev
+<span class="comment"># localhost:8787</span></div><p>Use this to inspect the typed service boundary and Cloudflare runtime shape.</p></div>
+            <div class="card"><small>Desktop</small><h3>Native shell</h3><div class="code"><span class="prompt">$</span> moon run desktop:dev</div><p>Use this to inspect the GPUI window and panel entities. Expect early scaffolding.</p></div>
+          </div>
+          <div class="timeline"><div class="step"><b>Clone</b><p>Get the repository and enter its root.</p></div><div class="step"><b>Pin</b><p>Run proto so local tools match the workspace.</p></div><div class="step"><b>Run</b><p>Start one surface and verify its baseline.</p></div><div class="step"><b>Trace</b><p>Follow the route from UI to API or native shell.</p></div></div>
+        </div>
+        <div class="source">Source: <a href="https://github.com/OpenCut-app/OpenCut#development" target="_blank" rel="noreferrer">README · documented commands</a></div>
+      </section>
+
+      <section class="slide" data-title="Build a feature" data-type="How-to" data-num="14 / 16">
+        <div class="slide-inner">
+          <div class="eyebrow">Step 03 · Extend</div>
+          <h2>Pick an ownership boundary before writing code.</h2>
+          <div class="grid-3">
+            <div class="card"><span class="tag">UI feature</span><h3>Start in web</h3><p>Define the user interaction in the web route or component tree. Keep state close to the surface until a shared model exists.</p></div>
+            <div class="card"><span class="tag">Service feature</span><h3>Start in API</h3><p>Add a typed Elysia route, then decide how the web or desktop surface calls it. Keep health and failure states visible.</p></div>
+            <div class="card"><span class="tag">Native feature</span><h3>Start in desktop</h3><p>Use the existing GPUI panel entities and preserve state ownership. The desktop README warns that this surface is very early.</p></div>
+          </div>
+          <div class="card" style="margin-top:15px"><span class="tag">Forward-looking integration</span><p style="margin:0">For plugins, MCP or headless rendering, first define the project representation, permissions, undo/redo semantics and validation hooks. The README names these directions, but the current checked-out tree does not yet expose their implementation.</p></div>
+        </div>
+        <div class="source">Sources: <a href="https://github.com/OpenCut-app/OpenCut/tree/main/apps" target="_blank" rel="noreferrer">apps/</a> · <a href="https://github.com/OpenCut-app/OpenCut#status" target="_blank" rel="noreferrer">planned capabilities</a></div>
+      </section>
+
+      <section class="slide" data-title="Validate your work" data-type="How-to" data-num="15 / 16">
+        <div class="slide-inner">
+          <div class="eyebrow">Step 04 · Validate</div>
+          <h2>Make “it runs” a <span class="accent">small</span> part of done.</h2>
+          <div class="grid-2">
+            <div>
+              <div class="checklist"><div class="check"><span class="check-icon">✓</span><span>Can a new developer reproduce the baseline using the documented commands?</span></div><div class="check"><span class="check-icon">✓</span><span>Does the change belong to web, API, desktop or a genuinely shared layer?</span></div><div class="check"><span class="check-icon">✓</span><span>Are failure, loading, permissions and undo/redo states explicit?</span></div><div class="check"><span class="check-icon">✓</span><span>Does the feature preserve a path to plugins, scripts or agents later?</span></div></div>
+            </div>
+            <div class="card"><span class="tag">Contribution reality</span><h3>Know the project’s current invitation</h3><p>The README says outside contributions aren’t set up yet while the architecture is being designed. That means the best immediate contribution may be discussion, issue reports, experiments or following the Discord rather than assuming a normal PR flow.</p></div>
+          </div>
+        </div>
+        <div class="source">Source: <a href="https://github.com/OpenCut-app/OpenCut#contributing" target="_blank" rel="noreferrer">README · Contributing</a></div>
+      </section>
+
+      <section class="slide" data-title="Takeaways" data-type="Close" data-num="16 / 16">
+        <div class="slide-inner">
+          <div class="eyebrow">Close</div>
+          <h2>OpenCut is a bet on the <span class="lime">editor as a platform</span>.</h2>
+          <div class="grid-2">
+            <div class="card"><h3>What’s compelling</h3><ul class="list"><li>open source and MIT licensed</li><li>multi-surface direction</li><li>plugin, API and automation ambition</li><li>AI-agent integration is part of the plan</li></ul></div>
+            <div class="card"><h3>What to remember</h3><ul class="list"><li>the rewrite is still early</li><li>classic is the usable version today</li><li>planned does not mean shipped</li><li>architecture is the current product story</li></ul></div>
+          </div>
+          <div class="card" style="margin-top:18px"><span class="tag">Recommended next move</span><p style="margin:0">Clone it, run the web shell, read the API and desktop boundaries, then decide whether your interest is creator UX, native media performance, platform architecture or agentic editing.</p></div>
+          <div style="margin-top:24px" class="notes"><a href="https://github.com/OpenCut-app/OpenCut" target="_blank" rel="noreferrer">↗ OpenCut repository</a><a href="https://github.com/OpenCut-app/opencut-classic" target="_blank" rel="noreferrer">↗ OpenCut Classic, linked by the README as the version to use today</a><a href="https://github.com/OpenCut-app/OpenCut/blob/main/LICENSE" target="_blank" rel="noreferrer">↗ MIT licence</a><a href="https://github.com/moonrepo/moon" target="_blank" rel="noreferrer">↗ Moon repo tooling</a><a href="https://www.gpui.rs/" target="_blank" rel="noreferrer">↗ GPUI</a></div>
+        </div>
+        <div class="source">Built from repository inspection · source links are embedded throughout the deck</div>
+      </section>
+    </main>
+
+    <div class="footer-nav">
+      <div class="counter" id="counter">01 / 16</div>
+      <div class="nav-buttons"><button class="nav-btn" id="prevBtn" aria-label="Previous slide" title="Previous slide">←</button><button class="nav-btn" id="nextBtn" aria-label="Next slide" title="Next slide">→</button></div>
+    </div>
+
+    <aside class="overview" id="overview" aria-hidden="true">
+      <div class="overview-head"><div><div class="eyebrow">Navigate</div><h2>Slide overview</h2><p>Jump anywhere. Press <strong>Esc</strong> to close.</p></div><button class="icon-btn" id="closeOverview" aria-label="Close slide overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="slide-index" id="slideIndex"></div>
+    </aside>
+  </div>
+  <script>
+    (() => {
+      const deck = document.getElementById('deck');
+      const slides = [...document.querySelectorAll('.slide')];
+      const overview = document.getElementById('overview');
+      const index = document.getElementById('slideIndex');
+      const counter = document.getElementById('counter');
+      const progress = document.getElementById('progress');
+      const prev = document.getElementById('prevBtn');
+      const next = document.getElementById('nextBtn');
+      let current = 0;
+      let touchStart = null;
+
+      slides.forEach((slide, i) => {
+        const card = document.createElement('button');
+        card.className = 'index-card';
+        card.dataset.index = i;
+        card.innerHTML = `<span class="index-no">${String(i + 1).padStart(2, '0')}</span><span class="index-title">${slide.dataset.title}</span><span class="index-type">${slide.dataset.type}</span>`;
+        card.addEventListener('click', () => { go(i); closeOverview(); });
+        index.appendChild(card);
+      });
+      const indexCards = [...index.children];
+
+      function go(n) {
+        current = Math.max(0, Math.min(slides.length - 1, n));
+        deck.style.transform = `translateX(-${current * 100}vw)`;
+        counter.textContent = `${String(current + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        prev.disabled = current === 0;
+        next.disabled = current === slides.length - 1;
+        indexCards.forEach((card, i) => card.classList.toggle('active', i === current));
+        slides[current].scrollTop = 0;
+      }
+      function nextSlide() { go(current + 1); }
+      function prevSlide() { go(current - 1); }
+      function openOverview() { overview.classList.add('open'); overview.setAttribute('aria-hidden', 'false'); }
+      function closeOverview() { overview.classList.remove('open'); overview.setAttribute('aria-hidden', 'true'); }
+
+      document.getElementById('nextBtn').addEventListener('click', nextSlide);
+      document.getElementById('prevBtn').addEventListener('click', prevSlide);
+      document.getElementById('overviewBtn').addEventListener('click', openOverview);
+      document.getElementById('closeOverview').addEventListener('click', closeOverview);
+      overview.addEventListener('click', (e) => { if (e.target === overview) closeOverview(); });
+      document.getElementById('fullscreenBtn').addEventListener('click', async () => {
+        try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); else await document.exitFullscreen(); } catch (e) { /* fullscreen may be blocked by the host */ }
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && overview.classList.contains('open')) { closeOverview(); return; }
+        if (overview.classList.contains('open')) return;
+        if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); nextSlide(); }
+        if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); prevSlide(); }
+        if (e.key === 'Home') { e.preventDefault(); go(0); }
+        if (e.key === 'End') { e.preventDefault(); go(slides.length - 1); }
+        if (e.key.toLowerCase() === 'o') openOverview();
+        if (e.key.toLowerCase() === 'f') document.getElementById('fullscreenBtn').click();
+      });
+      deck.addEventListener('touchstart', (e) => { touchStart = e.changedTouches[0].clientX; }, {passive:true});
+      deck.addEventListener('touchend', (e) => { if (touchStart === null) return; const dx = e.changedTouches[0].clientX - touchStart; if (Math.abs(dx) > 55) dx < 0 ? nextSlide() : prevSlide(); touchStart = null; }, {passive:true});
+      go(0);
+    })();
+  </script>
+</body>
+</html>

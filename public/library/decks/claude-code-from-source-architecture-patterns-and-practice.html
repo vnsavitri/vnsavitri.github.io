@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="A deep-dive interactive slide deck on Claude Code from Source: architecture, patterns and implementation guidance." />
+  <title>Claude Code from Source — Architecture, Patterns &amp; Practice</title>
+  <style>
+    :root {
+      --bg: #0b0d0e;
+      --panel: #141819;
+      --panel-2: #1b2021;
+      --ink: #f4f0e8;
+      --muted: #a6aaa7;
+      --dim: #707875;
+      --line: rgba(244, 240, 232, .14);
+      --orange: #ff9c48;
+      --orange-2: #ffca88;
+      --mint: #8de0c8;
+      --blue: #9ed3ff;
+      --pink: #ff9ebc;
+      --yellow: #f9da75;
+      --shadow: 0 24px 80px rgba(0,0,0,.3);
+      --radius: 22px;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--bg); color: var(--ink); scroll-behavior: smooth; }
+    body { margin: 0; background: radial-gradient(circle at 72% 18%, rgba(255,156,72,.12), transparent 34rem), var(--bg); font-family: var(--sans); overflow: hidden; }
+    button, a { font: inherit; }
+    button { color: inherit; }
+    a { color: inherit; }
+
+    .deck { min-height: 100svh; position: relative; }
+    .toolbar { position: fixed; z-index: 20; top: 18px; left: 22px; right: 22px; display: flex; align-items: center; gap: 10px; pointer-events: none; }
+    .brand { margin-right: auto; color: var(--muted); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; pointer-events: auto; }
+    .toolbar-actions { display: flex; gap: 8px; pointer-events: auto; }
+    .icon-btn { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: rgba(20,24,25,.76); color: var(--muted); cursor: pointer; transition: .2s ease; backdrop-filter: blur(14px); }
+    .icon-btn:hover, .icon-btn:focus-visible { border-color: var(--orange); color: var(--ink); transform: translateY(-1px); outline: none; }
+    .icon-btn svg { width: 17px; height: 17px; }
+    .progress-track { position: fixed; z-index: 22; bottom: 0; left: 0; height: 3px; width: 100%; background: rgba(255,255,255,.08); }
+    .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--orange), var(--mint)); transition: width .3s ease; }
+
+    .slides { height: 100svh; position: relative; }
+    .slide { position: absolute; inset: 0; padding: clamp(78px, 9vw, 112px) clamp(24px, 7vw, 108px) 72px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(14px); transition: opacity .34s ease, transform .34s ease, visibility .34s; }
+    .slide.active { opacity: 1; visibility: visible; transform: translateY(0); }
+    .slide-inner { width: min(1240px, 100%); min-height: 100%; margin: auto; display: flex; flex-direction: column; justify-content: center; }
+    .eyebrow { color: var(--orange); font-size: 12px; text-transform: uppercase; letter-spacing: .18em; font-weight: 700; margin-bottom: 18px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 920px; margin-bottom: 20px; font-size: clamp(48px, 8vw, 114px); line-height: .94; letter-spacing: -.065em; font-weight: 750; }
+    h2 { max-width: 930px; margin-bottom: 20px; font-size: clamp(36px, 5vw, 72px); line-height: .98; letter-spacing: -.055em; font-weight: 750; }
+    h3 { margin-bottom: 9px; font-size: 20px; letter-spacing: -.025em; }
+    .lede { max-width: 720px; color: var(--muted); font-size: clamp(18px, 2vw, 24px); line-height: 1.42; }
+    .small { font-size: 13px; line-height: 1.55; color: var(--muted); }
+    .mono { font-family: var(--mono); }
+    .orange { color: var(--orange-2); }
+    .mint { color: var(--mint); }
+    .blue { color: var(--blue); }
+    .pink { color: var(--pink); }
+    .yellow { color: var(--yellow); }
+    .muted { color: var(--muted); }
+    .dim { color: var(--dim); }
+    .emphasis { color: var(--ink); font-weight: 650; }
+
+    .title-grid { display: grid; grid-template-columns: 1.1fr .9fr; align-items: center; gap: clamp(36px, 7vw, 110px); }
+    .title-meta { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 28px; }
+    .pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 12px; }
+    .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--orange); }
+    .cover-art { min-height: 450px; position: relative; display: grid; place-items: center; }
+    .orbit { position: absolute; width: min(34vw, 430px); aspect-ratio: 1; border: 1px solid rgba(255,156,72,.38); border-radius: 50%; transform: rotate(-18deg); }
+    .orbit::before, .orbit::after { content: ""; position: absolute; inset: 16%; border: 1px solid rgba(141,224,200,.22); border-radius: 50%; transform: rotate(55deg) scaleX(1.6); }
+    .orbit::after { inset: 30%; transform: rotate(-35deg) scaleX(1.8); border-color: rgba(158,211,255,.22); }
+    .core { width: min(22vw, 270px); aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%; background: radial-gradient(circle, rgba(255,156,72,.38), rgba(255,156,72,.06) 54%, transparent 70%); box-shadow: 0 0 90px rgba(255,156,72,.22); }
+    .core span { display: grid; place-items: center; width: 112px; height: 112px; border-radius: 28px; border: 1px solid rgba(255,202,136,.55); background: rgba(255,156,72,.08); color: var(--orange-2); font-size: 44px; }
+    .orb-label { position: absolute; top: 8%; right: 7%; color: var(--mint); font-family: var(--mono); font-size: 12px; }
+    .orb-label.two { bottom: 12%; left: 2%; color: var(--blue); }
+    .orb-label.three { bottom: 26%; right: 0; color: var(--pink); }
+    .source { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 22px; color: var(--dim); font-size: 11px; line-height: 1.4; }
+    .source a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+
+    .callout { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start; padding: 20px 22px; border: 1px solid rgba(255,156,72,.34); border-radius: var(--radius); background: linear-gradient(135deg, rgba(255,156,72,.1), rgba(255,255,255,.025)); margin: 22px 0; }
+    .callout-icon { color: var(--orange); font-size: 22px; }
+    .callout p { margin: 0; color: var(--muted); line-height: 1.55; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+    .card { padding: 22px; border: 1px solid var(--line); background: linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.018)); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .card p { color: var(--muted); line-height: 1.5; margin-bottom: 0; }
+    .card .num { color: var(--orange); font: 700 12px var(--mono); margin-bottom: 24px; }
+    .card .tag { display: inline-flex; margin-top: 16px; padding: 5px 8px; border-radius: 6px; background: rgba(255,255,255,.06); color: var(--muted); font: 11px var(--mono); }
+    .section-slide { background: linear-gradient(135deg, rgba(255,156,72,.11), transparent 42%), var(--bg); }
+    .section-slide .section-number { font: 700 clamp(88px, 18vw, 260px)/.7 var(--mono); color: rgba(255,156,72,.16); letter-spacing: -.1em; margin-bottom: 46px; }
+    .section-slide h2 { max-width: 760px; }
+    .section-line { width: 110px; height: 4px; border-radius: 999px; background: var(--orange); margin-top: 14px; }
+
+    .architecture { display: grid; grid-template-columns: 1fr 1.35fr; gap: 26px; align-items: center; }
+    .arch-list { display: grid; gap: 10px; }
+    .arch-item { display: grid; grid-template-columns: 34px 1fr; gap: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.025); }
+    .arch-item b { display: block; margin-bottom: 3px; }
+    .arch-item span { color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .arch-num { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; background: rgba(255,156,72,.13); color: var(--orange-2); font: 700 12px var(--mono); }
+    .system-map { position: relative; min-height: 480px; display: grid; place-items: center; }
+    .map-ring { position: absolute; width: 410px; aspect-ratio: 1; border: 1px dashed rgba(255,255,255,.22); border-radius: 50%; }
+    .map-ring.small { width: 256px; border-color: rgba(141,224,200,.32); }
+    .map-node { position: absolute; min-width: 118px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: #171c1d; text-align: center; box-shadow: 0 10px 26px rgba(0,0,0,.24); }
+    .map-node b { display: block; font-size: 13px; margin-bottom: 3px; }
+    .map-node span { display: block; color: var(--muted); font-size: 10px; line-height: 1.3; }
+    .map-node.core-node { position: relative; min-width: 158px; padding: 22px 14px; border-color: rgba(255,156,72,.55); background: rgba(255,156,72,.1); }
+    .n-user { top: 2%; left: 50%; transform: translateX(-50%); }
+    .n-tools { right: 0; top: 38%; }
+    .n-memory { left: 0; top: 38%; }
+    .n-tasks { left: 15%; bottom: 4%; }
+    .n-hooks { right: 14%; bottom: 4%; }
+    .connector { position: absolute; height: 1px; background: linear-gradient(90deg, transparent, rgba(255,156,72,.7), transparent); transform-origin: left center; }
+    .c1 { width: 138px; top: 25%; left: 41%; transform: rotate(90deg); }
+    .c2 { width: 160px; top: 49%; left: 54%; transform: rotate(0deg); }
+    .c3 { width: 160px; top: 49%; left: 46%; transform: rotate(180deg); }
+    .c4 { width: 170px; top: 62%; left: 43%; transform: rotate(137deg); }
+    .c5 { width: 170px; top: 62%; left: 57%; transform: rotate(43deg); }
+
+    .flow { display: flex; align-items: stretch; gap: 9px; margin: 26px 0 20px; flex-wrap: wrap; }
+    .flow-step { flex: 1 1 140px; min-width: 120px; padding: 15px 14px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.035); }
+    .flow-step strong { display: block; margin-bottom: 5px; }
+    .flow-step span { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .flow-arrow { align-self: center; color: var(--orange); font-size: 22px; }
+    .loop-visual { position: relative; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; align-items: center; padding: 26px; border: 1px solid var(--line); border-radius: var(--radius); background: radial-gradient(circle at 50% 50%, rgba(141,224,200,.08), transparent 58%), rgba(255,255,255,.018); }
+    .loop-node { padding: 22px 16px; border-radius: 16px; border: 1px solid var(--line); text-align: center; background: rgba(10,13,14,.55); }
+    .loop-node .glyph { color: var(--orange); font-size: 28px; margin-bottom: 9px; }
+    .loop-node b { display: block; margin-bottom: 4px; }
+    .loop-node span { color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .loop-back { position: absolute; left: 12%; right: 12%; bottom: 12px; border-bottom: 1px dashed rgba(255,156,72,.55); }
+    .loop-back::after { content: "↺  repeat until stop"; position: absolute; left: 50%; transform: translateX(-50%); bottom: -24px; padding: 0 10px; background: #111516; color: var(--orange-2); font: 11px var(--mono); white-space: nowrap; }
+
+    .pipeline { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 22px; }
+    .pipe { position: relative; display: grid; grid-template-columns: 30px 1fr; gap: 11px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.027); }
+    .pipe .n { color: var(--orange); font: 700 11px var(--mono); padding-top: 2px; }
+    .pipe b { display: block; font-size: 13px; margin-bottom: 3px; }
+    .pipe span { display: block; color: var(--muted); font-size: 11px; line-height: 1.4; }
+    .pipe.safe { border-color: rgba(141,224,200,.28); }
+    .pipe.danger { border-color: rgba(255,158,188,.28); }
+    .mode-table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 13px; }
+    .mode-table th, .mode-table td { padding: 12px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .mode-table th { color: var(--orange-2); font: 11px var(--mono); text-transform: uppercase; letter-spacing: .1em; }
+    .mode-table td { color: var(--muted); line-height: 1.4; }
+    .mode-table td:first-child { color: var(--ink); font-family: var(--mono); font-size: 12px; }
+
+    .compression { display: grid; gap: 10px; margin-top: 26px; }
+    .layer { display: grid; grid-template-columns: 154px 1fr auto; gap: 14px; align-items: center; padding: 15px 16px; border: 1px solid var(--line); border-radius: 13px; background: rgba(255,255,255,.028); }
+    .layer strong { color: var(--ink); font-size: 13px; }
+    .layer span { color: var(--muted); font-size: 12px; }
+    .layer em { color: var(--mint); font: 11px var(--mono); font-style: normal; }
+
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+    .code { margin: 0; padding: 18px; overflow: auto; border: 1px solid var(--line); border-radius: 16px; background: #080a0b; color: #dfe7e2; font: 12px/1.65 var(--mono); white-space: pre; }
+    .code .kw { color: var(--pink); }
+    .code .fn { color: var(--blue); }
+    .code .cm { color: #73847f; }
+    .code .str { color: var(--yellow); }
+    .checklist { display: grid; gap: 10px; }
+    .check { display: grid; grid-template-columns: 22px 1fr; gap: 10px; align-items: start; color: var(--muted); line-height: 1.45; }
+    .check i { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 7px; background: rgba(141,224,200,.13); color: var(--mint); font-style: normal; font-size: 12px; }
+    .check b { color: var(--ink); }
+
+    .timeline { position: relative; display: grid; gap: 0; margin-top: 26px; }
+    .timeline::before { content: ""; position: absolute; left: 14px; top: 16px; bottom: 16px; width: 1px; background: linear-gradient(var(--orange), rgba(255,156,72,.05)); }
+    .milestone { position: relative; display: grid; grid-template-columns: 30px 100px 1fr; gap: 14px; align-items: start; padding: 12px 0; }
+    .milestone .dot { z-index: 1; width: 29px; height: 29px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--orange); background: var(--bg); color: var(--orange-2); font: 700 10px var(--mono); }
+    .milestone time { padding-top: 6px; color: var(--orange-2); font: 11px var(--mono); }
+    .milestone p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .milestone p b { color: var(--ink); }
+
+    .source-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-top: 25px; }
+    .source-card { padding: 15px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.025); }
+    .source-card b { display: block; margin-bottom: 5px; font-size: 13px; }
+    .source-card p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.42; }
+    .source-card a { color: var(--orange-2); text-decoration: none; }
+    .source-card a:hover { text-decoration: underline; }
+    .source-card q { color: #d3d6d1; }
+
+    .footer-controls { position: fixed; z-index: 19; bottom: 18px; right: 22px; display: flex; align-items: center; gap: 8px; }
+    .counter { color: var(--muted); font: 11px var(--mono); padding: 9px 11px; border: 1px solid var(--line); border-radius: 999px; background: rgba(20,24,25,.76); backdrop-filter: blur(14px); }
+    .hint { position: fixed; bottom: 20px; left: 22px; color: var(--dim); font: 10px var(--mono); }
+    .kbd { padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); }
+
+    .overview { position: fixed; z-index: 50; inset: 0; display: none; padding: 34px; background: rgba(6,8,9,.94); backdrop-filter: blur(18px); overflow: auto; }
+    .overview.open { display: block; }
+    .overview-head { width: min(1200px,100%); margin: 0 auto 24px; display: flex; align-items: center; gap: 16px; }
+    .overview-head h2 { margin: 0; font-size: 34px; }
+    .overview-head .close { margin-left: auto; }
+    .overview-grid { width: min(1200px,100%); margin: auto; display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+    .thumb { min-height: 126px; padding: 15px; position: relative; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(145deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); text-align: left; cursor: pointer; transition: .2s ease; }
+    .thumb:hover, .thumb.active { border-color: var(--orange); transform: translateY(-2px); }
+    .thumb .thumb-no { color: var(--orange); font: 10px var(--mono); }
+    .thumb h3 { margin: 26px 0 0; font-size: 15px; line-height: 1.15; }
+    .thumb p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.3; }
+    .toast { position: fixed; z-index: 60; left: 50%; bottom: 66px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; padding: 9px 12px; color: var(--ink); border: 1px solid var(--line); border-radius: 999px; background: #171c1d; font: 11px var(--mono); transition: .2s ease; }
+    .toast.show { opacity: 1; transform: translate(-50%,0); }
+
+    @media (max-width: 860px) {
+      body { overflow: hidden; }
+      .toolbar { top: 12px; left: 14px; right: 14px; }
+      .brand { max-width: 190px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .slide { padding: 76px 18px 68px; }
+      .title-grid, .architecture, .split, .grid-2 { grid-template-columns: 1fr; }
+      .cover-art { min-height: 320px; order: -1; }
+      .orbit { width: min(76vw, 360px); }
+      .core { width: min(46vw, 210px); }
+      .system-map { min-height: 390px; transform: scale(.84); margin: -35px -30px; }
+      .map-ring { width: 340px; }
+      .map-ring.small { width: 210px; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .pipeline { grid-template-columns: 1fr; }
+      .mode-table { font-size: 11px; }
+      .layer { grid-template-columns: 1fr; gap: 5px; }
+      .source-grid { grid-template-columns: 1fr; }
+      .overview { padding: 20px; }
+      .overview-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .hint { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-label="Interactive slide deck">
+    <header class="toolbar">
+      <div class="brand">claude-code-from-source / field guide</div>
+      <div class="toolbar-actions">
+        <button class="icon-btn" id="overviewBtn" aria-label="Open slide overview" title="Slide overview (O)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </button>
+        <button class="icon-btn" id="fullscreenBtn" aria-label="Enter fullscreen presentation" title="Fullscreen (F)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="slides">
+      <article class="slide active" data-title="Cover">
+        <div class="slide-inner title-grid">
+          <div>
+            <div class="eyebrow">Deep-dive deck · September 2026</div>
+            <h1>How a production coding agent thinks.</h1>
+            <p class="lede">A practical tour of <span class="orange">Claude Code from Source</span>: the architecture, patterns and trade-offs behind a serious agentic CLI.</p>
+            <div class="title-meta">
+              <span class="pill"><span class="dot"></span> 18 chapters · 7 parts</span>
+              <span class="pill">Educational pseudocode</span>
+              <span class="pill">Build your own mental model</span>
+            </div>
+          </div>
+          <div class="cover-art" aria-hidden="true">
+            <div class="orbit"></div>
+            <div class="core"><span>↻</span></div>
+            <div class="orb-label">stream → act → observe</div>
+            <div class="orb-label two">permissions</div>
+            <div class="orb-label three">memory / tools / tasks</div>
+          </div>
+          <div class="source"><span>Repository:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source" target="_blank" rel="noreferrer">github.com/alejandrobalderas/claude-code-from-source</a></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="TL;DR">
+        <div class="slide-inner">
+          <div class="eyebrow">01 · TL;DR</div>
+          <h2>It’s a field guide to the machinery around an LLM.</h2>
+          <p class="lede">The repo is not Claude Code source. It is an independent educational reconstruction of the patterns that make an agentic coding tool useful, safe and fast.</p>
+          <div class="callout"><div class="callout-icon">↗</div><p><span class="emphasis">Plain-English takeaway:</span> the model is only one component. The durable advantage comes from the loop around it: tools, permissions, state, memory, concurrency, interfaces and recovery.</p></div>
+          <div class="grid-3">
+            <div class="card"><div class="num">01 / SEE</div><h3>Understand the system</h3><p>Trace a request from keystroke to model stream, tool call, permission decision and final output.</p><span class="tag">mental model</span></div>
+            <div class="card"><div class="num">02 / STEAL</div><h3>Reuse the patterns</h3><p>Take the transferable pieces: async generators, fail-closed tools, prompt-cache-aware forks and layered context compression.</p><span class="tag">architecture</span></div>
+            <div class="card"><div class="num">03 / BUILD</div><h3>Implement a smaller version</h3><p>Use the how-to section as a sequence for building a safe, observable agent shell in your own stack.</p><span class="tag">practice</span></div>
+          </div>
+          <div class="source"><span>Source:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/README.md" target="_blank" rel="noreferrer">README.md</a> · <q>purely educational</q></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Why it matters">
+        <div class="slide-inner">
+          <div class="eyebrow">02 · Why it matters</div>
+          <h2>Use it when an agent must do more than answer.</h2>
+          <div class="grid-2">
+            <div class="card"><h3>For builders</h3><p>Design an agent that can inspect a codebase, call tools, recover from errors, and keep a human in the loop when risk rises.</p><div class="small orange" style="margin-top:18px">Example → build a repo-aware coding assistant with a Bash tool, file edits and test execution.</div></div>
+            <div class="card"><h3>For technical leaders</h3><p>Evaluate architectures beyond model quality: where are the trust boundaries, cost controls, extension points and failure modes?</p><div class="small mint" style="margin-top:18px">Example → compare two agent platforms by their permission model and context economics.</div></div>
+            <div class="card"><h3>For product teams</h3><p>Turn “AI can code” into a usable workflow with observable progress, good terminal interaction and predictable stop conditions.</p><div class="small blue" style="margin-top:18px">Example → prototype an internal developer experience for a multi-repo organisation.</div></div>
+            <div class="card"><h3>For AI researchers</h3><p>Study the system-level bets that determine agent behaviour in practice: memory selection, tool scheduling, and multi-agent coordination.</p><div class="small pink" style="margin-top:18px">Example → define evals for autonomy, latency, safety and recovery, not just task success.</div></div>
+          </div>
+          <div class="callout"><div class="callout-icon">!</div><p><span class="emphasis">Boundary:</span> the repository uses original pseudocode and analysis. Treat it as a pattern library, not as a drop-in clone or an authoritative description of Anthropic’s proprietary implementation.</p></div>
+          <div class="source"><span>Sources:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/README.md" target="_blank" rel="noreferrer">README.md</a> · <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch18-epilogue.md" target="_blank" rel="noreferrer">ch18-epilogue.md</a></div>
+        </div>
+      </article>
+
+      <article class="slide section-slide" data-title="Foundations">
+        <div class="slide-inner">
+          <div class="section-number">01</div>
+          <div class="eyebrow">Part I · Foundations</div>
+          <h2>Before the agent can think, the process must exist.</h2>
+          <p class="lede">Start with the shape of the system: the abstractions that make a language model into a working tool.</p>
+          <div class="section-line"></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Six abstractions">
+        <div class="slide-inner">
+          <div class="eyebrow">03 · The architecture</div>
+          <h2>Six abstractions carry most of the weight.</h2>
+          <div class="architecture">
+            <div class="arch-list">
+              <div class="arch-item"><div class="arch-num">01</div><div><b>Query loop</b><span>Streams, calls tools, appends results, repeats until a terminal state.</span></div></div>
+              <div class="arch-item"><div class="arch-num">02</div><div><b>Tool system</b><span>Typed action contracts with validation, permissions and rendering.</span></div></div>
+              <div class="arch-item"><div class="arch-num">03</div><div><b>Tasks</b><span>Background work and sub-agents with explicit state transitions.</span></div></div>
+              <div class="arch-item"><div class="arch-num">04</div><div><b>State</b><span>Infrastructure state separated from reactive UI state.</span></div></div>
+              <div class="arch-item"><div class="arch-num">05</div><div><b>Memory</b><span>Persistent context selected for relevance across sessions.</span></div></div>
+              <div class="arch-item"><div class="arch-num">06</div><div><b>Hooks</b><span>Lifecycle interceptors that can modify, block or extend behaviour.</span></div></div>
+            </div>
+            <div class="system-map" aria-label="Six abstraction architecture map">
+              <div class="map-ring"></div><div class="map-ring small"></div>
+              <div class="connector c1"></div><div class="connector c2"></div><div class="connector c3"></div><div class="connector c4"></div><div class="connector c5"></div>
+              <div class="map-node n-user"><b>User / REPL</b><span>input + display</span></div>
+              <div class="map-node core-node"><b>Query loop</b><span>stream · act · observe</span></div>
+              <div class="map-node n-tools"><b>Tools</b><span>side effects</span></div>
+              <div class="map-node n-memory"><b>Memory</b><span>relevant context</span></div>
+              <div class="map-node n-tasks"><b>Tasks</b><span>recursive work</span></div>
+              <div class="map-node n-hooks"><b>Hooks</b><span>intercept + govern</span></div>
+            </div>
+          </div>
+          <div class="source"><span>Source:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch01-architecture.md" target="_blank" rel="noreferrer">book/ch01-architecture.md</a> · <q>six core abstractions</q></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Golden path">
+        <div class="slide-inner">
+          <div class="eyebrow">04 · Golden path</div>
+          <h2>Every request is a controlled feedback loop.</h2>
+          <p class="lede">The interesting part isn’t the first model response. It’s what happens after the model asks to act.</p>
+          <div class="flow">
+            <div class="flow-step"><strong class="orange">1 · Prompt</strong><span>User asks for a change in natural language.</span></div><div class="flow-arrow">→</div>
+            <div class="flow-step"><strong class="blue">2 · Stream</strong><span>Model response and tool-use blocks arrive incrementally.</span></div><div class="flow-arrow">→</div>
+            <div class="flow-step"><strong class="mint">3 · Govern</strong><span>Validate, classify, check hooks and resolve permissions.</span></div><div class="flow-arrow">→</div>
+            <div class="flow-step"><strong class="yellow">4 · Act</strong><span>Run safe tools, collect results and preserve ordering.</span></div><div class="flow-arrow">→</div>
+            <div class="flow-step"><strong class="pink">5 · Repeat</strong><span>Append results; the model decides whether it needs another turn.</span></div>
+          </div>
+          <div class="loop-visual">
+            <div class="loop-node"><div class="glyph">⌁</div><b>Model</b><span>generates intent and tool calls</span></div>
+            <div class="loop-node"><div class="glyph">⚙</div><b>Tool executor</b><span>runs with safety and budget controls</span></div>
+            <div class="loop-node"><div class="glyph">▣</div><b>Conversation</b><span>stores messages and results</span></div>
+            <div class="loop-back"></div>
+          </div>
+          <p class="small" style="margin-top:28px">Why an async generator? The consumer pulls messages at its own pace, which gives the loop natural backpressure, cancellation and typed terminal states.</p>
+          <div class="source"><span>Source:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch01-architecture.md" target="_blank" rel="noreferrer">ch01-architecture.md</a> · <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch05-agent-loop.md" target="_blank" rel="noreferrer">ch05-agent-loop.md</a></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Tools & permissions">
+        <div class="slide-inner">
+          <div class="eyebrow">05 · Tools &amp; permissions</div>
+          <h2>Tools are not functions. They are governed capabilities.</h2>
+          <div class="split">
+            <div>
+              <p class="lede">A useful tool declares its input schema, output, concurrency safety, permission behaviour and progress surface.</p>
+              <div class="callout"><div class="callout-icon">✓</div><p><span class="emphasis">Fail-closed defaults:</span> new tools run serially and are treated as writes unless they explicitly prove they are safe to parallelise or read-only.</p></div>
+              <div class="card"><h3>One uniform path</h3><p>Built-in tools and MCP tools pass through the same validation, permission, result-budgeting and error-handling path. That consistency is the safety feature.</p></div>
+            </div>
+            <div>
+              <div class="pipeline">
+                <div class="pipe"><div class="n">01</div><div><b>Look up + validate</b><span>Resolve the tool, parse input, check semantic meaning.</span></div></div>
+                <div class="pipe"><div class="n">02</div><div><b>Prepare</b><span>Start a classifier; backfill derived input without mutating the original.</span></div></div>
+                <div class="pipe safe"><div class="n">03</div><div><b>Govern</b><span>Run hooks, rules, tool checks and mode-based permissions.</span></div></div>
+                <div class="pipe danger"><div class="n">04</div><div><b>Execute or deny</b><span>Run the action, budget results, fire post-hooks and classify errors.</span></div></div>
+              </div>
+              <p class="small" style="margin-top:14px">The full repo describes this as a 14-step pipeline. The four blocks above are the useful implementation boundaries.</p>
+            </div>
+          </div>
+          <div class="source"><span>Source:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch06-tools.md" target="_blank" rel="noreferrer">book/ch06-tools.md</a></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Permission modes">
+        <div class="slide-inner">
+          <div class="eyebrow">06 · Safety boundary</div>
+          <h2>Make safety a mode, not a scattering of if-statements.</h2>
+          <p class="lede">A named permission mode gives you a system-level answer to “what can this agent do right now?”</p>
+          <table class="mode-table">
+            <thead><tr><th>Mode</th><th>Behaviour</th><th>Good fit</th></tr></thead>
+            <tbody>
+              <tr><td>plan</td><td>Read-only; deny mutations.</td><td>Discovery, architecture, impact analysis.</td></tr>
+              <tr><td>default</td><td>Prompt for unresolved operations.</td><td>Interactive developer workflow.</td></tr>
+              <tr><td>acceptEdits</td><td>Auto-allow file edits; prompt on other mutations.</td><td>Fast local iteration with a human boundary.</td></tr>
+              <tr><td>auto</td><td>Use a transcript-aware classifier for routine decisions.</td><td>Semi-autonomous, observable background work.</td></tr>
+              <tr><td>bubble</td><td>Escalate a child agent’s decision to its parent.</td><td>Coordinator / worker systems.</td></tr>
+              <tr><td>bypassPermissions</td><td>Allow everything without prompting.</td><td>Internal testing only.</td></tr>
+            </tbody>
+          </table>
+          <div class="callout"><div class="callout-icon">↗</div><p>Design implication: <span class="emphasis">the permission resolver should be a first-class subsystem</span> with rules, provenance, hooks, user prompts and audit events, not a boolean tucked inside each tool.</p></div>
+          <div class="source"><span>Source:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch06-tools.md" target="_blank" rel="noreferrer">ch06-tools.md</a> · <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch01-architecture.md" target="_blank" rel="noreferrer">ch01-architecture.md</a></div>
+        </div>
+      </article>
+
+      <article class="slide section-slide" data-title="Core loop & scale">
+        <div class="slide-inner">
+          <div class="section-number">02</div>
+          <div class="eyebrow">Part II · Core loop &amp; scale</div>
+          <h2>Make the loop fast enough, cheap enough and composable enough.</h2>
+          <p class="lede">Once the agent can act safely, performance and coordination become product features.</p>
+          <div class="section-line"></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Context compression">
+        <div class="slide-inner">
+          <div class="eyebrow">07 · Agent loop</div>
+          <h2>Context management is a ladder, not a single compact button.</h2>
+          <p class="lede">The loop protects the context window by applying the lightest intervention that solves the immediate pressure.</p>
+          <div class="compression">
+            <div class="layer"><strong>Tool-result budget</strong><span>Limit or persist oversized outputs before they flood the transcript.</span><em>always on</em></div>
+            <div class="layer"><strong>Snip compact</strong><span>Trim low-value sections from large tool results.</span><em>light</em></div>
+            <div class="layer"><strong>Microcompact</strong><span>Replace stale tool results with compact references.</span><em>medium</em></div>
+            <div class="layer"><strong>Context collapse</strong><span>Summarise a finished portion of the conversation.</span><em>heavy</em></div>
+            <div class="layer"><strong>Auto-compact</strong><span>Rebuild a smaller working context when thresholds are reached.</span><em>last resort</em></div>
+          </div>
+          <div class="callout"><div class="callout-icon">↘</div><p><span class="emphasis">Product lesson:</span> context pressure is user-visible latency and cost. Make compaction observable, reversible where possible, and tested against task continuity.</p></div>
+          <div class="source"><span>Source:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch05-agent-loop.md" target="_blank" rel="noreferrer">ch05-agent-loop.md</a> · <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch17-performance.md" target="_blank" rel="noreferrer">ch17-performance.md</a></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Concurrency">
+        <div class="slide-inner">
+          <div class="eyebrow">08 · Concurrency</div>
+          <h2>Parallelise reads. Serialise risk.</h2>
+          <div class="split">
+            <div>
+              <div class="card"><div class="num">SAFE TO OVERLAP</div><h3>Speculative reads</h3><p>Start concurrency-safe tools while the model is still streaming. If the final call changes, discard the speculative result.</p><span class="tag mint">latency win</span></div>
+              <div class="card" style="margin-top:12px"><div class="num">KEEP ORDER</div><h3>Serial writes</h3><p>Writes and context modifiers wait for the right point in the queue. This preserves causality and prevents conflicting side effects.</p><span class="tag pink">safety boundary</span></div>
+            </div>
+            <div class="card">
+              <h3>Partition by input, not just tool name</h3>
+              <p>One tool can be safe or unsafe depending on its input. <span class="emphasis">ls</span> and <span class="emphasis">rm</span> shouldn’t inherit the same concurrency classification merely because both arrive through Bash.</p>
+              <div class="flow" style="margin-bottom:0"><div class="flow-step"><strong class="mint">Read batch</strong><span>grep · read · search<br/>parallel</span></div><div class="flow-arrow">→</div><div class="flow-step"><strong class="pink">Write queue</strong><span>edit · git · deploy<br/>ordered</span></div></div>
+            </div>
+          </div>
+          <div class="source"><span>Source:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch07-concurrency.md" target="_blank" rel="noreferrer">ch07-concurrency.md</a> · <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch01-architecture.md" target="_blank" rel="noreferrer">ch01-architecture.md</a></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Multi-agent">
+        <div class="slide-inner">
+          <div class="eyebrow">09 · Multi-agent orchestration</div>
+          <h2>Sub-agents are new loop instances, not magical exceptions.</h2>
+          <div class="grid-3">
+            <div class="card"><div class="num">01 / ISOLATE</div><h3>Context</h3><p>Give the child its own message history and deliberate visibility into the parent’s context.</p></div>
+            <div class="card"><div class="num">02 / GOVERN</div><h3>Permissions</h3><p>Use <span class="mono pink">bubble</span> mode so dangerous requests travel back to a parent with a real user boundary.</p></div>
+            <div class="card"><div class="num">03 / CLEAN UP</div><h3>Lifecycle</h3><p>Model resolution, hooks, skills, MCP, abort controllers, query loop and cleanup are explicit steps.</p></div>
+          </div>
+          <div class="card" style="margin-top:16px">
+            <h3>Choose the lightest coordination pattern</h3>
+            <div class="flow" style="margin-bottom:0"><div class="flow-step"><strong class="orange">Foreground</strong><span>Parent waits for a child result.</span></div><div class="flow-step"><strong class="blue">Background</strong><span>Child reports through progress channels.</span></div><div class="flow-step"><strong class="mint">Coordinator</strong><span>Parent decomposes work and dispatches workers.</span></div><div class="flow-step"><strong class="pink">Swarm</strong><span>Peers communicate through a mailbox and task registry.</span></div></div>
+          </div>
+          <div class="callout"><div class="callout-icon">↺</div><p>The strongest reusable idea is <span class="emphasis">recursive sameness</span>: a child agent should inherit the parent loop’s guarantees, while its context, tools and permissions are intentionally scoped.</p></div>
+          <div class="source"><span>Sources:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch08-sub-agents.md" target="_blank" rel="noreferrer">ch08-sub-agents.md</a> · <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch10-coordination.md" target="_blank" rel="noreferrer">ch10-coordination.md</a></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Forks & cost">
+        <div class="slide-inner">
+          <div class="eyebrow">10 · Prompt-cache economics</div>
+          <h2>Parallel agents only pay off when they share the prefix.</h2>
+          <div class="split">
+            <div>
+              <p class="lede">Fork agents preserve a byte-identical prompt prefix, allowing multiple children to reuse the expensive shared context.</p>
+              <div class="card"><h3>The design move</h3><p>Freeze the parent’s rendered system prompt. Add a small fork marker. Let the child diverge only after the cached prefix.</p><div class="small mint" style="margin-top:16px">Why it matters → less input-token cost and more predictable parallelism.</div></div>
+            </div>
+            <div class="card">
+              <div style="display:flex; justify-content:space-between; align-items:baseline"><span class="mono muted" style="font-size:12px">conceptual cost</span><span class="orange mono">shared prefix</span></div>
+              <div style="height:18px; margin:24px 0 12px; border-radius:999px; background:linear-gradient(90deg,var(--orange) 0 80%, rgba(255,255,255,.09) 80%);"></div>
+              <div style="display:flex; justify-content:space-between; color:var(--muted); font:11px var(--mono)"><span>parent context</span><span>child-specific tail</span></div>
+              <div class="callout" style="margin-bottom:0"><div class="callout-icon">95%</div><p>The README describes a roughly 95% input-token saving for byte-identical fork prefixes. Treat this as the repo’s reported design claim, not a universal benchmark.</p></div>
+            </div>
+          </div>
+          <p class="small" style="margin-top:24px">Trade-off: cache stability can constrain dynamic prompt content. A few unstable fields, headers or reordered tools can invalidate the benefit.</p>
+          <div class="source"><span>Source:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch09-fork-agents.md" target="_blank" rel="noreferrer">ch09-fork-agents.md</a> · <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/README.md" target="_blank" rel="noreferrer">README.md</a></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Memory & hooks">
+        <div class="slide-inner">
+          <div class="eyebrow">11 · Persistence &amp; extension</div>
+          <h2>Memory gives continuity. Hooks give control.</h2>
+          <div class="grid-2">
+            <div class="card"><div class="num">MEMORY</div><h3>Retrieve relevance, not keywords</h3><p>Project, user and team memories are stored as files, indexed with metadata, then selected for the current task. An always-loaded index can point to deeper memories.</p><div class="small orange" style="margin-top:16px">Useful pattern → human-readable files + machine-selected recall.</div></div>
+            <div class="card"><div class="num">EXTENSIBILITY</div><h3>Load light, execute deliberately</h3><p>Skills use two-phase loading: discover cheap frontmatter first, load full instructions only when invoked. Hooks intercept lifecycle events and can modify or block execution.</p><div class="small mint" style="margin-top:16px">Useful pattern → keep startup cheap and runtime boundaries explicit.</div></div>
+          </div>
+          <div class="flow">
+            <div class="flow-step"><strong class="orange">Session start</strong><span>scan files + frontmatter</span></div><div class="flow-arrow">→</div><div class="flow-step"><strong class="blue">Recall</strong><span>select relevant context</span></div><div class="flow-arrow">→</div><div class="flow-step"><strong class="mint">Invoke</strong><span>load skill / run hook</span></div><div class="flow-arrow">→</div><div class="flow-step"><strong class="pink">Snapshot</strong><span>freeze config for safety</span></div>
+          </div>
+          <div class="source"><span>Sources:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch11-memory.md" target="_blank" rel="noreferrer">ch11-memory.md</a> · <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch12-extensibility.md" target="_blank" rel="noreferrer">ch12-extensibility.md</a></div>
+        </div>
+      </article>
+
+      <article class="slide section-slide" data-title="Build your own">
+        <div class="slide-inner">
+          <div class="section-number">03</div>
+          <div class="eyebrow">Part III · Implementation guide</div>
+          <h2>Build the smallest system that preserves the guarantees.</h2>
+          <p class="lede">You don’t need 18 chapters to start. You do need the right order of operations.</p>
+          <div class="section-line"></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Implementation blueprint">
+        <div class="slide-inner">
+          <div class="eyebrow">12 · Blueprint</div>
+          <h2>Start with the loop. Add capability only after the boundary is observable.</h2>
+          <div class="timeline">
+            <div class="milestone"><div class="dot">01</div><time>FOUNDATION</time><p><b>Define messages and terminal states.</b> Make cancellation, max turns, budget exhaustion and errors explicit.</p></div>
+            <div class="milestone"><div class="dot">02</div><time>TOOLS</time><p><b>Build one self-describing tool.</b> Schema, execution, permission check, concurrency flag and result budget.</p></div>
+            <div class="milestone"><div class="dot">03</div><time>GOVERN</time><p><b>Put every call through one resolver.</b> Hooks → rules → tool check → mode → prompt.</p></div>
+            <div class="milestone"><div class="dot">04</div><time>CONTEXT</time><p><b>Add result budgeting and compaction.</b> Protect the model from your own tool output.</p></div>
+            <div class="milestone"><div class="dot">05</div><time>OBSERVE</time><p><b>Expose progress, costs and decisions.</b> If the human can’t see the boundary, they can’t trust it.</p></div>
+            <div class="milestone"><div class="dot">06</div><time>EXTEND</time><p><b>Add memory, skills, MCP and child agents.</b> Each should reuse the same loop and governance path.</p></div>
+          </div>
+          <div class="source"><span>Pattern synthesis from:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch01-architecture.md" target="_blank" rel="noreferrer">ch01</a> · <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch06-tools.md" target="_blank" rel="noreferrer">ch06</a> · <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch18-epilogue.md" target="_blank" rel="noreferrer">ch18</a></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Agent loop skeleton">
+        <div class="slide-inner">
+          <div class="eyebrow">13 · Step-by-step build</div>
+          <h2>Implement the core loop as a small, testable generator.</h2>
+          <div class="split">
+            <pre class="code"><span class="kw">async function</span> <span class="fn">*runAgent</span>(input, deps) {
+  <span class="kw">let</span> messages = [userMessage(input)]
+
+  <span class="kw">for</span> (<span class="kw">let</span> turn = 0; turn &lt; MAX_TURNS; turn++) {
+    messages = <span class="fn">compactIfNeeded</span>(messages, deps.budget)
+    <span class="kw">const</span> stream = <span class="kw">yield*</span> <span class="fn">callModel</span>(messages, deps.client)
+    <span class="kw">const</span> calls = <span class="fn">extractToolCalls</span>(stream)
+
+    <span class="kw">if</span> (calls.length === 0)
+      <span class="kw">return</span> { kind: <span class="str">"completed"</span> }
+
+    <span class="kw">const</span> results = <span class="kw">yield*</span> <span class="fn">executeTools</span>(calls, deps)
+    messages = messages.concat(results)
+  }
+
+  <span class="kw">return</span> { kind: <span class="str">"max_turns"</span> }
+}</pre>
+            <div>
+              <div class="checklist">
+                <div class="check"><i>1</i><div><b>Inject dependencies.</b><br/>Model client, tool registry, permission resolver, budget and clock.</div></div>
+                <div class="check"><i>2</i><div><b>Yield messages, not logs.</b><br/>Let the REPL, SDK or headless runner decide how to render them.</div></div>
+                <div class="check"><i>3</i><div><b>Keep terminal states typed.</b><br/>“Stopped” is not the same as “failed”. Preserve the reason.</div></div>
+                <div class="check"><i>4</i><div><b>Test the loop without a model.</b><br/>Feed canned streams and tool results to exercise recovery paths deterministically.</div></div>
+              </div>
+              <div class="callout"><div class="callout-icon">⌘</div><p>This is deliberately pseudocode. The repo’s examples are educational; your implementation should make its own contracts explicit.</p></div>
+            </div>
+          </div>
+          <div class="source"><span>Source:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch05-agent-loop.md" target="_blank" rel="noreferrer">ch05-agent-loop.md</a> · pseudocode adapted for teaching</div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Tool contract">
+        <div class="slide-inner">
+          <div class="eyebrow">14 · Step-by-step build</div>
+          <h2>Give every tool a contract the orchestrator can reason about.</h2>
+          <div class="split">
+            <pre class="code"><span class="kw">type</span> Tool&lt;Input, Output&gt; = {
+  name: <span class="kw">string</span>
+  inputSchema: Schema&lt;Input&gt;
+  isReadOnly(input: Input): <span class="kw">boolean</span>
+  isConcurrencySafe(input: Input): <span class="kw">boolean</span>
+  checkPermissions(input: Input): Decision
+  call(input: Input, ctx: ToolContext):
+    Promise&lt;ToolResult&lt;Output&gt;&gt;
+}
+
+<span class="cm">// safe defaults: serial + treated as a write</span>
+<span class="kw">const</span> defaults = {
+  isReadOnly: () =&gt; <span class="kw">false</span>,
+  isConcurrencySafe: () =&gt; <span class="kw">false</span>
+}</pre>
+            <div>
+              <div class="card"><h3>Build in this order</h3><div class="checklist" style="margin-top:15px"><div class="check"><i>✓</i><div><b>Schema first.</b> The model-facing contract and runtime validator should be the same object.</div></div><div class="check"><i>✓</i><div><b>Permission before execution.</b> Never let the tool decide its own trust boundary after side effects begin.</div></div><div class="check"><i>✓</i><div><b>Budget the result.</b> Large output is a context attack, even when the tool is benign.</div></div><div class="check"><i>✓</i><div><b>Classify concurrency by input.</b> A tool name is not a safety guarantee.</div></div></div></div>
+              <div class="card" style="margin-top:14px"><h3>First tools to implement</h3><p><span class="orange">ReadFile</span> → <span class="blue">ListFiles</span> → <span class="mint">Search</span> → <span class="yellow">EditFile</span> → <span class="pink">RunCommand</span>.</p></div>
+            </div>
+          </div>
+          <div class="source"><span>Source:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch06-tools.md" target="_blank" rel="noreferrer">ch06-tools.md</a></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="MCP & remote">
+        <div class="slide-inner">
+          <div class="eyebrow">15 · Connectivity</div>
+          <h2>Make the boundary portable: local tools, MCP and remote sessions.</h2>
+          <div class="grid-3">
+            <div class="card"><div class="num">LOCAL</div><h3>Fast path</h3><p>Use direct process calls for filesystem, shell and local project workflows. Keep permission and result contracts identical.</p></div>
+            <div class="card"><div class="num">MCP</div><h3>Universal tool surface</h3><p>Wrap remote tools into the same model-facing interface. Handle transports, OAuth, timeouts, expiry and tool discovery.</p></div>
+            <div class="card"><div class="num">REMOTE</div><h3>Session bridge</h3><p>Separate durable reads from HTTP writes, route messages, deduplicate echoes and make token refresh explicit.</p></div>
+          </div>
+          <div class="flow">
+            <div class="flow-step"><strong class="orange">Model-facing tool</strong><span>stable schema</span></div><div class="flow-arrow">→</div><div class="flow-step"><strong class="blue">Adapter</strong><span>local / MCP / bridge</span></div><div class="flow-arrow">→</div><div class="flow-step"><strong class="mint">Governance</strong><span>same resolver</span></div><div class="flow-arrow">→</div><div class="flow-step"><strong class="pink">Result</strong><span>normalised + budgeted</span></div>
+          </div>
+          <div class="callout"><div class="callout-icon">↔</div><p><span class="emphasis">Implementation rule:</span> add connectivity by extending the adapter layer, not by teaching the core loop a new special case for every transport.</p></div>
+          <div class="source"><span>Sources:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch15-mcp.md" target="_blank" rel="noreferrer">ch15-mcp.md</a> · <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch16-remote.md" target="_blank" rel="noreferrer">ch16-remote.md</a></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Performance checklist">
+        <div class="slide-inner">
+          <div class="eyebrow">16 · Performance checklist</div>
+          <h2>Make the machinery feel invisible.</h2>
+          <div class="grid-2">
+            <div class="card"><h3>Startup</h3><div class="checklist" style="margin-top:15px"><div class="check"><i>→</i><div>Dispatch fast paths before expensive imports.</div></div><div class="check"><i>→</i><div>Start independent I/O in parallel.</div></div><div class="check"><i>→</i><div>Preconnect to the model when it is safe.</div></div></div></div>
+            <div class="card"><h3>Tokens &amp; cost</h3><div class="checklist" style="margin-top:15px"><div class="check"><i>→</i><div>Reserve a modest default output slot; escalate only when needed.</div></div><div class="check"><i>→</i><div>Keep stable prompt prefixes byte-identical.</div></div><div class="check"><i>→</i><div>Defer low-frequency tool schemas.</div></div></div></div>
+            <div class="card"><h3>Rendering</h3><div class="checklist" style="margin-top:15px"><div class="check"><i>→</i><div>Stream through a rendering pipeline, not one giant re-render.</div></div><div class="check"><i>→</i><div>Use double buffers and pools where terminal churn is high.</div></div><div class="check"><i>→</i><div>Make progress and partial output visible.</div></div></div></div>
+            <div class="card"><h3>Search &amp; memory</h3><div class="checklist" style="margin-top:15px"><div class="check"><i>→</i><div>Index asynchronously; expose partial queryability.</div></div><div class="check"><i>→</i><div>Use cheap filters before expensive relevance scoring.</div></div><div class="check"><i>→</i><div>Measure recall quality and staleness, not only latency.</div></div></div></div>
+          </div>
+          <div class="source"><span>Source:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch17-performance.md" target="_blank" rel="noreferrer">ch17-performance.md</a></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="What transfers">
+        <div class="slide-inner">
+          <div class="eyebrow">17 · Design judgement</div>
+          <h2>Transfer the patterns. Question the scale-specific machinery.</h2>
+          <div class="split">
+            <div class="card"><h3 class="mint">Transfers broadly</h3><div class="checklist" style="margin-top:16px"><div class="check"><i>✓</i><div><b>Generator-based loop</b><br/>Backpressure, cancellation and terminal states.</div></div><div class="check"><i>✓</i><div><b>Self-describing tools</b><br/>Safety and concurrency travel with capability.</div></div><div class="check"><i>✓</i><div><b>Layered context control</b><br/>Protect quality and cost as sessions grow.</div></div><div class="check"><i>✓</i><div><b>Permission modes</b><br/>Make trust posture legible.</div></div></div></div>
+            <div class="card"><h3 class="pink">Needs evidence in your context</h3><div class="checklist" style="margin-top:16px"><div class="check"><i>?</i><div><b>Fork-cache economics</b><br/>Depends on provider, prefix stability and workload shape.</div></div><div class="check"><i>?</i><div><b>Swarm complexity</b><br/>Coordination can cost more than it saves.</div></div><div class="check"><i>?</i><div><b>File-based memory</b><br/>Excellent for inspectability; not automatically right for every scale.</div></div><div class="check"><i>?</i><div><b>Terminal-first UI</b><br/>Powerful for developers; not a universal interaction model.</div></div></div></div>
+          </div>
+          <div class="callout"><div class="callout-icon">◎</div><p>The repo’s highest-value contribution is not an exact implementation. It is a set of design questions you can ask of any agent architecture.</p></div>
+          <div class="source"><span>Source:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch18-epilogue.md" target="_blank" rel="noreferrer">ch18-epilogue.md</a> · <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/README.md" target="_blank" rel="noreferrer">README.md</a></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Your first build">
+        <div class="slide-inner">
+          <div class="eyebrow">18 · How-to guide</div>
+          <h2>A focused first build for your own agent shell.</h2>
+          <div class="grid-3">
+            <div class="card"><div class="num">DAY 1</div><h3>Read-only agent</h3><p>Model stream + file listing + file reading + search. No writes. Log every message and tool decision.</p></div>
+            <div class="card"><div class="num">DAY 2–3</div><h3>Governed edits</h3><p>Add a diff-based edit tool, permission prompts, plan mode and result budgeting. Test denial paths first.</p></div>
+            <div class="card"><div class="num">DAY 4–5</div><h3>Recovery &amp; memory</h3><p>Add typed terminal states, retry boundaries, compact context and a small project-memory index.</p></div>
+            <div class="card"><div class="num">DAY 6</div><h3>Concurrency</h3><p>Partition reads and writes. Speculate only on tools with a proven input-level safety classification.</p></div>
+            <div class="card"><div class="num">DAY 7</div><h3>One extension</h3><p>Integrate one MCP server or one child agent through the same tool and permission path.</p></div>
+            <div class="card"><div class="num">DONE WHEN</div><h3>You can explain every stop</h3><p>For any action, you can answer: what happened, why it was allowed, what it cost and how it can be stopped.</p></div>
+          </div>
+          <div class="source"><span>Implementation sequence synthesised from:</span> <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch01-architecture.md" target="_blank" rel="noreferrer">ch01</a> · <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch06-tools.md" target="_blank" rel="noreferrer">ch06</a> · <a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch17-performance.md" target="_blank" rel="noreferrer">ch17</a></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Closing">
+        <div class="slide-inner">
+          <div class="eyebrow">19 · Closing</div>
+          <h2>Don’t copy the product. Copy the questions.</h2>
+          <p class="lede">What is the loop? What can act? Who decides? What is remembered? What is parallel? What happens when the model is wrong?</p>
+          <div class="callout"><div class="callout-icon">↻</div><p><span class="emphasis">The durable mental model:</span> agent quality is the product of model capability, tool design, governance, context economics and interaction design.</p></div>
+          <div class="source-grid">
+            <div class="source-card"><b><a href="https://github.com/alejandrobalderas/claude-code-from-source" target="_blank" rel="noreferrer">Repository</a></b><p>Full book, web implementation and chapter navigation.</p></div>
+            <div class="source-card"><b><a href="https://claude-code-from-source.com" target="_blank" rel="noreferrer">Read online</a></b><p>The project’s published interactive reading experience.</p></div>
+            <div class="source-card"><b><a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/book/ch18-epilogue.md" target="_blank" rel="noreferrer">Epilogue</a></b><p>Five architectural bets, transfer boundaries and future directions.</p></div>
+            <div class="source-card"><b><a href="https://github.com/alejandrobalderas/claude-code-from-source/blob/main/README.md" target="_blank" rel="noreferrer">README</a></b><p>Scope, table of contents and educational disclaimer.</p></div>
+          </div>
+          <p class="small" style="margin-top:34px">Use <span class="kbd">←</span> <span class="kbd">→</span> to navigate · <span class="kbd">O</span> for overview · <span class="kbd">F</span> for fullscreen</p>
+        </div>
+      </article>
+    </section>
+
+    <div class="footer-controls">
+      <button class="icon-btn" id="prevBtn" aria-label="Previous slide" title="Previous slide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="counter" id="counter">01 / 19</div>
+      <button class="icon-btn" id="nextBtn" aria-label="Next slide" title="Next slide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+    <div class="hint"><span class="kbd">←</span> <span class="kbd">→</span> navigate &nbsp; <span class="kbd">O</span> overview &nbsp; <span class="kbd">F</span> fullscreen</div>
+    <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+  </main>
+
+  <aside class="overview" id="overview" aria-label="Slide overview" aria-hidden="true">
+    <div class="overview-head"><div><div class="eyebrow">Navigation</div><h2>Slide overview</h2></div><button class="icon-btn close" id="closeOverview" aria-label="Close slide overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="overview-grid" id="overviewGrid"></div>
+  </aside>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const counter = document.getElementById('counter');
+      const progress = document.getElementById('progressBar');
+      const overview = document.getElementById('overview');
+      const overviewGrid = document.getElementById('overviewGrid');
+      const toast = document.getElementById('toast');
+      let index = 0;
+      let toastTimer;
+
+      const pad = (n) => String(n).padStart(2, '0');
+      const showToast = (message) => {
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 1400);
+      };
+
+      function buildOverview() {
+        overviewGrid.innerHTML = slides.map((slide, i) => {
+          const title = slide.dataset.title || `Slide ${i + 1}`;
+          const eyebrow = slide.querySelector('.eyebrow')?.textContent || '';
+          const sub = eyebrow.replace(/^\d+\s·\s*/, '');
+          return `<button class="thumb" data-index="${i}" aria-label="Go to slide ${i + 1}: ${title}"><span class="thumb-no">${pad(i + 1)}</span><h3>${title}</h3><p>${sub}</p></button>`;
+        }).join('');
+        overviewGrid.querySelectorAll('.thumb').forEach((button) => button.addEventListener('click', () => {
+          goTo(Number(button.dataset.index));
+          closeOverview();
+        }));
+      }
+
+      function update() {
+        slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+        counter.textContent = `${pad(index + 1)} / ${pad(slides.length)}`;
+        progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+        overviewGrid.querySelectorAll('.thumb').forEach((button, i) => button.classList.toggle('active', i === index));
+        const hash = `#slide-${index + 1}`;
+        if (location.hash !== hash) history.replaceState(null, '', hash);
+      }
+
+      function goTo(next) {
+        index = Math.max(0, Math.min(slides.length - 1, next));
+        update();
+      }
+      function next() { goTo(index + 1); }
+      function previous() { goTo(index - 1); }
+      function openOverview() { overview.classList.add('open'); overview.setAttribute('aria-hidden', 'false'); }
+      function closeOverview() { overview.classList.remove('open'); overview.setAttribute('aria-hidden', 'true'); }
+      async function toggleFullscreen() {
+        try {
+          if (!document.fullscreenElement) { await document.documentElement.requestFullscreen(); showToast('Fullscreen presentation mode'); }
+          else { await document.exitFullscreen(); showToast('Exited fullscreen'); }
+        } catch (error) { showToast('Fullscreen is unavailable in this browser'); }
+      }
+
+      document.getElementById('nextBtn').addEventListener('click', next);
+      document.getElementById('prevBtn').addEventListener('click', previous);
+      document.getElementById('overviewBtn').addEventListener('click', openOverview);
+      document.getElementById('closeOverview').addEventListener('click', closeOverview);
+      document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+      overview.addEventListener('click', (event) => { if (event.target === overview) closeOverview(); });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowRight' || event.key === 'PageDown' || event.key === ' ') { event.preventDefault(); next(); }
+        if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); previous(); }
+        if (event.key === 'Home') { event.preventDefault(); goTo(0); }
+        if (event.key === 'End') { event.preventDefault(); goTo(slides.length - 1); }
+        if (event.key.toLowerCase() === 'o') { event.preventDefault(); overview.classList.contains('open') ? closeOverview() : openOverview(); }
+        if (event.key.toLowerCase() === 'f') { event.preventDefault(); toggleFullscreen(); }
+        if (event.key === 'Escape' && overview.classList.contains('open')) closeOverview();
+      });
+
+      const match = location.hash.match(/slide-(\d+)/);
+      if (match) index = Math.max(0, Math.min(slides.length - 1, Number(match[1]) - 1));
+      buildOverview();
+      update();
+    })();
+  </script>
+</body>
+</html>

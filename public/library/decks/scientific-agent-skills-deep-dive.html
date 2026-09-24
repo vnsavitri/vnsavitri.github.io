@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="A deep dive into K-Dense Scientific Agent Skills, the companion paper, and how to use the library with Claude Code, Codex, DeepSeek Harness, Hermes Agent and other agent harnesses." />
+  <title>Scientific Agent Skills · Deep Dive</title>
+  <style>
+    :root {
+      --ink: #10212b;
+      --ink-2: #243b46;
+      --muted: #617680;
+      --paper: #f6f8f7;
+      --paper-2: #eef3f0;
+      --white: #ffffff;
+      --line: #d7e1dd;
+      --mint: #b8e2cf;
+      --mint-2: #e1f3e9;
+      --teal: #0d716d;
+      --teal-deep: #064b50;
+      --orange: #e49357;
+      --orange-soft: #fff0df;
+      --blue: #497ca7;
+      --blue-soft: #e8f1f8;
+      --red: #ae5248;
+      --red-soft: #f9e9e5;
+      --shadow: 0 18px 50px rgba(20, 52, 59, .12);
+      --shadow-soft: 0 10px 30px rgba(20, 52, 59, .07);
+      --radius: 22px;
+      --radius-sm: 14px;
+      --sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--paper); color: var(--ink); font-family: var(--sans); }
+    body { overflow: hidden; }
+    button, a { font: inherit; }
+    a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    button { border: 0; cursor: pointer; }
+    button:focus-visible, a:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+
+    .deck { min-height: 100svh; background: var(--paper); }
+    .stage { position: relative; height: 100svh; overflow: hidden; }
+    .slide {
+      display: none;
+      height: 100svh;
+      overflow: auto;
+      padding: clamp(34px, 5vw, 76px) clamp(22px, 7vw, 110px) 126px;
+      background: var(--paper);
+      scrollbar-color: var(--mint) transparent;
+    }
+    .slide.is-active { display: block; animation: arrive .42s cubic-bezier(.2,.8,.2,1) both; }
+    @keyframes arrive { from { opacity: .15; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @media (prefers-reduced-motion: reduce) { .slide.is-active { animation: none; } * { scroll-behavior: auto !important; } }
+
+    .slide-inner { max-width: 1220px; min-height: calc(100svh - 164px); margin: 0 auto; display: flex; flex-direction: column; justify-content: center; }
+    .eyebrow { color: var(--teal); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 18px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(46px, 8vw, 106px); line-height: .95; letter-spacing: -.065em; max-width: 1000px; margin-bottom: 24px; }
+    h2 { font-size: clamp(36px, 5.6vw, 74px); line-height: .98; letter-spacing: -.055em; max-width: 950px; margin-bottom: 24px; }
+    h3 { font-size: clamp(18px, 2vw, 27px); line-height: 1.08; letter-spacing: -.03em; margin-bottom: 10px; }
+    p, li { font-size: clamp(15px, 1.45vw, 20px); line-height: 1.47; }
+    .lede { font-size: clamp(20px, 2.6vw, 34px); line-height: 1.15; letter-spacing: -.035em; max-width: 880px; color: var(--ink-2); }
+    .small { font-size: 13px; line-height: 1.45; color: var(--muted); }
+    .tiny { font-size: 11px; line-height: 1.35; color: var(--muted); }
+    .muted { color: var(--muted); }
+    .mono { font-family: var(--mono); }
+    .accent { color: var(--teal); }
+    .orange { color: #a95c2d; }
+    .strong { font-weight: 760; }
+    .rule { width: 76px; height: 4px; background: var(--orange); border-radius: 4px; margin: 26px 0; }
+    .source { margin-top: auto; padding-top: 26px; color: var(--muted); font-size: 11px; line-height: 1.35; }
+    .source a { color: var(--teal-deep); }
+
+    .cover { background: var(--teal-deep); color: var(--white); position: relative; overflow: hidden; }
+    .cover::before, .cover::after { content: ""; position: absolute; border-radius: 50%; pointer-events: none; }
+    .cover::before { width: 58vw; height: 58vw; right: -18vw; top: -26vw; border: 1px solid rgba(184, 226, 207, .35); box-shadow: 0 0 0 48px rgba(184,226,207,.08), 0 0 0 96px rgba(184,226,207,.04); }
+    .cover::after { width: 34vw; height: 34vw; left: -19vw; bottom: -21vw; background: rgba(228,147,87,.16); }
+    .cover .slide-inner { position: relative; z-index: 1; }
+    .cover .eyebrow, .cover .source, .cover .small { color: rgba(255,255,255,.72); }
+    .cover h1 { max-width: 900px; }
+    .cover .lede { color: rgba(255,255,255,.83); max-width: 790px; }
+    .cover-mark { display: inline-grid; place-items: center; width: 58px; height: 58px; border: 1px solid rgba(255,255,255,.35); border-radius: 18px; margin-bottom: 26px; }
+    .cover-mark svg { width: 30px; height: 30px; }
+    .cover-meta { display: flex; flex-wrap: wrap; gap: 9px 18px; margin-top: 34px; font-size: 13px; color: rgba(255,255,255,.75); }
+
+    .section-break { background: var(--ink); color: var(--white); }
+    .section-break .slide-inner { justify-content: flex-end; padding-bottom: 50px; }
+    .section-break h2 { max-width: 840px; }
+    .section-break .section-word { font-size: clamp(76px, 16vw, 230px); line-height: .75; letter-spacing: -.1em; color: var(--mint); margin-bottom: 40px; }
+    .section-break .section-note { max-width: 610px; color: rgba(255,255,255,.7); }
+
+    .grid-2 { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: clamp(24px, 5vw, 74px); align-items: center; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .stack { display: grid; gap: 14px; }
+    .align-end { align-items: end; }
+    .span-all { grid-column: 1 / -1; }
+
+    .panel { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); padding: clamp(18px, 2.6vw, 34px); box-shadow: var(--shadow-soft); }
+    .panel.soft { background: var(--mint-2); border-color: transparent; box-shadow: none; }
+    .panel.ink { background: var(--ink); color: var(--white); border-color: transparent; box-shadow: none; }
+    .panel.orange { background: var(--orange-soft); border-color: transparent; box-shadow: none; }
+    .panel.blue { background: var(--blue-soft); border-color: transparent; box-shadow: none; }
+    .panel.red { background: var(--red-soft); border-color: transparent; box-shadow: none; }
+    .panel p:last-child, .panel ul:last-child { margin-bottom: 0; }
+    .panel + .panel { margin-top: 0; }
+    .panel-label { display: flex; justify-content: space-between; gap: 12px; color: var(--teal); font-size: 11px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; margin-bottom: 18px; }
+    .ink .panel-label { color: var(--mint); }
+
+    .number { font-size: clamp(44px, 5.5vw, 82px); font-weight: 800; line-height: .9; letter-spacing: -.07em; color: var(--teal); }
+    .number.orange-num { color: #b56632; }
+    .metric-row { display: flex; align-items: flex-end; gap: 18px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .metric-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .metric-copy { flex: 1; }
+    .metric-copy strong { display: block; font-size: 16px; margin-bottom: 4px; }
+    .metric-copy span { color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+    .quote { font-size: clamp(25px, 3.3vw, 46px); line-height: 1.08; letter-spacing: -.045em; max-width: 860px; }
+    .quote-mark { color: var(--orange); font-size: 1.6em; vertical-align: -.15em; margin-right: 6px; }
+    .callout { padding: 15px 17px; border-radius: var(--radius-sm); background: var(--paper-2); border: 1px solid var(--line); }
+    .callout strong { display: block; margin-bottom: 4px; }
+    .callout p { font-size: 15px; margin-bottom: 0; }
+    .callout.warn { background: var(--orange-soft); border-color: #f4d4b5; }
+    .callout.safe { background: var(--mint-2); border-color: #bde3cf; }
+    .callout.danger { background: var(--red-soft); border-color: #efc6bf; }
+
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; background: var(--paper-2); color: var(--teal-deep); font-size: 11px; font-weight: 800; letter-spacing: .04em; }
+    .pill.orange { background: var(--orange-soft); color: #8f4c23; }
+    .pill.blue { background: var(--blue-soft); color: #2c5b83; }
+    .pill.red { background: var(--red-soft); color: #8c3f37; }
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .usecase { min-height: 170px; padding: 22px; border-radius: var(--radius-sm); display: flex; flex-direction: column; justify-content: space-between; }
+    .usecase h3 { font-size: 21px; }
+    .usecase p { font-size: 14px; color: var(--ink-2); margin-bottom: 0; }
+    .usecase.mint { background: var(--mint-2); }
+    .usecase.orange { background: var(--orange-soft); }
+    .usecase.blue { background: var(--blue-soft); }
+    .usecase.plain { background: var(--white); border: 1px solid var(--line); }
+    .icon-bubble { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px; background: rgba(255,255,255,.65); color: var(--teal-deep); margin-bottom: 20px; }
+    .icon-bubble svg { width: 18px; height: 18px; }
+
+    .flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; align-items: stretch; }
+    .flow-step { position: relative; padding: 24px 26px 24px 22px; background: var(--white); border: 1px solid var(--line); min-height: 178px; }
+    .flow-step:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+    .flow-step:last-child { border-radius: 0 var(--radius) var(--radius) 0; }
+    .flow-step:not(:last-child)::after { content: ""; position: absolute; z-index: 2; right: -11px; top: 50%; width: 20px; height: 20px; background: var(--white); border-top: 1px solid var(--line); border-right: 1px solid var(--line); transform: translateY(-50%) rotate(45deg); }
+    .flow-step:nth-child(2) { background: var(--mint-2); }
+    .flow-step:nth-child(3) { background: var(--orange-soft); }
+    .flow-step h3 { font-size: 20px; }
+    .flow-step p { font-size: 14px; color: var(--muted); margin-bottom: 0; }
+    .flow-step .step-index { color: var(--teal); font: 800 12px var(--mono); margin-bottom: 22px; }
+
+    .layer-stack { display: grid; gap: 9px; }
+    .layer { display: grid; grid-template-columns: 140px 1fr; gap: 16px; align-items: center; min-height: 66px; padding: 14px 18px; border-radius: 13px; background: var(--white); border: 1px solid var(--line); }
+    .layer strong { color: var(--teal-deep); }
+    .layer span { font-size: 14px; color: var(--muted); }
+    .layer.resident { border-left: 5px solid var(--teal); }
+    .layer.instruction { border-left: 5px solid var(--orange); }
+    .layer.reference { border-left: 5px solid var(--blue); }
+
+    .folder-tree { font-family: var(--mono); font-size: clamp(12px, 1.2vw, 15px); line-height: 1.75; color: var(--ink-2); }
+    .folder-tree .folder { color: var(--teal); font-weight: 800; }
+    .folder-tree .file { color: #99602f; }
+    .folder-tree .dim { color: var(--muted); }
+    .tree-box { background: var(--ink); border-radius: var(--radius); padding: 24px 26px; color: rgba(255,255,255,.78); box-shadow: var(--shadow); }
+    .tree-box .folder { color: var(--mint); }
+    .tree-box .file { color: #f5b881; }
+    .tree-box .dim { color: rgba(255,255,255,.45); }
+
+    .bar-chart { display: grid; gap: 16px; }
+    .bar-row { display: grid; grid-template-columns: 124px 1fr 80px; gap: 14px; align-items: center; }
+    .bar-label { font-size: 13px; color: var(--ink-2); }
+    .bar-track { height: 24px; border-radius: 999px; background: var(--paper-2); overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: inherit; background: var(--teal); }
+    .bar-fill.orange-fill { background: var(--orange); }
+    .bar-value { font: 700 13px var(--mono); color: var(--teal-deep); text-align: right; }
+    .chart-note { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+    .code { background: #10212b; color: #ecf5f1; border-radius: var(--radius); padding: 21px 24px; overflow: auto; box-shadow: var(--shadow); }
+    pre { margin: 0; font: 12px/1.62 var(--mono); white-space: pre-wrap; }
+    .code .comment { color: #8fb5a9; }
+    .code .cmd { color: #f7bc82; }
+    .code .key { color: #bde2ff; }
+    .code .string { color: #d7f09e; }
+
+    .decision-table { display: grid; gap: 8px; }
+    .decision-row { display: grid; grid-template-columns: 1.1fr 1.2fr 1.4fr; gap: 14px; align-items: start; padding: 15px 0; border-bottom: 1px solid var(--line); }
+    .decision-row:first-child { color: var(--teal); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .decision-row:not(:first-child) p { font-size: 14px; margin-bottom: 0; }
+    .decision-row:not(:first-child) strong { font-size: 14px; }
+
+    .timeline { position: relative; display: grid; gap: 14px; }
+    .timeline::before { content: ""; position: absolute; left: 18px; top: 17px; bottom: 17px; width: 2px; background: var(--line); }
+    .timeline-item { position: relative; display: grid; grid-template-columns: 38px 1fr; gap: 18px; align-items: start; }
+    .timeline-dot { width: 12px; height: 12px; margin: 11px 0 0 12px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 5px var(--orange-soft); }
+    .timeline-copy { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 15px 18px; }
+    .timeline-copy strong { display: block; margin-bottom: 3px; }
+    .timeline-copy p { margin-bottom: 0; font-size: 14px; color: var(--muted); }
+
+    .harness-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .harness { min-height: 155px; padding: 17px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--white); }
+    .harness .harness-icon { color: var(--teal); margin-bottom: 22px; }
+    .harness h3 { font-size: 18px; }
+    .harness p { font-size: 13px; color: var(--muted); margin-bottom: 0; }
+
+    .takeaway { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .takeaway > div { padding: 22px; border-radius: var(--radius); }
+    .takeaway .yes { background: var(--mint-2); }
+    .takeaway .no { background: var(--red-soft); }
+    .takeaway h3 { margin-bottom: 13px; }
+    .takeaway ul { padding-left: 19px; margin-bottom: 0; }
+    .takeaway li { font-size: 15px; margin-bottom: 7px; }
+
+    .chrome { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 18px; padding: 14px clamp(14px, 3vw, 38px) 16px; background: linear-gradient(180deg, rgba(246,248,247,0), rgba(246,248,247,.94) 25%, rgba(246,248,247,.98)); pointer-events: none; }
+    .chrome > * { pointer-events: auto; }
+    .cover ~ .chrome { color: var(--ink); }
+    .progress-wrap { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .progress { width: min(280px, 26vw); height: 4px; border-radius: 4px; background: var(--line); overflow: hidden; }
+    .progress > span { display: block; height: 100%; background: var(--teal); transition: width .3s ease; }
+    .counter { font: 700 12px var(--mono); color: var(--muted); white-space: nowrap; }
+    .nav { display: flex; gap: 8px; align-items: center; }
+    .nav button, .tool-button { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; color: var(--ink); background: rgba(255,255,255,.88); border: 1px solid var(--line); box-shadow: 0 5px 16px rgba(20,52,59,.08); }
+    .nav button:hover, .tool-button:hover { background: var(--white); transform: translateY(-1px); }
+    .nav button:disabled { opacity: .35; cursor: default; transform: none; }
+    .nav svg, .tool-button svg { width: 18px; height: 18px; }
+    .tools { justify-self: end; display: flex; gap: 8px; }
+    .tool-button.wide { width: auto; padding: 0 13px; gap: 8px; font-size: 12px; font-weight: 750; }
+
+    .overview { position: fixed; inset: 0; z-index: 50; display: none; padding: clamp(18px, 4vw, 56px); background: rgba(16,33,43,.68); backdrop-filter: blur(10px); }
+    .overview.is-open { display: block; }
+    .overview-panel { height: 100%; max-width: 1180px; margin: 0 auto; overflow: auto; padding: clamp(20px, 3vw, 42px); border-radius: 24px; background: var(--paper); box-shadow: 0 28px 80px rgba(0,0,0,.24); }
+    .overview-head { display: flex; align-items: start; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
+    .overview-head h2 { font-size: clamp(32px, 5vw, 60px); margin-bottom: 10px; }
+    .close-button { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; border: 1px solid var(--line); background: var(--white); color: var(--ink); flex: none; }
+    .index-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 10px; }
+    .index-item { min-height: 98px; text-align: left; padding: 15px; border-radius: 14px; background: var(--white); border: 1px solid var(--line); color: var(--ink); transition: border .2s ease, transform .2s ease, background .2s ease; }
+    .index-item:hover, .index-item.current { border-color: var(--teal); background: var(--mint-2); transform: translateY(-2px); }
+    .index-item.section { background: var(--ink); color: var(--white); border-color: var(--ink); }
+    .index-number { display: block; font: 700 11px var(--mono); color: var(--teal); margin-bottom: 15px; }
+    .index-item.section .index-number { color: var(--mint); }
+    .index-title { display: block; font-size: 14px; line-height: 1.2; font-weight: 760; }
+    .index-tag { display: block; margin-top: 8px; font-size: 11px; color: var(--muted); }
+    .index-item.section .index-tag { color: rgba(255,255,255,.6); }
+
+    .no-js { padding: 20px; }
+    @media (max-width: 900px) {
+      body { overflow: auto; }
+      .slide { padding-left: 22px; padding-right: 22px; padding-bottom: 116px; }
+      .slide-inner { min-height: calc(100svh - 146px); }
+      .grid-2, .grid-3, .grid-4, .flow, .harness-grid, .takeaway { grid-template-columns: 1fr; }
+      .flow-step { min-height: auto; }
+      .flow-step:first-child, .flow-step:last-child { border-radius: 0; }
+      .flow-step:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+      .flow-step:last-child { border-radius: 0 0 var(--radius) var(--radius); }
+      .flow-step:not(:last-child)::after { right: auto; top: auto; bottom: -11px; left: 50%; transform: translateX(-50%) rotate(135deg); }
+      .bar-row { grid-template-columns: 96px 1fr 64px; gap: 8px; }
+      .decision-row { grid-template-columns: 1fr; gap: 5px; padding: 13px 0; }
+      .decision-row:first-child { display: none; }
+      .layer { grid-template-columns: 1fr; gap: 6px; }
+      .chrome { grid-template-columns: 1fr auto; gap: 8px; }
+      .progress-wrap { grid-column: 1 / -1; order: 2; justify-content: center; }
+      .tools { order: 1; }
+      .nav { order: 1; }
+      .progress { width: min(330px, 66vw); }
+    }
+    @media (max-width: 540px) {
+      h1 { font-size: clamp(44px, 14vw, 70px); }
+      h2 { font-size: clamp(34px, 11vw, 58px); }
+      .number { font-size: 52px; }
+      .metric-row { align-items: start; }
+      .bar-label { font-size: 12px; }
+      .bar-value { font-size: 11px; }
+      .nav button, .tool-button { width: 38px; height: 38px; }
+      .tool-button.wide { padding: 0 10px; }
+      .tool-button.wide span { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <noscript><div class="no-js">This deck needs JavaScript for navigation and overview mode.</div></noscript>
+  <main class="deck" id="deck">
+    <!-- 01 -->
+    <section class="slide cover is-active" data-title="Scientific Agent Skills" data-section="Start">
+      <div class="slide-inner">
+        <div class="cover-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="7.4"/><path d="m7 7 10 10M17 7 7 17"/></svg>
+        </div>
+        <div class="eyebrow">Repo + research paper · 18 September 2026</div>
+        <h1>Scientific Agent Skills</h1>
+        <p class="lede">A field guide to turning a general AI agent into a more disciplined research partner.</p>
+        <div class="cover-meta"><span>Beginner TL;DR</span><span>Architecture deep dive</span><span>Claude Code · Codex · Hermes</span></div>
+        <div class="source">Primary sources: <a href="https://github.com/K-Dense-AI/scientific-agent-skills" target="_blank" rel="noreferrer">repository</a> · <a href="https://arxiv.org/abs/2609.00065" target="_blank" rel="noreferrer">paper, arXiv:2609.00065</a></div>
+      </div>
+    </section>
+
+    <!-- 02 -->
+    <section class="slide" data-title="The beginner version" data-section="TL;DR">
+      <div class="slide-inner">
+        <div class="grid-2">
+          <div>
+            <div class="eyebrow">The beginner version</div>
+            <h2>Working code isn’t the same as defensible science.</h2>
+            <p class="lede">Scientific Agent Skills are small, reviewable procedures that tell an agent how a field expects a task to be done.</p>
+          </div>
+          <div class="stack">
+            <div class="panel soft"><div class="panel-label"><span>Without a skill</span><span>Risk</span></div><p>An agent can produce plausible code while missing a convention that changes the meaning of the result.</p></div>
+            <div class="panel ink"><div class="panel-label"><span>With a skill</span><span>Guardrail</span></div><p>The agent gets explicit guidance about the test, identifier namespace, assumptions and caveats that matter.</p></div>
+          </div>
+        </div>
+        <div class="source">Paper: the introduction frames the problem as procedural knowledge, not just code generation. <a href="https://arxiv.org/pdf/2609.00065#page=2" target="_blank" rel="noreferrer">Read the paper, pp. 1–2</a></div>
+      </div>
+    </section>
+
+    <!-- 03 -->
+    <section class="slide" data-title="The central distinction" data-section="TL;DR">
+      <div class="slide-inner">
+        <div class="eyebrow">The central distinction</div>
+        <p class="quote"><span class="quote-mark">“</span>An agent can return working code. A defensible analysis depends on the procedural choices behind it.</p>
+        <div class="rule"></div>
+        <div class="grid-2">
+          <div class="panel orange"><h3>Example: RNA-seq</h3><p>A script may run while treating 100 cells from each of three mice as 300 independent replicates. The skill makes the experimental unit explicit: <span class="strong">n = 3 mice</span>, not n = 300 cells.</p></div>
+          <div class="panel blue"><h3>Example: file coordinates</h3><p>A pipeline may shift genomic intervals by one base if coordinate conventions are left implicit. A skill turns that convention into a check the agent can follow.</p></div>
+        </div>
+        <div class="source">Paper: concrete failure examples and the procedural framing. <a href="https://arxiv.org/pdf/2609.00065#page=2" target="_blank" rel="noreferrer">pp. 1–2</a></div>
+      </div>
+    </section>
+
+    <!-- 04 -->
+    <section class="slide" data-title="Why it is useful" data-section="TL;DR">
+      <div class="slide-inner">
+        <div class="eyebrow">Why it is useful</div>
+        <h2>It packages hard-won judgement into something an agent can load when needed.</h2>
+        <div class="grid-3">
+          <div class="usecase mint"><div><div class="icon-bubble"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 19V5m0 14h16M8 15l3-4 3 2 4-6"/></svg></div><h3>Faster starts</h3></div><p>Skip repeated package and API discovery when a documented workflow already exists.</p></div>
+          <div class="usecase orange"><div><div class="icon-bubble"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3 5 6v5c0 4.6 2.9 7.7 7 10 4.1-2.3 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg></div><h3>Better boundaries</h3></div><p>Make validation, provenance and safety limits part of the workflow rather than a late reminder.</p></div>
+          <div class="usecase blue"><div><div class="icon-bubble"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div><h3>Reusable practice</h3></div><p>Turn a successful research procedure into a portable, inspectable unit that other harnesses can discover.</p></div>
+        </div>
+        <div class="source">Repository: stated benefits include reviewed starting points, multi-step workflows and documented integration paths. <a href="https://github.com/K-Dense-AI/scientific-agent-skills#why-use-this" target="_blank" rel="noreferrer">README · Why Use This?</a></div>
+      </div>
+    </section>
+
+    <!-- 05 -->
+    <section class="slide" data-title="Use cases to picture" data-section="TL;DR">
+      <div class="slide-inner">
+        <div class="eyebrow">Use cases to picture</div>
+        <div class="grid-2 align-end">
+          <div><h2>Think of it as a procedural layer over your existing agent.</h2><p class="muted">The library doesn’t replace your model, tools or expert review. It gives the agent better instructions for using them.</p></div>
+          <div class="panel soft"><div class="panel-label"><span>Prompt → workflow</span><span>Illustrative</span></div><p class="mono small">“Use the available skills to query ChEMBL, analyse SAR with RDKit, screen candidates, check resistance mechanisms, and produce a cited report.”</p></div>
+        </div>
+        <div class="grid-4" style="margin-top:28px">
+          <div class="usecase plain"><div><div class="icon-bubble"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v18M5 6h14M7 6c0 3-2 5-3 6 2 2 4 3 8 3s6-1 8-3c-1-1-3-3-3-6"/></svg></div><h3>Drug discovery</h3></div><p>Compound search, SAR, docking and evidence retrieval.</p></div>
+          <div class="usecase plain"><div><div class="icon-bubble"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 19V5m0 14h16"/><path d="M7 15c2-5 3-7 5-4s3 1 5-5"/></svg></div><h3>Omics</h3></div><p>Single-cell, RNA-seq, variants and network analysis.</p></div>
+          <div class="usecase plain"><div><div class="icon-bubble"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h5M8 16h8"/></svg></div><h3>Evidence work</h3></div><p>Trials, regulatory documents and traceable literature synthesis.</p></div>
+          <div class="usecase plain"><div><div class="icon-bubble"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></div><h3>Methods</h3></div><p>Validation, uncertainty, design and reproducibility checks.</p></div>
+        </div>
+        <div class="source">Repository examples include drug discovery, single-cell RNA-seq, multi-omics, virtual screening and systems biology. <a href="https://github.com/K-Dense-AI/scientific-agent-skills#quick-examples" target="_blank" rel="noreferrer">README · Quick Examples</a></div>
+      </div>
+    </section>
+
+    <!-- 06 -->
+    <section class="slide section-break" data-title="Inside the system" data-section="Section break">
+      <div class="slide-inner">
+        <div class="section-word">01</div>
+        <div class="eyebrow">Section break</div>
+        <h2>Inside the system</h2>
+        <p class="section-note">What a skill is, how the repository is shaped, and why progressive disclosure is the core design move.</p>
+      </div>
+    </section>
+
+    <!-- 07 -->
+    <section class="slide" data-title="Anatomy of a skill" data-section="Deep dive">
+      <div class="slide-inner">
+        <div class="grid-2">
+          <div><div class="eyebrow">Deep dive · 01</div><h2>A skill is a directory, not a magical plugin.</h2><p class="lede">At minimum, it has a human-readable <span class="mono">SKILL.md</span>. It may also carry references, scripts and assets.</p></div>
+          <div class="tree-box folder-tree">
+            <div><span class="folder">skills/</span><span class="dim">your-skill/</span></div>
+            <div>├── <span class="file">SKILL.md</span> <span class="dim"># required</span></div>
+            <div>├── <span class="folder">references/</span> <span class="dim"># deeper docs</span></div>
+            <div>├── <span class="folder">scripts/</span> <span class="dim"># runnable helpers</span></div>
+            <div>└── <span class="folder">assets/</span> <span class="dim"># templates / static files</span></div>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-top:34px">
+          <div class="panel"><div class="panel-label"><span>Frontmatter</span><span>Routing</span></div><p>Name, description, licence, compatibility, allowed tools and metadata.</p></div>
+          <div class="panel"><div class="panel-label"><span>Instruction body</span><span>Procedure</span></div><p>When to use it, what to do, what to check and what not to claim.</p></div>
+          <div class="panel"><div class="panel-label"><span>Supporting files</span><span>Depth</span></div><p>Reference material and code stay deferred until the workflow needs them.</p></div>
+        </div>
+        <div class="source">Paper: minimum structure and conventional subdirectories. <a href="https://arxiv.org/pdf/2609.00065#page=3" target="_blank" rel="noreferrer">Paper · Section 2</a></div>
+      </div>
+    </section>
+
+    <!-- 08 -->
+    <section class="slide" data-title="Progressive disclosure" data-section="Deep dive">
+      <div class="slide-inner">
+        <div class="eyebrow">Deep dive · 02</div>
+        <h2>Keep the catalogue visible. Load the procedure only when it earns its place.</h2>
+        <div class="grid-2" style="margin-top:22px">
+          <div class="layer-stack">
+            <div class="layer resident"><strong>Resident tier</strong><span>Name + short description of every installed skill. Used for routing.</span></div>
+            <div class="layer instruction"><strong>Instruction tier</strong><span>The full <span class="mono">SKILL.md</span> for the selected workflow.</span></div>
+            <div class="layer reference"><strong>Reference tier</strong><span>Longer documents, examples and supporting material, loaded selectively.</span></div>
+          </div>
+          <div class="panel soft"><div class="panel-label"><span>The payoff</span><span>Paper measurement</span></div><div class="number">7.1%</div><p>At the paper’s pinned snapshot, the resident descriptions for all 163 skills used 7.1% of a 200,000-token window.</p><p class="small">That is a corpus measurement, not proof that an agent selects correctly.</p></div>
+        </div>
+        <div class="source">Paper: the three-tier model and resident token measurement. <a href="https://arxiv.org/pdf/2609.00065#page=3" target="_blank" rel="noreferrer">Paper · Section 2.1</a></div>
+      </div>
+    </section>
+
+    <!-- 09 -->
+    <section class="slide" data-title="How skills compose" data-section="Deep dive">
+      <div class="slide-inner">
+        <div class="eyebrow">Deep dive · 03</div>
+        <h2>One research task can compose several kinds of skill.</h2>
+        <p class="muted" style="max-width:780px">The library’s worked examples show a pattern: domain skills do the specialised work, while statistics and communication skills connect the workflow into something interpretable.</p>
+        <div class="flow" style="margin-top:32px">
+          <div class="flow-step"><div class="step-index">01 · DOMAIN</div><h3>Find and transform</h3><p>Retrieve data, resolve identifiers, use a package or query a named scientific resource.</p></div>
+          <div class="flow-step"><div class="step-index">02 · METHOD</div><h3>Analyse and check</h3><p>Apply the appropriate test, assumptions, uncertainty treatment or experimental convention.</p></div>
+          <div class="flow-step"><div class="step-index">03 · COMMUNICATE</div><h3>Report and trace</h3><p>Generate figures, explain caveats and return evidence with a provenance trail.</p></div>
+        </div>
+        <div class="callout safe" style="margin-top:20px"><strong>Useful mental model</strong><p>Skills are not a single giant “scientist prompt”. They are composable procedures with different jobs.</p></div>
+        <div class="source">Paper: 46 documented workflows, median of 4 categories per example; communication and statistics act as connective tissue. <a href="https://arxiv.org/pdf/2609.00065#page=5" target="_blank" rel="noreferrer">Paper · Section 3</a></div>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section class="slide" data-title="What is in the current repo" data-section="Deep dive">
+      <div class="slide-inner">
+        <div class="eyebrow">Deep dive · 04 · live repository view</div>
+        <h2>The repository has become a broad scientific operating layer.</h2>
+        <div class="grid-2">
+          <div class="panel ink"><div class="panel-label"><span>Current package metadata</span><span>main</span></div><div class="number" style="color:var(--mint)">2.69.0</div><p>Current <span class="mono">plugin.json</span> version observed in the live repository.</p><div class="pills"><span class="pill">MIT</span><span class="pill">Agent Plugins 1.0.0</span><span class="pill">K-Dense Inc.</span></div></div>
+          <div class="stack">
+            <div class="metric-row"><div class="number">166</div><div class="metric-copy"><strong>ready-to-use skills</strong><span>Current README claim. The paper analyses an earlier pinned snapshot of 163.</span></div></div>
+            <div class="metric-row"><div class="number orange-num">100+</div><div class="metric-copy"><strong>scientific and financial databases</strong><span>Including a unified database-lookup skill and dedicated data-access skills.</span></div></div>
+            <div class="metric-row"><div class="number">70+</div><div class="metric-copy"><strong>optimised Python package skills</strong><span>Examples include RDKit, Scanpy, scikit-learn, pydicom and more.</span></div></div>
+          </div>
+        </div>
+        <div class="source">Live sources: <a href="https://github.com/K-Dense-AI/scientific-agent-skills/blob/main/plugin.json" target="_blank" rel="noreferrer">plugin.json</a> · <a href="https://github.com/K-Dense-AI/scientific-agent-skills#whats-included" target="_blank" rel="noreferrer">README · What’s Included</a> · snapshot discrepancy explained on the next slide.</div>
+      </div>
+    </section>
+
+    <!-- 11 -->
+    <section class="slide" data-title="What the paper actually measured" data-section="Deep dive">
+      <div class="slide-inner">
+        <div class="eyebrow">Deep dive · 05 · evidence</div>
+        <h2>The paper measures the documentation corpus, not agent performance.</h2>
+        <div class="grid-2">
+          <div class="bar-chart panel">
+            <div class="panel-label"><span>Context cost</span><span>Paper snapshot · v2.65.0</span></div>
+            <div class="bar-row"><div class="bar-label">Resident + instructions</div><div class="bar-track"><div class="bar-fill" style="width:23.9%"></div></div><div class="bar-value">23.9%</div></div>
+            <div class="bar-row"><div class="bar-label">All references loaded</div><div class="bar-track"><div class="bar-fill orange-fill" style="width:100%"></div></div><div class="bar-value">112.7%</div></div>
+            <p class="chart-note">Median documented workflow against a 200,000-token window. The second bar exceeds the window.</p>
+          </div>
+          <div class="stack">
+            <div class="panel soft"><div class="number">14,246</div><p>resident-tier tokens across the 163-skill snapshot.</p></div>
+            <div class="panel blue"><div class="number">47,706</div><p>median documented workflow cost after resident descriptions plus instruction files.</p></div>
+            <div class="panel orange"><div class="number">29 / 46</div><p>worked workflows that would overflow if every reference file were loaded.</p></div>
+          </div>
+        </div>
+        <div class="source">Paper: token measurements from Sections 2.1 and 5. <a href="https://arxiv.org/pdf/2609.00065#page=8" target="_blank" rel="noreferrer">Paper · Section 5</a></div>
+      </div>
+    </section>
+
+    <!-- 12 -->
+    <section class="slide" data-title="Read the evidence correctly" data-section="Deep dive">
+      <div class="slide-inner">
+        <div class="eyebrow">Deep dive · 06 · evidence boundary</div>
+        <h2>Useful evidence, modest claim.</h2>
+        <div class="takeaway">
+          <div class="yes"><h3>What the paper supports</h3><ul><li>The repository has a tiered documentation design.</li><li>The pinned corpus fits better when references stay deferred.</li><li>Descriptions are a routing bottleneck worth measuring.</li><li>The library is a structured, portable knowledge artefact.</li></ul></div>
+          <div class="no"><h3>What it does not establish</h3><ul><li>That skills improve scientific outcomes on real tasks.</li><li>That a host selects the right skill reliably.</li><li>That every skill is substantively correct or current.</li><li>That portability means identical behaviour across hosts.</li></ul></div>
+        </div>
+        <div class="callout warn" style="margin-top:22px"><strong>Practical consequence</strong><p>Adopt it as a strong starting point, then evaluate the specific skills and workflows that matter to your own research agenda.</p></div>
+        <div class="source">Paper: limitations cover task-level evaluation, selection, review coverage, host portability and the moving snapshot. <a href="https://arxiv.org/pdf/2609.00065#page=9" target="_blank" rel="noreferrer">Paper · Section 6</a></div>
+      </div>
+    </section>
+
+    <!-- 13 -->
+    <section class="slide" data-title="Routing is the hidden problem" data-section="Deep dive">
+      <div class="slide-inner">
+        <div class="grid-2">
+          <div><div class="eyebrow">Deep dive · 07 · routing</div><h2>The library’s power depends on the agent picking the right procedure.</h2><p class="lede">A long catalogue creates a selection problem before the workflow even starts.</p></div>
+          <div class="panel">
+            <div class="panel-label"><span>Paper signal</span><span>Lexical proxy</span></div>
+            <div class="metric-row"><div class="number">0.15</div><div class="metric-copy"><strong>median nearest-neighbour similarity</strong><span>Most descriptions have no very close lexical competitor.</span></div></div>
+            <div class="metric-row"><div class="number orange-num">0.40</div><div class="metric-copy"><strong>closest pair: datamol ↔ rdkit</strong><span>Adjacent toolkits still need precise descriptions.</span></div></div>
+            <div class="metric-row"><div class="number">33</div><div class="metric-copy"><strong>descriptions with 56 direct pointers</strong><span>Authored cross-references help route between neighbours.</span></div></div>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-top:28px">
+          <div class="callout safe"><strong>Design implication</strong><p>Install a topical subset, not everything by default.</p></div>
+          <div class="callout"><strong>Prompt implication</strong><p>Name the skill when the task is important or ambiguous.</p></div>
+          <div class="callout warn"><strong>Evaluation implication</strong><p>Test selection separately from task completion.</p></div>
+        </div>
+        <div class="source">Paper: lexical separability and authored cross-references are proxies, not measured host selection accuracy. <a href="https://arxiv.org/pdf/2609.00065#page=6" target="_blank" rel="noreferrer">Paper · Section 4</a></div>
+      </div>
+    </section>
+
+    <!-- 14 -->
+    <section class="slide" data-title="Security and trust" data-section="Deep dive">
+      <div class="slide-inner">
+        <div class="eyebrow">Deep dive · 08 · security</div>
+        <h2>Skills are executable instructions. Treat them like code with influence.</h2>
+        <div class="grid-2">
+          <div class="panel red"><div class="panel-label"><span>Repository warning</span><span>Do not skip</span></div><p>Skills can instruct an agent to run code, install packages, make network requests and modify files. Review what you install.</p><p class="small">Community contributions may have uneven review coverage.</p></div>
+          <div class="timeline">
+            <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-copy"><strong>1 · Narrow the install</strong><p>Start with skills relevant to the project, not the whole library.</p></div></div>
+            <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-copy"><strong>2 · Read the SKILL.md</strong><p>Understand dependencies, tools, credentials and external services.</p></div></div>
+            <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-copy"><strong>3 · Pin the release</strong><p>Record the repository tag, skill name and metadata version used.</p></div></div>
+            <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-copy"><strong>4 · Scan before trust</strong><p>Run the recommended scanner and inspect behaviour in your environment.</p></div></div>
+          </div>
+        </div>
+        <div class="source">Repository: security disclaimer and scanning guidance. <a href="https://github.com/K-Dense-AI/scientific-agent-skills#security-disclaimer" target="_blank" rel="noreferrer">README · Security Disclaimer</a></div>
+      </div>
+    </section>
+
+    <!-- 15 -->
+    <section class="slide section-break" data-title="Make it usable in your harness" data-section="Section break">
+      <div class="slide-inner">
+        <div class="section-word">02</div>
+        <div class="eyebrow">Section break</div>
+        <h2>Make it usable in your harness</h2>
+        <p class="section-note">A practical path from repository to project-scoped, evaluated workflows across Claude Code, Codex, DeepSeek Harness, Hermes Agent and other hosts.</p>
+      </div>
+    </section>
+
+    <!-- 16 -->
+    <section class="slide" data-title="Implementation map" data-section="How-to guide">
+      <div class="slide-inner">
+        <div class="eyebrow">How-to guide · 01</div>
+        <h2>Start with a narrow research loop.</h2>
+        <div class="flow" style="margin-top:28px">
+          <div class="flow-step"><div class="step-index">01 · CHOOSE</div><h3>Choose the work</h3><p>Pick one repeatable workflow: literature synthesis, methods validation, omics analysis or evidence retrieval.</p></div>
+          <div class="flow-step"><div class="step-index">02 · INSTALL</div><h3>Install the minimum</h3><p>Bring in the topical skills your project can actually use. Pin the repo release.</p></div>
+          <div class="flow-step"><div class="step-index">03 · VERIFY</div><h3>Evaluate the path</h3><p>Check selection, tool use, provenance, failure modes and the quality of the final artefact.</p></div>
+        </div>
+        <div class="callout safe" style="margin-top:22px"><strong>Recommended first experiment</strong><p>Use one workflow from your PhD research agenda, such as evidence-traceable literature synthesis, and compare an agent with and without the selected skills.</p></div>
+        <div class="source">Recommendation grounded in the paper’s limitations: a controlled comparison is needed to show benefit. <a href="https://arxiv.org/pdf/2609.00065#page=9" target="_blank" rel="noreferrer">Paper · Section 6</a></div>
+      </div>
+    </section>
+
+    <!-- 17 -->
+    <section class="slide" data-title="Install the topical subset" data-section="How-to guide">
+      <div class="slide-inner">
+        <div class="grid-2">
+          <div><div class="eyebrow">How-to guide · 02 · scope</div><h2>Don’t start with all 166.</h2><p class="lede">Choose the smallest collection that covers your first workflow. This reduces standing context and the number of routing candidates.</p></div>
+          <div class="code"><pre><span class="comment"># browse or install the whole repo</span>
+<span class="cmd">npx skills add K-Dense-AI/scientific-agent-skills</span>
+
+<span class="comment"># install one skill directly with GitHub CLI</span>
+<span class="cmd">gh skill install K-Dense-AI/scientific-agent-skills scanpy</span>
+
+<span class="comment"># pin a release for reproducibility</span>
+<span class="cmd">gh skill install K-Dense-AI/scientific-agent-skills \</span>
+  <span class="cmd">--pin v2.66.0</span></pre></div>
+        </div>
+        <div class="decision-table" style="margin-top:34px">
+          <div class="decision-row"><div>First question</div><div>Good starting subset</div><div>Why</div></div>
+          <div class="decision-row"><strong>Literature + evidence</strong><p><span class="pill">paper-lookup</span> <span class="pill">scientific-writing</span> <span class="pill">database-lookup</span></p><p>Traceable retrieval and synthesis before adding domain-specific analysis.</p></div>
+          <div class="decision-row"><strong>Single-cell or omics</strong><p><span class="pill">scanpy</span> <span class="pill">pydeseq2</span> <span class="pill">scientific-visualization</span></p><p>Pair domain computation with analysis and communication skills.</p></div>
+          <div class="decision-row"><strong>Methods validation</strong><p><span class="pill">analytical-method-validation</span> <span class="pill">scientific-writing</span></p><p>Make the governing framework and acceptance criteria explicit.</p></div>
+        </div>
+        <div class="source">Install commands and topical-subset recommendation follow the repository README. Verify current flags and release names in your environment. <a href="https://github.com/K-Dense-AI/scientific-agent-skills#getting-started" target="_blank" rel="noreferrer">README · Getting Started</a></div>
+      </div>
+    </section>
+
+    <!-- 18 -->
+    <section class="slide" data-title="Claude Code and Codex" data-section="How-to guide">
+      <div class="slide-inner">
+        <div class="eyebrow">How-to guide · 03 · supported hosts</div>
+        <h2>Use the standards path first, then add host-specific wiring.</h2>
+        <div class="harness-grid" style="margin-top:26px">
+          <div class="harness"><div class="harness-icon"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 5h16v14H4z"/><path d="m8 9 3 3-3 3M13 15h3"/></svg></div><h3>Claude Code</h3><p>Use the common skills installer or a project-scoped skills directory. Read the installed <span class="mono">SKILL.md</span>.</p></div>
+          <div class="harness"><div class="harness-icon"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h4"/></svg></div><h3>Codex</h3><p>For plugin-capable clients, use the repository’s <span class="mono">plugin.json</span> plus <span class="mono">skills/</span> layout.</p></div>
+          <div class="harness"><div class="harness-icon"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="7" cy="12" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="17" cy="17" r="3"/><path d="m9.5 10.5 5-2M9.5 13.5l5 2"/></svg></div><h3>Project scope</h3><p>Keep the subset beside the project when reproducibility and team review matter.</p></div>
+          <div class="harness"><div class="harness-icon"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 18h16M6 15l4-4 3 2 5-6"/></svg></div><h3>Verify</h3><p>Confirm discovery, invoke by name, inspect tool permissions and capture the output provenance.</p></div>
+        </div>
+        <div class="code" style="margin-top:22px"><pre><span class="comment"># Codex plugin route from a local checkout</span>
+<span class="cmd">codex plugins install .</span>
+
+<span class="comment"># Claude Code / Codex: invoke explicitly in a first test</span>
+<span class="string">“Use the available scientific-agent skill for [workflow].
+Name the skill you selected, list its assumptions, and cite the source paths.”</span></pre></div>
+        <div class="source">Repository documents Claude Code and Codex as supported hosts, while warning that install UX and metadata behaviour are host-specific. <a href="https://github.com/K-Dense-AI/scientific-agent-skills#agent-plugins-cursor-codex-and-other-plugin-clients" target="_blank" rel="noreferrer">README · Agent Plugins</a></div>
+      </div>
+    </section>
+
+    <!-- 19 -->
+    <section class="slide" data-title="DeepSeek Harness, Hermes and others" data-section="How-to guide">
+      <div class="slide-inner">
+        <div class="grid-2">
+          <div><div class="eyebrow">How-to guide · 04 · other harnesses</div><h2>Port the layout, not the assumptions.</h2><p class="lede">If a harness supports the open Agent Skills convention, point it at the same directory. If it doesn’t, build a thin adapter around discovery and invocation.</p></div>
+          <div class="panel soft"><div class="panel-label"><span>Portable core</span><span>Host adapter</span></div><div class="layer-stack"><div class="layer resident"><strong>Discover</strong><span>Where does this host look for skills?</span></div><div class="layer instruction"><strong>Load</strong><span>How does it read <span class="mono">SKILL.md</span>?</span></div><div class="layer reference"><strong>Permit</strong><span>Which tools, packages and network calls are allowed?</span></div></div></div>
+        </div>
+        <div class="decision-table" style="margin-top:32px">
+          <div class="decision-row"><div>Harness</div><div>Practical starting point</div><div>Confidence boundary</div></div>
+          <div class="decision-row"><strong>DeepSeek Harness</strong><p>Place a project-scoped copy under the harness’s documented skills path, or wrap the directory in its native skill/plugin format.</p><p>Do not assume Claude/Codex discovery or permissions carry over unchanged.</p></div>
+          <div class="decision-row"><strong>Hermes Agent</strong><p>Use the repository’s documented tap route where supported, otherwise clone into a skills directory the host scans.</p><p>Confirm how Hermes handles metadata, credentials, scripts and network access.</p></div>
+          <div class="decision-row"><strong>Other harnesses</strong><p>Start from the standard directory shape and test one skill end to end before installing a collection.</p><p>Portability is intended by the paper, not proven as identical behaviour.</p></div>
+        </div>
+        <div class="source">Repository gives a generic skills-directory route and a Hermes tap example, while the paper explicitly qualifies host portability. <a href="https://github.com/K-Dense-AI/scientific-agent-skills#other-agent-skills-hosts-openclaw-nemoclaw-pi-hermes" target="_blank" rel="noreferrer">README · Other hosts</a> · <a href="https://arxiv.org/pdf/2609.00065#page=10" target="_blank" rel="noreferrer">Paper · Availability</a></div>
+      </div>
+    </section>
+
+    <!-- 20 -->
+    <section class="slide" data-title="Adapt it to your research OS" data-section="How-to guide">
+      <div class="slide-inner">
+        <div class="eyebrow">How-to guide · 05 · your project layer</div>
+        <h2>Pair external skills with your own project contract.</h2>
+        <div class="grid-2">
+          <div class="tree-box folder-tree">
+            <div><span class="folder">your-project/</span></div>
+            <div>├── <span class="folder">.agents/skills/</span> <span class="dim"># selected external skills</span></div>
+            <div>├── <span class="file">AGENTS.md</span> <span class="dim"># project rules</span></div>
+            <div>├── <span class="file">EVALS.md</span> <span class="dim"># golden tasks + checks</span></div>
+            <div>├── <span class="file">PROVENANCE.md</span> <span class="dim"># source policy</span></div>
+            <div>└── <span class="folder">runs/</span> <span class="dim"># outputs + traces</span></div>
+          </div>
+          <div class="stack">
+            <div class="callout safe"><strong>External skills</strong><p>Provide reusable scientific procedures and package guidance.</p></div>
+            <div class="callout"><strong>Project contract</strong><p>Defines your domain, data handling, naming, evidence and output rules.</p></div>
+            <div class="callout warn"><strong>Harness policy</strong><p>Defines credentials, network access, shell permissions and approval gates.</p></div>
+          </div>
+        </div>
+        <div class="callout" style="margin-top:22px"><strong>For your own work</strong><p>Use this pattern for a research notebook, evidence-traceable literature review, bio-AI convergence scan or reproducibility workflow. Keep personal or clinical data out of a public skills repository.</p></div>
+        <div class="source">This slide is an implementation recommendation derived from the repository’s separation of skill payloads, host configuration and security guidance. <a href="https://github.com/K-Dense-AI/scientific-agent-skills#security-disclaimer" target="_blank" rel="noreferrer">Repository security guidance</a></div>
+      </div>
+    </section>
+
+    <!-- 21 -->
+    <section class="slide" data-title="Invoke with a disciplined prompt" data-section="How-to guide">
+      <div class="slide-inner">
+        <div class="eyebrow">How-to guide · 06 · first invocation</div>
+        <h2>Ask the agent to expose the procedure, not just the answer.</h2>
+        <div class="grid-2">
+          <div class="code"><pre><span class="string">Use the available scientific skills for this task.</span>
+
+<span class="key">Workflow:</span> evidence-traceable literature synthesis
+<span class="key">Domain:</span> bio-AI convergence
+<span class="key">Requirements:</span>
+  1. Name the skills you selected and why.
+  2. State assumptions and missing data.
+  3. Keep claims tied to source passages.
+  4. Separate findings, inference and recommendation.
+  5. Save a provenance log and an uncertainty note.
+  6. Stop before clinical or regulatory decisions.</pre></div>
+          <div class="panel soft"><div class="panel-label"><span>What you are testing</span><span>Not just output quality</span></div><div class="stack"><div class="callout safe"><strong>Selection</strong><p>Did the harness find the right skill?</p></div><div class="callout"><strong>Adherence</strong><p>Did the agent follow the procedure?</p></div><div class="callout warn"><strong>Evidence</strong><p>Did it preserve provenance and caveats?</p></div></div></div>
+        </div>
+        <div class="source">Prompting guidance and examples are in the repository README and docs. The explicit evaluation dimensions are implementation recommendations, not reported paper results. <a href="https://github.com/K-Dense-AI/scientific-agent-skills#quick-examples" target="_blank" rel="noreferrer">README · Quick Examples</a></div>
+      </div>
+    </section>
+
+    <!-- 22 -->
+    <section class="slide" data-title="Build an evaluation loop" data-section="How-to guide">
+      <div class="slide-inner">
+        <div class="eyebrow">How-to guide · 07 · validation</div>
+        <h2>Evaluate the harness, the skill and the scientific result separately.</h2>
+        <div class="grid-3" style="margin-top:24px">
+          <div class="panel soft"><div class="panel-label"><span>Layer 1</span><span>Selection</span></div><h3>Did it choose well?</h3><p>Create labelled tasks that name the intended skill and close neighbours. Measure correct selection and unnecessary loading.</p></div>
+          <div class="panel blue"><div class="panel-label"><span>Layer 2</span><span>Execution</span></div><h3>Did it follow the procedure?</h3><p>Check tool calls, assumptions, reference loading, script use and stopping behaviour against a rubric.</p></div>
+          <div class="panel orange"><div class="panel-label"><span>Layer 3</span><span>Outcome</span></div><h3>Did the science hold?</h3><p>Score against domain answer keys, published conventions, provenance completeness and expert review.</p></div>
+        </div>
+        <div class="code" style="margin-top:24px"><pre><span class="comment"># minimum golden-set record</span>
+task_id: literature-001
+intended_skill: paper-lookup
+must_cite: true
+must_state_limits: true
+forbidden: patient-specific advice
+review: domain-expert + provenance-check</pre></div>
+        <div class="source">Paper explicitly calls for controlled task-level evaluations and says its corpus measurements do not establish benefit. The golden-set design above is a practical extension. <a href="https://arxiv.org/pdf/2609.00065#page=9" target="_blank" rel="noreferrer">Paper · Limitations</a></div>
+      </div>
+    </section>
+
+    <!-- 23 -->
+    <section class="slide" data-title="Operate it like a living dependency" data-section="How-to guide">
+      <div class="slide-inner">
+        <div class="eyebrow">How-to guide · 08 · maintenance</div>
+        <h2>Once installed, it becomes part of your supply chain.</h2>
+        <div class="grid-2">
+          <div class="timeline">
+            <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-copy"><strong>Pin</strong><p>Repository release, commit or tag. Record each skill’s own metadata version too.</p></div></div>
+            <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-copy"><strong>Review</strong><p>Read the skill and its referenced files before enabling scripts or credentials.</p></div></div>
+            <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-copy"><strong>Scan</strong><p>Run your security scanner and inspect changes in pull requests.</p></div></div>
+            <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-copy"><strong>Re-test</strong><p>Re-run your golden set when the skill or harness changes.</p></div></div>
+          </div>
+          <div class="panel ink"><div class="panel-label"><span>Citation hygiene</span><span>When publishing</span></div><p>Record the release tag, skill name and <span class="mono">metadata.version</span> used. For clinical, regulatory or imaging work, state the specific scope limits.</p><div class="rule" style="background:var(--mint)"></div><p class="small" style="color:rgba(255,255,255,.68)">This makes a changing library identifiable later.</p></div>
+        </div>
+        <div class="source">Paper: availability and citation requirements. <a href="https://arxiv.org/pdf/2609.00065#page=11" target="_blank" rel="noreferrer">Paper · Section 7</a> · <a href="https://github.com/K-Dense-AI/scientific-agent-skills#security-disclaimer" target="_blank" rel="noreferrer">Repository · Security</a></div>
+      </div>
+    </section>
+
+    <!-- 24 -->
+    <section class="slide" data-title="The practical verdict" data-section="Close">
+      <div class="slide-inner">
+        <div class="eyebrow">The practical verdict</div>
+        <h2>Use Scientific Agent Skills as a procedural starting layer, then earn trust locally.</h2>
+        <div class="grid-3" style="margin-top:30px">
+          <div class="panel soft"><div class="number">01</div><h3>Start narrow</h3><p>Select a topical subset around one real workflow.</p></div>
+          <div class="panel blue"><div class="number">02</div><h3>Make it visible</h3><p>Ask the agent to name its skill, assumptions, sources and limits.</p></div>
+          <div class="panel orange"><div class="number">03</div><h3>Measure what matters</h3><p>Evaluate selection, adherence, provenance and scientific outcomes separately.</p></div>
+        </div>
+        <div class="callout safe" style="margin-top:24px"><strong>One-sentence takeaway</strong><p>Skills don’t turn an agent into a scientist by themselves. They give it a better procedural memory, which you still need to test, constrain and review.</p></div>
+        <div class="source">Repository: <a href="https://github.com/K-Dense-AI/scientific-agent-skills" target="_blank" rel="noreferrer">github.com/K-Dense-AI/scientific-agent-skills</a> · Paper: <a href="https://arxiv.org/abs/2609.00065" target="_blank" rel="noreferrer">arXiv:2609.00065</a></div>
+      </div>
+    </section>
+
+    <!-- 25 -->
+    <section class="slide" data-title="Sources and caveats" data-section="Close">
+      <div class="slide-inner">
+        <div class="eyebrow">Sources and caveats</div>
+        <h2>Read the source, pin the version, keep the claim modest.</h2>
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-label"><span>Primary reading</span><span>Links</span></div>
+            <p><a href="https://github.com/K-Dense-AI/scientific-agent-skills" target="_blank" rel="noreferrer"><strong>Scientific Agent Skills repository</strong></a><br><span class="small">Live README, plugin metadata, installation guidance, examples and security disclaimer.</span></p>
+            <p><a href="https://arxiv.org/abs/2609.00065" target="_blank" rel="noreferrer"><strong>Scientific Agent Skills: A Library of Procedural Knowledge for Research Agents</strong></a><br><span class="small">Kassis et al., arXiv:2609.00065, v2, September 2026.</span></p>
+            <p><a href="https://agentskills.io/" target="_blank" rel="noreferrer"><strong>Agent Skills standard</strong></a><br><span class="small">The open convention the repository targets.</span></p>
+          </div>
+          <div class="panel red">
+            <div class="panel-label"><span>Limitations to carry forward</span><span>Important</span></div>
+            <ul><li>The paper measures the documentation corpus, not task outcomes.</li><li>The live repository moves faster than the paper’s pinned snapshot.</li><li>Host support and discovery behaviour need local verification.</li><li>Scientific and clinical outputs still need qualified review.</li></ul>
+          </div>
+        </div>
+        <div class="rule"></div>
+        <p class="small">Deck prepared from publicly available repository and paper material. Implementation commands are reproduced as guidance from the source and should be checked against the current host version before use.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="chrome" aria-label="Deck controls">
+    <div class="progress-wrap"><div class="progress" aria-hidden="true"><span id="progressFill"></span></div><div class="counter" id="counter">01 / 25</div></div>
+    <div class="nav" aria-label="Slide navigation">
+      <button id="prevBtn" type="button" aria-label="Previous slide" title="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m15 18-6-6 6-6"/></svg></button>
+      <button id="nextBtn" type="button" aria-label="Next slide" title="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="tools">
+      <button class="tool-button wide" id="overviewBtn" type="button" aria-label="Open slide overview" title="Slide overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg><span>Overview</span></button>
+      <button class="tool-button wide" id="fullBtn" type="button" aria-label="Enter full screen" title="Full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M4 16v4h4"/></svg><span>Full screen</span></button>
+    </div>
+  </div>
+
+  <div class="overview" id="overview" role="dialog" aria-modal="true" aria-labelledby="overviewTitle">
+    <div class="overview-panel">
+      <div class="overview-head"><div><div class="eyebrow">Navigate the deck</div><h2 id="overviewTitle">Slide overview</h2><p class="muted">Jump to any page. Press <span class="mono">O</span> to toggle this view.</p></div><button class="close-button" id="closeOverview" type="button" aria-label="Close slide overview" title="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+      <div class="index-grid" id="indexGrid"></div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const counter = document.getElementById('counter');
+      const progressFill = document.getElementById('progressFill');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const overview = document.getElementById('overview');
+      const indexGrid = document.getElementById('indexGrid');
+      let current = 0;
+      let touchStartX = 0;
+
+      const iconArrow = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m9 18 6-6-6-6"/></svg>';
+      function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+      function slideFromHash() {
+        const match = location.hash.match(/slide=(\d+)/);
+        return match ? clamp(Number(match[1]) - 1, 0, slides.length - 1) : 0;
+      }
+      function renderIndex() {
+        indexGrid.innerHTML = slides.map((slide, i) => {
+          const section = slide.dataset.section || '';
+          const isSection = slide.classList.contains('section-break');
+          return '<button type="button" class="index-item ' + (isSection ? 'section ' : '') + (i === current ? 'current' : '') + '" data-go="' + i + '">' +
+            '<span class="index-number">' + String(i + 1).padStart(2, '0') + '</span>' +
+            '<span class="index-title">' + slide.dataset.title + '</span>' +
+            '<span class="index-tag">' + section + '</span>' +
+            (isSection ? '<span style="float:right;margin-top:-20px;color:var(--mint)">' + iconArrow + '</span>' : '') +
+          '</button>';
+        }).join('');
+        indexGrid.querySelectorAll('[data-go]').forEach(btn => btn.addEventListener('click', () => { goTo(Number(btn.dataset.go)); closeOverview(); }));
+      }
+      function updateHash() { history.replaceState(null, '', '#slide=' + (current + 1)); }
+      function goTo(index) {
+        current = clamp(index, 0, slides.length - 1);
+        slides.forEach((slide, i) => {
+          slide.classList.toggle('is-active', i === current);
+          slide.setAttribute('aria-hidden', i === current ? 'false' : 'true');
+          if (i === current) slide.scrollTop = 0;
+        });
+        counter.textContent = String(current + 1).padStart(2, '0') + ' / ' + String(slides.length).padStart(2, '0');
+        progressFill.style.width = (((current + 1) / slides.length) * 100) + '%';
+        prevBtn.disabled = current === 0;
+        nextBtn.disabled = current === slides.length - 1;
+        updateHash();
+        renderIndex();
+      }
+      function next() { if (current < slides.length - 1) goTo(current + 1); }
+      function prev() { if (current > 0) goTo(current - 1); }
+      function openOverview() { overview.classList.add('is-open'); renderIndex(); document.getElementById('closeOverview').focus(); }
+      function closeOverview() { overview.classList.remove('is-open'); }
+      async function toggleFullscreen() {
+        try {
+          if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+          else await document.exitFullscreen();
+        } catch (e) { /* Fullscreen can be blocked by the browser. */ }
+      }
+
+      prevBtn.addEventListener('click', prev);
+      nextBtn.addEventListener('click', next);
+      document.getElementById('overviewBtn').addEventListener('click', openOverview);
+      document.getElementById('closeOverview').addEventListener('click', closeOverview);
+      document.getElementById('fullBtn').addEventListener('click', toggleFullscreen);
+      overview.addEventListener('click', e => { if (e.target === overview) closeOverview(); });
+      window.addEventListener('hashchange', () => goTo(slideFromHash()));
+      window.addEventListener('keydown', e => {
+        if (overview.classList.contains('is-open')) {
+          if (e.key === 'Escape' || e.key.toLowerCase() === 'o') { e.preventDefault(); closeOverview(); }
+          return;
+        }
+        const key = e.key.toLowerCase();
+        if (['arrowright','arrowdown',' ','pagedown'].includes(key)) { e.preventDefault(); next(); }
+        if (['arrowleft','arrowup','pageup'].includes(key)) { e.preventDefault(); prev(); }
+        if (key === 'home') { e.preventDefault(); goTo(0); }
+        if (key === 'end') { e.preventDefault(); goTo(slides.length - 1); }
+        if (key === 'o') { e.preventDefault(); openOverview(); }
+        if (key === 'f') { e.preventDefault(); toggleFullscreen(); }
+      });
+      document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive:true});
+      document.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(dx) > 60) dx < 0 ? next() : prev();
+      }, {passive:true});
+      document.querySelectorAll('[data-go]').forEach(btn => btn.addEventListener('click', () => goTo(Number(btn.dataset.go))));
+      goTo(slideFromHash());
+    })();
+  </script>
+</body>
+</html>

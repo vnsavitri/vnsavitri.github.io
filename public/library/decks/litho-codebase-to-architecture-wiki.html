@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="A deep dive into Litho, formerly deepwiki-rs: an AI-driven Rust CLI for generating C4 architecture documentation from codebases." />
+  <title>Litho / deepwiki-rs · Codebase to architecture wiki</title>
+  <style>
+    :root {
+      --paper: #f4f1e8;
+      --paper-2: #ebe7dc;
+      --ink: #1b2423;
+      --muted: #66706b;
+      --line: #cbd0c7;
+      --teal: #087f7b;
+      --teal-2: #d7eeeb;
+      --orange: #d86338;
+      --orange-2: #fae3d7;
+      --violet: #6659a6;
+      --violet-2: #e7e3f7;
+      --green: #387c58;
+      --green-2: #dfeee3;
+      --white: #fffdf7;
+      --shadow: 0 18px 50px rgba(20, 33, 31, .10);
+      --radius: 18px;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --sans: "Avenir Next", "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--paper); color: var(--ink); font-family: var(--sans); }
+    body { overflow: hidden; }
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+    ::selection { background: var(--teal); color: var(--white); }
+
+    .app { min-height: 100svh; position: relative; background: var(--paper); }
+    .topline { position: fixed; inset: 0 0 auto 0; height: 4px; z-index: 30; background: var(--line); }
+    .progress { height: 100%; width: 0; background: var(--teal); transition: width .35s ease; }
+    .brand { position: fixed; top: 26px; left: 32px; z-index: 20; display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+    .brand-mark { width: 25px; height: 25px; border: 1.5px solid var(--teal); border-radius: 7px; display: grid; place-items: center; color: var(--teal); font: 700 11px var(--mono); }
+    .counter { position: fixed; top: 28px; right: 32px; z-index: 20; color: var(--muted); font: 12px var(--mono); letter-spacing: .08em; }
+
+    .stage { min-height: 100svh; position: relative; }
+    .slide { display: none; min-height: 100svh; height: 100svh; padding: 112px 9vw 110px; position: relative; overflow: auto; isolation: isolate; }
+    .slide.is-active { display: block; animation: arrive .45s cubic-bezier(.22, .75, .25, 1) both; }
+    @keyframes arrive { from { opacity: .1; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    .slide::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, transparent 0 7%, rgba(8,127,123,.035) 7% 7.08%, transparent 7.08% 100%); }
+    .slide-inner { max-width: 1180px; margin: 0 auto; min-height: calc(100svh - 222px); display: flex; flex-direction: column; justify-content: center; }
+    h1, h2, h3, p { margin: 0; }
+    h1, h2 { letter-spacing: -.045em; line-height: .98; font-weight: 750; }
+    h1 { font-size: clamp(54px, 8.5vw, 132px); max-width: 8.8ch; }
+    h2 { font-size: clamp(38px, 5.3vw, 76px); max-width: 12ch; }
+    h3 { font-size: 17px; line-height: 1.15; letter-spacing: -.02em; }
+    p { line-height: 1.55; }
+    .lede { max-width: 66ch; font-size: clamp(18px, 2vw, 26px); line-height: 1.34; color: #36413e; }
+    .small { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .mono { font-family: var(--mono); }
+    .accent { color: var(--teal); }
+    .orange { color: var(--orange); }
+    .source { position: absolute; left: 9vw; right: 9vw; bottom: 78px; display: flex; justify-content: space-between; gap: 20px; align-items: center; color: var(--muted); font-size: 11px; line-height: 1.3; }
+    .source a { text-decoration: underline; text-decoration-color: #aeb7af; text-underline-offset: 3px; }
+    .source .claim { max-width: 68ch; }
+    .source .tag { font-family: var(--mono); white-space: nowrap; }
+
+    .cover { background: var(--ink); color: var(--white); }
+    .cover::before { background: none; }
+    .cover .brand, .cover .counter { color: #a7b8b1; }
+    .cover .brand-mark { border-color: #70d3cd; color: #70d3cd; }
+    .cover .lede { color: #c7d3ce; max-width: 46ch; }
+    .cover .source { color: #a7b8b1; }
+    .cover .source a { text-decoration-color: #5a7770; }
+    .cover-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .78fr); gap: 7vw; align-items: center; }
+    .cover-title { margin: 24px 0 32px; }
+    .cover-title em { font-style: normal; color: #70d3cd; }
+    .cover-note { margin-top: 28px; display: flex; align-items: center; gap: 10px; color: #a7b8b1; font-size: 12px; }
+    .cover-note .dot { width: 8px; height: 8px; border-radius: 50%; background: #70d3cd; box-shadow: 0 0 0 5px rgba(112,211,205,.12); }
+    .cover-graphic { min-height: 410px; border-left: 1px solid #3c5550; border-bottom: 1px solid #3c5550; position: relative; padding: 28px; }
+    .cover-graphic::after { content: "C4 / 01 → 04"; position: absolute; right: 0; top: 12px; color: #70d3cd; font: 11px var(--mono); letter-spacing: .1em; }
+    .graph-line { stroke: #50736c; stroke-width: 1; stroke-dasharray: 4 7; }
+    .graph-node { fill: #203c38; stroke: #70d3cd; stroke-width: 1.25; }
+    .graph-node.hot { fill: #684535; stroke: #ffb293; }
+    .graph-label { fill: #c9d8d2; font: 12px var(--mono); }
+    .graph-label.tiny { fill: #7eaaa1; font-size: 10px; }
+
+    .split { display: grid; grid-template-columns: minmax(250px, .8fr) minmax(0, 1.2fr); gap: 7vw; align-items: center; }
+    .split.wide-left { grid-template-columns: minmax(0, 1.2fr) minmax(250px, .8fr); }
+    .rule { height: 1px; background: var(--line); margin: 28px 0; }
+    .punchline { font-size: clamp(28px, 4vw, 56px); letter-spacing: -.04em; line-height: 1.02; max-width: 16ch; }
+    .quote { border-left: 2px solid var(--teal); padding-left: 20px; font-size: 20px; line-height: 1.35; max-width: 44ch; }
+
+    .triptych { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .triptych > div { padding: 26px 26px 26px 0; min-height: 168px; border-right: 1px solid var(--line); }
+    .triptych > div + div { padding-left: 26px; }
+    .triptych > div:last-child { border-right: 0; }
+    .triptych h3 { margin-bottom: 12px; }
+    .triptych p { font-size: 15px; color: #4d5a54; }
+    .stepno { font: 12px var(--mono); color: var(--teal); margin-bottom: 18px; }
+
+    .benefit-layout { display: grid; grid-template-columns: 1.2fr .8fr; gap: 6vw; align-items: stretch; }
+    .before-after { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); background: var(--white); }
+    .before-after > div { padding: 28px; }
+    .before-after > div:first-child { border-right: 1px solid var(--line); background: #eeece4; }
+    .before-after h3 { margin-bottom: 24px; }
+    .before-after ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+    .before-after li { font-size: 14px; line-height: 1.35; color: #4c5953; }
+    .before-after li::before { content: "×"; display: inline-block; width: 22px; color: var(--orange); font: 16px var(--mono); }
+    .before-after > div:last-child li::before { content: "→"; color: var(--teal); }
+    .side-note { align-self: center; }
+    .side-note p { margin-top: 20px; color: #4d5a54; }
+
+    .use-case-grid { display: grid; grid-template-columns: 1.1fr .9fr; border-top: 1px solid var(--line); }
+    .use-case { min-height: 142px; padding: 24px 26px 22px 0; border-bottom: 1px solid var(--line); }
+    .use-case:nth-child(odd) { border-right: 1px solid var(--line); padding-right: 34px; }
+    .use-case:nth-child(even) { padding-left: 34px; }
+    .use-case p { margin-top: 10px; max-width: 38ch; color: #56625d; font-size: 14px; }
+    .use-case .use-mark { color: var(--teal); font: 14px var(--mono); float: right; }
+
+    .section-break { background: var(--teal); color: var(--white); }
+    .section-break::before { background: none; }
+    .section-break .section-layout { display: grid; grid-template-columns: .85fr 1.15fr; gap: 9vw; align-items: end; }
+    .section-break h2 { max-width: 7ch; font-size: clamp(58px, 10vw, 144px); }
+    .section-break .lede { color: #d5efeb; max-width: 34ch; }
+    .section-glyph { height: 190px; border: 1px solid rgba(255,255,255,.5); position: relative; padding: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-items: end; }
+    .section-glyph i { display: block; border: 1px solid rgba(255,255,255,.7); height: calc(46px + var(--h)); position: relative; }
+    .section-glyph i::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: 9px; height: 1px; background: rgba(255,255,255,.65); box-shadow: 0 -8px rgba(255,255,255,.3), 0 -16px rgba(255,255,255,.2); }
+    .section-glyph i:nth-child(1) { --h: 8px; }
+    .section-glyph i:nth-child(2) { --h: 42px; }
+    .section-glyph i:nth-child(3) { --h: 76px; }
+    .section-glyph i:nth-child(4) { --h: 114px; }
+
+    .pipeline { display: grid; grid-template-columns: 1fr 1.4fr; gap: 6vw; align-items: center; }
+    .pipeline-visual { border: 1px solid var(--line); background: var(--white); padding: 26px; }
+    .pipeline-visual svg { display: block; width: 100%; height: auto; }
+    .stage-list { display: grid; gap: 0; border-top: 1px solid var(--line); }
+    .stage-row { display: grid; grid-template-columns: 76px 1fr; gap: 18px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .stage-row .stage-id { font: 12px var(--mono); color: var(--teal); padding-top: 2px; }
+    .stage-row p { margin-top: 5px; color: #55615b; font-size: 14px; }
+
+    .preprocess-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 6vw; align-items: start; }
+    .file-tree { border: 1px solid var(--line); background: #202c2a; color: #d5e1d9; padding: 24px; font: 13px/1.85 var(--mono); min-height: 340px; }
+    .file-tree .dim { color: #83a49a; }
+    .file-tree .hot { color: #ffd0bc; }
+    .file-tree .teal { color: #8fe0d8; }
+    .facts { display: grid; gap: 18px; }
+    .fact { border-bottom: 1px solid var(--line); padding-bottom: 18px; }
+    .fact strong { display: block; font-size: 26px; letter-spacing: -.03em; }
+    .fact span { display: block; margin-top: 4px; color: var(--muted); font-size: 13px; }
+
+    .research-layout { display: grid; grid-template-columns: .72fr 1.28fr; gap: 6vw; align-items: center; }
+    .levels { display: grid; gap: 12px; }
+    .level { padding: 20px 22px; border: 1px solid var(--line); background: var(--white); }
+    .level strong { display: flex; justify-content: space-between; font-size: 16px; }
+    .level p { margin-top: 6px; color: var(--muted); font-size: 13px; }
+    .level.c1 { border-color: var(--teal); background: var(--teal-2); transform: translateX(36px); }
+    .level.c2 { border-color: var(--violet); background: var(--violet-2); transform: translateX(18px); }
+    .level.c3 { border-color: var(--orange); background: var(--orange-2); }
+    .agent-roster { border-top: 1px solid var(--line); }
+    .agent-row { display: grid; grid-template-columns: 190px 1fr; gap: 24px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+    .agent-row strong { font-size: 14px; }
+    .agent-row span { color: #5a655f; font-size: 14px; }
+    .optional { color: var(--orange) !important; }
+
+    .contract-layout { display: grid; grid-template-columns: 1.05fr .95fr; gap: 6vw; align-items: center; }
+    .contract-board { border: 1px solid var(--line); background: var(--white); padding: 28px; }
+    .contract-line { display: grid; grid-template-columns: 130px 1fr; gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+    .contract-line:last-child { border-bottom: 0; }
+    .contract-line b { font-family: var(--mono); font-weight: 500; color: var(--teal); font-size: 12px; }
+    .mode-panel { min-height: 290px; }
+    .tabs { display: flex; border-bottom: 1px solid var(--line); gap: 5px; }
+    .tab { border: 0; background: transparent; padding: 12px 14px; color: var(--muted); font-size: 13px; border-bottom: 2px solid transparent; }
+    .tab.is-selected { color: var(--teal); border-bottom-color: var(--teal); }
+    .mode-copy { padding-top: 24px; }
+    .mode-copy h3 { font-size: 27px; margin-bottom: 12px; }
+    .mode-copy p { color: #56625c; max-width: 40ch; }
+    .mode-copy code { display: block; margin-top: 18px; padding: 14px; background: #202c2a; color: #cbe9df; font: 12px/1.6 var(--mono); white-space: pre-wrap; }
+
+    .llm-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 6vw; align-items: start; }
+    .provider-line { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 30px; }
+    .provider { border: 1px solid var(--line); padding: 9px 11px; background: var(--white); font: 12px var(--mono); }
+    .llm-flow { border-left: 1px solid var(--teal); padding-left: 26px; display: grid; gap: 19px; }
+    .llm-step { position: relative; }
+    .llm-step::before { content: ""; position: absolute; width: 8px; height: 8px; background: var(--teal); border-radius: 50%; left: -31px; top: 6px; }
+    .llm-step strong { display: block; font-size: 16px; }
+    .llm-step p { margin-top: 4px; color: #56625c; font-size: 14px; }
+    .tool-box { border: 1px solid var(--line); background: #202c2a; color: #d9e8df; padding: 22px; font: 12px/1.7 var(--mono); }
+    .tool-box .key { color: #8fe0d8; }
+    .tool-box .value { color: #ffd0bc; }
+
+    .memory-layout { display: grid; grid-template-columns: .9fr 1.1fr; gap: 6vw; align-items: center; }
+    .memory-stack { display: grid; gap: 0; }
+    .memory-layer { padding: 22px; border: 1px solid var(--line); background: var(--white); }
+    .memory-layer + .memory-layer { margin-top: -1px; margin-left: 28px; }
+    .memory-layer:nth-child(2) { background: var(--teal-2); border-color: var(--teal); }
+    .memory-layer:nth-child(3) { background: var(--orange-2); border-color: var(--orange); }
+    .memory-layer strong { font-size: 16px; }
+    .memory-layer p { margin-top: 6px; font-size: 13px; color: #56625c; }
+    .cache-code { border: 1px solid var(--line); padding: 25px; background: var(--white); font: 13px/1.8 var(--mono); }
+    .cache-code .comment { color: var(--muted); }
+    .cache-code .teal { color: var(--teal); }
+    .cache-code .orange { color: var(--orange); }
+
+    .output-layout { display: grid; grid-template-columns: 1fr .9fr; gap: 6vw; align-items: center; }
+    .output-tree { border: 1px solid var(--line); background: var(--white); padding: 25px; font: 13px/2 var(--mono); }
+    .output-tree .folder { color: var(--teal); }
+    .output-tree .file { color: #47544e; }
+    .outlet-note { padding-left: 25px; border-left: 2px solid var(--orange); }
+    .outlet-note h3 { font-size: 29px; margin-bottom: 12px; }
+    .outlet-note p { color: #56625c; }
+
+    .section-break.dark { background: var(--ink); }
+    .section-break.dark .section-glyph { border-color: #56716b; }
+    .section-break.dark .section-glyph i { border-color: #70d3cd; }
+    .section-break.dark .lede { color: #c7d3ce; }
+
+    .guide-layout { display: grid; grid-template-columns: .82fr 1.18fr; gap: 6vw; align-items: start; }
+    .guide-list { display: grid; gap: 0; border-top: 1px solid var(--line); }
+    .guide-item { display: grid; grid-template-columns: 38px 1fr; gap: 15px; padding: 16px 0; border-bottom: 1px solid var(--line); align-items: start; }
+    .guide-item input { appearance: none; width: 21px; height: 21px; border: 1px solid #8a9890; border-radius: 5px; margin: 0; position: relative; cursor: pointer; }
+    .guide-item input:checked { background: var(--teal); border-color: var(--teal); }
+    .guide-item input:checked::after { content: "✓"; color: white; position: absolute; font-size: 14px; left: 3px; top: 0; }
+    .guide-item label { cursor: pointer; }
+    .guide-item strong { display: block; font-size: 15px; }
+    .guide-item span { display: block; color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .command-panel { border: 1px solid var(--line); background: #202c2a; color: #d9e8df; padding: 24px; }
+    .command-panel h3 { color: #fffdf7; margin-bottom: 18px; }
+    .cmd { margin: 0 0 12px; padding: 13px 44px 13px 14px; background: #15201e; color: #cbe9df; font: 12px/1.55 var(--mono); position: relative; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .copy { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border: 1px solid #48615b; background: transparent; color: #9cbab0; display: grid; place-items: center; border-radius: 6px; }
+    .copy:hover { color: white; border-color: #8fe0d8; }
+    .command-panel .small { color: #9cbab0; }
+
+    .config-layout { display: grid; grid-template-columns: 1.05fr .95fr; gap: 6vw; align-items: center; }
+    .config-code { background: #202c2a; color: #d9e8df; padding: 24px; font: 12px/1.7 var(--mono); overflow: auto; }
+    .config-code .key { color: #8fe0d8; }
+    .config-code .str { color: #ffd0bc; }
+    .config-code .comment { color: #83a49a; }
+    .decision-list { display: grid; gap: 18px; }
+    .decision { padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+    .decision h3 { margin-bottom: 7px; }
+    .decision p { color: #56625c; font-size: 14px; }
+
+    .limits-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 6vw; }
+    .limits-col { border-top: 1px solid var(--line); }
+    .limit { padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .limit strong { display: block; font-size: 16px; }
+    .limit p { margin-top: 6px; color: #56625c; font-size: 14px; }
+    .limit .label { color: var(--orange); font: 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 7px; }
+    .limit.good .label { color: var(--teal); }
+
+    .takeaway-layout { display: grid; grid-template-columns: .9fr 1.1fr; gap: 6vw; align-items: end; }
+    .takeaways { border-top: 1px solid var(--line); }
+    .takeaway { display: grid; grid-template-columns: 38px 1fr; gap: 18px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .takeaway .num { color: var(--teal); font: 12px var(--mono); }
+    .takeaway p { color: #56625c; font-size: 15px; }
+    .end-mark { color: var(--teal); font: 12px var(--mono); border: 1px solid var(--teal); padding: 9px 11px; display: inline-block; margin-top: 25px; }
+
+    .controls { position: fixed; right: 28px; bottom: 22px; z-index: 25; display: flex; align-items: center; gap: 8px; }
+    .control { width: 40px; height: 40px; border: 1px solid #b7c0b8; color: var(--ink); background: rgba(244,241,232,.92); border-radius: 10px; display: grid; place-items: center; transition: .2s ease; }
+    .control:hover { border-color: var(--teal); color: var(--teal); transform: translateY(-2px); }
+    .control:focus-visible, .tab:focus-visible, .toc-link:focus-visible, .copy:focus-visible, .guide-item input:focus-visible { outline: 3px solid rgba(8,127,123,.35); outline-offset: 3px; }
+    .control svg { width: 18px; height: 18px; }
+    .cover .control { background: rgba(27,36,35,.85); border-color: #55706a; color: #d9e8df; }
+    .section-break .control { background: rgba(8,127,123,.85); border-color: #8fe0d8; color: white; }
+
+    .toc { position: fixed; inset: 0; z-index: 40; display: none; background: rgba(27,36,35,.54); padding: 5vh 5vw; }
+    .toc.is-open { display: block; }
+    .toc-panel { max-width: 720px; max-height: 90vh; overflow: auto; margin: auto; background: var(--paper); box-shadow: var(--shadow); padding: 30px; border-radius: var(--radius); }
+    .toc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+    .toc-head h2 { font-size: 34px; }
+    .toc-close { width: 36px; height: 36px; border: 1px solid var(--line); background: transparent; border-radius: 9px; display: grid; place-items: center; }
+    .toc-links { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .toc-link { text-align: left; border: 1px solid var(--line); background: var(--white); border-radius: 11px; padding: 14px; color: var(--ink); transition: .2s ease; }
+    .toc-link:hover { border-color: var(--teal); transform: translateY(-2px); }
+    .toc-link.is-current { border-color: var(--teal); background: var(--teal-2); }
+    .toc-link .idx { display: block; color: var(--teal); font: 11px var(--mono); margin-bottom: 5px; }
+    .toc-link .title { display: block; font-size: 14px; }
+    .hint { position: fixed; left: 32px; bottom: 28px; z-index: 20; color: var(--muted); font: 11px var(--mono); }
+    .cover .hint, .section-break .hint { color: #91aaa2; }
+
+    @media (max-width: 850px) {
+      body { overflow: hidden; }
+      .brand { left: 18px; top: 18px; }
+      .counter { right: 18px; top: 20px; }
+      .slide { padding: 82px 24px 105px; height: 100svh; }
+      .slide-inner { min-height: calc(100svh - 187px); justify-content: flex-start; padding-top: 8vh; }
+      h1 { font-size: clamp(54px, 17vw, 96px); }
+      h2 { font-size: clamp(39px, 12vw, 63px); max-width: 11ch; }
+      .lede { font-size: 18px; }
+      .source { left: 24px; right: 24px; bottom: 72px; align-items: flex-start; flex-direction: column; gap: 5px; }
+      .source .tag { display: none; }
+      .cover-layout, .split, .split.wide-left, .benefit-layout, .pipeline, .preprocess-layout, .research-layout, .contract-layout, .llm-layout, .memory-layout, .output-layout, .guide-layout, .config-layout, .limits-layout, .takeaway-layout, .section-break .section-layout { grid-template-columns: 1fr; gap: 34px; }
+      .cover-layout { padding-top: 3vh; }
+      .cover-graphic { min-height: 260px; margin-top: 4px; }
+      .cover-graphic svg { max-height: 250px; }
+      .triptych { grid-template-columns: 1fr; }
+      .triptych > div, .triptych > div + div { padding: 19px 0; min-height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      .triptych > div:last-child { border-bottom: 0; }
+      .before-after { grid-template-columns: 1fr; }
+      .before-after > div:first-child { border-right: 0; border-bottom: 1px solid var(--line); }
+      .use-case-grid { grid-template-columns: 1fr; }
+      .use-case, .use-case:nth-child(even), .use-case:nth-child(odd) { padding: 19px 0; border-right: 0; }
+      .section-break .slide-inner { padding-top: 12vh; }
+      .section-break h2 { font-size: clamp(64px, 20vw, 120px); }
+      .section-glyph { height: 135px; }
+      .level.c1, .level.c2 { transform: none; }
+      .agent-row { grid-template-columns: 1fr; gap: 5px; }
+      .contract-line { grid-template-columns: 1fr; gap: 5px; }
+      .toc { padding: 3vh 18px; }
+      .toc-panel { padding: 22px; }
+      .toc-links { grid-template-columns: 1fr; }
+      .controls { right: 18px; bottom: 17px; }
+      .control { width: 37px; height: 37px; }
+      .hint { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" id="app">
+    <div class="topline"><div class="progress" id="progress"></div></div>
+    <div class="brand"><span class="brand-mark">L</span><span>Litho / deepwiki-rs</span></div>
+    <div class="counter" id="counter">01 / 18</div>
+
+    <section class="stage" id="stage">
+      <article class="slide cover is-active" data-title="Cover">
+        <div class="slide-inner cover-layout">
+          <div>
+            <div class="small mono" style="color:#91aaa2">CODEBASE → ARCHITECTURE WIKI</div>
+            <h1 class="cover-title">Make the <em>codebase</em> legible.</h1>
+            <p class="lede">A deep dive into Litho, the Rust CLI formerly known as <span class="mono">deepwiki-rs</span>. It analyses a repository, asks specialised agents to make sense of it, and writes a structured C4 documentation set.</p>
+            <div class="cover-note"><span class="dot"></span><span>Source snapshot: 14 September 2026 · commit <span class="mono">27dbd3e</span></span></div>
+          </div>
+          <div class="cover-graphic">
+            <svg viewBox="0 0 420 360" role="img" aria-label="A codebase flowing through layered architecture documentation">
+              <line class="graph-line" x1="55" y1="72" x2="175" y2="125"/><line class="graph-line" x1="55" y1="160" x2="175" y2="125"/><line class="graph-line" x1="55" y1="250" x2="175" y2="125"/>
+              <line class="graph-line" x1="175" y1="125" x2="295" y2="80"/><line class="graph-line" x1="175" y1="125" x2="295" y2="185"/><line class="graph-line" x1="175" y1="125" x2="295" y2="290"/><line class="graph-line" x1="295" y1="80" x2="371" y2="185"/><line class="graph-line" x1="295" y1="185" x2="371" y2="185"/><line class="graph-line" x1="295" y1="290" x2="371" y2="185"/>
+              <rect class="graph-node" x="20" y="52" width="70" height="38" rx="8"/><rect class="graph-node" x="20" y="140" width="70" height="38" rx="8"/><rect class="graph-node hot" x="20" y="230" width="70" height="38" rx="8"/>
+              <rect class="graph-node" x="140" y="105" width="70" height="40" rx="8"/><rect class="graph-node" x="260" y="60" width="70" height="40" rx="8"/><rect class="graph-node" x="260" y="165" width="70" height="40" rx="8"/><rect class="graph-node hot" x="260" y="270" width="70" height="40" rx="8"/><rect class="graph-node" x="336" y="165" width="70" height="40" rx="8"/>
+              <text class="graph-label" x="33" y="76">src/</text><text class="graph-label" x="30" y="164">docs/</text><text class="graph-label" x="30" y="254">config</text><text class="graph-label" x="151" y="130">scan</text><text class="graph-label" x="269" y="85">C1</text><text class="graph-label" x="269" y="190">C2</text><text class="graph-label" x="269" y="295">C3–4</text><text class="graph-label" x="345" y="190">wiki</text>
+              <text class="graph-label tiny" x="20" y="326">files</text><text class="graph-label tiny" x="140" y="326">context</text><text class="graph-label tiny" x="260" y="326">research</text><text class="graph-label tiny" x="336" y="326">output</text>
+            </svg>
+          </div>
+        </div>
+        <div class="source"><span class="claim">“High-performance AI-driven intelligent document generator” · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/README.md" target="_blank" rel="noreferrer">README.md</a></span><span class="tag">01 / COVER</span></div>
+      </article>
+
+      <article class="slide" data-title="TL;DR: what it does">
+        <div class="slide-inner">
+          <div class="split">
+            <div><h2>In plain English</h2><p class="lede" style="margin-top:24px">Litho turns a messy repository into a navigable explanation of how the system works.</p></div>
+            <div class="triptych">
+              <div><div class="stepno">01 / INGEST</div><h3>Read the repository</h3><p>Walk the project, extract structure, inspect language-specific patterns, and retain original documentation material.</p></div>
+              <div><div class="stepno">02 / REASON</div><h3>Build an architecture view</h3><p>Specialised research agents work from shared context to infer system, domain, workflow, module, and boundary views.</p></div>
+              <div><div class="stepno">03 / WRITE</div><h3>Export a Repo-Wiki</h3><p>Compose Markdown documentation with C4 diagrams, relationships, code-level notes, and a summary report.</p></div>
+            </div>
+          </div>
+          <div class="rule"></div>
+          <p class="quote">The useful mental model: <strong>a documentation compiler with LLM-powered analysis passes</strong>.</p>
+        </div>
+        <div class="source"><span class="claim">The README describes a four-stage pipeline: preprocessing → research → composition → verification/output · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/README.md" target="_blank" rel="noreferrer">README.md</a></span><span class="tag">02 / TL;DR</span></div>
+      </article>
+
+      <article class="slide" data-title="Why it matters">
+        <div class="slide-inner">
+          <div class="benefit-layout">
+            <div><h2>Documentation decays. Code keeps moving.</h2><p class="lede" style="margin-top:24px">Litho is designed for the awkward gap between what a codebase does and what the team can still explain.</p></div>
+            <div class="side-note"><p class="punchline">The payoff is not “more docs”. It’s <span class="accent">less archaeology</span>.</p><p>New teammates find the shape of the system sooner. Reviewers get architectural context. Maintainers get a repeatable baseline that can be regenerated after change.</p></div>
+          </div>
+          <div class="before-after" style="margin-top:50px">
+            <div><h3>Without a generator</h3><ul><li>Important context lives in people’s heads.</li><li>Manual diagrams drift away from implementation.</li><li>Every onboarding question becomes a bespoke tour.</li></ul></div>
+            <div><h3>With Litho in the loop</h3><ul><li>Repository structure becomes a shared starting point.</li><li>C4 views give the team a common abstraction ladder.</li><li>Cacheable, repeatable passes make refreshes cheaper.</li></ul></div>
+          </div>
+        </div>
+        <div class="source"><span class="claim">Benefits are stated by the project as onboarding, code review, compliance, multi-language support, and CI/CD suitability · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/README.md" target="_blank" rel="noreferrer">README.md</a></span><span class="tag">03 / WHY</span></div>
+      </article>
+
+      <article class="slide" data-title="Use cases">
+        <div class="slide-inner">
+          <div class="split wide-left"><div><h2>Where it earns its keep</h2><p class="lede" style="margin-top:24px">Use Litho when the cost of understanding a system is higher than the cost of generating a first architectural map.</p></div><div><p class="small mono">GOOD FIT / NOT A RUNTIME OBSERVER</p><p style="margin-top:12px;color:#56625c">It is a read-only analysis and documentation tool. It doesn’t replace design judgement, tests, production observability, or human review.</p></div></div>
+          <div class="use-case-grid" style="margin-top:52px">
+            <div class="use-case"><span class="use-mark">↳ 01</span><h3>Onboard a new engineer</h3><p>Start with the generated system context, architecture, workflow, and boundary documents before diving into individual modules.</p></div>
+            <div class="use-case"><span class="use-mark">↳ 02</span><h3>Prepare a code review</h3><p>Regenerate a lightweight architecture baseline to make large refactors easier to discuss.</p></div>
+            <div class="use-case"><span class="use-mark">↳ 03</span><h3>Preserve institutional knowledge</h3><p>Capture what the current code implies before a team, product, or ownership boundary changes.</p></div>
+            <div class="use-case"><span class="use-mark">↳ 04</span><h3>Bring business context closer</h3><p>Mount local Markdown, PDF, SQL, YAML, or JSON knowledge and route it to the agents that need it.</p></div>
+          </div>
+        </div>
+        <div class="source"><span class="claim">The repository explicitly positions itself for developers, architects, technical writers, engineering teams, and open-source projects · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/README.md" target="_blank" rel="noreferrer">README.md</a></span><span class="tag">04 / USE CASES</span></div>
+      </article>
+
+      <article class="slide section-break" data-title="Section: understand the machine">
+        <div class="slide-inner section-layout"><div><h2>Understand<br/>the machine.</h2></div><div><p class="lede">The interesting part isn’t the CLI wrapper. It’s the chain of specialised passes, shared state, and controlled LLM calls underneath it.</p><div class="section-glyph" style="margin-top:36px"><i></i><i></i><i></i><i></i></div></div></div>
+        <div class="source"><span class="claim">Deep dive: execution flow, agent contracts, LLM integration, memory, cache, and outputs.</span><span class="tag">05 / SECTION BREAK</span></div>
+      </article>
+
+      <article class="slide" data-title="The four-stage pipeline">
+        <div class="slide-inner">
+          <div class="pipeline"><div><h2>A staged pipeline, not one giant prompt</h2><p class="lede" style="margin-top:24px">Each phase produces structured material for the next. That makes the process easier to inspect, resume, cache, and evolve.</p><div class="stage-list" style="margin-top:34px"><div class="stage-row"><div class="stage-id">01 / PRE</div><div><h3>Preprocess</h3><p>Repository structure, source material, directory dossiers, and relationships.</p></div></div><div class="stage-row"><div class="stage-id">02 / C1–4</div><div><h3>Research</h3><p>System, domain, architecture, workflow, module, boundary, and optional database analysis.</p></div></div><div class="stage-row"><div class="stage-id">03 / DOC</div><div><h3>Compose</h3><p>Specialised editors turn research into a documentation tree.</p></div></div><div class="stage-row"><div class="stage-id">04 / OUT</div><div><h3>Output</h3><p>Write Markdown, summary information, and run Mermaid repair.</p></div></div></div></div>
+            <div class="pipeline-visual"><svg viewBox="0 0 560 440" role="img" aria-label="Four-stage Litho processing pipeline"><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8" fill="none" stroke="#087f7b" stroke-width="1.5"/></marker></defs><path d="M110 72 L110 158 L110 244 L110 330" stroke="#087f7b" stroke-width="2" fill="none" marker-end="url(#arrow)"/><path d="M110 158 C220 158 290 125 410 125" stroke="#bdc9c0" stroke-width="1" stroke-dasharray="4 6" fill="none"/><path d="M110 244 C220 244 290 285 410 285" stroke="#bdc9c0" stroke-width="1" stroke-dasharray="4 6" fill="none"/><rect x="38" y="42" width="144" height="60" rx="12" fill="#d7eeeb" stroke="#087f7b"/><rect x="38" y="128" width="144" height="60" rx="12" fill="#e7e3f7" stroke="#6659a6"/><rect x="38" y="214" width="144" height="60" rx="12" fill="#fae3d7" stroke="#d86338"/><rect x="38" y="300" width="144" height="60" rx="12" fill="#dfeee3" stroke="#387c58"/><text x="61" y="68" font-family="monospace" font-size="11" fill="#087f7b">PHASE 01</text><text x="61" y="88" font-family="Arial" font-size="17" font-weight="700" fill="#1b2423">Preprocess</text><text x="61" y="154" font-family="monospace" font-size="11" fill="#6659a6">PHASE 02</text><text x="61" y="174" font-family="Arial" font-size="17" font-weight="700" fill="#1b2423">Research</text><text x="61" y="240" font-family="monospace" font-size="11" fill="#d86338">PHASE 03</text><text x="61" y="260" font-family="Arial" font-size="17" font-weight="700" fill="#1b2423">Compose</text><text x="61" y="326" font-family="monospace" font-size="11" fill="#387c58">PHASE 04</text><text x="61" y="346" font-family="Arial" font-size="17" font-weight="700" fill="#1b2423">Output</text><rect x="325" y="91" width="170" height="68" rx="12" fill="#fffdf7" stroke="#cbd0c7"/><rect x="325" y="251" width="170" height="68" rx="12" fill="#fffdf7" stroke="#cbd0c7"/><text x="346" y="116" font-family="monospace" font-size="11" fill="#66706b">SHARED CONTEXT</text><text x="346" y="139" font-family="Arial" font-size="15" font-weight="700" fill="#1b2423">Memory + cache</text><text x="346" y="276" font-family="monospace" font-size="11" fill="#66706b">OUTPUT TREE</text><text x="346" y="299" font-family="Arial" font-size="15" font-weight="700" fill="#1b2423">C4 Markdown</text></svg></div></div>
+        </div>
+        <div class="source"><span class="claim">`launch()` creates the context, optionally syncs knowledge, then runs preprocessing → research → composition → output · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/src/generator/workflow.rs" target="_blank" rel="noreferrer">workflow.rs</a></span><span class="tag">06 / PIPELINE</span></div>
+      </article>
+
+      <article class="slide" data-title="Preprocessing: make code inspectable">
+        <div class="slide-inner"><div class="preprocess-layout"><div><h2>First, make the repository inspectable.</h2><p class="lede" style="margin-top:24px">Before an agent tries to explain the system, Litho builds a compact working representation of it.</p><div class="file-tree" style="margin-top:34px"><div class="dim">$ deepwiki-rs -p ./my-project</div><br/><div class="teal">▾ project_structure</div><div>  ├─ directories</div><div>  ├─ files</div><div>  └─ tracked metadata</div><div class="hot">▾ directory_dossiers</div><div>  ├─ purpose + summary</div><div>  ├─ file insights</div><div>  └─ importance score</div><div class="teal">▾ relationships</div><div>  └─ module / file links</div></div></div><div class="facts"><div class="fact"><strong>12</strong><span>language processors are registered in the source tree, including Rust, Python, JavaScript, TypeScript, React, Vue, Swift, Kotlin, PHP, C#, Java, and Svelte.</span></div><div class="fact"><strong>256 KB</strong><span>maximum directory content batch before the preprocessor splits work at file boundaries.</span></div><div class="fact"><strong>read-only</strong><span>the analysis reads source and writes documentation/cache artefacts. It doesn’t operate on the target system at runtime.</span></div><div class="fact"><strong>fallbacks exist</strong><span>if an LLM directory summary fails, the preprocessor can keep a fallback dossier and continue its pipeline.</span></div></div></div></div>
+        <div class="source"><span class="claim">Preprocessing implementation: structure extraction, directory dossiers, batching, and relationship analysis · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/src/generator/preprocess/mod.rs" target="_blank" rel="noreferrer">preprocess/mod.rs</a> · <a href="https://github.com/sopaco/deepwiki-rs/tree/main/src/generator/preprocess/extractors/language_processors" target="_blank" rel="noreferrer">language processors</a></span><span class="tag">07 / PREPROCESS</span></div>
+      </article>
+
+      <article class="slide" data-title="Research: zoom from C1 to C4">
+        <div class="slide-inner"><div class="research-layout"><div><h2>Research zooms in, layer by layer.</h2><p class="lede" style="margin-top:24px">The research stage moves from “what is this system?” towards “what are the important modules and boundaries?”</p><div class="levels" style="margin-top:34px"><div class="level c1"><strong><span>C1 / system context</span><span>01</span></strong><p>SystemContextResearcher frames the project and its users.</p></div><div class="level c2"><strong><span>C2 / containers & domains</span><span>02–04</span></strong><p>DomainModulesDetector, ArchitectureResearcher, and WorkflowResearcher map the meso level.</p></div><div class="level c3"><strong><span>C3–C4 / modules & boundaries</span><span>05–06</span></strong><p>KeyModulesInsight and BoundaryAnalyzer deepen the code-level and interface view.</p></div></div></div><div><div class="small mono" style="margin-bottom:16px">RESEARCH ORCHESTRATOR / DEFAULT PATH</div><div class="agent-roster"><div class="agent-row"><strong>SystemContextResearcher</strong><span>project purpose, audience, system boundary</span></div><div class="agent-row"><strong>DomainModulesDetector</strong><span>domain module candidates and importance</span></div><div class="agent-row"><strong>ArchitectureResearcher</strong><span>architecture structure and relationships</span></div><div class="agent-row"><strong>WorkflowResearcher</strong><span>how work moves through the system</span></div><div class="agent-row"><strong>KeyModulesInsight</strong><span>deep insight into key modules</span></div><div class="agent-row"><strong>BoundaryAnalyzer</strong><span>CLI, API, router, and configuration boundaries</span></div><div class="agent-row"><strong class="optional">DatabaseOverviewAnalyzer</strong><span class="optional">conditional: runs when database-related files are detected</span></div></div></div></div></div>
+        <div class="source"><span class="claim">The orchestrator runs six core analyses and conditionally adds database analysis · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/src/generator/research/orchestrator.rs" target="_blank" rel="noreferrer">research/orchestrator.rs</a></span><span class="tag">08 / RESEARCH</span></div>
+      </article>
+
+      <article class="slide" data-title="The agent contract">
+        <div class="slide-inner"><div class="contract-layout"><div><h2>Every agent signs a small contract.</h2><p class="lede" style="margin-top:24px">The <span class="mono">StepForwardAgent</span> trait turns each analysis pass into a repeatable unit: declare inputs, build a prompt, choose an execution mode, validate the output, and store the result.</p><div class="contract-board" style="margin-top:34px"><div class="contract-line"><b>DATA</b><span>required and optional sources from memory, research, or local knowledge</span></div><div class="contract-line"><b>MODE</b><span>structured extraction, free-form prompting, or prompting with tools</span></div><div class="contract-line"><b>FORMAT</b><span>token-aware project structure, insights, dependencies, README material</span></div><div class="contract-line"><b>RESULT</b><span>typed output, formatted summary, and a memory write</span></div></div></div><div class="mode-panel"><div class="tabs" role="tablist" aria-label="Agent execution modes"><button class="tab is-selected" role="tab" aria-selected="true" data-mode="extract">Extract</button><button class="tab" role="tab" aria-selected="false" data-mode="prompt">Prompt</button><button class="tab" role="tab" aria-selected="false" data-mode="tools">Tools</button></div><div class="mode-copy" id="mode-copy"><h3>Structured output</h3><p>The agent asks the provider for a typed result that can be deserialised against a JSON schema. This is useful when the next stage depends on predictable fields.</p><code>LLMCallMode::Extract
+ JsonSchema + Deserialize</code></div></div></div></div>
+        <div class="source"><span class="claim">Agent data sources, call modes, formatter configuration, and execution abstraction · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/src/generator/step_forward_agent.rs" target="_blank" rel="noreferrer">step_forward_agent.rs</a> · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/src/generator/agent_executor.rs" target="_blank" rel="noreferrer">agent_executor.rs</a></span><span class="tag">09 / AGENT CONTRACT</span></div>
+      </article>
+
+      <article class="slide" data-title="LLM providers and tools">
+        <div class="slide-inner"><div class="llm-layout"><div><h2>One client, several model backends.</h2><p class="lede" style="margin-top:24px">The provider layer keeps the rest of the generator focused on prompts and data, while the CLI can select cloud-compatible or local inference.</p><div class="provider-line"><span class="provider">openai</span><span class="provider">anthropic</span><span class="provider">gemini</span><span class="provider">deepseek</span><span class="provider">moonshot</span><span class="provider">mistral</span><span class="provider">openrouter</span><span class="provider">ollama</span></div><div class="llm-flow"><div class="llm-step"><strong>Pick a model by prompt size</strong><p>Efficient and powerful model settings are evaluated before a call.</p></div><div class="llm-step"><strong>Retry with backoff</strong><p>Transient provider errors can be retried; a powerful model can serve as a fallback.</p></div><div class="llm-step"><strong>Use ReAct when exploration helps</strong><p>Research agents can call preset file explorer, file reader, and time tools.</p></div></div></div><div><div class="tool-box"><div><span class="key">agent</span>: <span class="value">ResearchOrchestrator</span></div><div><span class="key">mode</span>: <span class="value">PromptWithTools</span></div><div><span class="key">tools</span>: [</div><div>  <span class="value">file_explorer</span>,</div><div>  <span class="value">file_reader</span>,</div><div>  <span class="value">time</span></div><div>]</div><br/><div><span class="key">if max_depth</span> → summary_reasoner</div><div><span class="key">if provider fails</span> → retry / fallback</div></div><p class="small" style="margin-top:22px">The tool boundary matters: file tools apply whitelist and path checks, so the model isn’t given an unrestricted filesystem primitive.</p></div></div></div>
+        <div class="source"><span class="claim">Provider enum, agent construction, tool wiring, retry logic, and summary fallover · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/src/llm/client/providers.rs" target="_blank" rel="noreferrer">providers.rs</a> · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/src/llm/client/mod.rs" target="_blank" rel="noreferrer">client/mod.rs</a></span><span class="tag">10 / LLM + TOOLS</span></div>
+      </article>
+
+      <article class="slide" data-title="Memory and cache">
+        <div class="slide-inner"><div class="memory-layout"><div><h2>Shared context keeps the passes connected.</h2><p class="lede" style="margin-top:24px"><span class="mono">GeneratorContext</span> carries the LLM client, configuration, cache manager, and in-memory store across the pipeline.</p><div class="memory-stack" style="margin-top:36px"><div class="memory-layer"><strong>PREPROCESS scope</strong><p>Project structure, code insights, original document, relationships.</p></div><div class="memory-layer"><strong>RESEARCH scope</strong><p>Typed agent reports that downstream editors can retrieve.</p></div><div class="memory-layer"><strong>DOCUMENTATION scope</strong><p>Markdown sections held by the documentation tree before output.</p></div></div></div><div><div class="cache-code"><div class="comment">// cache key = category + MD5(prompt)</div><div><span class="teal">cache.get</span>(category, prompt)</div><div>  ↳ hit: deserialize JSON</div><div>  ↳ miss: call provider</div><div><span class="teal">cache.set</span>(category, prompt, data)</div><div class="comment">// tracks hits, misses, writes, errors</div><div class="comment">// token and estimated cost savings</div><br/><div><span class="orange">--no-cache</span> disable cache</div><div><span class="orange">--force-regenerate</span> clear cache safely</div></div><p class="small" style="margin-top:22px">The cache is file-based and expiry-aware. It improves repeatability and can reduce duplicate model calls, but a cache hit is only as good as the prompt and source snapshot that produced it.</p></div></div></div>
+        <div class="source"><span class="claim">Context wiring and scoped memory · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/src/generator/context.rs" target="_blank" rel="noreferrer">context.rs</a> · prompt-hash cache and performance metrics · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/src/cache/mod.rs" target="_blank" rel="noreferrer">cache/mod.rs</a></span><span class="tag">11 / MEMORY + CACHE</span></div>
+      </article>
+
+      <article class="slide" data-title="Composition and output">
+        <div class="slide-inner"><div class="output-layout"><div><h2>Research becomes a documentation tree.</h2><p class="lede" style="margin-top:24px">Composition uses specialised editors to write the views a human reader needs, then the outlet persists them in the target language’s file naming scheme.</p><div class="output-tree" style="margin-top:36px"><div class="folder">litho.docs/</div><div class="file">├─ 1.Overview.md</div><div class="file">├─ 2.Architecture.md</div><div class="file">├─ 3.Workflow.md</div><div class="file">├─ 5.Boundary-Interfaces.md</div><div class="file">├─ 6.Database-Overview.md <span style="color:#d86338">(if detected)</span></div><div class="file">└─ summary.json / report</div></div></div><div class="outlet-note"><h3>One useful finishing move</h3><p>After writing the Markdown, Litho invokes <span class="mono">mermaid-fixer</span> to detect and repair generated Mermaid syntax. That dependency is checked at startup, so a missing fixer stops the run early.</p><p style="margin-top:20px">This is a good example of a generator treating its own output as something to validate, not just something to emit.</p></div></div></div>
+        <div class="source"><span class="claim">Six composition editors, language-aware <span class="mono">DocTree</span>, disk output, summary outlet, and Mermaid fixer integration · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/src/generator/compose/mod.rs" target="_blank" rel="noreferrer">compose/mod.rs</a> · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/src/generator/outlet/mod.rs" target="_blank" rel="noreferrer">outlet/mod.rs</a></span><span class="tag">12 / OUTPUT</span></div>
+      </article>
+
+      <article class="slide section-break dark" data-title="Section: implement it">
+        <div class="slide-inner section-layout"><div><h2>Implement<br/>the loop.</h2></div><div><p class="lede">The fastest path is to get one project through the full pipeline, inspect the output, then tune the model, knowledge, and cache decisions.</p><div class="section-glyph" style="margin-top:36px"><i></i><i></i><i></i><i></i></div></div></div>
+        <div class="source"><span class="claim">Implementation guide: install, configure, run, validate, and iterate.</span><span class="tag">13 / SECTION BREAK</span></div>
+      </article>
+
+      <article class="slide" data-title="Step-by-step quick start">
+        <div class="slide-inner"><div class="guide-layout"><div><h2>Get a first map in one session.</h2><p class="lede" style="margin-top:24px">Use this as a deliberate first pass. Don’t begin by perfecting every setting.</p><div class="guide-list" style="margin-top:34px"><div class="guide-item"><input type="checkbox" id="g1"><label for="g1"><strong>Install Rust and Cargo</strong><span>Rust 1.70+ is listed as the repository prerequisite.</span></label></div><div class="guide-item"><input type="checkbox" id="g2"><label for="g2"><strong>Install Mermaid Fixer</strong><span>The generator checks for this executable before starting.</span></label></div><div class="guide-item"><input type="checkbox" id="g3"><label for="g3"><strong>Choose a provider and models</strong><span>Cloud-compatible endpoints or local Ollama are supported.</span></label></div><div class="guide-item"><input type="checkbox" id="g4"><label for="g4"><strong>Run against a small project first</strong><span>Inspect the output shape before scaling up.</span></label></div></div></div><div class="command-panel"><h3>Install and run</h3><div class="cmd">cargo install deepwiki-rs<button class="copy" aria-label="Copy install command" data-copy="cargo install deepwiki-rs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div><div class="cmd">deepwiki-rs -p ./my-project -o ./litho.docs<button class="copy" aria-label="Copy basic run command" data-copy="deepwiki-rs -p ./my-project -o ./litho.docs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div><div class="cmd">deepwiki-rs --target-language en -p ./my-project<button class="copy" aria-label="Copy language command" data-copy="deepwiki-rs --target-language en -p ./my-project"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1 2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div><p class="small">The CLI defaults to the current directory and <span class="mono">./litho.docs</span> if you omit paths.</p></div></div></div>
+        <div class="source"><span class="claim">Prerequisites, install options, and basic commands · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/README.md" target="_blank" rel="noreferrer">README.md</a> · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/src/cli.rs" target="_blank" rel="noreferrer">cli.rs</a></span><span class="tag">14 / QUICK START</span></div>
+      </article>
+
+      <article class="slide" data-title="Configuration that matters">
+        <div class="slide-inner"><div class="config-layout"><div><h2>Configure the decisions, not the noise.</h2><p class="lede" style="margin-top:24px">Start with the example TOML. The high-impact choices are provider, endpoint, model pairing, concurrency, target language, cache, and local knowledge.</p><div class="config-code" style="margin-top:34px"><div><span class="key">[llm]</span></div><div><span class="key">provider</span> = <span class="str">"ollama"</span></div><div><span class="key">api_base_url</span> = <span class="str">"http://localhost:11434"</span></div><div><span class="key">model_efficient</span> = <span class="str">"your-fast-model"</span></div><div><span class="key">model_powerful</span> = <span class="str">"your-strong-model"</span></div><br/><div><span class="key">[cache]</span></div><div><span class="key">enabled</span> = <span class="str">true</span></div><div><span class="key">expire_hours</span> = <span class="str">24</span></div><br/><div><span class="key">target_language</span> = <span class="str">"en"</span></div></div></div><div class="decision-list"><div class="decision"><h3>Cloud or local?</h3><p>Use a compatible hosted endpoint for stronger models, or Ollama where local inference and data locality matter more.</p></div><div class="decision"><h3>Fast model or strong model?</h3><p>Keep routine extraction efficient, then reserve the powerful model for complex reasoning and fallback.</p></div><div class="decision"><h3>Fresh run or cache-assisted run?</h3><p>Use the cache while iterating. Use <span class="mono">--force-regenerate</span> when you need to invalidate prior LLM responses.</p></div><div class="decision"><h3>Code only or code + knowledge?</h3><p>Mount ADRs, architecture docs, SQL, API specs, and business context when code alone can’t explain intent.</p></div></div></div></div>
+        <div class="source"><span class="claim">Configuration schema and example values · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/litho-example.toml" target="_blank" rel="noreferrer">litho-example.toml</a> · CLI overrides · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/src/config.rs" target="_blank" rel="noreferrer">config.rs</a></span><span class="tag">15 / CONFIGURE</span></div>
+      </article>
+
+      <article class="slide" data-title="External knowledge">
+        <div class="slide-inner"><div class="split"><div><h2>Give the agents the context code can’t contain.</h2><p class="lede" style="margin-top:24px">Local knowledge integration lets you classify and chunk supporting documents, cache them, and route relevant categories to selected agents.</p><div class="quote" style="margin-top:34px">Good candidates: ADRs, API contracts, database schemas, deployment notes, workflows, and domain glossaries.</div></div><div><div class="file-tree" style="min-height:300px"><div class="teal">[knowledge.local_docs]</div><div>enabled = true</div><div>cache_dir = <span class="hot">".litho/cache/knowledge"</span></div><br/><div class="teal">[[categories]]</div><div>name = <span class="hot">"architecture"</span></div><div>paths = [</div><div>  <span class="hot">"docs/architecture/**/*.md"</span>,</div><div>  <span class="hot">"docs/design/**/*.pdf"</span></div><div>]</div><div>target_agents = [</div><div>  <span class="hot">"ArchitectureResearcher"</span>,</div><div>  <span class="hot">"ArchitectureEditor"</span></div><div>]</div></div><div style="margin-top:24px"><div class="cmd" style="background:#202c2a;color:#cbe9df">deepwiki-rs sync-knowledge --force<button class="copy" aria-label="Copy sync knowledge command" data-copy="deepwiki-rs sync-knowledge --force"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div></div></div></div></div>
+        <div class="source"><span class="claim">Supported document types, categories, chunking, sync behaviour, and agent filtering · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/README.md" target="_blank" rel="noreferrer">README.md</a> · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/src/integrations/knowledge_sync.rs" target="_blank" rel="noreferrer">knowledge_sync.rs</a></span><span class="tag">16 / KNOWLEDGE</span></div>
+      </article>
+
+      <article class="slide" data-title="Validate the output">
+        <div class="slide-inner"><div class="split wide-left"><div><h2>Trust the map by testing its edges.</h2><p class="lede" style="margin-top:24px">Generated documentation is a useful starting point, not ground truth. Validate what it says against the source and the team’s intent.</p></div><div><p class="small mono">A PRACTICAL REVIEW LOOP</p><p style="margin-top:12px;color:#56625c">Compare the generated system context with the README. Trace one workflow into the files. Check one boundary against the CLI/config. Record what the generator missed.</p></div></div><div class="limits-layout" style="margin-top:52px"><div class="limits-col"><div class="limit good"><div class="label">Strength</div><strong>Clear abstraction ladder</strong><p>C1 → C2 → C3/C4 gives readers a route from system intent to implementation detail.</p></div><div class="limit good"><div class="label">Strength</div><strong>Resumable ingredients</strong><p>Typed outputs, memory scopes, and cache entries make intermediate work inspectable.</p></div><div class="limit good"><div class="label">Strength</div><strong>Local inference option</strong><p>Ollama support is useful when a project needs a local model boundary.</p></div></div><div class="limits-col"><div class="limit"><div class="label">Watch</div><strong>LLM inference is still inference</strong><p>Architecture roles and relationships can be plausible but wrong. Cross-check consequential claims.</p></div><div class="limit"><div class="label">Watch</div><strong>Docs can drift between runs</strong><p>Regeneration improves freshness, but it doesn’t prove correctness or preserve every human decision.</p></div><div class="limit"><div class="label">Watch</div><strong>Large repos need tuning</strong><p>Prompt compression, directory-only formatting, concurrency, and cache settings affect cost and quality.</p></div></div></div></div>
+        <div class="source"><span class="claim">Limitations here are reasoned recommendations grounded in the repository’s read-only boundary, LLM dependence, cache, and large-project controls · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/docs/en/1.Overview.md" target="_blank" rel="noreferrer">generated overview</a> · <a href="https://github.com/sopaco/deepwiki-rs/blob/main/src/config.rs" target="_blank" rel="noreferrer">config.rs</a></span><span class="tag">17 / VALIDATE</span></div>
+      </article>
+
+      <article class="slide" data-title="Takeaways and sources">
+        <div class="slide-inner"><div class="takeaway-layout"><div><h2>The short version.</h2><p class="lede" style="margin-top:24px">Litho is a focused, local-first-feeling architecture documentation engine. Its value comes from the workflow around the model: inspectable phases, typed hand-offs, scoped memory, caching, and output repair.</p><span class="end-mark">END / BEGIN WITH ONE REPOSITORY</span></div><div class="takeaways"><div class="takeaway"><div class="num">01</div><p><strong>Use it to lower the cost of understanding.</strong> Start with onboarding, review, or knowledge preservation.</p></div><div class="takeaway"><div class="num">02</div><p><strong>Think like a compiler.</strong> The pipeline is the product: preprocess, research, compose, output.</p></div><div class="takeaway"><div class="num">03</div><p><strong>Keep humans in the loop.</strong> Generated architecture is evidence to inspect, not a substitute for ownership.</p></div><div class="takeaway"><div class="num">04</div><p><strong>Pair code with intent.</strong> Add ADRs, contracts, and domain context when the repository can’t speak for itself.</p></div></div></div><div class="rule"></div><p class="small">Primary source: <a href="https://github.com/sopaco/deepwiki-rs" target="_blank" rel="noreferrer">github.com/sopaco/deepwiki-rs</a> · The README notes that Litho has evolved into <a href="https://github.com/sopaco/terrain" target="_blank" rel="noreferrer">Terrain</a>; this deck focuses on the Litho / deepwiki-rs repository snapshot and its focused C4 generator.</p></div>
+        <div class="source"><span class="claim">Built from repository README, source modules, configuration example, generated English docs, and MIT licence.</span><span class="tag">18 / TAKEAWAYS</span></div>
+      </article>
+    </section>
+
+    <div class="hint">← → navigate · O overview · F fullscreen</div>
+    <nav class="controls" aria-label="Deck controls">
+      <button class="control" id="prev" aria-label="Previous slide" title="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <button class="control" id="next" aria-label="Next slide" title="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 18l6-6-6-6"/></svg></button>
+      <button class="control" id="toc-open" aria-label="Open slide overview" title="Slide overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></button>
+      <button class="control" id="fullscreen" aria-label="Enter fullscreen" title="Fullscreen presentation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5"/></svg></button>
+    </nav>
+
+    <aside class="toc" id="toc" aria-hidden="true">
+      <div class="toc-panel" role="dialog" aria-modal="true" aria-labelledby="toc-title">
+        <div class="toc-head"><h2 id="toc-title">Slide overview</h2><button class="toc-close" id="toc-close" aria-label="Close slide overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+        <div class="toc-links" id="toc-links"></div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const counter = document.getElementById('counter');
+      const progress = document.getElementById('progress');
+      const toc = document.getElementById('toc');
+      const tocLinks = document.getElementById('toc-links');
+      let current = 0;
+      let touchStartX = 0;
+      let touchStartY = 0;
+
+      const pad = n => String(n).padStart(2, '0');
+      const renderToc = () => {
+        tocLinks.innerHTML = slides.map((slide, i) => `<button class="toc-link ${i === current ? 'is-current' : ''}" data-go="${i}"><span class="idx">${pad(i + 1)}</span><span class="title">${slide.dataset.title}</span></button>`).join('');
+        tocLinks.querySelectorAll('[data-go]').forEach(btn => btn.addEventListener('click', () => { go(Number(btn.dataset.go)); closeToc(); }));
+      };
+      const go = (index) => {
+        current = (index + slides.length) % slides.length;
+        slides.forEach((slide, i) => slide.classList.toggle('is-active', i === current));
+        counter.textContent = `${pad(current + 1)} / ${pad(slides.length)}`;
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        renderToc();
+        slides[current].scrollTop = 0;
+      };
+      const next = () => go(current + 1);
+      const prev = () => go(current - 1);
+      const closeToc = () => { toc.classList.remove('is-open'); toc.setAttribute('aria-hidden', 'true'); };
+      document.getElementById('next').addEventListener('click', next);
+      document.getElementById('prev').addEventListener('click', prev);
+      document.getElementById('toc-open').addEventListener('click', () => { toc.classList.add('is-open'); toc.setAttribute('aria-hidden', 'false'); });
+      document.getElementById('toc-close').addEventListener('click', closeToc);
+      toc.addEventListener('click', e => { if (e.target === toc) closeToc(); });
+
+      document.getElementById('fullscreen').addEventListener('click', async () => {
+        try {
+          if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+          else await document.exitFullscreen();
+        } catch (_) { /* Fullscreen can be unavailable in embedded browsers. */ }
+      });
+
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && toc.classList.contains('is-open')) { closeToc(); return; }
+        if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); next(); }
+        if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); prev(); }
+        if (e.key.toLowerCase() === 'o') { toc.classList.toggle('is-open'); toc.setAttribute('aria-hidden', String(!toc.classList.contains('is-open'))); }
+        if (e.key.toLowerCase() === 'f') document.getElementById('fullscreen').click();
+      });
+
+      const stage = document.getElementById('stage');
+      stage.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, {passive: true});
+      stage.addEventListener('touchend', e => { const dx = e.changedTouches[0].screenX - touchStartX; const dy = e.changedTouches[0].screenY - touchStartY; if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) dx < 0 ? next() : prev(); }, {passive: true});
+
+      document.querySelectorAll('[data-mode]').forEach(tab => tab.addEventListener('click', () => {
+        document.querySelectorAll('[data-mode]').forEach(t => { t.classList.toggle('is-selected', t === tab); t.setAttribute('aria-selected', String(t === tab)); });
+        const copy = document.getElementById('mode-copy');
+        const modes = {
+          extract: ['Structured output', 'The agent asks the provider for a typed result that can be deserialised against a JSON schema. This is useful when the next stage depends on predictable fields.', 'LLMCallMode::Extract\n+ JsonSchema + Deserialize'],
+          prompt: ['Open-ended reasoning', 'The agent returns general reasoning text when the result is better expressed as explanation, synthesis, or prose.', 'LLMCallMode::Prompt\n+ String response'],
+          tools: ['Repository exploration', 'The agent can use preset tools to inspect files during a ReAct loop, then hand its findings back to the pipeline.', 'LLMCallMode::PromptWithTools\n+ file_explorer + file_reader']
+        };
+        const [title, body, code] = modes[tab.dataset.mode];
+        copy.innerHTML = `<h3>${title}</h3><p>${body}</p><code>${code}</code>`;
+      }));
+
+      document.querySelectorAll('[data-copy]').forEach(btn => btn.addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText(btn.dataset.copy); const old = btn.innerHTML; btn.textContent = '✓'; setTimeout(() => btn.innerHTML = old, 900); } catch (_) { btn.textContent = '!'; }
+      }));
+
+      go(0);
+    })();
+  </script>
+</body>
+</html>

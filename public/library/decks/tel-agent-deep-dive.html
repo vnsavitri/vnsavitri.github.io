@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tel-Agent — Deep dive</title>
+  <meta name="description" content="A native, interactive deep-dive deck on Tel-Agent, the open-source self-hosted AI phone assistant." />
+  <style>
+    :root {
+      --bg: #0a0d0f;
+      --bg-2: #11171a;
+      --panel: #151d20;
+      --panel-2: #1b2529;
+      --ink: #f2f3ed;
+      --muted: #aab5b3;
+      --dim: #6f7b7a;
+      --line: rgba(235, 245, 238, .14);
+      --line-strong: rgba(235, 245, 238, .26);
+      --signal: #b9ff70;
+      --signal-2: #86d94c;
+      --aqua: #9ce7df;
+      --amber: #ffc56b;
+      --red: #ff8d82;
+      --shadow: 0 22px 70px rgba(0,0,0,.26);
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+    body { overflow: hidden; }
+    button { font: inherit; }
+    .deck { min-height: 100vh; position: relative; background: radial-gradient(circle at 75% 5%, rgba(185,255,112,.055), transparent 33rem), var(--bg); }
+    .deck::before { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .16; background-image: linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px); background-size: 64px 64px; mask-image: linear-gradient(to bottom, black, transparent 92%); }
+    .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; justify-content: space-between; align-items: center; padding: 18px 26px; color: var(--muted); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; pointer-events: none; }
+    .topbar > * { pointer-events: auto; }
+    .brand { display: flex; align-items: center; gap: 9px; font-weight: 700; letter-spacing: .08em; }
+    .brand-mark { width: 9px; height: 9px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 0 5px rgba(185,255,112,.12), 0 0 22px var(--signal); }
+    .slide-count { font-family: var(--mono); color: var(--dim); }
+    .slides { position: relative; min-height: 100vh; }
+    .slide { position: absolute; inset: 0; min-height: 100vh; padding: 96px 7vw 112px; display: grid; align-content: center; opacity: 0; visibility: hidden; transform: translateY(10px); transition: opacity .42s ease, transform .42s ease, visibility .42s; }
+    .slide.active { opacity: 1; visibility: visible; transform: none; }
+    .slide-inner { width: min(1180px, 100%); margin: 0 auto; }
+    .eyebrow { color: var(--signal); font: 600 11px/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; margin-bottom: 20px; }
+    h1, h2, h3, p { margin: 0; }
+    h1 { max-width: 930px; font-size: clamp(54px, 8vw, 122px); line-height: .9; letter-spacing: -.075em; font-weight: 780; }
+    h2 { max-width: 900px; font-size: clamp(36px, 5.2vw, 76px); line-height: .95; letter-spacing: -.06em; font-weight: 760; }
+    h3 { font-size: 18px; line-height: 1.1; letter-spacing: -.02em; }
+    .lede { max-width: 650px; margin-top: 26px; color: var(--muted); font-size: clamp(17px, 2vw, 23px); line-height: 1.4; }
+    .small { color: var(--muted); font-size: 14px; line-height: 1.55; }
+    .mono { font-family: var(--mono); }
+    .accent { color: var(--signal); }
+    .soft { color: var(--aqua); }
+    .amber { color: var(--amber); }
+    .red { color: var(--red); }
+    .rule { border-top: 1px solid var(--line); }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+    .panel { border: 1px solid var(--line); background: linear-gradient(145deg, rgba(255,255,255,.035), rgba(255,255,255,.012)); border-radius: 15px; padding: 22px; box-shadow: var(--shadow); }
+    .panel.flat { box-shadow: none; background: rgba(255,255,255,.02); }
+    .tag { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line-strong); border-radius: 999px; padding: 7px 10px; color: var(--muted); font: 11px var(--mono); letter-spacing: .04em; }
+    .tag.live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 0 4px rgba(185,255,112,.12); }
+    .cover { align-content: end; padding-bottom: 12vh; }
+    .cover-grid { display: grid; grid-template-columns: 1.05fr .95fr; align-items: end; gap: 40px; }
+    .cover h1 { font-size: clamp(62px, 10vw, 154px); }
+    .cover-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 30px; }
+    .signal-art { position: relative; min-height: 360px; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: linear-gradient(145deg, rgba(185,255,112,.075), rgba(156,231,223,.025) 42%, rgba(255,255,255,.015)); }
+    .signal-art::after { content: "SIP / LIVEKIT / MCP"; position: absolute; left: 20px; bottom: 18px; font: 10px var(--mono); color: var(--dim); letter-spacing: .15em; }
+    .signal-art svg { width: 100%; height: 100%; min-height: 360px; display: block; }
+    .signal-art .pulse { animation: pulse 2.3s ease-in-out infinite; transform-origin: center; }
+    @keyframes pulse { 0%,100% { opacity: .45; } 50% { opacity: 1; } }
+    .callout { border-left: 2px solid var(--signal); padding: 2px 0 2px 18px; margin-top: 28px; max-width: 650px; }
+    .callout p { font-size: 18px; line-height: 1.35; }
+    .stat-line { display: flex; align-items: baseline; gap: 12px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .stat-line:last-child { border-bottom: 0; }
+    .stat-number { min-width: 74px; font: 700 32px var(--mono); color: var(--signal); }
+    .stat-copy { color: var(--muted); line-height: 1.4; }
+    .big-quote { max-width: 900px; font-size: clamp(29px, 4.6vw, 68px); line-height: 1.04; letter-spacing: -.05em; }
+    .big-quote em { color: var(--signal); font-style: normal; }
+    .section-break { background: radial-gradient(circle at 78% 45%, rgba(185,255,112,.14), transparent 28rem), var(--bg); }
+    .section-break .section-title { max-width: 880px; }
+    .section-break .section-title h2 { font-size: clamp(50px, 8vw, 118px); }
+    .section-break .section-title p { margin-top: 22px; max-width: 540px; color: var(--muted); font-size: 18px; line-height: 1.45; }
+    .section-line { height: 1px; width: min(440px, 70vw); background: var(--signal); margin-top: 32px; }
+    .architecture { margin-top: 38px; display: grid; grid-template-columns: 1fr 1.12fr 1fr; gap: 11px; align-items: stretch; }
+    .arch-col { display: flex; flex-direction: column; gap: 11px; }
+    .arch-node { min-height: 96px; padding: 17px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.025); position: relative; }
+    .arch-node strong { display: block; font-size: 14px; margin-bottom: 7px; }
+    .arch-node span { display: block; color: var(--muted); font: 12px/1.45 var(--mono); }
+    .arch-node.core { border-color: rgba(185,255,112,.5); background: rgba(185,255,112,.065); }
+    .arch-node.core strong { color: var(--signal); }
+    .arch-arrow { display: flex; align-items: center; justify-content: center; color: var(--signal); font: 20px var(--mono); }
+    .boundary { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; margin-top: 34px; }
+    .boundary > div { padding: 25px; min-height: 252px; }
+    .boundary > div + div { border-left: 1px solid var(--line); background: rgba(255,255,255,.018); }
+    .boundary h3 { margin-bottom: 15px; }
+    .boundary ul, .plain-list { list-style: none; padding: 0; margin: 0; }
+    .boundary li, .plain-list li { padding: 10px 0; border-top: 1px solid var(--line); color: var(--muted); line-height: 1.35; }
+    .boundary li::before { content: "+"; color: var(--signal); font-family: var(--mono); margin-right: 10px; }
+    .boundary .no li::before { content: "–"; color: var(--dim); }
+    .loop { display: flex; align-items: stretch; gap: 8px; margin-top: 40px; overflow-x: auto; padding-bottom: 10px; }
+    .loop-step { flex: 1 0 135px; min-height: 144px; border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: rgba(255,255,255,.022); }
+    .loop-step .n { color: var(--signal); font: 11px var(--mono); }
+    .loop-step strong { display: block; margin-top: 26px; font-size: 15px; }
+    .loop-step span { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; margin-top: 7px; }
+    .loop-chevron { align-self: center; color: var(--dim); font-family: var(--mono); }
+    .bars { margin-top: 34px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .bar { border: 1px solid var(--line); border-radius: 14px; padding: 19px; }
+    .bar-line { display: flex; align-items: center; justify-content: space-between; font: 12px var(--mono); color: var(--muted); }
+    .bar-track { height: 8px; margin: 16px 0 10px; border-radius: 99px; background: rgba(255,255,255,.09); overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--signal-2), var(--signal)); }
+    .code { margin-top: 28px; padding: 20px; background: #080b0c; border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; color: #d4ded9; font: 12px/1.7 var(--mono); }
+    .code .c { color: #71837d; } .code .k { color: var(--aqua); } .code .s { color: var(--signal); }
+    .tool-grid { margin-top: 32px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .tool { min-height: 112px; border-top: 1px solid var(--signal); padding: 14px 3px 0; }
+    .tool strong { display: block; font: 13px var(--mono); color: var(--ink); }
+    .tool p { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.35; }
+    .roadmap { display: grid; grid-template-columns: 1.1fr .9fr; gap: 24px; margin-top: 34px; }
+    .timeline { border-left: 1px solid var(--line-strong); padding-left: 24px; }
+    .timeline-item { position: relative; padding: 0 0 24px; }
+    .timeline-item::before { content: ""; position: absolute; left: -30px; top: 4px; width: 9px; height: 9px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 0 5px rgba(185,255,112,.1); }
+    .timeline-item small { color: var(--signal); font: 11px var(--mono); }
+    .timeline-item strong { display: block; margin-top: 6px; }
+    .timeline-item p { color: var(--muted); font-size: 13px; line-height: 1.4; margin-top: 5px; }
+    .security-grid { margin-top: 34px; display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; }
+    .security-row { display: grid; grid-template-columns: 24px 1fr; gap: 12px; padding: 15px 0; border-bottom: 1px solid var(--line); }
+    .security-row:last-child { border-bottom: 0; }
+    .security-icon { color: var(--signal); }
+    .security-row strong { font-size: 14px; }
+    .security-row p { margin-top: 4px; color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .steps { margin-top: 32px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 11px; }
+    .step { padding: 18px; border: 1px solid var(--line); border-radius: 12px; min-height: 184px; }
+    .step .n { font: 700 27px var(--mono); color: var(--signal); }
+    .step strong { display: block; margin-top: 30px; font-size: 15px; }
+    .step p { margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .use-card { min-height: 240px; display: flex; flex-direction: column; justify-content: space-between; }
+    .use-card .label { color: var(--signal); font: 11px var(--mono); text-transform: uppercase; letter-spacing: .12em; }
+    .use-card p { margin-top: 12px; color: var(--muted); line-height: 1.45; }
+    .fit { margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .fit > div { padding: 20px; border-radius: 14px; border: 1px solid var(--line); }
+    .fit h3 { margin-bottom: 10px; }
+    .source-list { margin-top: 30px; display: grid; gap: 10px; }
+    .source-list a { color: var(--aqua); text-decoration: none; border-bottom: 1px solid var(--line); padding: 10px 0; font: 13px/1.4 var(--mono); }
+    .source-list a:hover { color: var(--signal); }
+    .controls { position: fixed; right: 24px; bottom: 20px; z-index: 30; display: flex; gap: 7px; align-items: center; }
+    .control-btn { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 10px; background: rgba(21,29,32,.86); color: var(--ink); cursor: pointer; transition: background .2s, border-color .2s, transform .2s; }
+    .control-btn:hover, .control-btn:focus-visible { background: var(--panel-2); border-color: var(--signal); transform: translateY(-2px); outline: none; }
+    .control-btn svg { width: 17px; height: 17px; }
+    .progress { position: fixed; left: 0; bottom: 0; height: 3px; width: 0; z-index: 30; background: var(--signal); transition: width .3s ease; }
+    .hint { position: fixed; bottom: 28px; left: 27px; z-index: 10; color: var(--dim); font: 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .overview { position: fixed; inset: 0; z-index: 50; display: none; padding: 7vh 7vw; background: rgba(7,10,11,.97); overflow: auto; }
+    .overview.open { display: block; }
+    .overview-head { display: flex; align-items: start; justify-content: space-between; gap: 20px; margin-bottom: 30px; }
+    .overview h2 { font-size: clamp(36px, 6vw, 70px); }
+    .overview-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 11px; }
+    .overview-card { min-height: 124px; display: flex; flex-direction: column; justify-content: space-between; padding: 15px; text-align: left; color: var(--ink); border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.025); cursor: pointer; }
+    .overview-card:hover, .overview-card.current { border-color: var(--signal); background: rgba(185,255,112,.08); }
+    .overview-card .no { color: var(--signal); font: 11px var(--mono); }
+    .overview-card .name { font-size: 14px; line-height: 1.15; }
+    @media (max-width: 860px) {
+      body { overflow: auto; }
+      .topbar { padding: 15px 18px; }
+      .slide { position: relative; min-height: 100svh; padding: 84px 6vw 105px; display: none; }
+      .slide.active { display: grid; }
+      .cover-grid, .grid-2, .roadmap, .security-grid, .fit, .boundary { grid-template-columns: 1fr; }
+      .cover-grid { gap: 28px; }
+      .signal-art, .signal-art svg { min-height: 250px; }
+      .boundary > div + div { border-left: 0; border-top: 1px solid var(--line); }
+      .architecture { grid-template-columns: 1fr; }
+      .arch-arrow { transform: rotate(90deg); min-height: 15px; }
+      .tool-grid, .steps { grid-template-columns: repeat(2, 1fr); }
+      .overview-grid { grid-template-columns: repeat(2, 1fr); }
+      .hint { display: none; }
+    }
+    @media (max-width: 520px) {
+      h1 { font-size: clamp(52px, 17vw, 84px); }
+      h2 { font-size: clamp(36px, 12vw, 56px); }
+      .lede { font-size: 16px; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .tool-grid, .steps { grid-template-columns: 1fr; }
+      .overview-grid { grid-template-columns: 1fr; }
+      .controls { right: 15px; bottom: 14px; }
+      .control-btn { width: 38px; height: 38px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-label="Tel-Agent deep dive slide deck">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark"></span><span>Tel-Agent / Deep dive</span></div>
+      <div class="slide-count" id="slideCount">01 / 18</div>
+    </header>
+
+    <section class="slides">
+      <article class="slide cover active" data-title="Tel-Agent">
+        <div class="slide-inner cover-grid">
+          <div>
+            <div class="eyebrow">Open-source / self-hosted / alpha</div>
+            <h1>Give your phone line a brain.</h1>
+            <p class="lede">Tel-Agent sits between a SIP phone line and an AI agent, so you can decide who gets through, which model answers, and where every conversation lives.</p>
+            <div class="cover-meta"><span class="tag live">Real-time voice</span><span class="tag">Bring your own keys</span><span class="tag">AGPL-3.0</span></div>
+          </div>
+          <div class="signal-art" aria-label="Abstract signal routing illustration">
+            <svg viewBox="0 0 620 430" role="img" aria-hidden="true">
+              <g fill="none" stroke="rgba(235,245,238,.15)" stroke-width="1"><path d="M45 76h530M45 145h530M45 214h530M45 283h530M45 352h530"/><path d="M108 35v340M206 35v340M304 35v340M402 35v340M500 35v340"/></g>
+              <g fill="none" stroke="var(--signal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M55 214h55l18-90 23 180 24-135 20 78 20-33h58l19-40 18 40h60l26-94 22 162 26-70 20 42h76"/></g>
+              <g class="pulse" fill="var(--signal)"><circle cx="128" cy="124" r="5"/><circle cx="246" cy="214" r="5"/><circle cx="414" cy="284" r="5"/><circle cx="544" cy="214" r="5"/></g>
+              <g fill="var(--aqua)" opacity=".7"><rect x="92" y="45" width="42" height="20" rx="4"/><rect x="278" y="45" width="62" height="20" rx="4"/><rect x="478" y="45" width="50" height="20" rx="4"/></g>
+              <g fill="var(--bg)" stroke="var(--line-strong)"><circle cx="128" cy="124" r="14"/><circle cx="246" cy="214" r="14"/><circle cx="414" cy="284" r="14"/><circle cx="544" cy="214" r="14"/></g>
+              <g fill="var(--ink)" font-family="var(--mono)" font-size="11"><text x="93" y="49">SIP</text><text x="284" y="49">AGENT</text><text x="485" y="49">TOOLS</text><text x="104" y="128">01</text><text x="222" y="218">02</text><text x="390" y="288">03</text><text x="520" y="218">04</text></g>
+            </svg>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="TL;DR">
+        <div class="slide-inner">
+          <div class="eyebrow">Start here</div>
+          <h2>Think of it as a self-hosted receptionist — with an escape hatch.</h2>
+          <div class="callout"><p>It answers calls and messages in real time, but keeps the important decisions in your hands: routing, models, recordings, tools and credentials.</p></div>
+          <div class="grid-3" style="margin-top:34px">
+            <div class="panel"><span class="tag">01 / ownership</span><h3 style="margin-top:24px">Your line. Your keys. Your archive.</h3><p class="small" style="margin-top:12px">Run it on your own machine or LAN. Recordings and transcripts stay in the installation you control.</p></div>
+            <div class="panel"><span class="tag">02 / flexibility</span><h3 style="margin-top:24px">Swap providers behind interfaces.</h3><p class="small" style="margin-top:12px">STT, LLM and TTS are separate provider contracts, so the dashboard isn’t welded to one model vendor.</p></div>
+            <div class="panel"><span class="tag">03 / reach</span><h3 style="margin-top:24px">One agent, many channels.</h3><p class="small" style="margin-top:12px">Phone, web chat, SMS, email and social channels can reach the same conversation and memory layer.</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Why it exists">
+        <div class="slide-inner">
+          <div class="eyebrow">The thesis</div>
+          <div class="big-quote">Closed products sell “AI receptionist”. Tel-Agent makes the <em>control plane</em> yours.</div>
+          <div class="grid-2" style="margin-top:54px">
+            <div>
+              <div class="stat-line"><span class="stat-number">01</span><span class="stat-copy">Choose which callers reach an AI at all.</span></div>
+              <div class="stat-line"><span class="stat-number">02</span><span class="stat-copy">Choose the model and voice stack that fits the job.</span></div>
+              <div class="stat-line"><span class="stat-number">03</span><span class="stat-copy">Search the conversation archive instead of losing context.</span></div>
+            </div>
+            <div class="panel flat"><div class="eyebrow">Useful mental model</div><h3 style="font-size:27px; line-height:1.15">Tel-Agent owns the conversation surface. Integrations stay outside.</h3><p class="small" style="margin-top:16px">Rather than becoming a CRM or a workflow platform, it exposes webhooks and an HTTP tool so the agent can act on other systems.</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide section-break" data-title="Read the system">
+        <div class="slide-inner section-title">
+          <div class="eyebrow">Section 01</div>
+          <h2>Read the system.</h2>
+          <p>What the repository is actually building, where its boundaries sit, and why the hard part is not “just connect a phone”.</p>
+          <div class="section-line"></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Architecture">
+        <div class="slide-inner">
+          <div class="eyebrow">Architecture</div>
+          <h2>A thin gateway, a serious conversation loop.</h2>
+          <div class="architecture">
+            <div class="arch-col"><div class="arch-node"><strong>Channels</strong><span>Phone / web chat / SMS / email / WhatsApp / social</span></div><div class="arch-node"><strong>Inbound context</strong><span>Caller ID, contact history, routing rules</span></div></div>
+            <div class="arch-col"><div class="arch-node core"><strong>Tel-Agent core</strong><span>FastAPI + session lifecycle + rules + conversation archive</span></div><div class="arch-node core"><strong>Voice pipeline</strong><span>LiveKit Agents · STT → LLM → TTS · barge-in</span></div><div class="arch-node core"><strong>Agent surface</strong><span>Next.js dashboard + live transcript + operator intervention</span></div></div>
+            <div class="arch-col"><div class="arch-node"><strong>Tools & integrations</strong><span>Transfer, message, calendar, HTTP, knowledge search</span></div><div class="arch-node"><strong>Storage & ops</strong><span>SQLite/Postgres · Redis · Caddy · Docker Compose</span></div></div>
+          </div>
+          <p class="small" style="margin-top:22px">The design decision that keeps scope finite: a channel is where the person talks; an integration is what the agent acts on.</p>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Boundaries">
+        <div class="slide-inner">
+          <div class="eyebrow">Scope boundary</div>
+          <h2>Its restraint is part of the product.</h2>
+          <div class="boundary">
+            <div><h3 class="accent">Tel-Agent owns</h3><ul><li>Telephony and SIP</li><li>Voice pipeline and turn-taking</li><li>Routing rules and failover</li><li>Conversation memory and transcripts</li><li>Tool execution and channel extensions</li></ul></div>
+            <div><h3 class="soft">Tel-Agent does not own</h3><ul class="no"><li>General workflow automation</li><li>400 SaaS integrations</li><li>A CRM or PBX replacement</li><li>Analog hardware support</li><li>Direct booking into a live calendar in v1</li></ul></div>
+          </div>
+          <div class="callout"><p>That “no” list is useful product strategy: reach everything else with webhooks or the generic HTTP tool.</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="The call loop">
+        <div class="slide-inner">
+          <div class="eyebrow">Deep dive / real time</div>
+          <h2>The call is a streaming system, not a chatbot with a microphone.</h2>
+          <div class="loop">
+            <div class="loop-step"><span class="n">01</span><strong>SIP ingress</strong><span>Provider or PBX hands over the call.</span></div><div class="loop-chevron">→</div>
+            <div class="loop-step"><span class="n">02</span><strong>Route</strong><span>Pass, block, or hand to the agent.</span></div><div class="loop-chevron">→</div>
+            <div class="loop-step"><span class="n">03</span><strong>STT</strong><span>Partial and final transcript events.</span></div><div class="loop-chevron">→</div>
+            <div class="loop-step"><span class="n">04</span><strong>LLM + tools</strong><span>Stream tokens and actions.</span></div><div class="loop-chevron">→</div>
+            <div class="loop-step"><span class="n">05</span><strong>TTS</strong><span>Start speaking before the answer is finished.</span></div>
+          </div>
+          <div class="grid-2" style="margin-top:26px"><div class="panel flat"><strong class="accent">Barge-in is non-negotiable.</strong><p class="small" style="margin-top:8px">When the caller interrupts, queued audio must be cancelled immediately. Otherwise the agent talks over the person and the whole product feels broken.</p></div><div class="panel flat"><strong class="amber">Measure the first audio out.</strong><p class="small" style="margin-top:8px">The repository’s target is under 800 ms from the end of caller speech to the first audio response.</p></div></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Provider contracts">
+        <div class="slide-inner">
+          <div class="eyebrow">Deep dive / abstraction</div>
+          <h2>Provider interfaces make the model a replaceable part.</h2>
+          <div class="code"><span class="c"># One contract, many implementations</span><br><span class="k">STTProvider</span>  → <span class="s">stream(audio)</span> → partial / final transcripts<br><span class="k">LLMProvider</span>  → <span class="s">stream(messages, tools)</span> → tokens + tool calls<br><span class="k">TTSProvider</span>  → <span class="s">stream(text)</span> → audio chunks<br><span class="k">TTSProvider</span>  → <span class="s">cancel()</span> → stop instantly on barge-in</div>
+          <div class="bars">
+            <div class="bar"><div class="bar-line"><span>STT / speech recognition</span><span class="accent">Deepgram · v1</span></div><div class="bar-track"><div class="bar-fill" style="width:78%"></div></div><p class="small">Partial results matter because endpointing and turn-taking determine how “alive” the call feels.</p></div>
+            <div class="bar"><div class="bar-line"><span>TTS / speech synthesis</span><span class="soft">ElevenLabs · v1</span></div><div class="bar-track"><div class="bar-fill" style="width:72%; background:linear-gradient(90deg,var(--aqua),#e2fff4)"></div></div><p class="small">The first chunk should speak while later text is still being generated.</p></div>
+          </div>
+          <p class="small" style="margin-top:19px">The repo names Ollama, Whisper and Piper as a later local-model path, with a GPU caveat for natural conversation.</p>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Tools & MCP">
+        <div class="slide-inner">
+          <div class="eyebrow">Deep dive / action layer</div>
+          <h2>Five precise tools beat twenty confusing ones.</h2>
+          <div class="tool-grid">
+            <div class="tool"><strong>transfer_call</strong><p>Hand a conversation to a human.</p></div><div class="tool"><strong>take_message</strong><p>Capture a structured message.</p></div><div class="tool"><strong>end_call</strong><p>Close politely and cleanly.</p></div><div class="tool"><strong>send_notification</strong><p>Notify Telegram or email.</p></div><div class="tool"><strong>http_request</strong><p>Escape hatch for systems outside the core.</p></div><div class="tool"><strong>search_knowledge</strong><p>Ground the agent in uploaded content.</p></div><div class="tool"><strong>check_calendar</strong><p>Read availability with a safety boundary.</p></div><div class="tool"><strong>MCP endpoint</strong><p>Expose a controlled tool surface to compatible clients.</p></div>
+          </div>
+          <div class="callout"><p>Calendar rule: propose and confirm, or write to a review calendar. A wrong booking destroys trust faster than a missed call.</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Roadmap">
+        <div class="slide-inner">
+          <div class="eyebrow">Project status / September 2026 snapshot</div>
+          <h2>The phone is the hard case — and it comes after the foundations.</h2>
+          <div class="roadmap">
+            <div class="timeline"><div class="timeline-item"><small>Milestone 0 · done</small><strong>Web chat proves the conversation loop.</strong><p>Streaming, interruption, storage and a transcript are the product proof in a cheap environment.</p></div><div class="timeline-item"><small>Milestone 3 · current focus</small><strong>Messaging channels widen reach.</strong><p>Web chat, WhatsApp, Telegram, Messenger, Instagram, Discord, Slack, email and SMS are wired in the current roadmap snapshot.</p></div><div class="timeline-item"><small>Milestone 11 · phone</small><strong>LiveKit Cloud SIP carries the first call path.</strong><p>Phone transport is proven ahead of its milestone; the repository still treats SIP, latency and barge-in as the hard case.</p></div></div>
+            <div class="panel flat"><div class="eyebrow">Why this order works</div><p class="big-quote" style="font-size:32px">“Every interface built before phone must still be shaped for <em>streaming</em>.”</p><p class="small" style="margin-top:18px">Text-channel comfort is not evidence that a call will feel natural. The latency budget is written down early, even when it is measured later.</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Security">
+        <div class="slide-inner">
+          <div class="eyebrow">Trust surface</div>
+          <h2>Self-hosting only matters if the defaults are safe.</h2>
+          <div class="security-grid">
+            <div class="panel flat"><div class="security-row"><div class="security-icon">◆</div><div><strong>Local by default</strong><p>Ports bind to loopback. Reach the installation through a private network, VPN or TLS reverse proxy.</p></div></div><div class="security-row"><div class="security-icon">◆</div><div><strong>Secrets stay masked</strong><p>API keys are encrypted at rest and never returned in full after saving.</p></div></div><div class="security-row"><div class="security-icon">◆</div><div><strong>No silent recording</strong><p>Recording announcements are on by default; human takeover does not make the legal obligation disappear.</p></div></div><div class="security-row"><div class="security-icon">◆</div><div><strong>Health is a requirement</strong><p>Monitor SIP registration, provider reachability, database state and per-call telemetry.</p></div></div></div>
+            <div class="panel"><span class="tag">Operational question</span><h3 style="font-size:28px; line-height:1.15; margin-top:24px">Would you know a dead phone service before the next caller does?</h3><p class="small" style="margin-top:17px">The repo’s answer is an explicit health endpoint, immediate alerting and an unmistakable dashboard status.</p><div style="margin-top:28px; padding:15px; border:1px solid rgba(255,197,107,.35); border-radius:10px; color:var(--amber); font:12px/1.5 var(--mono)">/health → SIP · providers · DB<br/>/api/settings → recording · retention · export</div></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="slide section-break" data-title="Make it real">
+        <div class="slide-inner section-title">
+          <div class="eyebrow">Section 02</div>
+          <h2>Make it real.</h2>
+          <p>A deterministic path from clone to first answered conversation, followed by the SIP step that turns a demo into a phone service.</p>
+          <div class="section-line"></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Quick start">
+        <div class="slide-inner">
+          <div class="eyebrow">How-to / 01</div>
+          <h2>Start with the local stack.</h2>
+          <p class="lede" style="font-size:17px">The fastest proof is a running dashboard and a streamed conversation. Don’t begin by designing the whole phone system.</p>
+          <div class="code"><span class="c"># 1. Clone and enter</span><br><span class="s">git clone https://github.com/Dpro-at/Tel-Agent.git</span><br><span class="s">cd Tel-Agent</span><br><br><span class="c"># 2. Create secrets</span><br><span class="s">cp .env.example .env</span><br><span class="s">openssl rand -hex 32</span> <span class="c"># set as ENCRYPTION_KEY</span><br><br><span class="c"># 3. Run the release-grade local stack</span><br><span class="s">docker compose up -d --build</span></div>
+          <div class="grid-3" style="margin-top:22px"><div class="panel flat"><strong class="accent">Dashboard</strong><p class="small" style="margin-top:7px">Open <span class="mono">localhost:38471</span>. First visit creates the administrator; there are no default credentials.</p></div><div class="panel flat"><strong class="soft">API docs</strong><p class="small" style="margin-top:7px">Inspect the generated API at <span class="mono">localhost:38472/docs</span>.</p></div><div class="panel flat"><strong class="amber">Data</strong><p class="small" style="margin-top:7px">Conversations live in the <span class="mono">tel-agent-data</span> volume by default.</p></div></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Connect a number">
+        <div class="slide-inner">
+          <div class="eyebrow">How-to / 02</div>
+          <h2>Then prove telephony before writing agent code.</h2>
+          <div class="steps"><div class="step"><span class="n">01</span><strong>Bring a number</strong><p>Buy or use a number from Twilio, Telnyx or an equivalent SIP provider.</p></div><div class="step"><span class="n">02</span><strong>Point it at LiveKit</strong><p>Create an inbound SIP trunk and dispatch rule. Keep the E.164 number and credentials handy.</p></div><div class="step"><span class="n">03</span><strong>Verify in the console</strong><p>Call from a mobile. Confirm the provider sees the call reach the trunk before debugging your own code.</p></div><div class="step"><span class="n">04</span><strong>Record caller ID</strong><p>Test forwarding too. Make sure routing rules see the number you think they will see.</p></div></div>
+          <div class="panel flat" style="margin-top:19px"><strong>Machine checklist</strong><p class="small" style="margin-top:8px"><span class="mono">Python 3.11+</span> · <span class="mono">ffmpeg</span> · outbound internet · Deepgram key · cloud LLM key · ElevenLabs key · G.711 codec on the trunk</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Proof gates">
+        <div class="slide-inner">
+          <div class="eyebrow">How-to / 03</div>
+          <h2>Build in proof gates, not feature piles.</h2>
+          <div class="steps"><div class="step"><span class="n">01</span><strong>The number reaches us</strong><p>Provider console shows the inbound call at the trunk.</p></div><div class="step"><span class="n">02</span><strong>Answer the call</strong><p>It stops ringing. Silence is acceptable at this stage.</p></div><div class="step"><span class="n">03</span><strong>Speak fixed text</strong><p>A hardcoded greeting proves the audio path.</p></div><div class="step"><span class="n">04</span><strong>Hear the caller</strong><p>The caller’s words appear as text in the terminal.</p></div></div>
+          <div class="grid-2" style="margin-top:16px"><div class="panel flat"><span class="tag live">The product moment</span><h3 style="margin-top:18px">You speak → the LLM replies → you hear it.</h3><p class="small" style="margin-top:8px">Only after this full loop works should you add routing, dashboards, second providers or MCP.</p></div><div class="panel flat"><span class="tag">Measure from call one</span><h3 style="margin-top:18px">End of speech → first audio out.</h3><p class="small" style="margin-top:8px">Track STT final, LLM first token, TTS first chunk, interruption count and language accuracy.</p></div></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Use cases">
+        <div class="slide-inner">
+          <div class="eyebrow">Where it earns its keep</div>
+          <h2>Best when the call is valuable, repetitive, and yours to control.</h2>
+          <div class="grid-3" style="margin-top:34px"><div class="panel use-card"><div><div class="label">Small clinic / workshop</div><h3 style="margin-top:20px">Triage routine calls, route the exceptions.</h3><p>Answer opening hours, collect the reason for calling, search a knowledge base, then hand off when a person should take over.</p></div><span class="tag">Human escalation</span></div><div class="panel use-card"><div><div class="label">Solo operator</div><h3 style="margin-top:20px">Own the inbox without being always on.</h3><p>Take messages, check availability, notify Telegram or email, and keep the transcript searchable across channels.</p></div><span class="tag">Self-hosted privacy</span></div><div class="panel use-card"><div><div class="label">Agent platform builder</div><h3 style="margin-top:20px">Use the phone as one more channel.</h3><p>Reuse the same agent, tools and memory for web chat, SMS, email, social messaging and phone.</p></div><span class="tag">Channel contract</span></div></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Fit and trade-offs">
+        <div class="slide-inner">
+          <div class="eyebrow">Decision guide</div>
+          <h2>Powerful for the right operator. Not magic, not turnkey.</h2>
+          <div class="fit"><div><h3 class="accent">Good fit if you need</h3><ul class="plain-list"><li>Control over recordings, models and credentials</li><li>Routing rules before an AI sees a caller</li><li>One agent surface across phone and messaging</li><li>Open-source extensibility and self-hosting</li></ul></div><div><h3 class="amber">Think twice if you need</h3><ul class="plain-list"><li>A fully managed receptionist with zero setup</li><li>Built-in CRM or broad workflow automation</li><li>Analog phone support without an ATA</li><li>Production-grade maturity today: the repo labels itself alpha</li></ul></div></div>
+          <div class="callout"><p>My read: Tel-Agent is most interesting as an <strong>agent-controlled communications layer</strong>, not as a replacement for every business system around it.</p></div>
+        </div>
+      </article>
+
+      <article class="slide" data-title="Sources">
+        <div class="slide-inner">
+          <div class="eyebrow">Sources / current repository snapshot</div>
+          <h2>Go to the source.</h2>
+          <p class="lede" style="font-size:17px">The deck reflects the public README and repository documents available on 20 September 2026. Status and milestones can change.</p>
+          <div class="source-list"><a href="https://github.com/Dpro-at/Tel-Agent" target="_blank" rel="noreferrer">README — what Tel-Agent is, architecture, quick start, security notes ↗</a><a href="https://github.com/Dpro-at/Tel-Agent/blob/main/docs/SPEC.md" target="_blank" rel="noreferrer">docs/SPEC.md — full product and technical specification ↗</a><a href="https://github.com/Dpro-at/Tel-Agent/blob/main/docs/ROADMAP.md" target="_blank" rel="noreferrer">docs/ROADMAP.md — milestone status and why phone comes late ↗</a><a href="https://github.com/Dpro-at/Tel-Agent/blob/main/docs/ONBOARDING.md" target="_blank" rel="noreferrer">docs/ONBOARDING.md — first contribution path ↗</a><a href="https://github.com/Dpro-at/Tel-Agent/blob/main/LICENSE" target="_blank" rel="noreferrer">LICENSE — AGPL-3.0 and network-service obligations ↗</a></div>
+          <div class="rule" style="margin-top:34px; padding-top:17px"><span class="small">Built as a self-contained interactive HTML deck. Use the index or arrow keys to move through it.</span></div>
+        </div>
+      </article>
+    </section>
+
+    <div class="hint">← → navigate · O overview · F fullscreen</div>
+    <nav class="controls" aria-label="Deck controls">
+      <button class="control-btn" id="prevBtn" type="button" aria-label="Previous slide" title="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5 8 12l7 7"/></svg></button>
+      <button class="control-btn" id="nextBtn" type="button" aria-label="Next slide" title="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 5 7 7-7 7"/></svg></button>
+      <button class="control-btn" id="overviewBtn" type="button" aria-label="Open slide overview" title="Slide overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></button>
+      <button class="control-btn" id="fullscreenBtn" type="button" aria-label="Enter fullscreen" title="Fullscreen presentation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M4 16v4h4"/></svg></button>
+    </nav>
+    <div class="progress" id="progress"></div>
+
+    <aside class="overview" id="overview" aria-hidden="true">
+      <div class="overview-head"><div><div class="eyebrow">Navigate the deck</div><h2>Slide overview.</h2></div><button class="control-btn" id="closeOverview" type="button" aria-label="Close slide overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>
+      <div class="overview-grid" id="overviewGrid"></div>
+    </aside>
+  </main>
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const count = document.getElementById('slideCount');
+      const progress = document.getElementById('progress');
+      const overview = document.getElementById('overview');
+      const overviewGrid = document.getElementById('overviewGrid');
+      let current = Math.max(0, Math.min(slides.length - 1, Number(location.hash.slice(1)) - 1 || 0));
+
+      const renderOverview = () => {
+        overviewGrid.innerHTML = slides.map((slide, i) => `<button class="overview-card ${i === current ? 'current' : ''}" type="button" data-index="${i}"><span class="no">${String(i + 1).padStart(2,'0')}</span><span class="name">${slide.dataset.title}</span></button>`).join('');
+        overviewGrid.querySelectorAll('[data-index]').forEach(btn => btn.addEventListener('click', () => { go(Number(btn.dataset.index)); closeOverview(); }));
+      };
+      const go = (index, updateHash = true) => {
+        current = (index + slides.length) % slides.length;
+        slides.forEach((slide, i) => { slide.classList.toggle('active', i === current); });
+        count.textContent = `${String(current + 1).padStart(2,'0')} / ${String(slides.length).padStart(2,'0')}`;
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        if (updateHash) history.replaceState(null, '', `#${current + 1}`);
+        renderOverview();
+      };
+      const openOverview = () => { overview.classList.add('open'); overview.setAttribute('aria-hidden','false'); };
+      const closeOverview = () => { overview.classList.remove('open'); overview.setAttribute('aria-hidden','true'); };
+      document.getElementById('prevBtn').addEventListener('click', () => go(current - 1));
+      document.getElementById('nextBtn').addEventListener('click', () => go(current + 1));
+      document.getElementById('overviewBtn').addEventListener('click', openOverview);
+      document.getElementById('closeOverview').addEventListener('click', closeOverview);
+      document.getElementById('fullscreenBtn').addEventListener('click', async () => { try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); else await document.exitFullscreen(); } catch (_) {} });
+      document.addEventListener('keydown', (event) => {
+        if (overview.classList.contains('open')) { if (event.key === 'Escape' || event.key.toLowerCase() === 'o') closeOverview(); return; }
+        if (['ArrowRight','PageDown',' '].includes(event.key)) { event.preventDefault(); go(current + 1); }
+        if (['ArrowLeft','PageUp'].includes(event.key)) { event.preventDefault(); go(current - 1); }
+        if (event.key.toLowerCase() === 'o') openOverview();
+        if (event.key.toLowerCase() === 'f') document.getElementById('fullscreenBtn').click();
+        if (event.key === 'Home') go(0);
+        if (event.key === 'End') go(slides.length - 1);
+      });
+      window.addEventListener('hashchange', () => { const next = Number(location.hash.slice(1)); if (next >= 1 && next <= slides.length) go(next - 1, false); });
+      go(current, false);
+    })();
+  </script>
+</body>
+</html>

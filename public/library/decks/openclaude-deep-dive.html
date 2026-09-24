@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0e0e11" />
+  <title>OpenClaude · Deep dive</title>
+  <style>
+    :root {
+      --bg: #0e0e11;
+      --surface: #17171c;
+      --surface-2: #1f2027;
+      --surface-3: #272832;
+      --ink: #f6f2ea;
+      --muted: #aaa7a2;
+      --dim: #77757a;
+      --line: rgba(246,242,234,.14);
+      --warm: #f2b66d;
+      --mint: #8dd6c7;
+      --lilac: #bcb0ff;
+      --red: #f48f86;
+      --shadow: 0 22px 80px rgba(0,0,0,.35);
+      --radius: 22px;
+      --sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font-family: var(--sans); }
+    body { overflow-x: hidden; }
+    button, a { font: inherit; }
+    button { color: inherit; }
+    a { color: inherit; }
+    .shell { min-height: 100vh; position: relative; }
+    .slide { display: none; min-height: 100svh; padding: 54px 7vw 104px; position: relative; isolation: isolate; }
+    .slide.active { display: grid; place-items: center; }
+    .slide::before { content: ""; position: absolute; inset: 0; z-index: -2; background: radial-gradient(circle at 92% 8%, rgba(188,176,255,.09), transparent 34%), radial-gradient(circle at 10% 100%, rgba(141,214,199,.06), transparent 32%); pointer-events: none; }
+    .slide.section-break::before { background: radial-gradient(circle at 50% 30%, rgba(242,182,109,.18), transparent 45%), linear-gradient(145deg, #17131a, #0e0e11); }
+    .slide-inner { width: min(1180px, 100%); min-height: min(760px, calc(100svh - 130px)); display: grid; align-content: center; gap: 26px; }
+    .eyebrow { color: var(--warm); letter-spacing: .13em; text-transform: uppercase; font-size: 11px; font-weight: 800; }
+    .kicker { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
+    .kicker .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 18px rgba(141,214,199,.6); }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: clamp(48px, 8vw, 110px); line-height: .92; letter-spacing: -.065em; max-width: 980px; }
+    h2 { font-size: clamp(34px, 5vw, 68px); line-height: .98; letter-spacing: -.05em; max-width: 960px; }
+    h3 { font-size: 20px; letter-spacing: -.02em; }
+    .lede { font-size: clamp(18px, 2.2vw, 28px); line-height: 1.25; color: var(--muted); max-width: 760px; }
+    .body { font-size: 16px; line-height: 1.55; color: var(--muted); }
+    .small { font-size: 13px; line-height: 1.45; color: var(--muted); }
+    .tiny { font-size: 11px; line-height: 1.4; color: var(--dim); }
+    .muted { color: var(--muted); }
+    .accent { color: var(--warm); }
+    .mint { color: var(--mint); }
+    .lilac { color: var(--lilac); }
+    .red { color: var(--red); }
+    .tag { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: rgba(255,255,255,.035); padding: 8px 11px; border-radius: 999px; color: var(--muted); font-size: 12px; }
+    .tag strong { color: var(--ink); font-weight: 650; }
+    .rule { height: 1px; width: 100%; background: var(--line); }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; }
+    .card { background: linear-gradient(155deg, rgba(255,255,255,.065), rgba(255,255,255,.025)); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
+    .card.soft { box-shadow: none; background: rgba(255,255,255,.035); }
+    .card h3 { margin-bottom: 10px; }
+    .card p + p { margin-top: 10px; }
+    .iconbox { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 14px; color: var(--warm); margin-bottom: 18px; background: rgba(242,182,109,.08); }
+    .iconbox svg { width: 21px; height: 21px; }
+    .hero { position: relative; }
+    .hero::after { content: ""; position: absolute; right: 1%; top: 50%; transform: translateY(-50%); width: min(34vw, 430px); height: min(34vw, 430px); border: 1px solid rgba(242,182,109,.4); border-radius: 50%; box-shadow: 0 0 0 22px rgba(242,182,109,.035), 0 0 0 52px rgba(242,182,109,.025), 0 0 90px rgba(242,182,109,.16); z-index: -1; }
+    .hero-mark { width: min(310px, 40vw); aspect-ratio: 1; display: grid; place-items: center; border: 1px solid rgba(242,182,109,.6); border-radius: 50%; background: radial-gradient(circle at 45% 35%, rgba(242,182,109,.22), rgba(242,182,109,.02) 56%, transparent 57%); box-shadow: 0 0 60px rgba(242,182,109,.1); }
+    .hero-mark .terminal { width: 64%; height: 44%; border: 1px solid var(--warm); border-radius: 14px; position: relative; background: rgba(14,14,17,.75); box-shadow: inset 0 0 30px rgba(242,182,109,.08); }
+    .hero-mark .terminal::before { content: "›_"; position: absolute; left: 18%; top: 28%; color: var(--warm); font: 700 clamp(32px, 5vw, 54px)/1 var(--mono); letter-spacing: -.12em; }
+    .hero-mark .terminal::after { content: ""; position: absolute; left: 18%; right: 18%; bottom: 18%; height: 1px; background: rgba(242,182,109,.6); }
+    .hero-layout { display: grid; grid-template-columns: 1.2fr .8fr; align-items: center; gap: 7vw; }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 26px; }
+    .hero-layout .visual { display: grid; place-items: center; }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .number { color: var(--warm); font: 700 14px/1 var(--mono); }
+    .big-number { font-size: clamp(42px, 6vw, 76px); line-height: .9; letter-spacing: -.06em; }
+    .stat { display: grid; gap: 6px; padding: 18px; border-left: 2px solid var(--warm); background: rgba(242,182,109,.05); }
+    .stat .label { color: var(--muted); font-size: 13px; }
+    .check-list, .plain-list { display: grid; gap: 12px; list-style: none; padding: 0; margin: 0; }
+    .check-list li, .plain-list li { display: grid; grid-template-columns: 23px 1fr; gap: 10px; align-items: start; color: var(--muted); line-height: 1.45; }
+    .check-list li::before { content: "✓"; color: var(--mint); font-weight: 800; }
+    .plain-list li::before { content: "→"; color: var(--warm); font-weight: 800; }
+    .flow { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 12px; align-items: stretch; }
+    .flow-step { position: relative; display: grid; gap: 8px; align-content: start; padding: 18px; min-height: 150px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.035); }
+    .flow-step:not(:last-child)::after { content: "→"; position: absolute; right: -17px; top: 50%; color: var(--warm); font-size: 22px; z-index: 2; }
+    .flow-step .iconbox { margin-bottom: 4px; width: 34px; height: 34px; border-radius: 11px; }
+    .flow-step h3 { font-size: 16px; }
+    .flow-step p { font-size: 12px; line-height: 1.35; color: var(--muted); }
+    .architecture { display: grid; grid-template-columns: 1fr .8fr 1.1fr; gap: 18px; align-items: stretch; }
+    .arch-col { display: grid; gap: 12px; align-content: center; }
+    .arch-node { border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: rgba(255,255,255,.035); }
+    .arch-node strong { display: block; font-size: 15px; margin-bottom: 5px; }
+    .arch-node span { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .arch-bridge { display: grid; place-items: center; color: var(--warm); font-size: 34px; }
+    .terminal-ui { font-family: var(--mono); background: #0a0a0c; border: 1px solid rgba(141,214,199,.32); border-radius: 18px; padding: 18px; color: #d8fff4; box-shadow: var(--shadow); }
+    .terminal-bar { display: flex; gap: 6px; margin-bottom: 16px; }
+    .terminal-bar i { display: block; width: 9px; height: 9px; border-radius: 50%; background: #59575b; }
+    .terminal-ui pre { margin: 0; overflow-x: auto; white-space: pre-wrap; font: 12px/1.55 var(--mono); }
+    .terminal-ui .prompt { color: var(--warm); }
+    .terminal-ui .comment { color: #7d918d; }
+    .terminal-ui .success { color: var(--mint); }
+    .code { background: #0a0a0c; border: 1px solid var(--line); border-radius: 16px; padding: 18px; overflow: auto; }
+    .code pre { margin: 0; color: #e8e1d5; font: 12px/1.55 var(--mono); white-space: pre-wrap; }
+    .code .key { color: var(--lilac); }
+    .code .str { color: var(--mint); }
+    .code .comment { color: #7f7c85; }
+    .step { display: grid; grid-template-columns: 44px 1fr; gap: 16px; align-items: start; }
+    .step-index { width: 38px; height: 38px; border: 1px solid var(--warm); border-radius: 13px; display: grid; place-items: center; color: var(--warm); font-weight: 800; }
+    .step h3 { margin-bottom: 8px; }
+    .callout { border: 1px solid rgba(242,182,109,.4); background: rgba(242,182,109,.08); padding: 18px 20px; border-radius: 18px; }
+    .callout strong { color: var(--warm); }
+    .source { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; border-top: 1px solid var(--line); padding-top: 14px; margin-top: 8px; color: var(--dim); font-size: 11px; line-height: 1.4; }
+    .source a { color: var(--muted); text-decoration: none; border-bottom: 1px solid rgba(170,167,162,.38); }
+    .source a:hover { color: var(--warm); border-color: var(--warm); }
+    .section-label { display: inline-flex; align-items: center; gap: 10px; color: var(--warm); text-transform: uppercase; letter-spacing: .16em; font-size: 12px; font-weight: 800; }
+    .section-label::before { content: ""; display: block; width: 32px; height: 1px; background: var(--warm); }
+    .section-break .slide-inner { min-height: 590px; align-content: center; }
+    .section-break h2 { max-width: 760px; }
+    .section-break .section-number { font: 700 clamp(70px, 14vw, 180px)/.75 var(--mono); color: rgba(242,182,109,.12); letter-spacing: -.12em; }
+    .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .table th, .table td { padding: 13px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .table th { color: var(--ink); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+    .table td { color: var(--muted); line-height: 1.4; }
+    .table td:first-child { color: var(--ink); font-weight: 650; }
+    .badge { display: inline-flex; padding: 5px 8px; border-radius: 999px; background: rgba(141,214,199,.1); color: var(--mint); font-size: 11px; }
+    .badge.warm { color: var(--warm); background: rgba(242,182,109,.1); }
+    .badge.red { color: var(--red); background: rgba(244,143,134,.1); }
+    .quote { font-size: clamp(25px, 4vw, 52px); line-height: 1.06; letter-spacing: -.045em; max-width: 900px; }
+    .quote em { color: var(--warm); font-style: normal; }
+    .takeaway-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; }
+    .source-list { display: grid; gap: 10px; }
+    .source-item { display: grid; grid-template-columns: 24px 1fr; gap: 9px; align-items: start; }
+    .source-item .n { color: var(--warm); font: 700 12px var(--mono); }
+    .source-item a { color: var(--ink); text-decoration: none; border-bottom: 1px solid rgba(246,242,234,.25); }
+    .source-item a:hover { color: var(--warm); border-color: var(--warm); }
+    .chrome { position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 22px; background: linear-gradient(180deg, transparent, rgba(14,14,17,.95) 35%); z-index: 20; pointer-events: none; }
+    .chrome > * { pointer-events: auto; }
+    .progress-wrap { flex: 1; max-width: 300px; display: flex; align-items: center; gap: 10px; }
+    .progress { height: 3px; flex: 1; background: rgba(246,242,234,.15); border-radius: 99px; overflow: hidden; }
+    .progress i { display: block; height: 100%; background: var(--warm); width: 0; transition: width .25s ease; }
+    .slide-count { color: var(--muted); font: 11px var(--mono); white-space: nowrap; }
+    .controls { display: flex; gap: 7px; align-items: center; }
+    .icon-btn { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--line); background: rgba(23,23,28,.92); border-radius: 12px; cursor: pointer; transition: .2s ease; }
+    .icon-btn:hover, .icon-btn:focus-visible { border-color: var(--warm); color: var(--warm); transform: translateY(-1px); outline: none; }
+    .icon-btn svg { width: 17px; height: 17px; }
+    .index-modal { position: fixed; inset: 0; display: none; place-items: center; background: rgba(5,5,7,.76); backdrop-filter: blur(12px); z-index: 50; padding: 24px; }
+    .index-modal.open { display: grid; }
+    .index-panel { width: min(940px, 100%); max-height: min(780px, 88vh); overflow: auto; background: #17171c; border: 1px solid var(--line); border-radius: 24px; padding: 24px; box-shadow: 0 30px 100px rgba(0,0,0,.55); }
+    .index-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+    .index-head h2 { font-size: 30px; }
+    .index-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+    .index-item { text-align: left; padding: 15px; border: 1px solid var(--line); border-radius: 15px; background: rgba(255,255,255,.035); cursor: pointer; min-height: 90px; }
+    .index-item:hover, .index-item:focus-visible { border-color: var(--warm); outline: none; }
+    .index-item.current { border-color: var(--mint); background: rgba(141,214,199,.08); }
+    .index-item .n { color: var(--warm); font: 700 11px var(--mono); }
+    .index-item .t { display: block; margin-top: 9px; font-size: 13px; line-height: 1.25; }
+    .index-item .s { display: block; margin-top: 6px; color: var(--dim); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+    .hint { position: fixed; top: 18px; right: 22px; z-index: 10; color: var(--dim); font: 11px var(--mono); }
+    .reveal { animation: rise .45s ease both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 850px) {
+      .slide { padding: 38px 22px 100px; }
+      .slide-inner { min-height: auto; gap: 22px; }
+      .hero-layout, .architecture, .takeaway-grid { grid-template-columns: 1fr; }
+      .hero::after { right: -160px; top: 38%; }
+      .hero-layout .visual { order: -1; justify-content: start; }
+      .hero-mark { width: 170px; }
+      .grid-4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .flow { grid-template-columns: 1fr; }
+      .flow-step { min-height: auto; }
+      .flow-step:not(:last-child)::after { content: "↓"; right: auto; top: auto; bottom: -20px; left: 50%; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .index-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .hint { display: none; }
+    }
+    @media (max-width: 520px) {
+      h1 { font-size: clamp(44px, 14vw, 72px); }
+      h2 { font-size: clamp(34px, 11vw, 54px); }
+      .grid-4 { grid-template-columns: 1fr; }
+      .index-grid { grid-template-columns: 1fr; }
+      .chrome { padding: 12px 14px; }
+      .progress-wrap { max-width: 150px; }
+      .slide-count { font-size: 10px; }
+      .table { display: block; overflow-x: auto; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="shell" id="app">
+    <div class="hint">← → navigate · I index · F fullscreen</div>
+
+    <main id="deck" aria-live="polite">
+      <section class="slide active" data-title="OpenClaude" data-section="Start">
+        <div class="slide-inner hero">
+          <div class="hero-layout">
+            <div class="reveal">
+              <div class="eyebrow">Repository deep dive · September 2026</div>
+              <div style="height:18px"></div>
+              <h1>OpenClaude<br><span class="accent">runs anywhere.</span></h1>
+              <div style="height:22px"></div>
+              <p class="lede">One terminal-first coding-agent workflow for cloud APIs, local models, tools, agents, MCP and streaming output.</p>
+              <div class="hero-meta">
+                <span class="tag"><strong>Open source</strong> CLI</span>
+                <span class="tag"><strong>Node.js</strong> ≥ 22</span>
+                <span class="tag"><strong>Cloud + local</strong> backends</span>
+              </div>
+              <div class="source"><span>Primary source</span><a href="https://github.com/Gitlawb/openclaude" target="_blank" rel="noreferrer">github.com/Gitlawb/openclaude</a></div>
+            </div>
+            <div class="visual reveal" style="animation-delay:.1s"><div class="hero-mark" aria-hidden="true"><div class="terminal"></div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="TL;DR" data-section="Start">
+        <div class="slide-inner">
+          <div class="eyebrow">01 · Plain-English TL;DR</div>
+          <h2>It is a <span class="accent">model-flexible coding agent</span> in your terminal.</h2>
+          <div class="grid-3">
+            <div class="card"><div class="iconbox">⌘</div><h3>One workflow</h3><p class="body">Keep prompts, files, shell commands, agents, MCP servers, slash commands and streamed responses in one place.</p></div>
+            <div class="card"><div class="iconbox">◎</div><h3>Many backends</h3><p class="body">Switch between compatible cloud endpoints and local runtimes such as Ollama without adopting a different CLI for each one.</p></div>
+            <div class="card"><div class="iconbox">↗</div><h3>More control</h3><p class="body">Route different agents to different models, cap tool-use steps, inspect repo structure, and expose the engine over gRPC.</p></div>
+          </div>
+          <div class="callout"><strong>Bottom line:</strong> OpenClaude is most useful when you want the coding-agent experience to follow your model and infrastructure choices, rather than the other way around.</div>
+          <div class="source"><span>Source-backed summary</span><a href="https://github.com/Gitlawb/openclaude#readme" target="_blank" rel="noreferrer">README</a><span>·</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/agent-routing.md" target="_blank" rel="noreferrer">agent routing docs</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Why it matters" data-section="Start">
+        <div class="slide-inner">
+          <div class="eyebrow">02 · Why it matters</div>
+          <h2>The leverage is in the <span class="mint">seam between model choice and tool use.</span></h2>
+          <div class="grid-2">
+            <div class="card soft"><div class="stat"><div class="big-number">01</div><div class="label">Provider abstraction</div></div><p class="body" style="margin-top:18px">A single interaction surface can sit over OpenAI-compatible APIs, Gemini, GitHub Models, Codex, Ollama, Atomic Chat and other supported routes.</p></div>
+            <div class="card soft"><div class="stat" style="border-color:var(--mint)"><div class="big-number">02</div><div class="label">Agent orchestration</div></div><p class="body" style="margin-top:18px">The workflow is not just “chat with a model”: tool calls, sub-agents, MCP, permissions, context and streaming are first-class parts of the loop.</p></div>
+            <div class="card soft"><div class="stat" style="border-color:var(--lilac)"><div class="big-number">03</div><div class="label">Local or headless</div></div><p class="body" style="margin-top:18px">Run a local model for privacy or experimentation, or put the engine behind a gRPC interface for another UI, CI/CD pipeline or product.</p></div>
+            <div class="card soft"><div class="stat" style="border-color:var(--red)"><div class="big-number">04</div><div class="label">Deliberate trade-offs</div></div><p class="body" style="margin-top:18px">Provider behaviour is not identical. Tool quality, output limits, authentication and local-model capability still matter.</p></div>
+          </div>
+          <div class="source"><span>Sources</span><a href="https://github.com/Gitlawb/openclaude#supported-providers" target="_blank" rel="noreferrer">supported providers</a><span>·</span><a href="https://github.com/Gitlawb/openclaude#provider-notes" target="_blank" rel="noreferrer">provider notes</a><span>·</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/grpc-server.md" target="_blank" rel="noreferrer">gRPC server</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Use cases" data-section="Start">
+        <div class="slide-inner">
+          <div class="eyebrow">03 · Benefits in practice</div>
+          <h2>Where it earns a place in your toolkit.</h2>
+          <div class="grid-3">
+            <div class="card"><div class="number">A · LOCAL EXPLORATION</div><h3 style="margin-top:18px">Prototype with Ollama</h3><p class="body">Try a local coding model against a small repo, keeping the same agent/tool loop while iterating on model size and quality.</p><div class="pill-row" style="margin-top:18px"><span class="badge">privacy-first experiments</span></div></div>
+            <div class="card"><div class="number">B · COST-AWARE ROUTING</div><h3 style="margin-top:18px">Split work by model strength</h3><p class="body">Use a cheaper or local model for exploration, a stronger model for planning, and a specialised route for frontend or review tasks.</p><div class="pill-row" style="margin-top:18px"><span class="badge warm">agentModels + agentRouting</span></div></div>
+            <div class="card"><div class="number">C · PRODUCT EMBEDDING</div><h3 style="margin-top:18px">Put an agent behind your UI</h3><p class="body">Expose the core engine over bidirectional gRPC, then build a custom interface, CI/CD integration or internal tool around the stream.</p><div class="pill-row" style="margin-top:18px"><span class="badge">headless integration</span></div></div>
+            <div class="card"><div class="number">D · CODEBASE ONBOARDING</div><h3 style="margin-top:18px">Inject repo structure</h3><p class="body">Use the optional repo map to surface structurally important files and definitions when a project is too large to read linearly.</p><div class="pill-row" style="margin-top:18px"><span class="badge">PageRank-backed map</span></div></div>
+            <div class="card"><div class="number">E · REPEATABLE CAPABILITY</div><h3 style="margin-top:18px">Package skills</h3><p class="body">Install or author skills as folders containing a <code>SKILL.md</code>, then let the agent invoke reusable procedures by name.</p><div class="pill-row" style="margin-top:18px"><span class="badge">skills</span></div></div>
+            <div class="card"><div class="number">F · LONG TASKS</div><h3 style="margin-top:18px">Run background sessions</h3><p class="body">Kick off a detached prompt, inspect its status and logs, and keep the terminal available for other work.</p><div class="pill-row" style="margin-top:18px"><span class="badge warm">--bg / ps / logs</span></div></div>
+          </div>
+          <div class="source"><span>Sources</span><a href="https://github.com/Gitlawb/openclaude#background-sessions" target="_blank" rel="noreferrer">background sessions</a><span>·</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/repo-map.md" target="_blank" rel="noreferrer">repo map</a><span>·</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/skills.md" target="_blank" rel="noreferrer">skills</a></div>
+        </div>
+      </section>
+
+      <section class="slide section-break" data-title="Deep dive" data-section="Deep dive">
+        <div class="slide-inner">
+          <div class="section-number">02</div>
+          <div class="section-label">Deep dive</div>
+          <h2>Think of OpenClaude as a <span class="accent">relay station</span> between intent, tools and models.</h2>
+          <p class="lede">Its interesting design choice is not a new model. It is the attempt to keep the agent loop portable.</p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="The mental model" data-section="Deep dive">
+        <div class="slide-inner">
+          <div class="eyebrow">04 · Mental model</div>
+          <h2>One loop, several interchangeable layers.</h2>
+          <div class="flow">
+            <div class="flow-step"><div class="iconbox">⌁</div><h3>Prompt</h3><p>You state the task in the terminal or through a client.</p></div>
+            <div class="flow-step"><div class="iconbox">◌</div><h3>Model</h3><p>A provider route produces reasoning and tool intent.</p></div>
+            <div class="flow-step"><div class="iconbox">▣</div><h3>Tools</h3><p>Files, bash, grep, agents, tasks, MCP and web tools act on the repo.</p></div>
+            <div class="flow-step"><div class="iconbox">↺</div><h3>Follow-up</h3><p>Results return to the model for the next step in the loop.</p></div>
+            <div class="flow-step"><div class="iconbox">✓</div><h3>Outcome</h3><p>Stream progress, ask permission, inspect changes and finish.</p></div>
+          </div>
+          <div class="terminal-ui"><div class="terminal-bar"><i></i><i></i><i></i></div><pre><span class="prompt">$</span> openclaude
+<span class="comment"># choose a provider, then ask for a bounded change</span>
+&gt; inspect the failing test, propose a fix, then run the focused suite
+<span class="success">streaming · tool call · permission · verification · summary</span></pre></div>
+          <div class="source"><span>Source</span><a href="https://github.com/Gitlawb/openclaude#what-works" target="_blank" rel="noreferrer">what works</a><span>·</span><a href="https://github.com/Gitlawb/openclaude#quick-start" target="_blank" rel="noreferrer">quick start</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Architecture" data-section="Deep dive">
+        <div class="slide-inner">
+          <div class="eyebrow">05 · Architecture</div>
+          <h2>Terminal-first on the outside; provider-aware on the inside.</h2>
+          <div class="architecture">
+            <div class="arch-col">
+              <div class="arch-node"><strong>Interactive CLI</strong><span>Prompts, sessions, slash commands, streaming output and permissions.</span></div>
+              <div class="arch-node"><strong>Background mode</strong><span>Detached child processes with status and logs.</span></div>
+              <div class="arch-node"><strong>VS Code extension</strong><span>Launch integration and theme support are bundled.</span></div>
+            </div>
+            <div class="arch-bridge">⇄</div>
+            <div class="arch-col">
+              <div class="arch-node"><strong>Query + tool loop</strong><span>Model calls, tool execution, context, sub-agents and follow-up responses.</span></div>
+              <div class="arch-node"><strong>Provider adapters</strong><span>OpenAI-compatible, Gemini, Codex, Ollama, Anthropic-family routes and more.</span></div>
+              <div class="arch-node"><strong>Integration boundary</strong><span>Bidirectional gRPC can stream text, tool calls and permission requests.</span></div>
+            </div>
+          </div>
+          <div class="callout"><strong>Design implication:</strong> treat provider choice as a replaceable runtime decision, but treat tool permissions, secrets, context and evaluation as product decisions.</div>
+          <div class="source"><span>Sources</span><a href="https://github.com/Gitlawb/openclaude#why-openclaude" target="_blank" rel="noreferrer">why OpenClaude</a><span>·</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/grpc-server.md" target="_blank" rel="noreferrer">gRPC boundary</a><span>·</span><a href="https://github.com/Gitlawb/openclaude/blob/main/package.json" target="_blank" rel="noreferrer">package exports and scripts</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Providers and profiles" data-section="Deep dive">
+        <div class="slide-inner">
+          <div class="eyebrow">06 · Provider layer</div>
+          <h2>Bring your route. Keep your workflow.</h2>
+          <div class="card soft">
+            <table class="table"><thead><tr><th>Route family</th><th>How it is configured</th><th>Useful when</th></tr></thead><tbody>
+              <tr><td>OpenAI-compatible</td><td><span class="badge">/provider or env vars</span></td><td>One interface for OpenAI, OpenRouter, DeepSeek, Groq, Mistral, LM Studio and compatible <code>/v1</code> servers.</td></tr>
+              <tr><td>Gemini / GitHub Models</td><td><span class="badge warm">provider flow</span></td><td>You want a guided setup or a provider-specific onboarding path.</td></tr>
+              <tr><td>Codex OAuth / Codex</td><td><span class="badge">/provider</span></td><td>You want ChatGPT sign-in or existing Codex CLI credentials.</td></tr>
+              <tr><td>Ollama / Atomic Chat</td><td><span class="badge">local runtime</span></td><td>You want local inference, no API key, or Apple Silicon experimentation.</td></tr>
+              <tr><td>Anthropic-family routes</td><td><span class="badge red">env / native route</span></td><td>You need Bedrock, Vertex or Foundry-style integrations; behaviour differs from Chat Completions routes.</td></tr>
+            </tbody></table>
+          </div>
+          <div class="grid-2"><div class="card soft"><h3>Profiles reduce repetition</h3><p class="body">The <code>/provider</code> flow can save provider profiles. A profile is a practical boundary for switching model, endpoint and credentials without rewriting the task workflow.</p></div><div class="card soft"><h3>But adapters are not identical</h3><p class="body">Tool quality, context handling, output caps and provider-native features vary. A green “connected” state is not an evaluation.</p></div></div>
+          <div class="source"><span>Sources</span><a href="https://github.com/Gitlawb/openclaude#supported-providers" target="_blank" rel="noreferrer">provider table</a><span>·</span><a href="https://github.com/Gitlawb/openclaude#provider-notes" target="_blank" rel="noreferrer">provider notes</a><span>·</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/advanced-setup.md" target="_blank" rel="noreferrer">advanced setup</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Agents and routing" data-section="Deep dive">
+        <div class="slide-inner">
+          <div class="eyebrow">07 · Agent routing</div>
+          <h2>Use different models for different kinds of work.</h2>
+          <div class="grid-2">
+            <div class="card"><div class="iconbox">⇆</div><h3>Model routing</h3><p class="body">Map an agent type such as <code>Explore</code>, <code>Plan</code>, <code>frontend-dev</code> or <code>verification</code> to a named model route.</p><div class="code" style="margin-top:16px"><pre><span class="key">"agentRouting"</span>: {
+  <span class="str">"Explore"</span>: <span class="str">"deepseek-v4-flash"</span>,
+  <span class="str">"Plan"</span>: <span class="str">"gpt-4o"</span>,
+  <span class="str">"frontend-dev"</span>: <span class="str">"zai-default"</span>
+}</pre></div></div>
+            <div class="card"><div class="iconbox" style="color:var(--mint);background:rgba(141,214,199,.08)">⊣</div><h3>Step limits</h3><p class="body">A custom agent can set <code>maxSteps</code> to cap tool-use steps. When the limit is reached, the agent is asked for a concise summary of work, findings and remaining tasks.</p><div class="code" style="margin-top:16px"><pre>---
+name: bounded-researcher
+description: Focused research
+<span class="key">maxSteps</span>: <span class="str">8</span>
+---</pre></div></div>
+          </div>
+          <div class="callout"><strong>Practical pattern:</strong> cheap model for discovery, stronger model for planning or synthesis, bounded verifier before completion. Keep the routing explicit and test each route on the same task set.</div>
+          <div class="source"><span>Source</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/agent-routing.md" target="_blank" rel="noreferrer">Agent Routing and Step Limits</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Repo map and skills" data-section="Deep dive">
+        <div class="slide-inner">
+          <div class="eyebrow">08 · Context leverage</div>
+          <h2>Two ways to make a large codebase feel smaller.</h2>
+          <div class="grid-2">
+            <div class="card"><div class="number">REPO MAP</div><h3 style="margin-top:15px">Structural context, ranked</h3><p class="body">The repo map enumerates files, extracts symbols and references, builds a weighted graph, then uses PageRank to rank structurally important files before rendering within a token budget.</p><div class="pill-row" style="margin-top:18px"><span class="tag"><strong>REPO_MAP=1</strong> opt-in</span><span class="tag">1024-token auto map</span></div></div>
+            <div class="card"><div class="number">SKILLS</div><h3 style="margin-top:15px">Reusable procedures, named</h3><p class="body">A skill is a folder with a <code>SKILL.md</code>. Project and user skills load at start; commands support list, show, install, remove, validate and verify.</p><div class="pill-row" style="margin-top:18px"><span class="tag"><strong>.openclaude/skills</strong> project-local</span><span class="tag">registry or URL</span></div></div>
+          </div>
+          <div class="terminal-ui"><div class="terminal-bar"><i></i><i></i><i></i></div><pre><span class="prompt">$</span> REPO_MAP=1 openclaude
+<span class="comment"># the session receives a compact structural map</span>
+<span class="prompt">$</span> openclaude skills list
+<span class="success">enabled  ci-fix  Diagnoses and fixes CI pipeline failures.</span></pre></div>
+          <div class="source"><span>Sources</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/repo-map.md" target="_blank" rel="noreferrer">repo map</a><span>·</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/skills.md" target="_blank" rel="noreferrer">skills</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Headless gRPC" data-section="Deep dive">
+        <div class="slide-inner">
+          <div class="eyebrow">09 · Integration boundary</div>
+          <h2>When the terminal is not the final interface.</h2>
+          <div class="grid-2">
+            <div class="card soft"><div class="iconbox">⇄</div><h3>Bidirectional streaming</h3><p class="body">The gRPC server can stream text chunks, tool calls and permission requests for sensitive commands. A test CLI client ships with the repository.</p></div>
+            <div class="card soft"><div class="iconbox" style="color:var(--mint);background:rgba(141,214,199,.08)">⚙</div><h3>Product-shaped integration</h3><p class="body">Use the protocol boundary for a custom UI, an internal developer tool, CI/CD, or a future agentic product surface.</p></div>
+          </div>
+          <div class="code"><pre><span class="comment"># terminal 1: start the engine</span>
+$ npm run dev:grpc
+
+<span class="comment"># terminal 2: run the test client</span>
+$ npm run dev:grpc:cli
+
+<span class="comment"># defaults</span>
+GRPC_HOST=localhost
+GRPC_PORT=50051</pre></div>
+          <div class="callout"><strong>Security note:</strong> binding to <code>0.0.0.0</code> exposes the service on all interfaces and is not recommended without authentication.</div>
+          <div class="source"><span>Source</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/grpc-server.md" target="_blank" rel="noreferrer">Headless gRPC Server</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Limits and caveats" data-section="Deep dive">
+        <div class="slide-inner">
+          <div class="eyebrow">10 · Read this before adopting</div>
+          <h2>Portability helps. It does not remove the hard parts.</h2>
+          <div class="grid-3">
+            <div class="card"><div class="iconbox" style="color:var(--red);background:rgba(244,143,134,.08)">!</div><h3>Credentials</h3><p class="body">The routing guide warns that <code>api_key</code> values in <code>settings.json</code> are stored in plaintext. Keep the file private and out of version control.</p></div>
+            <div class="card"><div class="iconbox" style="color:var(--warm);background:rgba(242,182,109,.08)">≈</div><h3>Model variance</h3><p class="body">Anthropic-specific features may not exist on other providers, smaller local models can struggle with long tool flows, and output caps vary.</p></div>
+            <div class="card"><div class="iconbox" style="color:var(--lilac);background:rgba(188,176,255,.08)">⌂</div><h3>Config boundaries</h3><p class="body">OpenClaude uses its own <code>~/.openclaude</code> paths and does not automatically load Claude Code configuration. Migrate intentionally.</p></div>
+          </div>
+          <div class="card soft"><h3>What the repository does not prove</h3><ul class="plain-list" style="margin-top:14px"><li>It does not prove equal quality across every provider or model.</li><li>It does not remove the need for permission design, evaluation, observability and secret handling.</li><li>It does not create filesystem isolation when you fork a conversation; the README explicitly calls out that boundary.</li></ul></div>
+          <div class="source"><span>Sources</span><a href="https://github.com/Gitlawb/openclaude#provider-notes" target="_blank" rel="noreferrer">provider notes</a><span>·</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/agent-routing.md" target="_blank" rel="noreferrer">plaintext key warning</a><span>·</span><a href="https://github.com/Gitlawb/openclaude#openclaude-config-cutover" target="_blank" rel="noreferrer">config cutover</a></div>
+        </div>
+      </section>
+
+      <section class="slide section-break" data-title="Implementation guide" data-section="Build it">
+        <div class="slide-inner">
+          <div class="section-number">03</div>
+          <div class="section-label">Implementation guide</div>
+          <h2>Start small: <span class="accent">install, connect, bound, validate.</span></h2>
+          <p class="lede">A useful first run is a controlled repo task, not an all-access autonomous experiment.</p>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Step 1 · Install" data-section="Build it">
+        <div class="slide-inner">
+          <div class="eyebrow">11 · Step 1</div>
+          <h2>Install the CLI and confirm the runtime.</h2>
+          <div class="step"><div class="step-index">01</div><div><h3>Use Node.js 22 or newer</h3><p class="body">The npm install path requires Node.js <code>≥22.0.0</code>. Bun is needed for source builds and local development.</p></div></div>
+          <div class="code"><pre>$ node --version
+$ npm install -g @gitlawb/openclaude@latest
+$ openclaude --version</pre></div>
+          <div class="step"><div class="step-index">02</div><div><h3>Run the first session</h3><p class="body">Start in a test repository with a clean working tree. Keep the first task narrow enough to inspect every file change.</p></div></div>
+          <div class="code"><pre>$ cd path/to/a-test-repo
+$ openclaude</pre></div>
+          <div class="source"><span>Source</span><a href="https://github.com/Gitlawb/openclaude#quick-start" target="_blank" rel="noreferrer">Quick Start</a><span>·</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/advanced-setup.md" target="_blank" rel="noreferrer">advanced setup</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Step 2 · Connect a provider" data-section="Build it">
+        <div class="slide-inner">
+          <div class="eyebrow">12 · Step 2</div>
+          <h2>Choose a cloud route or a local model.</h2>
+          <div class="grid-2">
+            <div class="card"><div class="number">FAST CLOUD PATH</div><h3 style="margin-top:15px">OpenAI-compatible API</h3><div class="code" style="margin-top:15px"><pre>$ export CLAUDE_CODE_USE_OPENAI=1
+$ export OPENAI_API_KEY=sk-your-key
+$ export OPENAI_MODEL=gpt-4o
+$ openclaude</pre></div></div>
+            <div class="card"><div class="number">LOCAL PATH</div><h3 style="margin-top:15px">Ollama</h3><div class="code" style="margin-top:15px"><pre>$ export CLAUDE_CODE_USE_OPENAI=1
+$ export OPENAI_BASE_URL=http://localhost:11434/v1
+$ export OPENAI_MODEL=qwen2.5-coder:7b
+$ openclaude</pre></div></div>
+          </div>
+          <div class="callout"><strong>Recommended first experiment:</strong> use <code>/provider</code> for guided setup, then run the same small task against one cloud model and one local model. Compare tool completion, edit quality, latency and cost.</div>
+          <div class="source"><span>Sources</span><a href="https://github.com/Gitlawb/openclaude#fastest-openai-setup" target="_blank" rel="noreferrer">OpenAI setup</a><span>·</span><a href="https://github.com/Gitlawb/openclaude#fastest-local-ollama-setup" target="_blank" rel="noreferrer">Ollama setup</a><span>·</span><a href="https://github.com/Gitlawb/openclaude#quick-start" target="_blank" rel="noreferrer">provider flow</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Step 3 · Bound the agent" data-section="Build it">
+        <div class="slide-inner">
+          <div class="eyebrow">13 · Step 3</div>
+          <h2>Make the first agent <span class="mint">bounded and observable.</span></h2>
+          <div class="grid-2">
+            <div class="card soft"><h3>Limit the tool loop</h3><p class="body">Create a custom agent with a positive <code>maxSteps</code> value. Ask for a summary when the budget is exhausted rather than letting the workflow run indefinitely.</p></div>
+            <div class="card soft"><h3>Keep permissions explicit</h3><p class="body">Treat file edits, shell commands, network access and credentials as separate capabilities. Use a disposable branch or test repository until the behaviour is predictable.</p></div>
+          </div>
+          <div class="code"><pre>mkdir -p .openclaude/agents
+
+cat &gt; .openclaude/agents/bounded-researcher.md &lt;&lt;'EOF'
+---
+name: bounded-researcher
+description: Focused research with bounded tool use
+maxSteps: 8
+---
+You are a focused research agent.
+Return: completed work, findings, remaining tasks, and whether another run is needed.
+EOF</pre></div>
+          <div class="source"><span>Source</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/agent-routing.md" target="_blank" rel="noreferrer">step limits and agent frontmatter</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Step 4 · Add routing and context" data-section="Build it">
+        <div class="slide-inner">
+          <div class="eyebrow">14 · Step 4</div>
+          <h2>Scale the workflow only after the loop works.</h2>
+          <div class="grid-3">
+            <div class="card"><div class="number">01</div><h3 style="margin-top:15px">Route</h3><p class="body">Add <code>agentModels</code> and <code>agentRouting</code> to map different agent types to models or endpoints.</p></div>
+            <div class="card"><div class="number">02</div><h3 style="margin-top:15px">Map</h3><p class="body">Enable <code>REPO_MAP=1</code> when a repository is large enough that compact structural context improves navigation.</p></div>
+            <div class="card"><div class="number">03</div><h3 style="margin-top:15px">Package</h3><p class="body">Turn repeated procedures into skills under <code>.openclaude/skills</code>, then validate and verify them before wider use.</p></div>
+          </div>
+          <div class="code"><pre><span class="comment"># structural context for the next session</span>
+$ REPO_MAP=1 openclaude
+
+<span class="comment"># inspect reusable capabilities</span>
+$ openclaude skills list
+$ openclaude skills validate .openclaude/skills/my-skill
+$ openclaude skills verify</pre></div>
+          <div class="source"><span>Sources</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/repo-map.md" target="_blank" rel="noreferrer">repo map</a><span>·</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/skills.md" target="_blank" rel="noreferrer">skills commands</a><span>·</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/agent-routing.md" target="_blank" rel="noreferrer">routing</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Step 5 · Integrate with gRPC" data-section="Build it">
+        <div class="slide-inner">
+          <div class="eyebrow">15 · Step 5 · Optional</div>
+          <h2>Turn the agent loop into a service boundary.</h2>
+          <div class="step"><div class="step-index">01</div><div><h3>Start locally</h3><p class="body">Run the gRPC server on localhost and use the shipped CLI client to understand the stream and permission events.</p></div></div>
+          <div class="step"><div class="step-index">02</div><div><h3>Generate a client</h3><p class="body">The repository points to <code>src/proto/openclaude.proto</code> as the source for clients in Python, Go, Rust or another language.</p></div></div>
+          <div class="step"><div class="step-index">03</div><div><h3>Wrap it with product guardrails</h3><p class="body">Add authentication, network policy, audit logging, cancellation, rate limits, model selection and explicit approval states before exposing it beyond localhost.</p></div></div>
+          <div class="code"><pre>$ npm run dev:grpc
+$ npm run dev:grpc:cli</pre></div>
+          <div class="source"><span>Source</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/grpc-server.md" target="_blank" rel="noreferrer">gRPC server guide</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Validation checklist" data-section="Build it">
+        <div class="slide-inner">
+          <div class="eyebrow">16 · Validate before trust</div>
+          <h2>Use the same task set to compare routes.</h2>
+          <div class="grid-2">
+            <div class="card"><h3>Functional checks</h3><ul class="check-list" style="margin-top:16px"><li>Install path works on a clean machine.</li><li>Provider setup can start a session and stream output.</li><li>File read/write, shell, grep and MCP tools behave as expected.</li><li>Resume, fork and background-session commands match your workflow.</li><li>Repo map and skills load only when intended.</li></ul></div>
+            <div class="card"><h3>Risk checks</h3><ul class="check-list" style="margin-top:16px"><li>Credentials are not committed or exposed in logs.</li><li>Agent step limits stop work predictably.</li><li>Tool permissions are visible and reviewable.</li><li>Local versus cloud data paths are understood.</li><li>gRPC is not exposed on all interfaces without authentication.</li></ul></div>
+          </div>
+          <div class="card soft"><h3>Suggested benchmark</h3><p class="body" style="margin-top:10px">Create five representative repo tasks: explore, plan, edit, test and review. Run them across two providers and record success, tool errors, human interventions, latency, token/cost signals and quality of the final diff.</p></div>
+          <div class="source"><span>Interpretation grounded in</span><a href="https://github.com/Gitlawb/openclaude#provider-notes" target="_blank" rel="noreferrer">provider notes</a><span>·</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/agent-routing.md" target="_blank" rel="noreferrer">step limits</a><span>·</span><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/grpc-server.md" target="_blank" rel="noreferrer">gRPC safety note</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Takeaways" data-section="Close">
+        <div class="slide-inner">
+          <div class="eyebrow">17 · Takeaways</div>
+          <p class="quote">The strategic idea is simple: <em>keep the agent workflow stable while the model and deployment surface stay swappable.</em></p>
+          <div class="takeaway-grid">
+            <div class="card"><h3>Worth trying if you...</h3><ul class="plain-list" style="margin-top:16px"><li>Want one terminal workflow across cloud and local models.</li><li>Need explicit agent routing or bounded sub-agents.</li><li>Are exploring custom UIs or developer tooling around an agent engine.</li><li>Prefer open-source control over provider-specific tooling.</li></ul></div>
+            <div class="card"><h3>Keep your eyes open for...</h3><ul class="plain-list" style="margin-top:16px"><li>Provider-specific differences and model quality variance.</li><li>Credential storage, network exposure and permission boundaries.</li><li>Whether your team needs a CLI, a service, or both.</li><li>Evidence from your own task benchmark, not a feature checklist.</li></ul></div>
+          </div>
+          <div class="source"><span>Repository</span><a href="https://github.com/Gitlawb/openclaude" target="_blank" rel="noreferrer">Gitlawb/openclaude</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Sources and licence" data-section="Close">
+        <div class="slide-inner">
+          <div class="eyebrow">18 · Sources and licence</div>
+          <h2>Read the source, then test the workflow on your own repos.</h2>
+          <div class="grid-2">
+            <div class="card"><h3>Primary reading</h3><div class="source-list" style="margin-top:16px">
+              <div class="source-item"><span class="n">01</span><div><a href="https://github.com/Gitlawb/openclaude" target="_blank" rel="noreferrer">Repository and README</a><div class="tiny">Product scope, quick start, providers, agents and background sessions.</div></div></div>
+              <div class="source-item"><span class="n">02</span><div><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/advanced-setup.md" target="_blank" rel="noreferrer">Advanced setup</a><div class="tiny">Source builds, provider environment variables and runtime controls.</div></div></div>
+              <div class="source-item"><span class="n">03</span><div><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/agent-routing.md" target="_blank" rel="noreferrer">Agent routing and step limits</a><div class="tiny">Per-agent models, routing and bounded tool use.</div></div></div>
+              <div class="source-item"><span class="n">04</span><div><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/repo-map.md" target="_blank" rel="noreferrer">Repo map</a> · <a href="https://github.com/Gitlawb/openclaude/blob/main/docs/skills.md" target="_blank" rel="noreferrer">Skills</a><div class="tiny">Context compression and reusable procedures.</div></div></div>
+              <div class="source-item"><span class="n">05</span><div><a href="https://github.com/Gitlawb/openclaude/blob/main/docs/grpc-server.md" target="_blank" rel="noreferrer">Headless gRPC server</a><div class="tiny">Streaming integration boundary and safety defaults.</div></div></div>
+            </div></div>
+            <div class="card"><h3>Licence note</h3><p class="body" style="margin-top:16px">The repository licence says modifications and additions by OpenClaude contributors are offered under the MIT License where legally permissible, while underlying derived code remains subject to Anthropic’s copyright and terms.</p><div class="callout" style="margin-top:18px"><strong>Practical takeaway:</strong> review the repository’s current licence and terms before redistribution or commercial adoption.</div><div class="source"><span>Licence</span><a href="https://github.com/Gitlawb/openclaude/blob/main/LICENSE" target="_blank" rel="noreferrer">LICENSE</a></div></div>
+          </div>
+          <div class="rule"></div>
+          <p class="small">Deck prepared as an evidence-grounded explainer. Claims are based on the repository and linked documentation available at the time of preparation; check the upstream project for changes.</p>
+        </div>
+      </section>
+
+      <section class="slide section-break" data-title="End" data-section="Close">
+        <div class="slide-inner">
+          <div class="section-label">End</div>
+          <h2>Keep your agent loop portable.</h2>
+          <p class="lede">Then make the boundaries explicit: model, tools, permissions, context, evaluation and deployment.</p>
+          <div class="hero-meta"><span class="tag"><strong>OpenClaude</strong> deep dive</span><span class="tag">github.com/Gitlawb/openclaude</span></div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="chrome" aria-label="Deck controls">
+      <div class="progress-wrap"><div class="progress" aria-label="Slide progress"><i id="progressBar"></i></div><span class="slide-count" id="slideCount">01 / 22</span></div>
+      <div class="controls">
+        <button class="icon-btn" id="prevBtn" title="Previous slide" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m15 18-6-6 6-6"/></svg></button>
+        <button class="icon-btn" id="nextBtn" title="Next slide" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m9 18 6-6-6-6"/></svg></button>
+        <button class="icon-btn" id="indexBtn" title="Slide overview" aria-label="Open slide overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></button>
+        <button class="icon-btn" id="fullBtn" title="Full screen" aria-label="Enter full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5"/></svg></button>
+      </div>
+    </nav>
+
+    <div class="index-modal" id="indexModal" role="dialog" aria-modal="true" aria-labelledby="indexTitle">
+      <div class="index-panel">
+        <div class="index-head"><div><div class="eyebrow">Navigate</div><h2 id="indexTitle">Slide overview</h2></div><button class="icon-btn" id="closeIndex" title="Close overview" aria-label="Close slide overview">×</button></div>
+        <div class="index-grid" id="indexGrid"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const progress = document.getElementById('progressBar');
+      const count = document.getElementById('slideCount');
+      const modal = document.getElementById('indexModal');
+      const grid = document.getElementById('indexGrid');
+      const requestedSlide = Number(new URLSearchParams(location.search).get('slide') || 1) - 1;
+      let current = Math.max(0, Math.min(slides.length - 1, Number.isFinite(requestedSlide) ? requestedSlide : 0));
+
+      const pad = n => String(n).padStart(2, '0');
+      function renderIndex() {
+        grid.innerHTML = slides.map((slide, i) => `<button class="index-item ${i === current ? 'current' : ''}" data-go="${i}"><span class="n">${pad(i + 1)}</span><span class="t">${slide.dataset.title}</span><span class="s">${slide.dataset.section}</span></button>`).join('');
+        grid.querySelectorAll('[data-go]').forEach(btn => btn.addEventListener('click', () => { go(Number(btn.dataset.go)); closeIndex(); }));
+      }
+      function go(next) {
+        current = Math.max(0, Math.min(slides.length - 1, next));
+        slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        count.textContent = `${pad(current + 1)} / ${pad(slides.length)}`;
+        document.title = `${slides[current].dataset.title} · OpenClaude`;
+        history.replaceState(null, '', `?slide=${current + 1}`);
+        renderIndex();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      function next() { go(current + 1); }
+      function prev() { go(current - 1); }
+      function openIndex() { modal.classList.add('open'); document.body.style.overflow = 'hidden'; setTimeout(() => document.querySelector('.index-item.current')?.focus(), 20); }
+      function closeIndex() { modal.classList.remove('open'); document.body.style.overflow = ''; }
+      document.getElementById('nextBtn').addEventListener('click', next);
+      document.getElementById('prevBtn').addEventListener('click', prev);
+      document.getElementById('indexBtn').addEventListener('click', openIndex);
+      document.getElementById('closeIndex').addEventListener('click', closeIndex);
+      document.getElementById('fullBtn').addEventListener('click', async () => { if (!document.fullscreenElement) await document.documentElement.requestFullscreen?.(); else await document.exitFullscreen?.(); });
+      modal.addEventListener('click', e => { if (e.target === modal) closeIndex(); });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && modal.classList.contains('open')) { closeIndex(); return; }
+        if (modal.classList.contains('open')) return;
+        if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
+        if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); prev(); }
+        if (e.key.toLowerCase() === 'i') openIndex();
+        if (e.key.toLowerCase() === 'f') document.getElementById('fullBtn').click();
+        if (e.key === 'Home') go(0);
+        if (e.key === 'End') go(slides.length - 1);
+      });
+      let touchStart = null;
+      document.addEventListener('touchstart', e => { touchStart = e.changedTouches[0].clientX; }, {passive:true});
+      document.addEventListener('touchend', e => { if (touchStart === null) return; const delta = e.changedTouches[0].clientX - touchStart; if (Math.abs(delta) > 55) delta < 0 ? next() : prev(); touchStart = null; }, {passive:true});
+      go(current);
+    })();
+  </script>
+</body>
+</html>

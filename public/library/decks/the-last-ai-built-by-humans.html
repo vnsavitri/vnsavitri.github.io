@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#07111f" />
+  <title>The Last AI Built by Humans | Recursive Self-Improvement</title>
+  <style>
+    :root {
+      --ink: #edf4ff;
+      --muted: #9aabc2;
+      --dim: #71839e;
+      --bg: #07111f;
+      --panel: rgba(15, 29, 50, .78);
+      --panel-2: #0e1b2e;
+      --line: rgba(158, 183, 215, .19);
+      --cyan: #67e8f9;
+      --cyan-2: #20c5df;
+      --lime: #b8f27d;
+      --amber: #ffd166;
+      --coral: #ff8b7b;
+      --violet: #b9a5ff;
+      --shadow: 0 22px 70px rgba(0,0,0,.32);
+      --radius: 24px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; background: var(--bg); color: var(--ink); font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { overflow: hidden; }
+    button, a { font: inherit; }
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .deck { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: radial-gradient(circle at 80% 10%, rgba(49, 111, 152, .22), transparent 34%), radial-gradient(circle at 10% 85%, rgba(61, 43, 120, .18), transparent 36%), var(--bg); }
+    .deck::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .22; background-image: linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px); background-size: 48px 48px; mask-image: linear-gradient(to bottom, black, transparent 72%); }
+    .slide { position: absolute; inset: 0; padding: 7.2vh 8vw 8.7vh; display: grid; align-content: center; overflow: auto; opacity: 0; transform: translateX(24px) scale(.985); pointer-events: none; transition: opacity .34s ease, transform .34s ease; }
+    .slide.is-active { opacity: 1; transform: none; pointer-events: auto; z-index: 2; }
+    .slide-inner { width: min(1180px, 100%); margin: 0 auto; }
+    .slide.compact { align-content: start; padding-top: 9.4vh; }
+    .slide.section-break { background: linear-gradient(135deg, rgba(14, 38, 59, .94), rgba(8, 17, 31, .98)); }
+    .slide.section-break::after { content: ""; position: absolute; width: 42vw; height: 42vw; right: -12vw; bottom: -16vw; border: 1px solid rgba(103,232,249,.22); border-radius: 50%; box-shadow: 0 0 0 7vw rgba(103,232,249,.025), 0 0 0 14vw rgba(103,232,249,.018); }
+    .eyebrow { color: var(--cyan); text-transform: uppercase; letter-spacing: .18em; font-size: .72rem; font-weight: 750; margin-bottom: 1.35rem; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(3.25rem, 7.2vw, 7.5rem); line-height: .94; letter-spacing: -.065em; max-width: 930px; margin-bottom: 1.35rem; }
+    h2 { font-size: clamp(2.05rem, 4.4vw, 4.6rem); line-height: .98; letter-spacing: -.05em; max-width: 960px; margin-bottom: 1.2rem; }
+    h3 { font-size: 1.05rem; letter-spacing: -.02em; margin-bottom: .45rem; }
+    .lede { font-size: clamp(1.05rem, 1.65vw, 1.45rem); line-height: 1.42; max-width: 790px; color: #c5d2e5; }
+    .small { font-size: .88rem; line-height: 1.45; color: var(--muted); }
+    .tiny { font-size: .73rem; line-height: 1.4; color: var(--dim); }
+    .accent { color: var(--cyan); }
+    .lime { color: var(--lime); }
+    .amber { color: var(--amber); }
+    .coral { color: var(--coral); }
+    .violet { color: var(--violet); }
+    .pill { display: inline-flex; gap: .45rem; align-items: center; border: 1px solid var(--line); padding: .42rem .72rem; border-radius: 999px; color: var(--muted); font-size: .74rem; white-space: nowrap; }
+    .pill strong { color: var(--ink); }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.5rem; }
+    .hero-loop { position: absolute; right: 8vw; top: 18vh; width: min(29vw, 360px); aspect-ratio: 1; opacity: .72; }
+    .hero-loop .ring { position: absolute; inset: 8%; border: 1px solid rgba(103,232,249,.35); border-radius: 50%; box-shadow: 0 0 0 2.6vw rgba(103,232,249,.035), 0 0 65px rgba(103,232,249,.16); }
+    .hero-loop .ring::after { content: ""; position: absolute; width: 18px; height: 18px; right: 10%; top: 16%; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 30px var(--cyan); }
+    .hero-loop svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .hero-loop text { fill: #bdebf5; font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; }
+    .source-note { position: absolute; bottom: 4.8vh; left: 8vw; right: 8vw; color: var(--dim); font-size: .7rem; line-height: 1.35; display: flex; justify-content: space-between; gap: 1rem; border-top: 1px solid rgba(158,183,215,.12); padding-top: .7rem; }
+    .source-note span:last-child { text-align: right; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: .85rem; }
+    .card { background: linear-gradient(150deg, rgba(23,44,73,.82), rgba(10,22,39,.78)); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.15rem 1.2rem; box-shadow: var(--shadow); }
+    .card.soft { box-shadow: none; background: rgba(255,255,255,.035); }
+    .card .tag { display: inline-block; color: var(--cyan); font-size: .7rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; margin-bottom: .8rem; }
+    .card p:last-child { margin-bottom: 0; }
+    .stat { font-size: clamp(2.2rem, 4.2vw, 4.4rem); letter-spacing: -.06em; line-height: .9; font-weight: 760; margin-bottom: .55rem; }
+    .stat-label { color: var(--muted); font-size: .86rem; line-height: 1.3; }
+    .quote { border-left: 3px solid var(--cyan); padding: .2rem 0 .2rem 1.2rem; color: #d6e4f5; font-size: clamp(1.1rem, 1.8vw, 1.55rem); line-height: 1.34; max-width: 780px; }
+    .two-col { display: grid; grid-template-columns: 1.05fr .95fr; align-items: center; gap: clamp(2rem, 6vw, 7rem); }
+    .ladder { display: grid; gap: .45rem; }
+    .level { display: grid; grid-template-columns: 74px 1fr auto; gap: 1rem; align-items: center; padding: .75rem .9rem; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.035); cursor: pointer; transition: .2s ease; }
+    .level:hover, .level.selected { border-color: var(--cyan); background: rgba(103,232,249,.09); transform: translateX(5px); }
+    .level-code { font-size: 1.18rem; font-weight: 800; color: var(--cyan); }
+    .level-name { font-weight: 720; }
+    .level-desc { color: var(--muted); font-size: .8rem; margin-top: .22rem; }
+    .level-arrow { color: var(--dim); font-size: 1.3rem; }
+    .ladder-detail { min-height: 255px; display: flex; flex-direction: column; justify-content: space-between; }
+    .detail-code { font-size: 5rem; line-height: .8; color: var(--cyan); letter-spacing: -.08em; font-weight: 850; }
+    .detail-rule { border-top: 1px solid var(--line); margin-top: 1rem; padding-top: 1rem; color: #cad8e9; }
+    .flow { display: grid; grid-template-columns: repeat(5, 1fr); gap: .65rem; align-items: center; margin: 1.7rem 0; }
+    .flow-step { min-height: 100px; display: flex; align-items: center; justify-content: center; text-align: center; padding: .8rem .5rem; border: 1px solid var(--line); background: rgba(255,255,255,.035); border-radius: 16px; font-weight: 700; font-size: .88rem; }
+    .flow-step.highlight { border-color: var(--cyan); background: rgba(103,232,249,.09); }
+    .flow-arrow { text-align: center; color: var(--cyan); font-size: 1.35rem; }
+    .loop-diagram { position: relative; min-height: 310px; display: grid; place-items: center; }
+    .loop-orbit { width: 270px; height: 270px; border-radius: 50%; border: 1px solid rgba(103,232,249,.52); box-shadow: 0 0 0 20px rgba(103,232,249,.025), 0 0 70px rgba(103,232,249,.12); position: relative; }
+    .loop-orbit::before { content: ""; position: absolute; inset: 49px; border: 1px dashed rgba(184,242,125,.48); border-radius: 50%; }
+    .loop-orbit::after { content: "next state"; position: absolute; top: 48%; left: 33%; color: var(--lime); font-size: .75rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+    .orbit-label { position: absolute; padding: .45rem .65rem; border: 1px solid var(--line); border-radius: 10px; background: #0d1d31; font-size: .76rem; color: #dbe8f5; box-shadow: var(--shadow); }
+    .orbit-label.one { top: -14px; left: 92px; }
+    .orbit-label.two { right: -42px; top: 104px; }
+    .orbit-label.three { bottom: 10px; left: 16px; }
+    .orbit-label.four { left: -60px; top: 102px; }
+    .orbit-dot { position: absolute; width: 11px; height: 11px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 24px var(--cyan); }
+    .orbit-dot.a { top: 17px; left: 129px; }
+    .orbit-dot.b { top: 129px; right: 15px; }
+    .orbit-dot.c { bottom: 17px; left: 129px; }
+    .orbit-dot.d { top: 129px; left: 15px; }
+    .bar-chart { display: grid; gap: .95rem; margin-top: 1.35rem; }
+    .bar-row { display: grid; grid-template-columns: 160px 1fr 48px; gap: .7rem; align-items: center; font-size: .8rem; }
+    .bar-track { height: 12px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--cyan-2), var(--cyan)); box-shadow: 0 0 18px rgba(103,232,249,.27); }
+    .bar-value { text-align: right; color: var(--cyan); font-weight: 780; }
+    .legend { display: flex; flex-wrap: wrap; gap: .8rem 1.15rem; color: var(--muted); font-size: .75rem; }
+    .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: .3rem; background: var(--cyan); }
+    .legend i.warn { background: var(--coral); }
+    .legend i.green { background: var(--lime); }
+    .comparison { width: 100%; border-collapse: collapse; font-size: .78rem; }
+    .comparison th { color: var(--dim); text-transform: uppercase; letter-spacing: .1em; font-size: .65rem; text-align: left; padding: .55rem .55rem; border-bottom: 1px solid var(--line); }
+    .comparison td { padding: .64rem .55rem; border-bottom: 1px solid rgba(158,183,215,.1); color: #c9d8e9; vertical-align: top; }
+    .comparison tr:last-child td { border-bottom: 0; }
+    .check { color: var(--lime); font-weight: 800; }
+    .maybe { color: var(--amber); font-weight: 800; }
+    .cross { color: var(--coral); font-weight: 800; }
+    .toggle { display: inline-flex; padding: .25rem; border-radius: 999px; background: rgba(255,255,255,.07); border: 1px solid var(--line); gap: .2rem; }
+    .toggle button { border: 0; background: transparent; color: var(--muted); padding: .45rem .7rem; border-radius: 999px; cursor: pointer; font-size: .75rem; }
+    .toggle button.active { background: var(--cyan); color: #08202a; font-weight: 800; }
+    .mode-copy { display: none; }
+    .mode-copy.active { display: block; }
+    .step { display: grid; grid-template-columns: 64px 1fr; gap: 1rem; align-items: start; }
+    .step-num { width: 54px; height: 54px; border-radius: 16px; display: grid; place-items: center; font-size: 1.15rem; font-weight: 850; color: #07111f; background: var(--cyan); }
+    .step h3 { font-size: 1.2rem; margin-bottom: .3rem; }
+    .step p { margin-bottom: 0; color: var(--muted); line-height: 1.45; }
+    pre { margin: 0; white-space: pre-wrap; word-break: break-word; background: #06101d; border: 1px solid var(--line); border-radius: 15px; padding: 1rem; color: #c8f5ff; font: .78rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .code-label { color: var(--lime); font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; margin-bottom: .55rem; font-weight: 800; }
+    .risk { display: grid; grid-template-columns: 24px 1fr; gap: .65rem; padding: .85rem 0; border-bottom: 1px solid rgba(158,183,215,.11); }
+    .risk:last-child { border-bottom: 0; }
+    .risk-dot { width: 10px; height: 10px; background: var(--coral); border-radius: 50%; margin-top: .35rem; box-shadow: 0 0 18px rgba(255,139,123,.6); }
+    .risk p { margin: 0; color: var(--muted); font-size: .86rem; line-height: 1.4; }
+    .risk strong { color: var(--ink); }
+    .domain-card { min-height: 190px; position: relative; overflow: hidden; }
+    .domain-card::after { content: attr(data-code); position: absolute; right: .8rem; bottom: -.7rem; font-size: 5.6rem; line-height: 1; font-weight: 900; color: rgba(255,255,255,.04); letter-spacing: -.1em; }
+    .domain-state { color: var(--lime); font-size: .73rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; margin-top: .75rem; }
+    .footer-takeaway { border: 1px solid rgba(184,242,125,.25); background: rgba(184,242,125,.06); border-radius: 17px; padding: 1rem 1.2rem; color: #d8f5ba; }
+    .nav { position: fixed; z-index: 10; left: 8vw; right: 8vw; bottom: 1.45rem; display: flex; align-items: center; gap: 1rem; }
+    .progress { flex: 1; height: 3px; background: rgba(255,255,255,.12); border-radius: 99px; overflow: hidden; }
+    .progress > span { display: block; height: 100%; width: 0; background: var(--cyan); box-shadow: 0 0 12px var(--cyan); transition: width .3s ease; }
+    .nav button, .toc-btn { border: 1px solid var(--line); background: rgba(10, 25, 43, .82); color: var(--muted); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: grid; place-items: center; }
+    .nav button:hover, .toc-btn:hover { color: var(--ink); border-color: var(--cyan); }
+    .counter { color: var(--dim); font-size: .75rem; min-width: 54px; text-align: right; }
+    .toc-btn { position: fixed; z-index: 12; top: 1.4rem; right: 2rem; border-radius: 12px; width: 40px; height: 34px; font-size: 1.05rem; }
+    .toc { position: fixed; inset: 0 0 0 auto; width: min(390px, 86vw); z-index: 11; background: #0a1728; border-left: 1px solid var(--line); padding: 5rem 1.4rem 2rem; transform: translateX(100%); transition: transform .28s ease; overflow: auto; box-shadow: -20px 0 60px rgba(0,0,0,.32); }
+    .toc.open { transform: none; }
+    .toc h3 { margin-bottom: 1.2rem; }
+    .toc a { display: flex; gap: .75rem; align-items: baseline; padding: .55rem .2rem; color: var(--muted); border-bottom: 1px solid rgba(158,183,215,.08); font-size: .85rem; }
+    .toc a:hover { color: var(--ink); text-decoration: none; }
+    .toc a span { color: var(--cyan); font: .68rem ui-monospace, monospace; min-width: 28px; }
+    .veil { position: fixed; inset: 0; z-index: 10; background: rgba(2,7,14,.48); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+    .veil.open { opacity: 1; pointer-events: auto; }
+    .kbd { display: inline-block; border: 1px solid var(--line); border-bottom-color: #58718e; border-radius: 6px; padding: .1rem .35rem; color: var(--muted); font: .7rem ui-monospace, monospace; }
+    .note { border: 1px solid rgba(255,209,102,.28); background: rgba(255,209,102,.06); border-radius: 15px; padding: .85rem 1rem; color: #f5dda0; font-size: .82rem; line-height: 1.4; }
+    @media (max-width: 900px) {
+      .slide { padding: 6.8vh 7vw 10vh; }
+      .source-note { left: 7vw; right: 7vw; }
+      .hero-loop { opacity: .24; width: 45vw; right: -5vw; top: 10vh; }
+      .two-col { grid-template-columns: 1fr; gap: 1.3rem; }
+      .grid-4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .grid-3 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .flow { grid-template-columns: 1fr; }
+      .flow-arrow { transform: rotate(90deg); height: 12px; }
+      .flow-step { min-height: 58px; }
+      .nav { left: 7vw; right: 7vw; }
+    }
+    @media (max-width: 580px) {
+      body { overflow: hidden; }
+      .slide { padding: 6.3vh 6vw 11vh; }
+      .slide.compact { padding-top: 8vh; }
+      h1 { font-size: clamp(2.8rem, 15vw, 4.9rem); }
+      h2 { font-size: clamp(2rem, 11vw, 3.2rem); }
+      .lede { font-size: 1rem; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .card { padding: 1rem; border-radius: 18px; }
+      .source-note { font-size: .62rem; bottom: 4.1vh; }
+      .source-note span:last-child { display: none; }
+      .level { grid-template-columns: 50px 1fr 16px; gap: .65rem; }
+      .level-desc { font-size: .72rem; }
+      .bar-row { grid-template-columns: 112px 1fr 35px; gap: .45rem; font-size: .7rem; }
+      .loop-orbit { width: 230px; height: 230px; }
+      .orbit-label.two { right: -18px; }
+      .orbit-label.four { left: -34px; }
+      pre { font-size: .68rem; }
+      .toc-btn { right: 1rem; top: 1rem; }
+      .nav { bottom: .85rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <main class="deck" id="deck" aria-label="Interactive slide deck">
+    <section class="slide is-active" id="s1" data-title="Cover">
+      <div class="slide-inner">
+        <div class="eyebrow">Research paper deep dive · September 2026</div>
+        <h1>The last AI built by humans?</h1>
+        <p class="lede">Toward genuine <span class="accent">recursive self-improvement</span>: a beginner-friendly tour of the autonomy ladder, the evidence, and how to build a credible improvement loop.</p>
+        <div class="hero-meta"><span class="pill"><strong>Source</strong> arXiv:2609.11873v1</span><span class="pill"><strong>Authors</strong> Yi Duan et al.</span><span class="pill"><strong>Format</strong> 75-page survey / preprint</span></div>
+      </div>
+      <div class="hero-loop" aria-hidden="true"><div class="ring"></div><svg viewBox="0 0 360 360"><path d="M180 45a135 135 0 1 1-95.5 39.5" fill="none" stroke="#67e8f9" stroke-width="1.5" stroke-dasharray="5 8"/><path d="M84 84l1-15 15 1" fill="none" stroke="#67e8f9" stroke-width="1.5"/><text x="148" y="31">improve</text><text x="291" y="184">verify</text><text x="142" y="343">inherit</text><text x="25" y="184">repeat</text></svg></div>
+      <div class="source-note"><span>Explanatory synthesis of the supplied PDF. Claims are labelled as reported findings or implementation inferences.</span><span><a href="https://arxiv.org/abs/2609.11873" target="_blank" rel="noreferrer">Open the paper ↗</a></span></div>
+    </section>
+
+    <section class="slide" id="s2" data-title="TL;DR">
+      <div class="slide-inner">
+        <div class="eyebrow">01 · Plain English first</div>
+        <h2>RSI is more than an AI fixing its last answer.</h2>
+        <div class="two-col">
+          <div><p class="quote">The key test is whether a validated change survives into the next round and changes how future improvements are found, judged, or retained.</p><p class="small" style="margin-top:1.2rem">Think of the difference between a developer fixing one bug and a team improving its coding process, test suite, memory, release gate, and ability to find the next bug.</p></div>
+          <div class="grid-2"><div class="card"><div class="stat accent">1</div><div class="stat-label">Persistent change</div></div><div class="card"><div class="stat lime">2</div><div class="stat-label">Future rounds affected</div></div><div class="card"><div class="stat amber">3</div><div class="stat-label">Human controls still visible</div></div><div class="card"><div class="stat violet">∞</div><div class="stat-label">Potentially recursive loop</div></div></div>
+        </div>
+      </div>
+      <div class="source-note"><span>Reported definition and improvement-loop anatomy, pp. 10-11.</span><span>Source: supplied paper</span></div>
+    </section>
+
+    <section class="slide" id="s3" data-title="Why it matters">
+      <div class="slide-inner">
+        <div class="eyebrow">02 · Why it matters</div>
+        <h2>The bottleneck is moving from model output to model development.</h2>
+        <p class="lede">As systems become more agentic, improvement requires more experiments, more interaction data, more verification, and more human coordination.</p>
+        <div class="grid-3" style="margin-top:1.6rem"><div class="card"><span class="tag">Training</span><h3>Expensive foundations</h3><p class="small">Data, architecture, optimisation, evaluation, hardware, and failure recovery all scale together.</p></div><div class="card"><span class="tag">Experience</span><h3>Learning signals are costly</h3><p class="small">Synthetic data, reinforcement learning, self-play, and practice still need reliable generation and retention.</p></div><div class="card"><span class="tag">Deployment</span><h3>Real work keeps changing</h3><p class="small">New documents, tools, workflows, and environment states create recurring failures after launch.</p></div></div>
+        <div class="footer-takeaway" style="margin-top:1rem"><strong>Paper's thesis:</strong> RSI could make improvement itself more persistent, efficient, and capable of discovering strategies beyond a fixed human recipe.</div>
+      </div>
+      <div class="source-note"><span>Scaling burdens and RSI motivation, pp. 3-4.</span><span>Interpretation: “development loop” is the unit of analysis</span></div>
+    </section>
+
+    <section class="slide" id="s4" data-title="Capability headroom">
+      <div class="slide-inner">
+        <div class="eyebrow">03 · The paper's empirical motivation</div>
+        <h2>Interactive capabilities still have more headroom.</h2>
+        <div class="two-col">
+          <div><p class="lede">The paper normalises heterogeneous benchmark results with its Headroom-Closed Index, or HCI: 0 is the entry-year frontier and 100 is a perfect score.</p><div class="bar-chart"><div class="bar-row"><span>Graduate science</span><div class="bar-track"><div class="bar-fill" style="width:85.8%"></div></div><b class="bar-value">85.8</b></div><div class="bar-row"><span>Cybersecurity agents</span><div class="bar-track"><div class="bar-fill" style="width:91.9%"></div></div><b class="bar-value">91.9</b></div><div class="bar-row"><span>Search / terminal</span><div class="bar-track"><div class="bar-fill" style="width:56.8%"></div></div><b class="bar-value">56.8</b></div><div class="bar-row"><span>Software engineering</span><div class="bar-track"><div class="bar-fill" style="width:52.6%"></div></div><b class="bar-value">52.6</b></div><div class="bar-row"><span>Tool agents</span><div class="bar-track"><div class="bar-fill" style="width:39.9%"></div></div><b class="bar-value">39.9</b></div></div></div>
+          <div class="card"><span class="tag">Read this carefully</span><h3>Headroom is a hypothesis about opportunity, not a forecast.</h3><p class="small">The source uses an illustrative post-2026 extension to show how verified repeated experience, regression testing, and retained updates might focus effort on weaker deployment workflows.</p><div class="note" style="margin-top:1rem">Benchmark protocols, subsets, and harnesses differ. The paper explicitly qualifies some comparisons, especially cybersecurity.</div></div>
+        </div>
+      </div>
+      <div class="source-note"><span>HCI trajectories and illustrative extension, pp. 7-9. Values reported by the paper.</span><span>Illustrative endpoint ≠ measured result</span></div>
+    </section>
+
+    <section class="slide" id="s5" data-title="Benefits and use cases">
+      <div class="slide-inner">
+        <div class="eyebrow">04 · Benefits and use cases</div>
+        <h2>What a useful RSI loop could buy you.</h2>
+        <div class="grid-4" style="margin-top:1.5rem"><div class="card domain-card" data-code="S"><span class="tag">Science</span><h3>Better research cycles</h3><p class="small">Retain hypotheses, failed branches, executable methods, and evidence so the next experiment starts smarter.</p><div class="domain-state">High-value feedback, hard attribution</div></div><div class="card domain-card" data-code="E"><span class="tag">Embodied</span><h3>Safer practice</h3><p class="small">Let current capability shape the next simulated task, while keeping physical trials gated and reversible.</p><div class="domain-state">Rich feedback, costly resets</div></div><div class="card domain-card" data-code="C"><span class="tag">Software</span><h3>Self-improving harnesses</h3><p class="small">Turn recurring repository failures into tested skills, tools, context rules, or harness changes.</p><div class="domain-state">Fast feedback, spec dependence</div></div><div class="card domain-card" data-code="H"><span class="tag">Healthcare</span><h3>Governed adaptation</h3><p class="small">Accumulate validated clinical knowledge and workflow safeguards without unrestricted trial and error.</p><div class="domain-state">High stakes, delayed outcomes</div></div></div>
+        <p class="small" style="margin-top:1.15rem">The practical benefit is not “no humans”. It is shifting human effort towards mission, evidence quality, protected evaluation, and consequential approval.</p>
+      </div>
+      <div class="source-note"><span>Application regimes and feedback requirements, pp. 36-43.</span><span>Use cases are source-grounded summaries</span></div>
+    </section>
+
+    <section class="slide section-break" id="s6" data-title="Deep dive section">
+      <div class="slide-inner"><div class="eyebrow">Deep dive</div><h2>How does recursive improvement earn its name?</h2><p class="lede">Start with the loop. Then ask what changes, what persists, and who still controls the decision.</p><div class="hero-meta"><span class="pill"><strong>Loop</strong> experience → candidate → verifier → inherited state</span><span class="pill"><strong>Boundary</strong> output change vs system change</span></div></div>
+      <div class="source-note"><span>Deep dive begins</span><span>Use ← / → or swipe to navigate</span></div>
+    </section>
+
+    <section class="slide compact" id="s7" data-title="Improvement loop">
+      <div class="slide-inner">
+        <div class="eyebrow">05 · The unit of analysis</div><h2>Every credible loop has a carrier of change.</h2>
+        <div class="two-col"><div class="loop-diagram"><div class="loop-orbit"><i class="orbit-dot a"></i><i class="orbit-dot b"></i><i class="orbit-dot c"></i><i class="orbit-dot d"></i><span class="orbit-label one">experience</span><span class="orbit-label two">candidate</span><span class="orbit-label three">verifier</span><span class="orbit-label four">state</span></div></div><div><div class="card"><h3>Ask three questions</h3><p class="small"><strong>Where does the loop close?</strong> Does the change return to the AI system?</p><p class="small"><strong>What is updated and inherited?</strong> Weights, memory, tools, harness, evaluator, or policy?</p><p class="small"><strong>Which decisions stay external?</strong> Objective, budget, safety boundary, acceptance, or release?</p></div><p class="small" style="margin-top:1rem">An accepted change becomes an <span class="lime">improvement</span> only when it enters the next system state. The next system is the <span class="accent">successor</span>.</p></div></div>
+      </div><div class="source-note"><span>Improvement-loop anatomy, p. 10.</span><span>Diagram is a visual synthesis</span></div>
+    </section>
+
+    <section class="slide compact" id="s8" data-title="RSI vs neighbours">
+      <div class="slide-inner"><div class="eyebrow">06 · Boundary conditions</div><h2>Not every automated improvement process is RSI.</h2><div class="card" style="overflow:auto"><table class="comparison"><thead><tr><th>Capability</th><th>Continual learning</th><th>AutoML</th><th>Agentic AI / ML</th><th>RSI</th></tr></thead><tbody><tr><td>Persistent retention</td><td class="check">✓ core</td><td class="maybe">◦ sometimes</td><td class="maybe">◦ sometimes</td><td class="check">✓ core</td></tr><tr><td>System self-modification</td><td class="check">✓ possible</td><td class="maybe">◦ boundary</td><td class="cross">× not required</td><td class="check">✓ core</td></tr><tr><td>Candidate proposal</td><td class="cross">×</td><td class="check">✓</td><td class="check">✓</td><td class="check">✓</td></tr><tr><td>Successor re-entry</td><td class="check">✓</td><td class="cross">×</td><td class="cross">×</td><td class="check">✓</td></tr><tr><td>Mechanism revision</td><td class="cross">×</td><td class="maybe">◦ boundary</td><td class="cross">×</td><td class="check">✓</td></tr><tr><td>Mechanism reuse</td><td class="cross">×</td><td class="cross">×</td><td class="maybe">◦ sometimes</td><td class="check">✓</td></tr></tbody></table></div><p class="small" style="margin-top:1rem">The distinction is functional, not branding: does a persistent improvement loop form around the system itself?</p></div><div class="source-note"><span>Table 1, p. 12. ✓ primary core · ◦ supporting / boundary · × outside scope.</span><span>Source: supplied paper</span></div>
+    </section>
+
+    <section class="slide compact" id="s9" data-title="Autonomy ladder">
+      <div class="slide-inner"><div class="eyebrow">07 · The autonomy ladder</div><h2>Five levels of responsibility, plus the non-RSI baseline.</h2><div class="two-col"><div class="ladder" id="ladder"><div class="level selected" data-level="B0"><div class="level-code">B0</div><div><div class="level-name">In-task improvement</div><div class="level-desc">Fixes the current output only</div></div><div class="level-arrow">›</div></div><div class="level" data-level="L1"><div class="level-code">L1</div><div><div class="level-name">Execution</div><div class="level-desc">Runs a prescribed update and retains it</div></div><div class="level-arrow">›</div></div><div class="level" data-level="L2"><div class="level-code">L2</div><div><div class="level-name">Strategy</div><div class="level-desc">Chooses how to improve next</div></div><div class="level-arrow">›</div></div><div class="level" data-level="L3"><div class="level-code">L3</div><div><div class="level-name">Experience</div><div class="level-desc">Chooses what to learn next</div></div><div class="level-arrow">›</div></div><div class="level" data-level="L4"><div class="level-code">L4</div><div><div class="level-name">Deployment</div><div class="level-desc">Decides what persists in live use</div></div><div class="level-arrow">›</div></div><div class="level" data-level="L5"><div class="level-code">L5</div><div><div class="level-name">Meta-improvement</div><div class="level-desc">Improves the improvement mechanism</div></div><div class="level-arrow">›</div></div></div><div class="card ladder-detail" id="ladder-detail"><div><div class="detail-code">B0</div><h3 style="margin-top:1.2rem">Output change without persistent system change.</h3><p class="small">Examples include self-refinement, reflections, and tree search that end with the task.</p></div><div class="detail-rule">Boundary: the experience is discarded when the task ends.</div></div></div></div><div class="source-note"><span>Autonomy hierarchy and cross-level boundaries, pp. 12-14 and 35.</span><span>Click a level to inspect it</span></div>
+    </section>
+
+    <section class="slide compact" id="s10" data-title="L1 execution">
+      <div class="slide-inner"><div class="eyebrow">08 · L1 execution autonomy</div><h2>AI runs the improvement recipe. Humans still write the recipe.</h2><div class="flow"><div class="flow-step">Objective<br><span class="tiny">human-defined</span></div><div class="flow-arrow">→</div><div class="flow-step highlight">Execute procedure</div><div class="flow-arrow">→</div><div class="flow-step">Retain artefact<br><span class="tiny">for next task</span></div></div><div class="grid-3"><div class="card"><span class="tag">Data</span><p class="small">Filtering, labelling, synthetic supervision, and quality pipelines at scale.</p></div><div class="card"><span class="tag">Engineering</span><p class="small">Profiling, code changes, deployment adaptation, and runbook-guided recovery.</p></div><div class="card"><span class="tag">Limit</span><p class="small">When the procedure meets an unanticipated condition, the system can’t independently redesign the procedure.</p></div></div><div class="footer-takeaway" style="margin-top:1rem"><strong>Evaluation:</strong> execution reliability + persistence safety. A bad retained artefact can propagate.</div></div><div class="source-note"><span>L1 definition, pipeline examples, and evaluation, pp. 14-18.</span><span>Reported systems include OpenAI Harness Engineering, Meta capacity efficiency, and AIPC</span></div>
+    </section>
+
+    <section class="slide compact" id="s11" data-title="L2 strategy">
+      <div class="slide-inner"><div class="eyebrow">09 · L2 strategy autonomy</div><h2>AI chooses which improvement to try next.</h2><div class="two-col"><div><div class="flow" style="grid-template-columns:repeat(3,1fr); margin-top:.6rem"><div class="flow-step">Observe<br>failure</div><div class="flow-arrow">→</div><div class="flow-step highlight">Diagnose + select</div></div><div class="flow" style="grid-template-columns:repeat(3,1fr); margin-top:0"><div class="flow-step">Instantiate</div><div class="flow-arrow">→</div><div class="flow-step">Test + retain / revert</div></div></div><div class="card"><span class="tag">Search surface expands</span><p class="small">Prompt → agent harness → workflow graph → model configuration → training rule → kernel implementation.</p><p class="small"><strong>Still external:</strong> the objective, task boundary, evaluation criterion, and acceptance rule.</p></div></div><div class="note" style="margin-top:1rem">Common hazards: benchmark overfitting, extra search compute mistaken for progress, and evaluators sharing the proposer’s blind spots.</div></div><div class="source-note"><span>L2 strategy selection and evaluation hazards, pp. 18-21.</span><span>Finding: human effort moves from proposing edits to constraining search</span></div>
+    </section>
+
+    <section class="slide compact" id="s12" data-title="L3 experience">
+      <div class="slide-inner"><div class="eyebrow">10 · L3 experience autonomy</div><h2>AI decides what it should learn from next.</h2><p class="lede">The evolving learner changes the next learning agenda. That is the crucial feedback connection.</p><div class="flow"><div class="flow-step">Observe learner state</div><div class="flow-arrow">→</div><div class="flow-step highlight">Choose experience</div><div class="flow-arrow">→</div><div class="flow-step">Update persistent state</div></div><div class="grid-3"><div class="card"><span class="tag">Adaptive tasks</span><h3>Generate near the frontier</h3><p class="small">Use current errors, uncertainty, or solver consistency to propose tasks that are difficult but learnable.</p></div><div class="card"><span class="tag">Self-play</span><h3>Proposer meets solver</h3><p class="small">A challenger or task generator adapts as the learner changes.</p></div><div class="card"><span class="tag">Practice</span><h3>Explore the environment</h3><p class="small">The agent chooses a useful next practice goal and turns success into a reusable skill.</p></div></div><div class="footer-takeaway" style="margin-top:1rem"><strong>Important:</strong> correctness, difficulty, and learning value are different signals. A task can be hard, valid, and still not teach much.</div></div><div class="source-note"><span>L3 mechanism, examples, and evaluation controls, pp. 22-26.</span><span>Examples: AZR, R-Zero, STP, VOYAGER, SIMA 2, SEAgent</span></div>
+    </section>
+
+    <section class="slide compact" id="s13" data-title="L4 deployment">
+      <div class="slide-inner"><div class="eyebrow">11 · L4 deployment autonomy</div><h2>Live interaction becomes a source of persistent adaptation.</h2><div class="two-col"><div class="card"><span class="tag">Example</span><h3>Pagination failure → reusable skill</h3><pre>Observed: stops after page 1
+Evidence: next_page = 2
+Change: loop until next_page is null
+Gate: sandbox + paired task tests
+Retain: “collect every page” skill
+Reuse: later API tasks</pre></div><div><div class="grid-2"><div class="card soft"><h3>What can change</h3><p class="small">Memory, skills, tools, code, harness, or weights.</p></div><div class="card soft"><h3>What stays governed</h3><p class="small">Objective, access boundaries, protected evaluation, release authority.</p></div></div><p class="small" style="margin-top:1rem">L4 is about deciding which consequences of experience persist in deployment. It isn’t proof that the adaptation remains useful under distribution shift.</p></div></div></div><div class="source-note"><span>L4 deployment adaptation and selective retention, pp. 26-31.</span><span>Diagram is an illustrative implementation pattern</span></div>
+    </section>
+
+    <section class="slide compact" id="s14" data-title="L5 meta-improvement">
+      <div class="slide-inner"><div class="eyebrow">12 · L5 recursive meta-improvement</div><h2>The improvement mechanism becomes the improvement target.</h2><div class="two-col"><div><div class="card"><span class="tag">L4</span><h3>Agent adapts; process stays fixed.</h3><p class="small">It learns a new skill or updates its harness, but the method that diagnoses and accepts updates remains unchanged.</p></div><div style="text-align:center;color:var(--cyan);font-size:1.5rem;margin:.5rem">↓</div><div class="card" style="border-color:rgba(184,242,125,.34)"><span class="tag" style="color:var(--lime)">L5</span><h3>Process adapts and is inherited.</h3><p class="small">A revised improver, evaluator, search policy, or research policy governs later successor rounds.</p></div></div><div><div class="card"><h3>Structural vs effective L5</h3><p class="small"><strong class="accent">Structural:</strong> a change persists and is invoked in a later improvement round.</p><p class="small"><strong class="lime">Effective:</strong> the revised mechanism produces or selects better successors under matched budgets and independent assessment.</p></div><div class="note" style="margin-top:1rem">Changing task code alone isn’t enough if the process that creates later revisions stays fixed.</div></div></div></div><div class="source-note"><span>L5 definition, examples, and structural / effective distinction, pp. 31-35.</span><span>Humans retain mission, safety boundaries, protected evaluation, and resource authority</span></div>
+    </section>
+
+    <section class="slide compact" id="s15" data-title="How to evaluate">
+      <div class="slide-inner"><div class="eyebrow">13 · Evidence, not vibes</div><h2>Measure the trajectory, not just the latest score.</h2><div class="grid-3"><div class="card"><div class="stat accent">01</div><h3>Adaptivity</h3><p class="small">Gain, improvement trajectory, and time to target.</p></div><div class="card"><div class="stat lime">02</div><h3>Retention</h3><p class="small">Replay loss, forgotten capabilities, regressions, and recovery.</p></div><div class="card"><div class="stat amber">03</div><h3>Transfer</h3><p class="small">Held-out gains within and across domains.</p></div><div class="card"><div class="stat violet">04</div><h3>Efficiency</h3><p class="small">Tokens, time, total cost, review effort, and rework per validated gain.</p></div><div class="card"><div class="stat coral">05</div><h3>Stability</h3><p class="small">Harmful updates and the largest temporary decline.</p></div><div class="card"><div class="stat accent">06</div><h3>Meta-recursion</h3><p class="small">Mechanism reuse, successor quality, goal choice, and stopping decisions.</p></div></div><div class="footer-takeaway" style="margin-top:1rem"><strong>Minimum credible claim:</strong> the inherited change helps later rounds acquire better experience, discover better interventions, or validate successors more effectively.</div></div><div class="source-note"><span>Table 8 and L5 evaluation requirements, pp. 34-35 and 52-53.</span><span>Measures are proposed / synthesised by the paper</span></div>
+    </section>
+
+    <section class="slide section-break" id="s16" data-title="Applications section">
+      <div class="slide-inner"><div class="eyebrow">Applications</div><h2>The same loop behaves differently in each world.</h2><p class="lede">The feedback may be executable, simulated, delayed, physical, clinical, or fundamentally uncertain. That changes what “safe inheritance” can mean.</p></div><div class="source-note"><span>Application regimes begin</span><span>Science · embodied intelligence · software · healthcare</span></div>
+    </section>
+
+    <section class="slide compact" id="s17" data-title="Four application regimes">
+      <div class="slide-inner"><div class="eyebrow">14 · Application regimes</div><h2>Four domains, four different verification problems.</h2><div class="grid-2"><div class="card"><span class="tag">S1 · Science</span><h3>Evidence is sparse and open-ended.</h3><p class="small">Failed experiments are hard to attribute. Provenance, assumptions, uncertainty, and reproducibility must travel with the result.</p><div class="domain-state">Paper assessment: strong L2, early L3</div></div><div class="card"><span class="tag">S2 · Embodied intelligence</span><h3>The policy chooses what it gets to see.</h3><p class="small">Experience is endogenous, components are coupled, and physical trials can’t always be reset or reversed.</p><div class="domain-state">Paper assessment: L2-L3 frontier, simulated L4</div></div><div class="card"><span class="tag">S3 · Software engineering</span><h3>Tests are powerful, but conditional.</h3><p class="small">Executable feedback is fast, yet passing tests depends on the specification, coverage, repository, and environment.</p><div class="domain-state">Paper assessment: mature L2, emerging L3, bounded L5</div></div><div class="card"><span class="tag">S4 · Healthcare</span><h3>Learning cannot be unrestricted trial and error.</h3><p class="small">Outcomes are delayed and confounded. Updates may not transfer across populations or institutions.</p><div class="domain-state">Paper assessment: mature L2, limited L3-like, little real L4-L5</div></div></div></div><div class="source-note"><span>Figure 9 and application sections, pp. 36-43.</span><span>Status labels are the paper's assessment</span></div>
+    </section>
+
+    <section class="slide compact" id="s18" data-title="Industry evidence">
+      <div class="slide-inner"><div class="eyebrow">15 · Early industrial evidence</div><h2>Industry is already building pieces of the loop.</h2><div class="grid-2"><div class="card"><span class="tag">Theseus</span><h3>Environment → data → model → environment</h3><p class="small">The paper reports workspace pilots where reconstructed environments improved rubric scores by 18.65-39.67 percentage points across five fixed model-harness pairings. The full sustained cycle remains to be established.</p></div><div class="card"><span class="tag">Humanlaya</span><h3>Delivery feedback → quality-system update</h3><p class="small">Reported internal comparison: key-defect packages fell from 9.0% to 3.7%, while average handling time fell from 48 to 27 minutes, after four feedback-driven updates.</p></div><div class="card"><span class="tag">Tencent Hyra</span><h3>Executable experience bank</h3><p class="small">Past code, logs, scores, and insights are recombined to guide parallel proposals. The evaluator can also be strengthened when loopholes appear.</p></div><div class="card"><span class="tag">Agent-Native Research Lab</span><h3>Research artefacts as inheritance substrate</h3><p class="small">The paper reports 93.7% vs 72.4% QA over prior work and 64.4% vs 57.4% reproduction success for agent-native vs conventional artefacts.</p></div></div><p class="tiny" style="margin-top:1rem">All figures on this slide are reported by the preprint. They aren’t independently verified here, and some are company-reported or preliminary.</p></div><div class="source-note"><span>Industry landscape, pp. 44-49.</span><span>Evidence level: preliminary / reported by source</span></div>
+    </section>
+
+    <section class="slide compact" id="s19" data-title="Failure modes">
+      <div class="slide-inner"><div class="eyebrow">16 · What can go wrong</div><h2>Persistence turns small mistakes into system behaviour.</h2><div class="two-col"><div class="card"><div class="risk"><i class="risk-dot"></i><p><strong>Wrong diagnosis.</strong> The fix targets the symptom, not the component that caused the failure.</p></div><div class="risk"><i class="risk-dot"></i><p><strong>Experience corruption.</strong> A weak difficulty proxy, judge, or memory entry steers later learning.</p></div><div class="risk"><i class="risk-dot"></i><p><strong>Library drift.</strong> More skills can degrade retrieval and stall progress.</p></div><div class="risk"><i class="risk-dot"></i><p><strong>Evaluator exploitation.</strong> The system learns to score well, not to become more capable.</p></div><div class="risk"><i class="risk-dot"></i><p><strong>Capability displacement.</strong> A new behaviour improves one task and quietly breaks old ones.</p></div></div><div><div class="card"><span class="tag">The governance invariant</span><h3>Keep an independent anchor.</h3><p class="small">Protected evaluation, matched budgets, version histories, held-out tasks, and rollback provide the boundary between “the score changed” and “the system improved”.</p></div><div class="card soft" style="margin-top:1rem"><h3>Human authority remains explicit</h3><p class="small">Mission, safety constraints, access permissions, resource limits, and consequential releases should remain governed.</p></div></div></div></div><div class="source-note"><span>Challenges and future directions, pp. 50-53; L1-L5 evaluation sections.</span><span>Safety note: this deck is not a deployment protocol</span></div>
+    </section>
+
+    <section class="slide section-break" id="s20" data-title="Implementation guide">
+      <div class="slide-inner"><div class="eyebrow">Implementation guide</div><h2>Build the smallest credible loop first.</h2><p class="lede">Start with a bounded, reversible target and prove that an update helps later tasks before increasing autonomy.</p><div class="hero-meta"><span class="pill"><strong>Recommended starting point</strong> L1-L2 harness or skill improvement</span><span class="pill"><strong>Non-negotiable</strong> independent regression gate</span></div></div><div class="source-note"><span>Implementation guide: recommendations inferred from the paper's framework</span><span>Not a source-reported recipe</span></div>
+    </section>
+
+    <section class="slide compact" id="s21" data-title="Step 1: target">
+      <div class="slide-inner"><div class="eyebrow">17 · Step 1</div><h2>Choose one target and define the state that can persist.</h2><div class="grid-2"><div class="card"><div class="step"><div class="step-num">1</div><div><h3>Pick a bounded target</h3><p>Examples: a retrieval policy, coding-agent harness, skill library, research workflow, or evaluator wrapper.</p></div></div><div class="step" style="margin-top:1.1rem"><div class="step-num" style="background:var(--lime)">2</div><div><h3>Define the successor state</h3><p>Versioned files, memory entries, tools, prompts, or model weights that the next round will actually load.</p></div></div></div><div><div class="code-label">Design record</div><pre>{
+  "target": "agent_harness",
+  "state": "git_commit + skill_registry",
+  "objective": "fewer incomplete repository changes",
+  "protected_eval": "hidden_regression_suite",
+  "human_gate": "required_before_release"
+}</pre></div></div><div class="footer-takeaway" style="margin-top:1rem"><strong>Done condition:</strong> you can point to the exact artefact that a later run inherits.</div></div><div class="source-note"><span>Derived from the paper's target, system state, successor, and external-control concepts, pp. 10-11.</span><span>Recommendation / implementation inference</span></div>
+    </section>
+
+    <section class="slide compact" id="s22" data-title="Step 2: evidence">
+      <div class="slide-inner"><div class="eyebrow">18 · Step 2</div><h2>Capture evidence so a future agent can tell what happened.</h2><div class="two-col"><div><div class="grid-2"><div class="card soft"><h3>Input</h3><p class="small">Task, environment, model, tools, constraints, and initial state.</p></div><div class="card soft"><h3>Trace</h3><p class="small">Actions, intermediate outputs, errors, tool results, and human corrections.</p></div><div class="card soft"><h3>Outcome</h3><p class="small">Tests, scores, costs, latency, side effects, and uncertainty.</p></div><div class="card soft"><h3>Lineage</h3><p class="small">Parent version, proposed diff, decision, and later reuse.</p></div></div></div><div class="card"><span class="tag">Evidence packet</span><pre>parent_state
+proposed_change
+motivating_evidence
+evaluation_config
+acceptance_decision
+supporting_trace
+applicability_conditions
+rollback_pointer</pre></div></div><p class="small" style="margin-top:1rem">The paper argues that future successors need failed branches and operating conditions, not only polished final answers.</p></div><div class="source-note"><span>Reproducible infrastructure and agent-native research artefacts, pp. 49 and 53.</span><span>Recommendation / implementation inference</span></div>
+    </section>
+
+    <section class="slide compact" id="s23" data-title="Step 3: propose">
+      <div class="slide-inner"><div class="eyebrow">19 · Step 3</div><h2>Turn recurring failures into testable intervention hypotheses.</h2><div class="flow"><div class="flow-step">Cluster failures</div><div class="flow-arrow">→</div><div class="flow-step highlight">Propose one change</div><div class="flow-arrow">→</div><div class="flow-step">Predict the effect</div></div><div class="grid-2"><div class="card"><span class="tag">Bad proposal</span><p class="small">“Make the agent smarter.”</p><p class="tiny">Too broad to attribute, test, or roll back.</p></div><div class="card" style="border-color:rgba(184,242,125,.3)"><span class="tag" style="color:var(--lime)">Good proposal</span><p class="small">“Add a pagination check to the API-retrieval skill because 7 of 12 failures stopped before next_page was null.”</p><p class="tiny">Specific cause, evidence, change, and predicted effect.</p></div></div><div class="footer-takeaway" style="margin-top:1rem"><strong>Done condition:</strong> every candidate includes a causal hypothesis and a measurable expected effect.</div></div><div class="source-note"><span>Cross-component diagnosis and coordinated improvement, pp. 50-51.</span><span>Recommendation / implementation inference</span></div>
+    </section>
+
+    <section class="slide compact" id="s24" data-title="Step 4: validate">
+      <div class="slide-inner"><div class="eyebrow">20 · Step 4</div><h2>Validate before you let the change persist.</h2><div class="two-col"><div class="card"><span class="tag">Control vs treatment</span><pre>same tasks
+same base model
+same tools
+same budget
+
+control: current state
+treatment: candidate state
+
+compare:
+- target outcome
+- old capabilities
+- cost / latency
+- side effects</pre></div><div><div class="risk"><i class="risk-dot" style="background:var(--cyan);box-shadow:0 0 18px rgba(103,232,249,.6)"></i><p><strong>Fast gate:</strong> unit tests, compilation, schema checks, sandbox, safety filters.</p></div><div class="risk"><i class="risk-dot" style="background:var(--lime);box-shadow:0 0 18px rgba(184,242,125,.6)"></i><p><strong>Regression gate:</strong> fixed protected tasks and previously solved capabilities.</p></div><div class="risk"><i class="risk-dot" style="background:var(--amber);box-shadow:0 0 18px rgba(255,209,102,.6)"></i><p><strong>Transfer gate:</strong> fresh tasks, held-out environments, or a different repository.</p></div><div class="risk"><i class="risk-dot" style="background:var(--violet);box-shadow:0 0 18px rgba(185,165,255,.6)"></i><p><strong>Human gate:</strong> required for consequential changes or uncertain evidence.</p></div></div></div><div class="footer-takeaway" style="margin-top:1rem"><strong>Done condition:</strong> a candidate can be rejected, accepted, or escalated with a recorded reason.</div></div><div class="source-note"><span>HDSO paired testing, protected evaluation, rollback, and L5 measurement, pp. 30 and 34-35.</span><span>Recommendation / implementation inference</span></div>
+    </section>
+
+    <section class="slide compact" id="s25" data-title="Step 5: retain">
+      <div class="slide-inner"><div class="eyebrow">21 · Step 5</div><h2>Retain selectively, reuse explicitly, and make rollback cheap.</h2><div class="grid-3"><div class="card"><span class="tag">Admit</span><h3>Write to the approved state</h3><p class="small">Attach evidence, scope, dependencies, and the validation result.</p></div><div class="card"><span class="tag">Activate</span><h3>Make reuse observable</h3><p class="small">Log whether the next agent retrieved and followed the skill or harness change.</p></div><div class="card"><span class="tag">Retire</span><h3>Manage drift</h3><p class="small">Cap the library, track contribution, and revalidate or retire stale artefacts.</p></div></div><div class="two-col" style="margin-top:1rem"><div class="card soft"><h3>Rollback pointer</h3><p class="small">Every accepted update should identify its parent and provide a one-action revert path.</p></div><div class="card soft"><h3>Release log</h3><p class="small">Record who or what approved it, what it changed, and what later evidence says.</p></div></div><div class="footer-takeaway" style="margin-top:1rem"><strong>Done condition:</strong> you can answer “what changed, why, where is it used, and how do we undo it?”</div></div><div class="source-note"><span>Persistent-state management, library drift, selective retention, and governed deployment, pp. 30-31 and 51.</span><span>Recommendation / implementation inference</span></div>
+    </section>
+
+    <section class="slide compact" id="s26" data-title="Step 6: graduate">
+      <div class="slide-inner"><div class="eyebrow">22 · Step 6</div><h2>Only graduate to higher autonomy when the evidence earns it.</h2><div class="ladder"><div class="level"><div class="level-code">L1</div><div><div class="level-name">Can it execute reliably?</div><div class="level-desc">Procedures are explicit; retained outputs are safe.</div></div><div class="level-arrow">→</div></div><div class="level"><div class="level-code">L2</div><div><div class="level-name">Can it choose useful interventions?</div><div class="level-desc">Search is efficient and doesn’t exploit the evaluator.</div></div><div class="level-arrow">→</div></div><div class="level"><div class="level-code">L3</div><div><div class="level-name">Can it choose valuable future experience?</div><div class="level-desc">Validity, difficulty, diversity, and learning benefit are separated.</div></div><div class="level-arrow">→</div></div><div class="level"><div class="level-code">L4</div><div><div class="level-name">Can it adapt in deployment without accumulating drift?</div><div class="level-desc">Use, transfer, monitoring, and release authority are governed.</div></div><div class="level-arrow">→</div></div><div class="level"><div class="level-code">L5</div><div><div class="level-name">Can the revised mechanism improve later successors?</div><div class="level-desc">Matched budgets, independent assessment, and long-horizon evidence.</div></div><div class="level-arrow">✓</div></div></div></div><div class="source-note"><span>Cross-level synthesis and long-horizon evaluation, pp. 35 and 50-53.</span><span>Recommendation / implementation inference</span></div>
+    </section>
+
+    <section class="slide compact" id="s27" data-title="Project patterns">
+      <div class="slide-inner"><div class="eyebrow">23 · Applied patterns for your projects</div><h2>Three safe places to experiment with RSI thinking.</h2><div class="grid-3"><div class="card"><span class="tag">Koinaku</span><h3>Repository-grounded agent improvement</h3><p class="small">Cluster recurring implementation failures, propose one harness or skill change, run the golden test suite, and retain only a versioned, reversible improvement.</p><div class="domain-state">Start at L1-L2</div></div><div class="card"><span class="tag">Kingdom of Hype</span><h3>Evolutionary narrative systems</h3><p class="small">Use playtest traces to evolve crisis-generation rules or NPC memory, while keeping the game’s design constraints and protected scenarios fixed.</p><div class="domain-state">Start in simulation</div></div><div class="card"><span class="tag">PhD research agent</span><h3>Agent-native research inheritance</h3><p class="small">Persist hypotheses, failed branches, provenance, executable analyses, and validation status so each research cycle inherits evidence rather than only prose.</p><div class="domain-state">Start with provenance</div></div></div><div class="toggle" id="evidence-toggle" style="margin-top:1.2rem"><button class="active" data-mode="paper">Paper says</button><button data-mode="inference">My implementation inference</button></div><div class="mode-copy active" data-copy="paper"><p class="small" style="margin-top:.75rem">The paper uses software engineering, science, and research infrastructure as examples where feedback can be executable or traceable, but it doesn’t evaluate these three projects.</p></div><div class="mode-copy" data-copy="inference"><p class="small" style="margin-top:.75rem">These are proposed applications of the framework to your projects, not findings reported by the paper. Keep them bounded, offline or sandboxed, and reversible.</p></div></div><div class="source-note"><span>Project examples are implementation inferences, mapped to the paper's software, science, and agent-native artefact patterns.</span><span>Evidence / inference toggle</span></div>
+    </section>
+
+    <section class="slide compact" id="s28" data-title="Takeaways">
+      <div class="slide-inner"><div class="eyebrow">24 · Final takeaways</div><h2>Genuine RSI is a governance and evidence problem as much as a capability problem.</h2><div class="grid-3"><div class="card"><span class="tag">1</span><h3>Persistence is the first boundary.</h3><p class="small">Fixing an output is not the same as changing the system that produces future outputs.</p></div><div class="card"><span class="tag">2</span><h3>Autonomy has layers.</h3><p class="small">Execution, strategy, experience, deployment, and meta-improvement should be evaluated separately.</p></div><div class="card"><span class="tag">3</span><h3>Verification must survive recursion.</h3><p class="small">If the evaluator changes, the comparison may change too. Protect anchors and preserve lineage.</p></div></div><div class="quote" style="margin-top:1.4rem">The decisive evidence is not a smarter current agent. It is an inherited change that makes later improvement more useful, transferable, attributable, and efficient.</div><p class="small" style="margin-top:1.2rem">Open questions: long-horizon accumulation, cross-domain transfer, cost-aware stopping, independent evaluation, and safe adaptation in science, robotics, software, and healthcare.</p></div><div class="source-note"><span>Conclusion and future directions, pp. 50-53.</span><span><a href="https://theseus-labs-rsi.github.io/" target="_blank" rel="noreferrer">Project page ↗</a></span></div>
+    </section>
+
+    <section class="slide compact" id="s29" data-title="Source notes">
+      <div class="slide-inner"><div class="eyebrow">Source notes</div><h2>Read the preprint with the right level of confidence.</h2><div class="grid-2"><div class="card"><span class="tag">Primary source</span><h3>The Last AI Built by Humans: Toward Genuine Recursive Self-Improvement</h3><p class="small">Yi Duan, Ying Liu, Zirui Tang et al. arXiv:2609.11873v1, 10 September 2026. Supplied PDF, 75 pages.</p><p class="small"><a href="https://arxiv.org/abs/2609.11873" target="_blank" rel="noreferrer">arXiv abstract and PDF ↗</a><br><a href="https://theseus-labs-rsi.github.io/" target="_blank" rel="noreferrer">Project page ↗</a></p></div><div class="card"><span class="tag">How to use this deck</span><p class="small">Blue source notes identify where the paper supports a claim. Slides marked “recommendation / implementation inference” extend the framework into a practical design pattern.</p><p class="small">Company-reported and preliminary results are labelled as such. No claims in this deck have been independently reproduced.</p><p class="tiny">This is an educational explainer, not a deployment, safety, medical, or investment recommendation.</p></div></div><div style="margin-top:1.4rem"><span class="kbd">←</span> <span class="kbd">→</span> navigate <span class="kbd">Space</span> next <span class="kbd">T</span> table of contents <span class="kbd">Esc</span> close</div></div><div class="source-note"><span>End of deck</span><span>Built as a self-contained shareable HTML file</span></div>
+    </section>
+  </main>
+
+  <button class="toc-btn" id="toc-btn" aria-label="Open table of contents">☰</button>
+  <div class="veil" id="veil"></div>
+  <aside class="toc" id="toc" aria-label="Table of contents"><h3>Contents</h3><div id="toc-links"></div></aside>
+  <nav class="nav" aria-label="Slide navigation"><button id="prev" aria-label="Previous slide">←</button><div class="progress"><span id="progress-bar"></span></div><div class="counter" id="counter">1 / 29</div><button id="next" aria-label="Next slide">→</button></nav>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      let current = 0;
+      let touchStartX = null;
+      const counter = document.getElementById('counter');
+      const progress = document.getElementById('progress-bar');
+      const toc = document.getElementById('toc');
+      const veil = document.getElementById('veil');
+      const tocLinks = document.getElementById('toc-links');
+      const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+      function renderToc() {
+        tocLinks.innerHTML = slides.map((s, i) => '<a href="#' + s.id + '" data-go="' + i + '"><span>' + String(i + 1).padStart(2, '0') + '</span>' + s.dataset.title + '</a>').join('');
+        tocLinks.querySelectorAll('[data-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); go(Number(a.dataset.go)); toggleToc(false); }));
+      }
+      function go(n, updateHash = true) {
+        current = clamp(n, 0, slides.length - 1);
+        slides.forEach((s, i) => s.classList.toggle('is-active', i === current));
+        counter.textContent = (current + 1) + ' / ' + slides.length;
+        progress.style.width = (((current + 1) / slides.length) * 100) + '%';
+        document.querySelectorAll('.toc a').forEach((a, i) => a.style.color = i === current ? 'var(--ink)' : 'var(--muted)');
+        if (updateHash) history.replaceState(null, '', '#' + slides[current].id);
+      }
+      function goFromHash() {
+        const id = location.hash.replace('#', '');
+        const idx = slides.findIndex(s => s.id === id);
+        go(idx >= 0 ? idx : 0, false);
+      }
+      function toggleToc(force) {
+        const open = typeof force === 'boolean' ? force : !toc.classList.contains('open');
+        toc.classList.toggle('open', open); veil.classList.toggle('open', open);
+      }
+      document.getElementById('prev').addEventListener('click', () => go(current - 1));
+      document.getElementById('next').addEventListener('click', () => go(current + 1));
+      document.getElementById('toc-btn').addEventListener('click', () => toggleToc());
+      veil.addEventListener('click', () => toggleToc(false));
+      document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); go(current + 1); }
+        if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(current - 1); }
+        if (e.key.toLowerCase() === 't') toggleToc();
+        if (e.key === 'Escape') toggleToc(false);
+        if (e.key === 'Home') go(0);
+        if (e.key === 'End') go(slides.length - 1);
+      });
+      document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive:true});
+      document.addEventListener('touchend', e => { if (touchStartX === null) return; const dx = e.changedTouches[0].screenX - touchStartX; if (Math.abs(dx) > 55) go(current + (dx < 0 ? 1 : -1)); touchStartX = null; }, {passive:true});
+      document.querySelectorAll('#ladder .level').forEach(item => item.addEventListener('click', () => {
+        const data = {
+          B0: ['B0', 'Output change without persistent system change.', 'Examples include self-refinement, reflections, and tree search that end with the task.', 'Boundary: the experience is discarded when the task ends.'],
+          L1: ['L1', 'AI executes a human-defined improvement procedure.', 'The accepted artefact persists into later tasks, but the recipe, objective, and acceptance criteria remain external.', 'Boundary: the procedure itself isn’t autonomously revised.'],
+          L2: ['L2', 'AI chooses which improvement intervention to attempt next.', 'It diagnoses evidence, searches over prompts, harnesses, workflows, training rules, or implementations.', 'Boundary: success is still defined by an external objective and evaluator.'],
+          L3: ['L3', 'AI chooses what learning experience to acquire next.', 'The evolving learner changes the future learning agenda through adaptive tasks, self-play, or practice.', 'Boundary: difficulty or correctness alone doesn’t prove learning value.'],
+          L4: ['L4', 'AI decides which deployment consequences persist.', 'Interaction histories become memory, skills, tools, code, harness, or weight updates for later tasks.', 'Boundary: release authority, access, objectives, and protected evaluation stay governed.'],
+          L5: ['L5', 'AI improves the mechanism that produces future improvements.', 'Successors inherit a revised improver, evaluator, search policy, or research policy.', 'Boundary: structural inheritance is not yet proof of effective long-horizon acceleration.']
+        }[item.dataset.level];
+        document.querySelectorAll('#ladder .level').forEach(x => x.classList.toggle('selected', x === item));
+        document.getElementById('ladder-detail').innerHTML = '<div><div class="detail-code">' + data[0] + '</div><h3 style="margin-top:1.2rem">' + data[1] + '</h3><p class="small">' + data[2] + '</p></div><div class="detail-rule">' + data[3] + '</div>';
+      }));
+      document.querySelectorAll('#evidence-toggle button').forEach(btn => btn.addEventListener('click', () => {
+        document.querySelectorAll('#evidence-toggle button').forEach(x => x.classList.toggle('active', x === btn));
+        document.querySelectorAll('.mode-copy').forEach(x => x.classList.toggle('active', x.dataset.copy === btn.dataset.mode));
+      }));
+      renderToc();
+      goFromHash();
+      window.addEventListener('hashchange', goFromHash);
+    })();
+  </script>
+</body>
+</html>
