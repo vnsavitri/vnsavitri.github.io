@@ -4,7 +4,7 @@ slug: koinaku
 hook: A mobile-first financial literacy app for Indonesian Gen Z, built with loop and graph engineering. Micro-lessons plus a paper-trading sandbox with virtual Rupiah, live in beta.
 status: ["beta", "production"]
 tech: ["Next.js 16", "TypeScript", "Supabase", "Capacitor"]
-live: https://web.koinaku.com
+live: https://koinaku.com
 order: 1
 tier: flagship
 variant: koinaku
@@ -27,4 +27,4 @@ The build runs as gated loops, not vibe coding. Every task moves through a ticke
 
 ## Status
 
-Live in early beta at [web.koinaku.com](https://web.koinaku.com), in active development with the loop system running daily.
+Live in early beta at [koinaku.com](https://koinaku.com), in active development with the loop system running daily.
