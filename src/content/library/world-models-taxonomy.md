@@ -1,7 +1,7 @@
 ---
 title: "World Models Taxonomy"
 slug: world-models-taxonomy
-category: architecture
+category: models
 date: 2026-06-04
 file: /library/decks/world-models-taxonomy.html
 thumb: /library/thumbs/world-models-taxonomy.webp

@@ -1,7 +1,7 @@
 ---
 title: "Build Your Own CoworkOS"
 slug: build-your-own-coworkos
-category: guides
+category: building
 date: 2026-09-18
 file: /library/decks/build-your-own-coworkos.html
 thumb: /library/thumbs/build-your-own-coworkos.webp

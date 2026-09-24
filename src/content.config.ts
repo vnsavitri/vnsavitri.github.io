@@ -26,7 +26,7 @@ const library = defineCollection({
   schema: z.object({
     title: z.string(),
     slug: z.string(),
-    category: z.enum(["slides", "guides", "architecture", "books"]),
+    category: z.enum(["agents", "models", "building", "books"]),
     date: z.date(),
     file: z.string(),
     thumb: z.string(),
