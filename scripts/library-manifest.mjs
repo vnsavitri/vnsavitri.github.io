@@ -7,7 +7,7 @@ export const SOURCE_DIR = "/Users/vividm4/Documents/CoworkOS/00_Outputs";
 export const DECKS = [
   // --- Slide decks ---
   { file: "Agent-me Deep Dive.html", title: "Agent-Me: Your AI Agent Twin", category: "slides", date: "2026-09-23" },
-  { file: "Claude Financial Services Deck.html", title: "Claude for Financial Services", category: "slides", date: "2026-09-23" },
+  { file: "claude-financial-services-deck-prettified-20260924.html", title: "Claude for Financial Services", category: "slides", date: "2026-09-24" },
   { file: "Code as Agent Harness Deck.html", title: "Code as Agent Harness", category: "slides", date: "2026-09-23" },
   { file: "Last AI Built By Human Deck.html", title: "The Last AI Built by Humans", category: "slides", date: "2026-09-23" },
   { file: "LinkedIn Skills Deep Dive.html", title: "LinkedIn Skills Deep Dive", category: "slides", date: "2026-09-23" },
