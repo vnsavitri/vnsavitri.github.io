@@ -5,7 +5,7 @@ hook: "Natural-language retrieval across 235,000+ global brand assets, with an a
 status: ["production", "enterprise"]
 tech: ["MCP", "Vercel", "Brandfolder API", "ChatGPT Enterprise"]
 demo: https://www.youtube.com/watch?v=UOeHNyh5A7Y
-order: 1
+order: 2
 tier: flagship
 variant: dam
 ---

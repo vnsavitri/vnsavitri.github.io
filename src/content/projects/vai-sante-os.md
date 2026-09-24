@@ -5,7 +5,7 @@ hook: "A local-first, provenance-aware AI architecture for fragmented, high-stak
 status: ["research", "active"]
 tech: ["Python", "Mermaid", "evaluation harness"]
 repo: https://github.com/vnsavitri/vai_sante_os
-order: 2
+order: 3
 tier: flagship
 variant: sante
 accent: true

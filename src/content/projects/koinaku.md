@@ -5,7 +5,7 @@ hook: A mobile-first financial literacy app for Indonesian Gen Z, built with loo
 status: ["beta", "production"]
 tech: ["Next.js 16", "TypeScript", "Supabase", "Capacitor"]
 live: https://web.koinaku.com
-order: 3
+order: 1
 tier: flagship
 variant: koinaku
 accent: true
