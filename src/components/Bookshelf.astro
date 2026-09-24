@@ -32,8 +32,29 @@ const sections = Object.entries(categoryLabels)
 <div class="shelf">
   <div class="shelf-scroller" id="lib-shelf" tabindex="-1">
     <div class="shelf-run">
+      {/* "All" shows one mixed run, newest first (decks arrive date-sorted).
+          The category filters swap it for the grouped sections below. Only one
+          view is ever displayed, so links aren't duplicated for tab or AT. */}
+      <section class="shelf-section" id="shelf-all" data-view="all">
+        <span class="shelf-divider" aria-hidden="true"></span>
+        <h3 class="shelf-sr-only">All, newest first</h3>
+        <ul class="shelf-books">
+          {decks.map((deck) => (
+            <Book
+              slug={deck.data.slug}
+              title={deck.data.title}
+              file={deck.data.file}
+              thumb={deck.data.thumb}
+              category={deck.data.category}
+              categoryLabel={categoryLabels[deck.data.category]}
+              slideCount={deck.data.slideCount}
+              sizeKb={deck.data.sizeKb}
+            />
+          ))}
+        </ul>
+      </section>
       {sections.map((section) => (
-        <section class="shelf-section" id={`shelf-${section.category}`} data-section={section.category}>
+        <section class="shelf-section view-off" id={`shelf-${section.category}`} data-section={section.category}>
           <span class="shelf-section__label" aria-hidden="true"><span class={`cat-dot cat-dot--${section.category}`}></span>{section.label}</span>
           <span class="shelf-divider" aria-hidden="true"></span>
           <h3 class="shelf-sr-only">{section.label}</h3>
@@ -146,7 +167,8 @@ const sections = Object.entries(categoryLabels)
     scroll-margin-inline: 2rem;
   }
 
-  .shelf-section.hidden {
+  .shelf-section.hidden,
+  .shelf-section.view-off {
     display: none;
   }
 
@@ -408,19 +430,26 @@ const sections = Object.entries(categoryLabels)
 
     const slots = Array.from(shelf.querySelectorAll<HTMLElement>(".book-slot"));
     const sections = Array.from(shelf.querySelectorAll<HTMLElement>(".shelf-section"));
-    const total = slots.length;
+    const allView = document.getElementById("shelf-all");
+    const total = allView?.querySelectorAll(".book-slot").length ?? slots.length;
     let activeCat = "all";
 
     function apply() {
       const q = search!.value.toLowerCase().trim();
       let visible = 0;
 
+      // Swap between the mixed run and the grouped sections.
+      sections.forEach((section) => {
+        const isAll = section === allView;
+        section.classList.toggle("view-off", isAll !== (activeCat === "all"));
+      });
+
       slots.forEach((slot) => {
         const catMatch = activeCat === "all" || slot.dataset.category === activeCat;
         const textMatch = !q || slot.dataset.title?.includes(q);
         const show = catMatch && !!textMatch;
         slot.classList.toggle("hidden", !show);
-        if (show) visible++;
+        if (show && !slot.closest(".view-off")) visible++;
       });
 
       // An empty section takes its bookend and label with it.
@@ -447,7 +476,7 @@ const sections = Object.entries(categoryLabels)
 
         const target =
           activeCat === "all"
-            ? shelf!.querySelector(".shelf-section")
+            ? allView
             : document.getElementById(`shelf-${activeCat}`);
         target?.scrollIntoView({ inline: "start", block: "nearest" });
       });
@@ -465,7 +494,7 @@ const sections = Object.entries(categoryLabels)
       if (!keys.includes(e.key)) return;
 
       const books = Array.from(
-        shelf.querySelectorAll<HTMLAnchorElement>(".book-slot:not(.hidden) .book")
+        shelf.querySelectorAll<HTMLAnchorElement>(".shelf-section:not(.view-off) .book-slot:not(.hidden) .book")
       );
       if (!books.length) return;
 

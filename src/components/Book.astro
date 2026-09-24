@@ -31,20 +31,19 @@ const thickness = isHardcover
 // identical between builds.
 const height = isHardcover ? 224 + (slideCount % 5) * 6 : 206 + (sizeKb % 4) * 4;
 
-// Each category has its own brand cloth so a shelf section reads at a glance,
-// matching the dots on the filters and labels (--cat-* in global.css). Spines
-// vary in depth within a category, from the data, so the shelf isn't flat.
-// Coral uses the soft tint lifted towards white: full coral fails spine-text
-// contrast with both cream and ink. Every pairing here is 4.5:1 or better.
-const CLOTH: Record<string, { base: string; toward: string; depths: number[]; fg: string }> = {
-  agents: { base: "var(--cat-agents)", toward: "black", depths: [0, 12, 24], fg: "var(--color-cream)" },
-  models: { base: "var(--color-accent-soft)", toward: "white", depths: [20, 30, 40], fg: "var(--color-ink)" },
-  building: { base: "var(--cat-building)", toward: "white", depths: [0, 12, 24], fg: "var(--color-ink)" },
-  books: { base: "var(--cat-books)", toward: "black", depths: [0, 12, 24], fg: "var(--color-cream)" },
+// Each category has its own shade of the site blue, darkest to lightest, so a
+// section reads at a glance and matches the dots on the filters and labels
+// (--cat-* in global.css). Spines vary a little in depth within a category,
+// from the data, so the shelf isn't flat. Every pairing is 4.5:1 or better.
+const CLOTH: Record<string, { toward: string; depths: number[]; fg: string }> = {
+  agents: { toward: "black", depths: [0, 12, 24], fg: "var(--color-cream)" },
+  models: { toward: "black", depths: [0, 10, 20], fg: "var(--color-cream)" },
+  building: { toward: "white", depths: [0, 12, 24], fg: "var(--color-ink)" },
+  books: { toward: "black", depths: [0, 5, 10], fg: "var(--color-ink)" },
 };
 const c = CLOTH[category] ?? CLOTH.agents;
 const depth = c.depths[(isHardcover ? slideCount : sizeKb) % 3];
-const cloth = { bg: `color-mix(in srgb, ${c.base} ${100 - depth}%, ${c.toward})`, fg: c.fg };
+const cloth = { bg: `color-mix(in srgb, var(--cat-${category}) ${100 - depth}%, ${c.toward})`, fg: c.fg };
 
 const typeLabel = isHardcover ? "Slide deck" : "Guide";
 const ariaLabel = isHardcover
