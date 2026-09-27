@@ -434,8 +434,34 @@ const sections = Object.entries(categoryLabels)
     const total = allView?.querySelectorAll(".book-slot").length ?? slots.length;
     let activeCat = "all";
 
+    // Deck text lives in a separate index so the page stays light: titles
+    // search instantly, and full text joins in once the index arrives.
+    let fullText: Record<string, string> = {};
+    let indexRequested = false;
+    function loadIndex() {
+      if (indexRequested) return;
+      indexRequested = true;
+      fetch("/library/search.json")
+        .then((r) => (r.ok ? r.json() : {}))
+        .then((data) => {
+          fullText = data;
+          if (search!.value.trim()) apply();
+        })
+        .catch(() => {
+          indexRequested = false;
+        });
+    }
+
+    // Every word must appear in the title or the deck's text, in any order.
+    function matches(slot: HTMLElement, terms: string[]) {
+      const title = slot.dataset.title ?? "";
+      const body = fullText[slot.querySelector<HTMLElement>(".book")?.dataset.slug ?? ""] ?? "";
+      return terms.every((t) => title.includes(t) || body.includes(t));
+    }
+
     function apply() {
       const q = search!.value.toLowerCase().trim();
+      const terms = q.split(/\s+/).filter(Boolean);
       let visible = 0;
 
       // Swap between the mixed run and the grouped sections.
@@ -446,7 +472,7 @@ const sections = Object.entries(categoryLabels)
 
       slots.forEach((slot) => {
         const catMatch = activeCat === "all" || slot.dataset.category === activeCat;
-        const textMatch = !q || slot.dataset.title?.includes(q);
+        const textMatch = !terms.length || matches(slot, terms);
         const show = catMatch && !!textMatch;
         slot.classList.toggle("hidden", !show);
         if (show && !slot.closest(".view-off")) visible++;
@@ -465,7 +491,11 @@ const sections = Object.entries(categoryLabels)
       if (noResults) noResults.style.display = visible === 0 ? "block" : "none";
     }
 
-    search.addEventListener("input", apply);
+    search.addEventListener("focus", loadIndex, { once: true });
+    search.addEventListener("input", () => {
+      loadIndex();
+      apply();
+    });
 
     filterBtns.forEach((btn) => {
       btn.addEventListener("click", () => {
