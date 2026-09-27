@@ -6,6 +6,10 @@ export const SOURCE_DIR = "/Users/vividm4/Documents/CoworkOS/00_Outputs";
 
 export const DECKS = [
   // --- Slide decks ---
+  { file: "Harness Zero Deep Dive.html", title: "Harness-Zero: Agent-as-Harness", category: "agents", date: "2026-09-27" },
+  { file: "Jev Deep Dive Slide Deck.html", title: "Jev: The Decision Model After the Chatbot Era", category: "models", date: "2026-09-27" },
+  { file: "Laya Deep Dive Slide Deck.html", title: "Laya: Decisions Without the Text Generator", category: "models", date: "2026-09-27" },
+  { file: "Univer Deep Dive Slide Deck.html", title: "Univer: Office Harness for AI Agents", category: "agents", date: "2026-09-27" },
   { file: "Agent-me Deep Dive.html", title: "Agent-Me: Your AI Agent Twin", category: "agents", date: "2026-09-23" },
   { file: "claude-financial-services-deck-prettified-20260924.html", title: "Claude for Financial Services", category: "building", date: "2026-09-24" },
   { file: "Code as Agent Harness Deck.html", title: "Code as Agent Harness", category: "agents", date: "2026-09-23" },

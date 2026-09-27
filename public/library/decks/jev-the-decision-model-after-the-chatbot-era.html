@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="A deep dive into Jev, TypeSafe's System One model, based on Senko Rašić's analysis and TypeSafe's public documentation." />
+  <title>Jev — the decision model after the chatbot era</title>
+  <style>
+    :root {
+      --paper: #f5f1e9;
+      --paper-2: #ebe5da;
+      --ink: #171916;
+      --muted: #666b63;
+      --line: rgba(23,25,22,.16);
+      --line-strong: rgba(23,25,22,.32);
+      --orange: #f36b3f;
+      --orange-dark: #9e341c;
+      --lime: #c9f46d;
+      --blue: #a7c7ff;
+      --violet: #d5c9ff;
+      --red: #f5a5a3;
+      --shadow: 0 24px 60px rgba(32, 29, 20, .10);
+      --max: 1200px;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--paper); color: var(--ink); scroll-behavior: smooth; }
+    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--paper); color: var(--ink); }
+    button, a { font: inherit; }
+    button { color: inherit; }
+    a { color: inherit; }
+
+    .deck { min-height: 100vh; overflow: hidden; }
+    .topbar { height: 64px; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10; background: rgba(245,241,233,.91); backdrop-filter: blur(12px); }
+    .brand { display: flex; gap: 10px; align-items: center; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; font-weight: 700; }
+    .brand-mark { width: 22px; height: 22px; border: 2px solid var(--ink); border-radius: 50%; position: relative; display: inline-block; }
+    .brand-mark::after { content: ""; width: 7px; height: 7px; position: absolute; right: -3px; top: 6px; border-radius: 50%; background: var(--orange); }
+    .topbar-actions { display: flex; gap: 8px; align-items: center; }
+    .icon-btn { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: transparent; display: inline-grid; place-items: center; cursor: pointer; transition: .2s ease; }
+    .icon-btn:hover, .icon-btn:focus-visible { background: var(--ink); color: var(--paper); outline: none; transform: translateY(-1px); }
+    .icon-btn[disabled] { opacity: .35; cursor: default; transform: none; }
+    .progress-wrap { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--line); }
+    .progress-bar { height: 100%; background: var(--orange); width: 0%; transition: width .25s ease; }
+
+    .stage { width: min(100%, 1440px); margin: 0 auto; }
+    .slide { display: none; min-height: calc(100vh - 64px); padding: clamp(28px, 5vw, 76px) clamp(22px, 6vw, 90px) 90px; position: relative; }
+    .slide.active { display: block; animation: enter .35s ease both; }
+    @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .slide-grid { max-width: var(--max); margin: 0 auto; }
+    .eyebrow { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; font-weight: 800; color: var(--muted); margin-bottom: 24px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(44px, 7vw, 104px); line-height: .96; letter-spacing: -.075em; max-width: 900px; margin-bottom: 24px; font-weight: 800; }
+    h2 { font-size: clamp(34px, 5vw, 70px); line-height: .98; letter-spacing: -.06em; max-width: 900px; margin-bottom: 24px; font-weight: 800; }
+    h3 { font-size: clamp(19px, 2.1vw, 28px); line-height: 1.05; letter-spacing: -.035em; margin-bottom: 10px; font-weight: 750; }
+    p { font-size: clamp(16px, 1.55vw, 21px); line-height: 1.45; max-width: 760px; color: #393d37; }
+    .lede { font-size: clamp(19px, 2.3vw, 30px); line-height: 1.18; letter-spacing: -.035em; max-width: 820px; }
+    .tiny { font-size: 12px; line-height: 1.45; color: var(--muted); }
+    .muted { color: var(--muted); }
+    .orange { color: var(--orange-dark); }
+    .lime { color: #3e5d00; }
+    .source { position: absolute; left: clamp(22px, 6vw, 90px); right: clamp(22px, 6vw, 90px); bottom: 28px; display: flex; justify-content: space-between; align-items: end; gap: 18px; font-size: 11px; color: var(--muted); }
+    .source a { text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 3px; }
+    .source .number { font-weight: 800; letter-spacing: .12em; white-space: nowrap; }
+
+    .cover { background: var(--paper); overflow: hidden; }
+    .cover::before { content: ""; position: absolute; width: 54vw; height: 54vw; max-width: 700px; max-height: 700px; right: -13vw; top: 10vh; border-radius: 48% 52% 42% 58%; background: var(--orange); opacity: .95; transform: rotate(-16deg); }
+    .cover::after { content: ""; position: absolute; width: 28vw; height: 28vw; max-width: 350px; max-height: 350px; right: 13vw; bottom: 9vh; border-radius: 50%; border: 1px solid var(--ink); opacity: .32; box-shadow: 0 0 0 28px rgba(23,25,22,.04), 0 0 0 56px rgba(23,25,22,.04); }
+    .cover .slide-grid { position: relative; z-index: 1; min-height: calc(100vh - 170px); display: flex; flex-direction: column; justify-content: center; }
+    .cover h1 { max-width: 760px; }
+    .cover h1 span { display: block; color: var(--orange-dark); }
+    .cover .lede { max-width: 580px; }
+    .cover-meta { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; margin-top: 46px; }
+    .meta-chip { border: 1px solid var(--line-strong); border-radius: 999px; padding: 9px 13px; font-size: 12px; background: rgba(245,241,233,.68); }
+    .cover-stamp { position: absolute; right: clamp(30px, 10vw, 160px); top: 88px; z-index: 2; width: 128px; height: 128px; border: 1px solid var(--ink); border-radius: 50%; display: grid; place-items: center; text-align: center; font-size: 11px; line-height: 1.1; text-transform: uppercase; letter-spacing: .11em; transform: rotate(12deg); background: rgba(245,241,233,.35); }
+
+    .section-break { background: var(--ink); color: var(--paper); display: none; }
+    .section-break.active { display: block; }
+    .section-break p { color: rgba(245,241,233,.72); }
+    .section-break .section-count { color: var(--lime); font-size: 14px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    .section-break .big-mark { position: absolute; right: 8vw; bottom: 10vh; font-size: clamp(160px, 27vw, 420px); letter-spacing: -.15em; line-height: .7; color: rgba(201,244,109,.92); font-weight: 900; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 5vw, 80px); align-items: start; }
+    .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .rule { height: 1px; background: var(--line); margin: 26px 0; }
+    .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 30px; }
+    .stat { background: var(--paper); padding: 19px; min-height: 132px; }
+    .stat strong { display: block; font-size: clamp(30px, 4vw, 54px); letter-spacing: -.06em; line-height: .95; margin-bottom: 10px; }
+    .stat span { display: block; font-size: 12px; line-height: 1.35; color: var(--muted); }
+
+    .callout { padding: 22px; border-left: 5px solid var(--orange); background: rgba(243,107,63,.10); margin: 24px 0; max-width: 780px; }
+    .callout p { margin-bottom: 0; }
+    .callout.lime-callout { border-left-color: #769900; background: rgba(201,244,109,.24); }
+    .callout.dark-callout { border-left-color: var(--lime); background: rgba(255,255,255,.06); }
+    .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 28px; }
+    .card { border: 1px solid var(--line); padding: 20px; min-height: 170px; background: rgba(255,255,255,.18); }
+    .card.accent-orange { border-top: 5px solid var(--orange); }
+    .card.accent-blue { border-top: 5px solid var(--blue); }
+    .card.accent-lime { border-top: 5px solid var(--lime); }
+    .card p { font-size: 15px; line-height: 1.4; margin-bottom: 0; }
+    .card .label { font-size: 11px; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; color: var(--muted); margin-bottom: 13px; }
+
+    .diagram { margin-top: 34px; padding: 22px 0 6px; }
+    .pipeline { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: 13px; }
+    .node { min-height: 130px; border: 1px solid var(--line-strong); padding: 18px; display: flex; flex-direction: column; justify-content: space-between; background: rgba(255,255,255,.28); }
+    .node strong { font-size: 20px; letter-spacing: -.03em; }
+    .node small { color: var(--muted); font-size: 12px; line-height: 1.3; }
+    .arrow { font-size: 24px; color: var(--orange-dark); text-align: center; }
+    .parallel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+    .pill { border: 1px solid var(--line-strong); padding: 10px 12px; font-size: 12px; background: var(--paper); }
+
+    .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 30px; }
+    .compare > div { background: var(--paper); padding: 24px; }
+    .compare .head { font-size: 12px; text-transform: uppercase; letter-spacing: .11em; font-weight: 800; color: var(--muted); margin-bottom: 20px; }
+    .compare ul { padding-left: 18px; margin: 0; }
+    .compare li { margin: 10px 0; line-height: 1.35; font-size: 15px; }
+    .compare .jev { background: rgba(201,244,109,.20); }
+
+    .bars { margin-top: 28px; max-width: 760px; }
+    .bar-row { display: grid; grid-template-columns: 160px 1fr 68px; gap: 12px; align-items: center; margin: 18px 0; font-size: 13px; }
+    .bar-track { height: 18px; background: var(--paper-2); position: relative; }
+    .bar-fill { height: 100%; background: var(--orange); }
+    .bar-fill.blue { background: #719ce4; }
+    .bar-value { text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; }
+    .axis { display: flex; justify-content: space-between; margin-left: 172px; color: var(--muted); font-size: 11px; border-top: 1px solid var(--line); padding-top: 7px; }
+
+    .confidence { display: grid; grid-template-columns: 1.1fr .9fr; gap: 20px; margin-top: 28px; align-items: stretch; }
+    .confidence-rail { border: 1px solid var(--line-strong); display: grid; grid-template-columns: 1fr 1fr 1fr; min-height: 180px; }
+    .confidence-rail div { padding: 18px; display: flex; flex-direction: column; justify-content: space-between; border-right: 1px solid var(--line); }
+    .confidence-rail div:last-child { border-right: 0; }
+    .confidence-rail .low { background: rgba(245,165,163,.55); }
+    .confidence-rail .mid { background: rgba(167,199,255,.55); }
+    .confidence-rail .high { background: rgba(201,244,109,.65); }
+    .confidence-rail strong { font-size: 14px; }
+    .confidence-rail span { font-size: 12px; line-height: 1.35; }
+    .threshold { border: 1px solid var(--line); padding: 20px; }
+    .threshold code { color: var(--orange-dark); }
+
+    .code-wrap { border: 1px solid var(--line-strong); background: #1d211d; color: #e8f0de; margin-top: 25px; box-shadow: var(--shadow); }
+    .code-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,.14); padding: 10px 14px; color: #aeb7a5; font-size: 11px; letter-spacing: .10em; text-transform: uppercase; }
+    .copy-btn { background: transparent; border: 1px solid rgba(255,255,255,.25); color: #e8f0de; border-radius: 999px; padding: 6px 10px; font-size: 11px; cursor: pointer; }
+    .copy-btn:hover, .copy-btn:focus-visible { background: #e8f0de; color: #1d211d; outline: none; }
+    pre { margin: 0; padding: 20px; overflow-x: auto; font: 13px/1.65 "SFMono-Regular", Consolas, "Liberation Mono", monospace; white-space: pre; }
+    .code-comment { color: #8fae73; }
+    .code-key { color: #ffd783; }
+    .code-string { color: #b9d9ff; }
+
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 28px; }
+    .step { border-top: 2px solid var(--ink); padding-top: 13px; }
+    .step .n { font-size: 13px; font-weight: 800; color: var(--orange-dark); margin-bottom: 25px; }
+    .step p { font-size: 14px; line-height: 1.4; margin-bottom: 0; }
+    .step strong { display: block; font-size: 18px; margin-bottom: 8px; }
+
+    .checklist { display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px; margin-top: 25px; max-width: 900px; }
+    .check { border-top: 1px solid var(--line); padding: 14px 0; display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; }
+    .check i { width: 20px; height: 20px; border-radius: 50%; background: var(--lime); display: grid; place-items: center; font-style: normal; font-size: 12px; font-weight: 900; }
+    .check strong { display: block; font-size: 15px; margin-bottom: 3px; }
+    .check span { color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+    .sources { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-top: 25px; max-width: 920px; }
+    .source-link { border-top: 1px solid var(--line); padding: 13px 0; text-decoration: none; display: flex; justify-content: space-between; gap: 18px; font-size: 14px; }
+    .source-link:hover span:first-child { color: var(--orange-dark); }
+    .source-link span:last-child { color: var(--muted); white-space: nowrap; font-size: 12px; }
+
+    .overview { position: fixed; inset: 0; z-index: 30; background: rgba(23,25,22,.82); backdrop-filter: blur(10px); padding: 40px; overflow: auto; display: none; }
+    .overview.open { display: block; }
+    .overview-inner { max-width: 1100px; margin: 0 auto; color: var(--paper); }
+    .overview-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .overview-head h2 { font-size: 36px; margin: 0; }
+    .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .overview-card { min-height: 110px; text-align: left; border: 1px solid rgba(245,241,233,.32); background: rgba(245,241,233,.08); color: var(--paper); padding: 15px; cursor: pointer; transition: .2s ease; }
+    .overview-card:hover, .overview-card:focus-visible { background: var(--lime); color: var(--ink); outline: none; transform: translateY(-2px); }
+    .overview-card .num { font-size: 11px; letter-spacing: .12em; opacity: .7; }
+    .overview-card .title { margin-top: 20px; font-size: 14px; line-height: 1.2; font-weight: 750; }
+
+    .bottom-nav { position: fixed; right: 26px; bottom: 24px; z-index: 12; display: flex; gap: 7px; padding: 6px; border: 1px solid var(--line); background: rgba(245,241,233,.86); backdrop-filter: blur(10px); border-radius: 999px; }
+    .bottom-nav .icon-btn { border: 0; }
+    .hint { position: fixed; left: 28px; bottom: 29px; z-index: 5; color: var(--muted); font-size: 11px; letter-spacing: .05em; }
+    body.presenting .topbar { position: fixed; left: 0; right: 0; top: 0; }
+    body.presenting .stage { padding-top: 64px; }
+    body.presenting .slide { min-height: 100vh; }
+    body.presenting .hint { display: none; }
+
+    @media (max-width: 760px) {
+      .topbar { height: 56px; padding: 0 16px; }
+      .brand { font-size: 10px; }
+      .icon-btn { width: 36px; height: 36px; }
+      .slide { min-height: calc(100vh - 56px); padding: 33px 19px 86px; }
+      .cover .slide-grid { min-height: calc(100vh - 150px); }
+      .cover::before { width: 82vw; height: 82vw; right: -32vw; top: 36vh; }
+      .cover::after { right: 16vw; bottom: 10vh; }
+      .cover-stamp { right: 20px; top: 74px; width: 94px; height: 94px; font-size: 9px; }
+      .two-col, .confidence { grid-template-columns: 1fr; }
+      .three-col, .card-grid { grid-template-columns: 1fr; }
+      .stat-row { grid-template-columns: 1fr; }
+      .stat { min-height: 0; }
+      .pipeline { grid-template-columns: 1fr; }
+      .arrow { transform: rotate(90deg); }
+      .parallel { grid-template-columns: 1fr 1fr 1fr; }
+      .compare { grid-template-columns: 1fr; }
+      .bar-row { grid-template-columns: 100px 1fr 52px; gap: 8px; }
+      .axis { margin-left: 108px; }
+      .steps { grid-template-columns: 1fr 1fr; }
+      .checklist, .sources { grid-template-columns: 1fr; }
+      .source { bottom: 24px; font-size: 10px; }
+      .hint { display: none; }
+      .bottom-nav { right: 14px; bottom: 13px; }
+      .overview { padding: 20px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behaviour: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck" id="deck">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>Jev / System One</span></div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="overviewBtn" aria-label="Open slide overview" data-tooltip="Slide overview">⌗</button>
+        <button class="icon-btn" id="fullscreenBtn" aria-label="Enter fullscreen presentation" data-tooltip="Fullscreen">⛶</button>
+      </div>
+      <div class="progress-wrap" aria-hidden="true"><div class="progress-bar" id="progressBar"></div></div>
+    </header>
+
+    <main class="stage" id="slides" aria-live="polite">
+      <section class="slide cover active" data-title="Cover">
+        <div class="cover-stamp">structured<br />decisions<br /><span class="orange">out</span></div>
+        <div class="slide-grid">
+          <div class="eyebrow">A deep dive from the chatbot era into the decision era</div>
+          <h1>Jev is not a smaller chatbot.<br /><span>It is a decision engine.</span></h1>
+          <p class="lede">What happens when an AI model stops generating prose and starts returning the typed, probabilistic judgements that software actually needs?</p>
+          <div class="cover-meta"><span class="meta-chip">Based on Senko Rašić’s analysis</span><span class="meta-chip">September 2026</span><span class="meta-chip">19 slides</span></div>
+        </div>
+        <div class="source"><span>Read with healthy scepticism: the article calls its model explanation a reasonable guess.</span><span class="number">01 / 19</span></div>
+      </section>
+
+      <section class="slide" data-title="TL;DR">
+        <div class="slide-grid">
+          <div class="eyebrow">Start here · plain-English summary</div>
+          <h2>LLMs write. Jev judges.</h2>
+          <p class="lede">Jev takes messy state, asks several tightly defined questions, and returns typed answers such as a choice, a score, or the probability that a statement is true.</p>
+          <div class="stat-row">
+            <div class="stat"><strong>fast</strong><span>No token-by-token prose generation. Questions can be evaluated in parallel.</span></div>
+            <div class="stat"><strong>typed</strong><span>Outputs are constrained to the structure you define, so your code does not need to parse a paragraph.</span></div>
+            <div class="stat"><strong>composable</strong><span>Use confidence and probabilities to branch, route, escalate, or combine judgements in ordinary code.</span></div>
+          </div>
+          <div class="callout lime-callout"><p><strong>Best mental model:</strong> a frontier-intelligence function call — unstructured state in, typed probabilistic decisions out.</p></div>
+        </div>
+        <div class="source"><span>Sources: article + TypeSafe introduction</span><span class="number">02 / 19</span></div>
+      </section>
+
+      <section class="slide" data-title="Where it fits">
+        <div class="slide-grid">
+          <div class="eyebrow">Before the deep dive</div>
+          <h2>Use it where the answer has a shape.</h2>
+          <div class="three-col card-grid">
+            <article class="card accent-orange"><div class="label">Choice</div><h3>Pick one path</h3><p>Route a support ticket to billing, technical, or sales. The options are declared before the model answers.</p></article>
+            <article class="card accent-blue"><div class="label">Score</div><h3>Place it on a scale</h3><p>Estimate frustration, risk, severity, or fit against a rubric with named levels.</p></article>
+            <article class="card accent-lime"><div class="label">Noul</div><h3>Is this true?</h3><p>Return a 0–1 probability for a focused yes/no judgement, such as “does this message request a refund?”</p></article>
+          </div>
+          <div class="rule"></div>
+          <p class="tiny">The name “Noul” is TypeSafe’s primitive for a probability that a statement is true. It is not a general-purpose answer generator.</p>
+        </div>
+        <div class="source"><span>Source: TypeSafe primitives documentation</span><span class="number">03 / 19</span></div>
+      </section>
+
+      <section class="slide section-break" data-title="Section 01 · The idea">
+        <div class="slide-grid">
+          <div class="section-count">01 / The idea</div>
+          <h2>Why this is different</h2>
+          <p class="lede">The interesting move is not “make an LLM cheaper”. It is “stop forcing a text generator to behave like a typed decision API”.</p>
+        </div>
+        <div class="big-mark" aria-hidden="true">↘</div>
+        <div class="source"><span>From prose generation to software-native decisions</span><span class="number">04 / 19</span></div>
+      </section>
+
+      <section class="slide" data-title="LLM vs Jev">
+        <div class="slide-grid">
+          <div class="eyebrow">The core distinction</div>
+          <h2>Strings are powerful. They are also a poor interface.</h2>
+          <div class="compare">
+            <div>
+              <div class="head">Typical LLM workflow</div>
+              <ul><li>Generate a sequence of tokens, one after another.</li><li>Ask for JSON or a label inside the generated text.</li><li>Parse, validate, and handle refusals or malformed output.</li><li>Confidence is usually an extra request, not a native signal.</li></ul>
+            </div>
+            <div class="jev">
+              <div class="head">Jev / System One workflow</div>
+              <ul><li>Ingest state and evaluate typed questions.</li><li>Return values inside a structure declared up front.</li><li>Receive probability distributions for Choice and Score.</li><li>Compose the results with deterministic application code.</li></ul>
+            </div>
+          </div>
+          <div class="callout"><p><strong>Design implication:</strong> put language understanding at the fuzzy edge, then let ordinary code own the workflow, policy, thresholds, and side effects.</p></div>
+        </div>
+        <div class="source"><span>Source: TypeSafe’s “Frontiers, Old and New” comparison</span><span class="number">05 / 19</span></div>
+      </section>
+
+      <section class="slide" data-title="How it probably works">
+        <div class="slide-grid">
+          <div class="eyebrow">A useful approximation, not a published paper</div>
+          <h2>Think “modern BERT with instruction-following”.</h2>
+          <p>Senko Rašić’s explanation is explicitly a simplification. The useful comparison is with classification models such as BERT: they are fast and cheap for defined judgements, but traditionally need task-specific fine-tuning.</p>
+          <div class="pipeline">
+            <div class="node"><strong>State</strong><small>Text, records, conversation, game state, policy.</small></div>
+            <div class="arrow">→</div>
+            <div class="node"><strong>Typed questions</strong><small>Choice, Score, or Noul. Each question has its own instructions.</small></div>
+            <div class="arrow">→</div>
+            <div class="node"><strong>Structured answers</strong><small>Values, probabilities, and confidence where available.</small></div>
+          </div>
+          <p class="tiny" style="margin-top:18px">The article notes that Jev’s model size is not public. Avoid treating any parameter estimate as fact.</p>
+        </div>
+        <div class="source"><span>Source: article, “How it (probably) works”</span><span class="number">06 / 19</span></div>
+      </section>
+
+      <section class="slide" data-title="Parallel questions">
+        <div class="slide-grid">
+          <div class="eyebrow">The performance idea</div>
+          <h2>One state. Many independent judgements. One call.</h2>
+          <p>Instead of making a workflow wait for one classifier, then another, Jev evaluates questions independently against the same state. You can ask for routing, urgency, and frustration together.</p>
+          <div class="diagram">
+            <div class="pipeline">
+              <div class="node"><strong>One ticket</strong><small>“The Stripe integration keeps failing. I’m losing sales.”</small></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>Fan-out</strong><div class="parallel"><span class="pill">department</span><span class="pill">frustration</span><span class="pill">urgent?</span></div></div>
+              <div class="arrow">→</div>
+              <div class="node"><strong>Branch</strong><small>Route, prioritise, and escalate with code.</small></div>
+            </div>
+          </div>
+          <div class="callout lime-callout"><p><strong>Key pattern:</strong> ask every question your code might need, even if some answers will be ignored for this input. The API is designed for speculative fan-out.</p></div>
+        </div>
+        <div class="source"><span>Sources: article + TypeSafe primitives documentation</span><span class="number">07 / 19</span></div>
+      </section>
+
+      <section class="slide" data-title="Benefits and use cases">
+        <div class="slide-grid">
+          <div class="eyebrow">What you gain</div>
+          <h2>Less parsing. Less latency. More explicit control.</h2>
+          <div class="card-grid">
+            <article class="card accent-orange"><div class="label">Automation</div><h3>Smart if-statements</h3><p>Use a model where hand-written rules are brittle but a full agent would be overkill.</p></article>
+            <article class="card accent-blue"><div class="label">Operations</div><h3>High-volume triage</h3><p>Classify, score, and route tickets, documents, or product feedback in a single request.</p></article>
+            <article class="card accent-lime"><div class="label">Safety</div><h3>Verify the fuzzy edge</h3><p>Score prompts, traces, outputs, jailbreak attempts, or policy fit before the next action.</p></article>
+            <article class="card accent-orange"><div class="label">Real time</div><h3>Latency-sensitive UX</h3><p>Make quick decisions inside an application without waiting for a prose response.</p></article>
+            <article class="card accent-blue"><div class="label">Games</div><h3>Reactive state machines</h3><p>Score player or world state, then let deterministic rules select the next NPC or crisis branch.</p></article>
+            <article class="card accent-lime"><div class="label">Data</div><h3>Map-reduce at scale</h3><p>Turn large collections of unstructured records into structured features and signals.</p></article>
+          </div>
+        </div>
+        <div class="source"><span>Use cases are synthesis; TypeSafe lists analogous categories in its announcement.</span><span class="number">08 / 19</span></div>
+      </section>
+
+      <section class="slide section-break" data-title="Section 02 · Evidence">
+        <div class="slide-grid">
+          <div class="section-count">02 / Evidence & limits</div>
+          <h2>Fast is useful.<br />Evidence is better.</h2>
+          <p class="lede">Jev looks compelling for the right task. The right question is not “is it better than an LLM?” but “does it fit this decision surface, with acceptable error and uncertainty?”</p>
+        </div>
+        <div class="big-mark" aria-hidden="true">≋</div>
+        <div class="source"><span>Interpret benchmark claims in context</span><span class="number">09 / 19</span></div>
+      </section>
+
+      <section class="slide" data-title="Jev vs BERT">
+        <div class="slide-grid">
+          <div class="eyebrow">The article’s hands-on test</div>
+          <h2>Nearly the same accuracy, without fine-tuning.</h2>
+          <p>On 3,000 Croatian-language texts, the author reports 97.1% for zero-shot Jev versus 97.6% for a fine-tuned local BERT. The difference is small, and the author says many disagreements were label-quality issues.</p>
+          <div class="bars" aria-label="Reported accuracy comparison">
+            <div class="bar-row"><span>Jev, zero-shot</span><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><span class="bar-value">97.1%</span></div>
+            <div class="bar-row"><span>Fine-tuned BERT</span><div class="bar-track"><div class="bar-fill blue" style="width:80%"></div></div><span class="bar-value">97.6%</span></div>
+            <div class="axis"><span>96%</span><span>97%</span><span>98%</span></div>
+          </div>
+          <div class="callout"><p><strong>Important:</strong> this is one author’s random sample and one task, not a universal benchmark. It supports “test the fit”, not “Jev always wins”.</p></div>
+        </div>
+        <div class="source"><span>Source: article, “Jev vs BERT”</span><span class="number">10 / 19</span></div>
+      </section>
+
+      <section class="slide" data-title="Hallucination claim">
+        <div class="slide-grid">
+          <div class="eyebrow">The claim needs a precise definition</div>
+          <h2>Type-safe is not the same as correct.</h2>
+          <div class="two-col">
+            <div>
+              <div class="callout lime-callout"><p><strong>What it can rule out:</strong> output outside the structure you specified. No invented JSON key, no free-form prose where a Choice was required.</p></div>
+              <div class="callout"><p><strong>What it cannot rule out:</strong> a wrong classification, a biased rubric, missing context, or a confident but mistaken judgement.</p></div>
+            </div>
+            <div>
+              <h3>Think in two axes</h3>
+              <div class="diagram">
+                <div class="node"><strong>Schema validity</strong><small>Did the answer fit the allowed type and options?</small></div>
+                <div class="arrow">↓</div>
+                <div class="node"><strong>Task validity</strong><small>Was the judgement right for your data, policy, and stakes?</small></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="source"><span>Sources: article + TypeSafe introduction; wording intentionally distinguishes type errors from task errors.</span><span class="number">11 / 19</span></div>
+      </section>
+
+      <section class="slide" data-title="Confidence and injection">
+        <div class="slide-grid">
+          <div class="eyebrow">Reliability is an architecture question</div>
+          <h2>Confidence should change what the system does next.</h2>
+          <div class="confidence">
+            <div class="confidence-rail">
+              <div class="low"><strong>Low</strong><span>Do not act. Escalate, clarify, or fall back.</span></div>
+              <div class="mid"><strong>Medium</strong><span>Confirm, gather more context, or review.</span></div>
+              <div class="high"><strong>High</strong><span>Automate low-risk actions; keep high-risk confirmation.</span></div>
+            </div>
+            <div class="threshold"><h3>Risk sets the threshold</h3><p class="tiny">Showing the wrong screen is recoverable. Approving a transfer is not. Use different confidence gates for each action.</p><p><code>if confidence &lt; 0.5:</code><br />route_to_human()</p><p><code>if high_stakes and confidence &lt; 0.9:</code><br />ask_for_confirmation()</p></div>
+          </div>
+          <div class="callout"><p><strong>Prompt injection:</strong> the article reports informal tests suggesting Jev may resist some attacks better because state and instructions are separate. Treat that as a hypothesis until you run adversarial evaluations on your own workflow.</p></div>
+        </div>
+        <div class="source"><span>Sources: article + TypeSafe confidence documentation</span><span class="number">12 / 19</span></div>
+      </section>
+
+      <section class="slide section-break" data-title="Section 03 · Build it">
+        <div class="slide-grid">
+          <div class="section-count">03 / Build it</div>
+          <h2>Start with a question.<br />End with a workflow.</h2>
+          <p class="lede">The implementation is small. The product work is deciding what the model is allowed to judge, what evidence it sees, and what the surrounding code does with uncertainty.</p>
+        </div>
+        <div class="big-mark" aria-hidden="true">→</div>
+        <div class="source"><span>A step-by-step implementation guide</span><span class="number">13 / 19</span></div>
+      </section>
+
+      <section class="slide" data-title="Implementation steps">
+        <div class="slide-grid">
+          <div class="eyebrow">A practical build sequence</div>
+          <h2>Four moves from idea to safe prototype.</h2>
+          <div class="steps">
+            <div class="step"><div class="n">01</div><strong>Define the state</strong><p>Pass the smallest useful record: text, metadata, policy, or structured context.</p></div>
+            <div class="step"><div class="n">02</div><strong>Split judgements</strong><p>Ask one focused question per dimension. Avoid “analyse everything and decide”.</p></div>
+            <div class="step"><div class="n">03</div><strong>Batch the call</strong><p>Mix Choice, Score, and Noul in one request when they share the same state.</p></div>
+            <div class="step"><div class="n">04</div><strong>Own the branch</strong><p>Use probabilities and confidence in application code. Gate side effects by risk.</p></div>
+          </div>
+          <div class="callout lime-callout"><p><strong>Rule of thumb:</strong> if a judgement needs extended reasoning, decompose it into smaller factors and compose the result in code.</p></div>
+        </div>
+        <div class="source"><span>Source: TypeSafe primitives and confidence documentation</span><span class="number">14 / 19</span></div>
+      </section>
+
+      <section class="slide" data-title="Python example">
+        <div class="slide-grid">
+          <div class="eyebrow">Official SDK shape, simplified for teaching</div>
+          <h2>Ask three questions in one request.</h2>
+          <div class="code-wrap">
+            <div class="code-bar"><span>python · typed decisions</span><button class="copy-btn" data-copy="code1">Copy code</button></div>
+            <pre id="code1"><span class="code-comment"># pip install typesafe-sdk</span>
+<span class="code-key">from</span> typesafe_sdk <span class="code-key">import</span> Choice, Noul, Score, TypeSafeClient
+
+client = TypeSafeClient()
+response = client.system_one(
+    state=ticket,
+    questions={
+        <span class="code-string">"department"</span>: Choice(
+            instructions=<span class="code-string">"Which team should handle this?"</span>,
+            criteria={<span class="code-string">"billing"</span>: <span class="code-string">"Payment or subscription issues"</span>,
+                      <span class="code-string">"technical"</span>: <span class="code-string">"Bugs or integration problems"</span>,
+                      <span class="code-string">"sales"</span>: <span class="code-string">"Pricing or account questions"</span>}),
+        <span class="code-string">"frustration"</span>: Score(
+            instructions=<span class="code-string">"How frustrated does the customer appear?"</span>,
+            criteria=[<span class="code-string">"Calm"</span>, <span class="code-string">"Frustrated"</span>, <span class="code-string">"Very angry"</span>]),
+        <span class="code-string">"is_urgent"</span>: Noul(
+            instructions=<span class="code-string">"Does the message convey urgency?"</span>),
+    },
+)</pre>
+          </div>
+          <p class="tiny" style="margin-top:16px">The article’s example uses the same three primitive types. The current quick start also documents the Python SDK, API route, and response shape.</p>
+        </div>
+        <div class="source"><span>Source: TypeSafe quick start + article code example</span><span class="number">15 / 19</span></div>
+      </section>
+
+      <section class="slide" data-title="Compose the workflow">
+        <div class="slide-grid">
+          <div class="eyebrow">Do not stop at the API call</div>
+          <h2>Make the surrounding code boring.</h2>
+          <div class="pipeline" style="margin-top:30px">
+            <div class="node"><strong>Jev</strong><small>Returns Choice, Score, Noul, probabilities, and confidence.</small></div>
+            <div class="arrow">→</div>
+            <div class="node"><strong>Policy layer</strong><small>Apply thresholds, weighting, permissions, and business rules.</small></div>
+            <div class="arrow">→</div>
+            <div class="node"><strong>Side effect</strong><small>Route, notify, retrieve, ask for confirmation, or do nothing.</small></div>
+          </div>
+          <div class="two-col" style="margin-top:30px">
+            <div><h3>Good decomposition</h3><p class="tiny">“How severe is the bug?”<br />“How frustrated is the customer?”<br />“How complete is the reproduction?”</p></div>
+            <div><h3>Bad decomposition</h3><p class="tiny">“Read this ticket, reason about everything, and decide what the company should do.”</p></div>
+          </div>
+          <div class="callout"><p><strong>Architecture payoff:</strong> when priorities change, change weights and thresholds in code instead of rewriting one giant prompt.</p></div>
+        </div>
+        <div class="source"><span>Source: TypeSafe primitives documentation, composite scoring guidance</span><span class="number">16 / 19</span></div>
+      </section>
+
+      <section class="slide" data-title="Worked blueprint">
+        <div class="slide-grid">
+          <div class="eyebrow">Worked design example</div>
+          <h2>Game NPCs are a good fit for fuzzy edges.</h2>
+          <p>Imagine a nemesis system that needs fast, explainable signals rather than a conversational monologue. Jev can score state; deterministic code can own the actual game rules.</p>
+          <div class="pipeline" style="margin-top:26px">
+            <div class="node"><strong>World state</strong><small>Player health, faction reputation, recent choices, crisis timer.</small></div>
+            <div class="arrow">→</div>
+            <div class="node"><strong>Questions</strong><div class="parallel"><span class="pill">player vulnerable?</span><span class="pill">revenge likely?</span><span class="pill">crisis urgent?</span></div></div>
+            <div class="arrow">→</div>
+            <div class="node"><strong>Game logic</strong><small>Choose ambush, retreat, negotiate, or escalate using thresholds and cooldowns.</small></div>
+          </div>
+          <div class="callout lime-callout"><p><strong>Why this is interesting:</strong> the AI supplies a fast judgement about a rich state; the game remains testable because the state machine still owns the action.</p></div>
+        </div>
+        <div class="source"><span>Worked example is an application design inference, not a TypeSafe product claim.</span><span class="number">17 / 19</span></div>
+      </section>
+
+      <section class="slide" data-title="Should you use it?">
+        <div class="slide-grid">
+          <div class="eyebrow">A decision checklist</div>
+          <h2>Use Jev when the decision surface is narrow.</h2>
+          <div class="checklist">
+            <div class="check"><i>✓</i><div><strong>There is a small answer space.</strong><span>Choice, ordered score, or probability of a defined statement.</span></div></div>
+            <div class="check"><i>✓</i><div><strong>Latency or cost matters.</strong><span>You are making many decisions, or the UX cannot wait for prose.</span></div></div>
+            <div class="check"><i>✓</i><div><strong>You can define the state.</strong><span>The model gets the relevant evidence without needing a long discovery phase.</span></div></div>
+            <div class="check"><i>✓</i><div><strong>You can test the rubric.</strong><span>You have examples, labels, reviewers, or a golden set to measure task validity.</span></div></div>
+            <div class="check"><i>✓</i><div><strong>You want code to own policy.</strong><span>Thresholds, weights, permissions, and side effects stay inspectable.</span></div></div>
+            <div class="check"><i>✓</i><div><strong>You do not need prose generation.</strong><span>If users need a nuanced explanation, pair the decision model with a generator.</span></div></div>
+          </div>
+          <div class="callout"><p><strong>Do not use it as a universal LLM replacement.</strong> If the task is open-ended reasoning, creative generation, or evidence synthesis, use a model and workflow designed for that job.</p></div>
+        </div>
+        <div class="source"><span>Recommendation synthesised from the article and TypeSafe’s public docs.</span><span class="number">18 / 19</span></div>
+      </section>
+
+      <section class="slide" data-title="Sources and next step">
+        <div class="slide-grid">
+          <div class="eyebrow">Keep exploring</div>
+          <h2>Jev’s real promise is not magic.<br /><span class="orange">It is a better interface.</span></h2>
+          <p class="lede">The opportunity is to put fast, calibrated judgements exactly where software needs them — then keep the system honest with tests, thresholds, and human escalation.</p>
+          <div class="sources">
+            <a class="source-link" href="https://blog.senko.net/analyzing-jev-a-new-ai-model" target="_blank" rel="noreferrer"><span>Senko Rašić · Analyzing Jev, a new AI model</span><span>article ↗</span></a>
+            <a class="source-link" href="https://typesafe.ai/blog/introducing-system-one-models-and-jev" target="_blank" rel="noreferrer"><span>TypeSafe · Introducing System One Models & Jev</span><span>primary ↗</span></a>
+            <a class="source-link" href="https://docs.typesafe.ai/introduction/quickstart" target="_blank" rel="noreferrer"><span>TypeSafe · Quick start</span><span>docs ↗</span></a>
+            <a class="source-link" href="https://docs.typesafe.ai/primitives" target="_blank" rel="noreferrer"><span>TypeSafe · Primitives / questions</span><span>docs ↗</span></a>
+            <a class="source-link" href="https://docs.typesafe.ai/confidence" target="_blank" rel="noreferrer"><span>TypeSafe · Confidence</span><span>docs ↗</span></a>
+            <a class="source-link" href="https://docs.typesafe.ai/" target="_blank" rel="noreferrer"><span>TypeSafe · Documentation home</span><span>docs ↗</span></a>
+          </div>
+          <div class="callout lime-callout"><p><strong>Suggested next experiment:</strong> pick one high-volume classification problem, create a small labelled evaluation set, and compare Jev, a fine-tuned classifier, and an LLM baseline on quality, latency, cost, and escalation rate.</p></div>
+        </div>
+        <div class="source"><span>Thanks for reading · press O for overview, F for fullscreen, ← / → to navigate</span><span class="number">19 / 19</span></div>
+      </section>
+    </main>
+
+    <div class="hint">← / → navigate · O overview · F fullscreen</div>
+    <nav class="bottom-nav" aria-label="Slide navigation">
+      <button class="icon-btn" id="prevBtn" aria-label="Previous slide" data-tooltip="Previous">←</button>
+      <button class="icon-btn" id="homeBtn" aria-label="Return to cover" data-tooltip="Cover">⌂</button>
+      <button class="icon-btn" id="nextBtn" aria-label="Next slide" data-tooltip="Next">→</button>
+    </nav>
+  </div>
+
+  <div class="overview" id="overview" role="dialog" aria-modal="true" aria-labelledby="overviewTitle">
+    <div class="overview-inner">
+      <div class="overview-head"><h2 id="overviewTitle">Slide overview</h2><button class="icon-btn" id="closeOverview" aria-label="Close slide overview">×</button></div>
+      <div class="overview-grid" id="overviewGrid"></div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const progress = document.getElementById('progressBar');
+      const overview = document.getElementById('overview');
+      const overviewGrid = document.getElementById('overviewGrid');
+      const prev = document.getElementById('prevBtn');
+      const next = document.getElementById('nextBtn');
+      let current = 0;
+
+      slides.forEach((slide, i) => {
+        const card = document.createElement('button');
+        card.className = 'overview-card';
+        card.type = 'button';
+        card.innerHTML = `<div class="num">${String(i + 1).padStart(2, '0')}</div><div class="title">${slide.dataset.title}</div>`;
+        card.addEventListener('click', () => { goTo(i); closeOverview(); });
+        overviewGrid.appendChild(card);
+      });
+
+      function goTo(index) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        prev.disabled = current === 0;
+        next.disabled = current === slides.length - 1;
+        document.querySelectorAll('.overview-card').forEach((card, i) => card.setAttribute('aria-current', i === current ? 'true' : 'false'));
+      }
+      function step(delta) { goTo(current + delta); }
+      function openOverview() { overview.classList.add('open'); document.getElementById('closeOverview').focus(); }
+      function closeOverview() { overview.classList.remove('open'); }
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      }
+
+      prev.addEventListener('click', () => step(-1));
+      next.addEventListener('click', () => step(1));
+      document.getElementById('homeBtn').addEventListener('click', () => goTo(0));
+      document.getElementById('overviewBtn').addEventListener('click', openOverview);
+      document.getElementById('closeOverview').addEventListener('click', closeOverview);
+      document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+      overview.addEventListener('click', (event) => { if (event.target === overview) closeOverview(); });
+      document.addEventListener('keydown', (event) => {
+        if (overview.classList.contains('open')) {
+          if (event.key === 'Escape') closeOverview();
+          return;
+        }
+        if (['ArrowRight', 'PageDown', ' '].includes(event.key)) { event.preventDefault(); step(1); }
+        if (['ArrowLeft', 'PageUp'].includes(event.key)) { event.preventDefault(); step(-1); }
+        if (event.key === 'Home') goTo(0);
+        if (event.key === 'End') goTo(slides.length - 1);
+        if (event.key.toLowerCase() === 'o') openOverview();
+        if (event.key.toLowerCase() === 'f') toggleFullscreen();
+      });
+      document.addEventListener('fullscreenchange', () => document.body.classList.toggle('presenting', Boolean(document.fullscreenElement)));
+      document.querySelectorAll('[data-copy]').forEach((button) => {
+        button.addEventListener('click', async () => {
+          const target = document.getElementById(button.dataset.copy);
+          const text = target.innerText;
+          try { await navigator.clipboard.writeText(text); button.textContent = 'Copied'; setTimeout(() => button.textContent = 'Copy code', 1300); }
+          catch { button.textContent = 'Select manually'; setTimeout(() => button.textContent = 'Copy code', 1500); }
+        });
+      });
+      goTo(0);
+    })();
+  </script>
+</body>
+</html>

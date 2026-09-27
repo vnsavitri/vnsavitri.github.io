@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="An interactive deep dive into Univer, the open-source Office SDK for embedded spreadsheets, documents and AI-native workflows." />
+  <title>Univer · Office Harness for AI Agents</title>
+  <style>
+    :root {
+      --ink: #17211b;
+      --muted: #69766d;
+      --paper: #f6f8f5;
+      --card: rgba(255,255,255,.84);
+      --line: #dce5dd;
+      --green: #2f6f4e;
+      --green-2: #9dc4a6;
+      --mint: #dff1e3;
+      --lime: #d9ee69;
+      --orange: #f19a63;
+      --purple: #7667d9;
+      --shadow: 0 22px 70px rgba(34, 68, 45, .12);
+      --radius: 24px;
+      --display: "Avenir Next", Avenir, "Segoe UI", system-ui, sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); }
+    body { font-family: var(--display); }
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+    .deck { position: relative; width: 100%; height: 100%; isolation: isolate; }
+    .deck::before { content: ""; position: fixed; inset: 0; z-index: -2; background: radial-gradient(circle at 15% 15%, #fff 0 18%, transparent 42%), radial-gradient(circle at 85% 80%, #e8f2e7 0 12%, transparent 44%), var(--paper); }
+    .deck::after { content: ""; position: fixed; inset: 0; z-index: -1; opacity: .22; pointer-events: none; background-image: linear-gradient(rgba(47,111,78,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(47,111,78,.05) 1px, transparent 1px); background-size: 38px 38px; mask-image: linear-gradient(to bottom, black, transparent 72%); }
+
+    .topbar { position: fixed; top: 0; left: 0; right: 0; height: 68px; padding: 0 34px; display: flex; align-items: center; justify-content: space-between; z-index: 20; background: rgba(246,248,245,.74); backdrop-filter: blur(18px); border-bottom: 1px solid rgba(220,229,221,.7); }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.02em; }
+    .brand-mark { width: 25px; height: 25px; border: 2px solid var(--green); border-radius: 8px; position: relative; transform: rotate(-8deg); }
+    .brand-mark::before, .brand-mark::after { content: ""; position: absolute; background: var(--green); border-radius: 2px; }
+    .brand-mark::before { width: 13px; height: 2px; left: 4px; top: 7px; box-shadow: 0 5px 0 var(--green), 0 10px 0 var(--green); }
+    .brand-mark::after { width: 2px; height: 13px; top: 4px; left: 9px; opacity: .32; }
+    .brand small { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; margin-left: 5px; }
+    .top-actions { display: flex; align-items: center; gap: 8px; }
+    .icon-btn { width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.75); color: var(--ink); display: inline-grid; place-items: center; transition: transform .2s, background .2s, border-color .2s; }
+    .icon-btn:hover { transform: translateY(-2px); background: #fff; border-color: var(--green-2); }
+    .icon-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+    .progress { position: fixed; left: 0; top: 67px; height: 2px; width: 0; z-index: 30; background: var(--green); transition: width .4s ease; }
+
+    .slides { width: 100%; height: 100%; }
+    .slide { display: none; width: 100%; height: 100%; min-height: 560px; padding: 108px 8vw 94px; overflow: auto; overscroll-behavior: contain; animation: enter .45s ease both; }
+    .slide.is-active { display: flex; flex-direction: column; }
+    @keyframes enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .slide-inner { width: min(1220px, 100%); margin: auto; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--green); font-size: 12px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+    .eyebrow::before { content: ""; width: 26px; height: 2px; background: var(--green); border-radius: 99px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(48px, 7.5vw, 104px); line-height: .92; letter-spacing: -.075em; margin: 22px 0 26px; max-width: 820px; }
+    h2 { font-size: clamp(32px, 4.5vw, 66px); line-height: .98; letter-spacing: -.065em; margin: 16px 0 20px; max-width: 880px; }
+    h3 { font-size: 20px; letter-spacing: -.025em; margin-bottom: 10px; }
+    .lede { max-width: 650px; color: #526159; font-size: clamp(17px, 2vw, 23px); line-height: 1.42; }
+    .micro { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .muted { color: var(--muted); }
+    .accent { color: var(--green); }
+    .lime { color: #526900; background: var(--lime); padding: 0 .14em; border-radius: .16em; }
+    .source { display: inline-flex; gap: 5px; align-items: center; color: #64756a; font-size: 11px; line-height: 1.35; text-decoration: none; border-bottom: 1px dotted #aab8ae; }
+    .source:hover { color: var(--green); border-color: var(--green); }
+    .source::before { content: "↗"; font-size: 12px; }
+    .source-row { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 22px; }
+    .source-row .source { max-width: 100%; }
+
+    .cover { position: relative; }
+    .cover .slide-inner { display: grid; grid-template-columns: 1.1fr .9fr; gap: 6vw; align-items: center; }
+    .cover-copy { position: relative; z-index: 2; }
+    .cover-copy h1 span { display: block; color: var(--green); }
+    .cover-meta { display: flex; gap: 12px; align-items: center; margin-top: 36px; color: var(--muted); font-size: 12px; }
+    .cover-meta b { color: var(--ink); }
+    .orbit { min-height: 420px; position: relative; display: grid; place-items: center; }
+    .orbit::before { content: ""; width: min(38vw, 450px); height: min(38vw, 450px); border: 1px solid #b6d5bd; border-radius: 50%; position: absolute; }
+    .orbit::after { content: ""; width: min(27vw, 315px); height: min(27vw, 315px); border: 1px dashed #b6d5bd; border-radius: 50%; position: absolute; transform: rotate(24deg); }
+    .core-disc { width: 164px; height: 164px; border-radius: 50%; background: var(--green); color: #fff; display: grid; place-items: center; text-align: center; font-size: 25px; font-weight: 800; letter-spacing: -.05em; line-height: .95; box-shadow: 0 22px 55px rgba(47,111,78,.28); position: relative; z-index: 2; }
+    .orbit-node { position: absolute; z-index: 3; display: flex; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid var(--line); background: rgba(255,255,255,.86); border-radius: 14px; box-shadow: 0 10px 28px rgba(45,76,53,.08); font-size: 12px; font-weight: 800; }
+    .orbit-node i { width: 8px; height: 8px; display: inline-block; border-radius: 50%; background: var(--orange); }
+    .orbit-node:nth-child(2) { top: 4%; left: 18%; }
+    .orbit-node:nth-child(3) { top: 24%; right: 4%; }
+    .orbit-node:nth-child(4) { bottom: 10%; right: 16%; }
+    .orbit-node:nth-child(5) { bottom: 15%; left: 3%; }
+    .orbit-node:nth-child(6) { top: 49%; left: -1%; }
+
+    .callout { border: 1px solid #bdd6c2; background: rgba(223,241,227,.66); border-radius: 18px; padding: 18px 20px; }
+    .callout strong { color: var(--green); }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; box-shadow: 0 10px 30px rgba(39,73,50,.05); }
+    .card p { color: #5d6b62; line-height: 1.5; margin-bottom: 0; }
+    .card .number { color: var(--green); font-size: 13px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 16px; }
+    .icon-tile { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; background: var(--mint); color: var(--green); font-size: 20px; margin-bottom: 18px; }
+    .icon-tile.orange { background: #fff0e6; color: #ad602d; }
+    .icon-tile.purple { background: #eeecff; color: #5d51b4; }
+
+    .section-break { background: var(--green); color: #f5fbf4; position: relative; overflow: hidden; }
+    .section-break::before { content: ""; position: absolute; width: 55vw; height: 55vw; border: 1px solid rgba(217,238,105,.36); border-radius: 50%; right: -15vw; top: -20vw; }
+    .section-break::after { content: ""; position: absolute; width: 34vw; height: 34vw; border: 1px dashed rgba(217,238,105,.42); border-radius: 50%; right: 7vw; top: 8vw; }
+    .section-break .slide-inner { position: relative; z-index: 2; }
+    .section-break .eyebrow { color: var(--lime); }
+    .section-break .eyebrow::before { background: var(--lime); }
+    .section-break h2 { max-width: 700px; }
+    .section-break p { max-width: 600px; color: #cfe6d3; font-size: 19px; line-height: 1.5; }
+
+    .split { display: grid; grid-template-columns: .85fr 1.15fr; gap: 34px; align-items: start; }
+    .split.reverse { grid-template-columns: 1.15fr .85fr; }
+    .rule-list { display: grid; gap: 13px; margin-top: 24px; }
+    .rule { display: grid; grid-template-columns: 27px 1fr; gap: 12px; align-items: start; }
+    .rule .check { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--mint); color: var(--green); font-weight: 900; font-size: 13px; }
+    .rule strong { display: block; margin-bottom: 4px; }
+    .rule span { color: #627067; font-size: 14px; line-height: 1.45; }
+
+    .app-map { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; margin-top: 30px; }
+    .app-map .bridge { color: var(--green); font-size: 26px; text-align: center; }
+    .map-panel { min-height: 250px; border: 1px solid var(--line); border-radius: 22px; padding: 22px; background: rgba(255,255,255,.7); }
+    .map-panel h3 { display: flex; justify-content: space-between; align-items: center; }
+    .pill { display: inline-flex; padding: 5px 8px; border: 1px solid #bdd6c2; border-radius: 99px; color: var(--green); background: var(--mint); font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+    .surface { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 20px; }
+    .surface span { min-height: 70px; display: grid; place-items: center; text-align: center; padding: 8px; border: 1px solid var(--line); border-radius: 13px; background: #fff; font-size: 12px; font-weight: 800; }
+    .surface span:first-child { background: #f8fde9; border-color: #dceaa8; }
+
+    .stack { display: grid; gap: 10px; margin-top: 26px; }
+    .stack-row { display: grid; grid-template-columns: 145px 1fr; gap: 16px; align-items: stretch; }
+    .stack-label { padding: 18px; border-radius: 16px; background: var(--green); color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; }
+    .stack-row:nth-child(2) .stack-label { background: #528c67; }
+    .stack-row:nth-child(3) .stack-label { background: #7daf8b; color: #183021; }
+    .stack-row:nth-child(4) .stack-label { background: #c7e4ca; color: #183021; }
+    .stack-content { padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.78); color: #5d6b62; line-height: 1.5; }
+    .stack-content b { color: var(--ink); }
+
+    .runtime { position: relative; padding: 28px; border: 1px solid var(--line); border-radius: 22px; background: rgba(255,255,255,.72); min-height: 330px; }
+    .runtime::before { content: ""; position: absolute; left: 17%; right: 17%; top: 50%; border-top: 1px dashed #9fc4a7; }
+    .runtime .center { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 160px; height: 112px; border-radius: 18px; background: var(--green); color: #fff; display: grid; place-items: center; text-align: center; font-weight: 900; padding: 14px; z-index: 2; box-shadow: 0 18px 40px rgba(47,111,78,.22); }
+    .runtime .node { position: absolute; width: 140px; padding: 14px 12px; border: 1px solid var(--line); border-radius: 16px; background: #fff; text-align: center; font-size: 12px; font-weight: 800; box-shadow: 0 8px 24px rgba(39,73,50,.07); }
+    .runtime .node small { display: block; margin-top: 4px; color: var(--muted); font-weight: 500; line-height: 1.3; }
+    .runtime .node:nth-child(2) { left: 3%; top: 23%; }
+    .runtime .node:nth-child(3) { right: 3%; top: 23%; }
+    .runtime .node:nth-child(4) { left: 3%; bottom: 7%; }
+    .runtime .node:nth-child(5) { right: 3%; bottom: 7%; }
+    .runtime .label { position: absolute; font-size: 11px; color: var(--green); background: var(--mint); border-radius: 99px; padding: 5px 8px; z-index: 3; }
+    .runtime .label.browser { left: 20%; top: 15%; }
+    .runtime .label.nodejs { right: 20%; bottom: 15%; }
+
+    .compare { overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: rgba(255,255,255,.76); }
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+    .compare-grid > div { padding: 15px 18px; border-bottom: 1px solid var(--line); }
+    .compare-grid > div:nth-child(3n+1) { font-weight: 800; color: var(--ink); }
+    .compare-grid > div:nth-child(3n+2) { background: #f1f8f1; color: #31593f; }
+    .compare-grid > div:nth-child(3n) { background: #fbf8f2; color: #7b6747; }
+    .compare-grid .head { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; font-weight: 900; color: var(--muted); background: transparent; }
+    .compare-grid .head:nth-child(2) { color: var(--green); background: #e6f3e8; }
+    .compare-grid .head:nth-child(3) { color: #876c47; background: #f4eee4; }
+    .compare-grid > div:not(.head) { font-size: 13px; line-height: 1.4; }
+
+    .code-shell { border-radius: 20px; overflow: hidden; border: 1px solid #25382c; background: #16211a; color: #d7ead9; box-shadow: var(--shadow); }
+    .code-top { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(220,245,224,.12); color: #9eb6a2; font-size: 11px; }
+    .dots { display: flex; gap: 5px; }
+    .dots i { width: 8px; height: 8px; border-radius: 50%; background: #63816b; }
+    pre { margin: 0; padding: 20px; overflow: auto; font: 12px/1.65 var(--mono); white-space: pre-wrap; }
+    .kw { color: #d9ee69; } .fn { color: #9ed4ff; } .str { color: #f5b388; } .com { color: #809a86; }
+    .steps { display: grid; gap: 14px; counter-reset: step; }
+    .step { counter-increment: step; display: grid; grid-template-columns: 48px 1fr; gap: 15px; align-items: start; }
+    .step::before { content: counter(step, decimal-leading-zero); display: grid; place-items: center; width: 42px; height: 42px; background: var(--green); color: white; border-radius: 14px; font-weight: 900; font-size: 12px; }
+    .step h3 { margin: 2px 0 5px; }
+    .step p { color: #607067; font-size: 14px; line-height: 1.45; margin-bottom: 0; }
+    .step .tag { display: inline-block; margin-left: 6px; padding: 3px 6px; border-radius: 5px; background: #f1f5f0; border: 1px solid var(--line); color: var(--muted); font: 10px var(--mono); }
+
+    .check-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; margin-top: 20px; }
+    .check-card { padding: 15px 16px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.75); }
+    .check-card b { display: block; font-size: 14px; margin-bottom: 4px; }
+    .check-card span { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; }
+
+    .takeaway { display: grid; grid-template-columns: 1.15fr .85fr; gap: 22px; align-items: stretch; }
+    .takeaway-main { border-radius: 26px; background: var(--green); color: #f5fbf4; padding: 34px; }
+    .takeaway-main h3 { color: var(--lime); }
+    .takeaway-main p { font-size: 24px; line-height: 1.2; letter-spacing: -.03em; }
+    .takeaway-side { display: grid; gap: 12px; }
+    .takeaway-side .card { padding: 20px; }
+    .takeaway-side .card h3 { font-size: 16px; }
+    .takeaway-side .card p { font-size: 13px; }
+    .source-notes { display: grid; gap: 10px; margin-top: 18px; }
+    .source-note { display: grid; grid-template-columns: 25px 1fr; gap: 10px; align-items: start; font-size: 12px; color: #5f6e64; line-height: 1.45; }
+    .source-note b { color: var(--ink); }
+
+    .bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; height: 68px; padding: 0 34px; display: flex; align-items: center; justify-content: space-between; z-index: 20; background: rgba(246,248,245,.78); backdrop-filter: blur(18px); border-top: 1px solid rgba(220,229,221,.75); }
+    .slide-count { color: var(--muted); font: 12px var(--mono); }
+    .nav { display: flex; gap: 8px; }
+    .nav button { width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 13px; background: rgba(255,255,255,.7); color: var(--ink); display: grid; place-items: center; transition: .2s; }
+    .nav button:hover:not(:disabled) { background: #fff; border-color: var(--green-2); transform: translateY(-2px); }
+    .nav button:disabled { opacity: .35; cursor: not-allowed; }
+    .nav svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .hint { color: var(--muted); font-size: 11px; }
+
+    .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: none; background: rgba(23,33,27,.38); backdrop-filter: blur(8px); }
+    .modal-backdrop.open { display: grid; place-items: center; }
+    .index-modal { width: min(760px, calc(100vw - 32px)); max-height: min(760px, calc(100vh - 70px)); overflow: auto; padding: 24px; border-radius: 24px; background: #f9fbf8; border: 1px solid rgba(255,255,255,.8); box-shadow: 0 30px 100px rgba(20,40,25,.28); }
+    .index-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .index-header h2 { font-size: 28px; margin: 0; }
+    .index-list { display: grid; gap: 7px; }
+    .index-item { width: 100%; border: 1px solid transparent; background: transparent; text-align: left; padding: 11px 12px; border-radius: 12px; display: flex; align-items: center; gap: 11px; color: #59685e; font-size: 13px; }
+    .index-item:hover, .index-item.active { background: #eaf5eb; border-color: #c4ddc8; color: var(--green); }
+    .index-item .ix { width: 26px; color: #9aac9f; font: 11px var(--mono); }
+    .index-item.active .ix { color: var(--green); font-weight: 900; }
+
+    @media (max-width: 850px) {
+      .topbar { height: 58px; padding: 0 16px; }
+      .progress { top: 57px; }
+      .brand small, .hint { display: none; }
+      .slide { padding: 84px 20px 90px; min-height: 520px; }
+      .cover .slide-inner, .split, .split.reverse, .takeaway { grid-template-columns: 1fr; gap: 22px; }
+      .cover h1 { font-size: clamp(48px, 15vw, 76px); margin-top: 15px; }
+      .orbit { min-height: 270px; margin-top: 4px; }
+      .orbit::before { width: min(70vw, 300px); height: min(70vw, 300px); }
+      .orbit::after { width: min(50vw, 215px); height: min(50vw, 215px); }
+      .core-disc { width: 116px; height: 116px; font-size: 19px; }
+      .orbit-node { font-size: 10px; padding: 7px 9px; }
+      .orbit-node:nth-child(2) { top: 2%; left: 7%; }
+      .orbit-node:nth-child(3) { top: 20%; right: 0; }
+      .orbit-node:nth-child(4) { bottom: 3%; right: 8%; }
+      .orbit-node:nth-child(5) { bottom: 6%; left: 0; }
+      .orbit-node:nth-child(6) { top: 46%; left: -2%; }
+      .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .app-map { grid-template-columns: 1fr; }
+      .app-map .bridge { transform: rotate(90deg); }
+      .stack-row { grid-template-columns: 1fr; gap: 5px; }
+      .stack-label { padding: 12px 16px; }
+      .runtime { min-height: 470px; }
+      .runtime::before { left: 50%; top: 19%; bottom: 19%; right: auto; height: auto; border-top: 0; border-left: 1px dashed #9fc4a7; }
+      .runtime .center { top: 50%; }
+      .runtime .node:nth-child(2) { left: 50%; top: 5%; transform: translateX(-50%); }
+      .runtime .node:nth-child(3) { right: auto; left: 50%; top: auto; bottom: 5%; transform: translateX(-50%); }
+      .runtime .node:nth-child(4) { left: 2%; bottom: 38%; }
+      .runtime .node:nth-child(5) { right: 2%; bottom: 38%; }
+      .runtime .label.browser { left: 4%; top: 26%; }
+      .runtime .label.nodejs { right: 4%; bottom: 26%; }
+      .compare { overflow-x: auto; }
+      .compare-grid { min-width: 660px; }
+      .check-grid { grid-template-columns: 1fr; }
+      .bottom-bar { height: 60px; padding: 0 16px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="deck" id="deck" aria-label="Univer interactive slide deck">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>UNIVER</span><small>office sdk</small></div>
+      <div class="top-actions">
+        <button class="icon-btn" id="indexBtn" title="Open slide overview" aria-label="Open slide overview">
+          <svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><rect x="14" y="14" width="6" height="6" rx="1"></rect></svg>
+        </button>
+        <button class="icon-btn" id="fullBtn" title="Enter fullscreen" aria-label="Enter fullscreen">
+          <svg viewBox="0 0 24 24"><path d="M8 4H4v4M16 4h4v4M20 16v4h-4M4 16v4h4"></path></svg>
+        </button>
+      </div>
+    </header>
+    <div class="progress" id="progress"></div>
+
+    <div class="slides">
+      <section class="slide cover is-active" data-title="Cover">
+        <div class="slide-inner">
+          <div class="cover-copy">
+            <div class="eyebrow">Repository deep dive</div>
+            <h1>Build your own <span>office layer.</span></h1>
+            <p class="lede">Univer is an open-source SDK for embedding spreadsheet, document and presentation experiences inside products you already own.</p>
+            <div class="cover-meta"><span><b>Univer</b> · dream-num</span><span>•</span><span>Inspected 26 Sep 2026</span></div>
+            <div class="source-row"><a class="source" href="https://github.com/dream-num/univer" target="_blank" rel="noreferrer">Repository README</a><a class="source" href="https://docs.univer.ai" target="_blank" rel="noreferrer">Documentation</a></div>
+          </div>
+          <div class="orbit" aria-label="Univer capability map">
+            <div class="core-disc">UNIVER<br><small>runtime</small></div>
+            <div class="orbit-node"><i></i>Sheets</div><div class="orbit-node"><i></i>Docs</div><div class="orbit-node"><i></i>Slides</div><div class="orbit-node"><i></i>Headless</div><div class="orbit-node"><i></i>AI workflows</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="TL;DR">
+        <div class="slide-inner">
+          <div class="eyebrow">01 · Plain-English summary</div>
+          <h2>Univer is the <span class="lime">office engine</span> you can put inside your own product.</h2>
+          <div class="grid-3" style="margin-top:30px">
+            <article class="card"><div class="icon-tile">▦</div><h3>Embed the surface</h3><p>Give your SaaS, internal tool or AI app a real editable workbook or document instead of building one from scratch.</p></article>
+            <article class="card"><div class="icon-tile orange">⌘</div><h3>Compose the runtime</h3><p>Pick a quick preset or assemble plugins yourself. Add, remove, replace or lazy-load capabilities as your product grows.</p></article>
+            <article class="card"><div class="icon-tile purple">◌</div><h3>Keep humans in the loop</h3><p>Agents can inspect and edit structured Office content, while people review the result in a familiar interactive surface.</p></article>
+          </div>
+          <div class="callout" style="margin-top:22px"><strong>The useful mental model:</strong> Univer isn’t “a spreadsheet viewer”. It’s a framework for building your own productivity surface, with browser UI and Node.js headless processing sharing the same architecture.</div>
+          <div class="source-row"><a class="source" href="https://github.com/dream-num/univer#-what-is-univer" target="_blank" rel="noreferrer">README · What is Univer?</a><a class="source" href="https://github.com/dream-num/univer#-why-univer" target="_blank" rel="noreferrer">README · Why Univer?</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Why it matters">
+        <div class="slide-inner">
+          <div class="eyebrow">The product opportunity</div>
+          <h2>Move from <span class="accent">documents as destinations</span> to documents as product primitives.</h2>
+          <div class="app-map">
+            <div class="map-panel"><h3>Your product <span class="pill">context</span></h3><p class="micro">The workflow, data, permissions and AI experience you already own.</p><div class="surface"><span>Metrics</span><span>Controls</span><span>Agent actions</span><span>Review</span><span>Approvals</span><span>Audit trail</span></div></div>
+            <div class="bridge">↔</div>
+            <div class="map-panel"><h3>Univer runtime <span class="pill">office surface</span></h3><p class="micro">Structured content, formulas, commands, rendering and Facade APIs.</p><div class="surface"><span>Sheets</span><span>Docs</span><span>Slides</span><span>Headless</span><span>Plugins</span><span>Locales</span></div></div>
+          </div>
+          <div class="source-row"><a class="source" href="https://github.com/dream-num/univer#-what-you-can-build" target="_blank" rel="noreferrer">README · What you can build</a><a class="source" href="https://github.com/dream-num/univer#-office-workflows-for-ai-agents" target="_blank" rel="noreferrer">README · AI workflows</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Benefits & use cases">
+        <div class="slide-inner">
+          <div class="eyebrow">Why teams use it</div>
+          <h2>Four benefits. Four concrete product shapes.</h2>
+          <div class="grid-2" style="margin-top:26px">
+            <article class="card"><div class="number">01 · Embed</div><h3>AI-native workspaces</h3><p>An agent creates a decision dashboard, report or mini-app inside a workspace. Web controls and metrics can bind to cells and update collaboratively.</p><p class="micro" style="margin-top:12px"><b>Example:</b> Univer Workspace or an internal planning cockpit.</p></article>
+            <article class="card"><div class="number">02 · Automate</div><h3>Headless document operations</h3><p>Run workbook or document logic on the server for generation, inspection, formula calculation or workflow automation without rendering a UI.</p><p class="micro" style="margin-top:12px"><b>Example:</b> an agent prepares a budget pack overnight.</p></article>
+            <article class="card"><div class="number">03 · Extend</div><h3>Focused vertical tools</h3><p>Compose the editor around the job: add domain menus, validation, approval steps, custom commands or embedded components.</p><p class="micro" style="margin-top:12px"><b>Example:</b> a recipe costing, supply planning or product-quality tool.</p></article>
+            <article class="card"><div class="number">04 · Reuse</div><h3>One model across surfaces</h3><p>Keep structured content and higher-level APIs consistent across browser and Node.js paths, rather than maintaining separate business logic.</p><p class="micro" style="margin-top:12px"><b>Example:</b> generate in Node, review in the browser.</p></article>
+          </div>
+          <div class="source-row"><a class="source" href="https://github.com/dream-num/univer#built-with-univer-office-sdk" target="_blank" rel="noreferrer">README · Workspace examples</a><a class="source" href="https://docs.univer.ai/guides/sheets/getting-started/node" target="_blank" rel="noreferrer">Docs · Headless Web SDK</a></div>
+        </div>
+      </section>
+
+      <section class="slide section-break" data-title="Deep dive · Under the hood">
+        <div class="slide-inner"><div class="eyebrow">02 · Deep dive</div><h2>Under the hood: a runtime you can compose.</h2><p>Most of the leverage comes from the seams: plugins, shared models, rendering and a Facade API that make the same core useful to an app, an agent and a server process.</p></div>
+      </section>
+
+      <section class="slide" data-title="Architecture">
+        <div class="slide-inner">
+          <div class="eyebrow">Architecture</div><h2>Four layers, one working surface.</h2>
+          <div class="stack">
+            <div class="stack-row"><div class="stack-label">Product surface</div><div class="stack-content"><b>Sheets · Docs · Slides · Bases</b><br />The experiences your user sees or your agent targets. Sheets are the most mature surface today; Docs and Slides continue to evolve.</div></div>
+            <div class="stack-row"><div class="stack-label">UI & render</div><div class="stack-content"><b>Canvas rendering · React UI · interactions · themes</b><br />A canvas-based rendering engine handles layout, primitives, scrolling, zooming and interaction layers.</div></div>
+            <div class="stack-row"><div class="stack-label">Core runtime</div><div class="stack-content"><b>Data models · commands · mutations · dependency injection</b><br />Shared business logic lives below the UI, making it possible to run product behaviours in more than one environment.</div></div>
+            <div class="stack-row"><div class="stack-label">Integration</div><div class="stack-content"><b>Facade API · plugins · presets · locales</b><br />Use a high-level API for app code, or go lower-level when building extensions and custom runtimes.</div></div>
+          </div>
+          <div class="source-row"><a class="source" href="https://github.com/dream-num/univer#-highlights" target="_blank" rel="noreferrer">README · Highlights</a><a class="source" href="https://github.com/dream-num/univer/blob/dev/packages/engine-render/README.md" target="_blank" rel="noreferrer">Package · Rendering engine</a><a class="source" href="https://github.com/dream-num/univer/blob/dev/packages/core/README.md" target="_blank" rel="noreferrer">Package · Core</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Browser + Node">
+        <div class="slide-inner">
+          <div class="eyebrow">Isomorphic by design</div><h2>Build in the browser. Process in Node. Share the logic.</h2>
+          <div class="runtime" aria-label="Browser and Node runtimes around shared Univer core">
+            <div class="center">Shared Univer core<br /><small>models · commands · Facade</small></div>
+            <div class="node">Browser UI<small>React, Canvas, menus, shortcuts</small></div>
+            <div class="node">Node.js<small>headless generation, inspection, automation</small></div>
+            <div class="node">Your app<small>permissions, storage, auth, AI</small></div>
+            <div class="node">Agent loop<small>read → act → verify → review</small></div>
+            <div class="label browser">client path</div><div class="label nodejs">server path</div>
+          </div>
+          <div class="callout" style="margin-top:20px"><strong>Design implication:</strong> keep feature logic, models, commands and mutations free of browser-only state. Put menus, shortcuts and React components in a separate UI plugin.</div>
+          <div class="source-row"><a class="source" href="https://github.com/dream-num/univer/blob/dev/docs/ISOMORPHIC.md" target="_blank" rel="noreferrer">Repo note · Building Isomorphic Univer</a><a class="source" href="https://docs.univer.ai/guides/sheets/getting-started/node" target="_blank" rel="noreferrer">Docs · Headless Web SDK</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Plugin composition">
+        <div class="slide-inner">
+          <div class="eyebrow">Composition model</div><h2>Start with a preset. Graduate to plugins when the product gets opinionated.</h2>
+          <div class="grid-2" style="margin-top:28px">
+            <article class="card"><div class="icon-tile">✦</div><h3>Preset mode</h3><p>Curated plugin collections for a fast working Sheets, Docs or Node setup. Good for prototypes, internal tools and a first product slice.</p><div class="callout" style="margin-top:16px"><b>Choose it when:</b><br /><span class="micro">You want a short integration path and sensible defaults.</span></div></article>
+            <article class="card"><div class="icon-tile orange">⊞</div><h3>Plugin mode</h3><p>Manually register packages, styles, locales, Facade APIs and configuration. Good for smaller bundles, lazy loading or custom runtime composition.</p><div class="callout" style="margin-top:16px"><b>Choose it when:</b><br /><span class="micro">You need strict control over the runtime boundary.</span></div></article>
+          </div>
+          <div class="source-row"><a class="source" href="https://github.com/dream-num/univer#-preset-mode-vs-plugin-mode" target="_blank" rel="noreferrer">README · Preset vs Plugin</a><a class="source" href="https://docs.univer.ai/guides/sheets/getting-started/installation" target="_blank" rel="noreferrer">Docs · Installation</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Commands & Facade">
+        <div class="slide-inner">
+          <div class="eyebrow">The extension seam</div><h2>Put the business action in the model. Let the UI be one client.</h2>
+          <div class="split" style="margin-top:25px">
+            <div>
+              <div class="rule-list">
+                <div class="rule"><div class="check">1</div><div><strong>Model</strong><span>Structured workbook or document state, with the data contracts your feature needs.</span></div></div>
+                <div class="rule"><div class="check">2</div><div><strong>Command / mutation</strong><span>One explicit action that can be triggered by a user, agent or server workflow.</span></div></div>
+                <div class="rule"><div class="check">3</div><div><strong>Service</strong><span>Dependency-injected capability for storage, calculation, events or other runtime work.</span></div></div>
+                <div class="rule"><div class="check">4</div><div><strong>Facade API</strong><span>A higher-level interface that keeps app code away from internal implementation details.</span></div></div>
+              </div>
+            </div>
+            <div class="code-shell"><div class="code-top"><span>conceptual plugin shape</span><span class="dots"><i></i><i></i><i></i></span></div><pre><span class="kw">export class</span> <span class="fn">QualityGatePlugin</span> {
+  <span class="kw">onStarting</span>(injector) {
+    injector.<span class="fn">add</span>(IQualityGateService, {
+      <span class="fn">validate</span>: (workbook) =&gt; {
+        <span class="com">// shared logic: browser + Node</span>
+        <span class="kw">return</span> checkRanges(workbook)
+      }
+    })
+  }
+}
+
+<span class="com">// UI plugin owns menus and shortcuts</span>
+<span class="kw">export class</span> <span class="fn">QualityGateUIPlugin</span> {
+  <span class="kw">onStarting</span>() { <span class="str">/* React / Canvas UI */</span> }
+}</pre></div>
+          </div>
+          <div class="source-row"><a class="source" href="https://github.com/dream-num/univer/blob/dev/docs/ISOMORPHIC.md" target="_blank" rel="noreferrer">Repo note · Separate plugins</a><a class="source" href="https://docs.univer.ai/guides/sheets/getting-started/facade" target="_blank" rel="noreferrer">Docs · Facade API</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="AI workflow">
+        <div class="slide-inner">
+          <div class="eyebrow">AI workflow</div><h2>Agents get a structured workspace, not just a text box.</h2>
+          <div class="grid-4" style="margin-top:30px">
+            <article class="card"><div class="number">01</div><h3>Inspect</h3><p>Read workbook or document structure through APIs instead of guessing from a screenshot.</p></article>
+            <article class="card"><div class="number">02</div><h3>Act</h3><p>Write values, formulas or document content through explicit, reviewable operations.</p></article>
+            <article class="card"><div class="number">03</div><h3>Verify</h3><p>Check content, render output, screenshots and layout diagnostics before delivery.</p></article>
+            <article class="card"><div class="number">04</div><h3>Review</h3><p>Keep a human in the loop with drafts, shared revisions or isolated worktrees where needed.</p></article>
+          </div>
+          <div class="callout" style="margin-top:22px"><strong>Product insight:</strong> the winning AI experience isn’t “AI inside a spreadsheet”. It’s an agent that can make structured changes, explain them, and hand a polished artefact back to a person.</div>
+          <p class="micro" style="margin-top:14px">Availability of live collaboration, shared revisions and worktree workflows depends on the relevant Web SDK, collaboration capabilities and licensing.</p>
+          <div class="source-row"><a class="source" href="https://github.com/dream-num/univer#-office-workflows-for-ai-agents" target="_blank" rel="noreferrer">README · Office workflows for AI agents</a><a class="source" href="https://docs.univer.ai/ai" target="_blank" rel="noreferrer">Docs · AI SDK</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="OSS vs Pro">
+        <div class="slide-inner">
+          <div class="eyebrow">Scope check</div><h2>Know what the open-source repo gives you — and where Pro begins.</h2>
+          <div class="compare" style="margin-top:27px"><div class="compare-grid">
+            <div class="head">Surface</div><div class="head">Open source</div><div class="head">Pro / commercial</div>
+            <div>Foundation</div><div>Core SDK, plugin system, rendering, formula engine, Facade API, themes, i18n.</div><div>Pro presets and enterprise deployment packages.</div>
+            <div>Sheets</div><div>Editing, formulas, formatting, filter/sort, validation, comments, notes, tables and drawing integration.</div><div>Collaboration, import/export, print, charts, pivots, connectors and enhanced formula features.</div>
+            <div>Docs</div><div>Document model and editor UI, lists, links, comments and drawing integration.</div><div>Collaboration, import/export, print, enhanced layout and remote resources.</div>
+            <div>Slides</div><div>Presentation data model and UI packages under active development.</div><div>Pro slide model/UI, import/export, charts, tables and shared shape editing.</div>
+            <div>Runtime</div><div>Browser apps, Node headless usage, Web Worker/RPC patterns and automation primitives.</div><div>Collaboration server, SSR, server-side calculation and replay tooling.</div>
+          </div></div>
+          <div class="source-row"><a class="source" href="https://github.com/dream-num/univer#-open-source-and-pro" target="_blank" rel="noreferrer">README · Open Source and Pro</a><a class="source" href="https://docs.univer.ai/guides/pro" target="_blank" rel="noreferrer">Docs · Univer Pro guide</a></div>
+        </div>
+      </section>
+
+      <section class="slide section-break" data-title="Build it">
+        <div class="slide-inner"><div class="eyebrow">03 · Build it</div><h2>A practical path from zero to a product-shaped prototype.</h2><p>Start narrow: one surface, one workflow, one validation loop. Add collaboration and deeper customisation only when the product earns it.</p></div>
+      </section>
+
+      <section class="slide" data-title="Implementation steps">
+        <div class="slide-inner">
+          <div class="eyebrow">Step-by-step guide</div><h2>The shortest path to a working Sheets surface.</h2>
+          <div class="split" style="margin-top:25px">
+            <div class="steps">
+              <div class="step"><div><h3>Choose the boundary <span class="tag">browser / Node</span></h3><p>Decide whether the first slice is interactive, headless or both. Keep the domain workflow outside the editor core.</p></div></div>
+              <div class="step"><div><h3>Start with a preset <span class="tag">fast path</span></h3><p>Use <code>@univerjs/presets</code> plus <code>@univerjs/preset-sheets-core</code> for a minimal browser setup.</p></div></div>
+              <div class="step"><div><h3>Register the container <span class="tag">UI</span></h3><p>Give Univer a full-height element, create a workbook, then mount your app shell around it.</p></div></div>
+              <div class="step"><div><h3>Prove one workflow <span class="tag">vertical slice</span></h3><p>For example: import data → calculate → flag exceptions → ask for review → export or hand off.</p></div></div>
+            </div>
+            <div class="code-shell"><div class="code-top"><span>preset mode · TypeScript</span><span class="dots"><i></i><i></i><i></i></span></div><pre><span class="kw">import</span> { UniverSheetsCorePreset } <span class="kw">from</span> <span class="str">'@univerjs/preset-sheets-core'</span>
+<span class="kw">import</span> presetEnUS <span class="kw">from</span> <span class="str">'@univerjs/preset-sheets-core/locales/en-US'</span>
+<span class="kw">import</span> { createUniver, LocaleType, mergeLocales } <span class="kw">from</span> <span class="str">'@univerjs/presets'</span>
+<span class="kw">import</span> <span class="str">'@univerjs/preset-sheets-core/lib/index.css'</span>
+
+<span class="kw">const</span> { univerAPI } = <span class="fn">createUniver</span>({
+  locale: LocaleType.EN_US,
+  locales: { [LocaleType.EN_US]: <span class="fn">mergeLocales</span>(presetEnUS) },
+  presets: [<span class="fn">UniverSheetsCorePreset</span>({ container: <span class="str">'app'</span> })],
+})
+
+univerAPI.<span class="fn">createWorkbook</span>({})</pre></div>
+          </div>
+          <div class="source-row"><a class="source" href="https://github.com/dream-num/univer#-quick-start" target="_blank" rel="noreferrer">README · Quick Start</a><a class="source" href="https://docs.univer.ai/guides/sheets/getting-started/installation" target="_blank" rel="noreferrer">Docs · Installation & basic usage</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Headless + AI">
+        <div class="slide-inner">
+          <div class="eyebrow">Step 2 · Add the agent loop</div><h2>Put the model outside the editor. Give it safe, observable operations.</h2>
+          <div class="split reverse" style="margin-top:25px">
+            <div class="code-shell"><div class="code-top"><span>conceptual service boundary</span><span class="dots"><i></i><i></i><i></i></span></div><pre><span class="kw">type</span> Task = {
+  workbookId: <span class="kw">string</span>
+  instruction: <span class="kw">string</span>
+}
+
+<span class="kw">async function</span> <span class="fn">runAgentTask</span>(task: Task) {
+  <span class="kw">const</span> state = <span class="kw">await</span> office.<span class="fn">inspect</span>(task.workbookId)
+  <span class="kw">const</span> plan = <span class="kw">await</span> model.<span class="fn">propose</span>({ state, task })
+  <span class="kw">await</span> policy.<span class="fn">check</span>(plan)
+  <span class="kw">const</span> result = <span class="kw">await</span> office.<span class="fn">apply</span>(plan)
+  <span class="kw">const</span> report = <span class="kw">await</span> office.<span class="fn">verify</span>(result)
+  <span class="kw">return</span> { result, report }
+}</pre></div>
+            <div>
+              <div class="rule-list">
+                <div class="rule"><div class="check">A</div><div><strong>Inspect before act</strong><span>Give the model structured state and relevant ranges, not an unbounded page dump.</span></div></div>
+                <div class="rule"><div class="check">B</div><div><strong>Apply through commands</strong><span>Keep mutations explicit, auditable and easy to roll back or review.</span></div></div>
+                <div class="rule"><div class="check">C</div><div><strong>Verify the artefact</strong><span>Validate formulas, ranges, rendered layout and business-specific rules.</span></div></div>
+                <div class="rule"><div class="check">D</div><div><strong>Escalate ambiguity</strong><span>Ask a person when the agent lacks confidence or the cost of a wrong edit is high.</span></div></div>
+              </div>
+            </div>
+          </div>
+          <p class="micro" style="margin-top:18px">The code is an implementation pattern, not a verbatim Univer API listing. Treat it as a product architecture guide and map each operation to documented Facade APIs and your own policy layer.</p>
+          <div class="source-row"><a class="source" href="https://docs.univer.ai/ai" target="_blank" rel="noreferrer">Docs · AI SDK</a><a class="source" href="https://docs.univer.ai/guides/sheets/getting-started/facade" target="_blank" rel="noreferrer">Docs · Facade API</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Custom plugin">
+        <div class="slide-inner">
+          <div class="eyebrow">Step 3 · Extend safely</div><h2>When your workflow is real, graduate from configuration to a domain plugin.</h2>
+          <div class="grid-3" style="margin-top:26px">
+            <article class="card"><div class="number">Client</div><h3>Make it legible</h3><p>Menus, shortcuts, status, visual warnings and custom components belong in a UI-facing plugin.</p></article>
+            <article class="card"><div class="number">Shared</div><h3>Make it reusable</h3><p>Models, commands, mutations, services and Facade APIs should not depend on browser-only state.</p></article>
+            <article class="card"><div class="number">Server</div><h3>Make it automatable</h3><p>Use headless paths for batch work, generation, verification and background jobs, while keeping policies around them.</p></article>
+          </div>
+          <div class="check-grid">
+            <div class="check-card"><b>Version alignment</b><span>Keep coordinated <code>@univerjs/*</code> packages on the same release line.</span></div>
+            <div class="check-card"><b>Public API discipline</b><span>Prefer documented package exports and Facade APIs over internal implementation folders.</span></div>
+            <div class="check-card"><b>Runtime compatibility</b><span>Plan for target browsers, <code>Intl.Segmenter</code> support and your chosen build tool.</span></div>
+            <div class="check-card"><b>Test the mutation</b><span>Cover command behaviour and formula correctness before layering on polished UI.</span></div>
+          </div>
+          <div class="source-row"><a class="source" href="https://github.com/dream-num/univer/blob/dev/docs/API_STABILITY.md" target="_blank" rel="noreferrer">Repo note · API stability</a><a class="source" href="https://github.com/dream-num/univer#-compatibility" target="_blank" rel="noreferrer">README · Compatibility</a><a class="source" href="https://github.com/dream-num/univer/tree/dev/tests" target="_blank" rel="noreferrer">Repo · Tests</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Validate & ship">
+        <div class="slide-inner">
+          <div class="eyebrow">Step 4 · Validate & ship</div><h2>Ship a narrow capability with a visible proof loop.</h2>
+          <div class="grid-2" style="margin-top:27px">
+            <article class="card"><div class="number">Before release</div><h3>Prove the core behaviour</h3><div class="rule-list"><div class="rule"><div class="check">✓</div><div><strong>Unit / integration tests</strong><span>Formula correctness, command mutations, range operations and failure paths.</span></div></div><div class="rule"><div class="check">✓</div><div><strong>Rendered checks</strong><span>Long formulas, zoom, scrolling, keyboard paths and mobile layout.</span></div></div><div class="rule"><div class="check">✓</div><div><strong>Agent evaluation</strong><span>Golden tasks with expected edits, provenance and human-review triggers.</span></div></div></div></article>
+            <article class="card"><div class="number">After release</div><h3>Keep the surface trustworthy</h3><div class="rule-list"><div class="rule"><div class="check">↺</div><div><strong>Observe decisions</strong><span>Log requested action, applied mutation, verification result and reviewer outcome.</span></div></div><div class="rule"><div class="check">↺</div><div><strong>Version deliberately</strong><span>Track package alignment and document any experimental API dependency.</span></div></div><div class="rule"><div class="check">↺</div><div><strong>Make escape hatches</strong><span>Provide undo, draft state, approval gates and a clear way to inspect raw content.</span></div></div></div></article>
+          </div>
+          <div class="callout" style="margin-top:22px"><strong>Done condition:</strong> a user can complete one meaningful task end to end, understand what the agent changed, and recover when the workflow goes wrong.</div>
+          <div class="source-row"><a class="source" href="https://github.com/dream-num/univer/blob/dev/docs/API_STABILITY.md" target="_blank" rel="noreferrer">Repo note · API stability policy</a><a class="source" href="https://github.com/dream-num/univer/tree/dev/tests/formula-integration" target="_blank" rel="noreferrer">Repo · Formula integration tests</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Takeaways">
+        <div class="slide-inner">
+          <div class="eyebrow">What to remember</div><h2>Univer’s unfair advantage is not “more spreadsheet features”.</h2>
+          <div class="takeaway" style="margin-top:26px">
+            <div class="takeaway-main"><h3>THE THESIS</h3><p>It gives product teams a reusable office runtime that agents can operate and people can review.</p><p class="micro" style="color:#cfe6d3">That makes structured Office content a first-class part of your application architecture.</p></div>
+            <div class="takeaway-side"><article class="card"><h3>Best fit</h3><p>AI-native workspaces, planning tools, operational dashboards, structured reviews and domain-specific document workflows.</p></article><article class="card"><h3>Watch-outs</h3><p>Sheets are most mature. Slides are active development. API stability, version alignment and OSS/Pro boundaries matter.</p></article><article class="card"><h3>First move</h3><p>Prototype one end-to-end task with preset mode, then test whether a domain plugin earns its complexity.</p></article></div>
+          </div>
+          <div class="source-row"><a class="source" href="https://github.com/dream-num/univer" target="_blank" rel="noreferrer">Repository · inspected commit 1defaf4</a><a class="source" href="https://github.com/dream-num/univer/releases" target="_blank" rel="noreferrer">Releases</a></div>
+        </div>
+      </section>
+
+      <section class="slide" data-title="Sources & notes">
+        <div class="slide-inner">
+          <div class="eyebrow">Sources & evidence</div><h2>Read the repo, then make the product boundary your own.</h2>
+          <div class="source-notes">
+            <div class="source-note"><b>01</b><div><b>Repository README</b> — “Univer is an open-source SDK for creating office applications inside your own product.” <a class="source" href="https://github.com/dream-num/univer#-what-is-univer" target="_blank" rel="noreferrer">Open source</a></div></div>
+            <div class="source-note"><b>02</b><div><b>Repository README</b> — “One consistent API surface for workbooks, ranges, formulas, and documents across browser and Node.js.” <a class="source" href="https://github.com/dream-num/univer#-highlights" target="_blank" rel="noreferrer">Open source</a></div></div>
+            <div class="source-note"><b>03</b><div><b>Isomorphic architecture note</b> — “Separate plugins” for underlying logic and UI; commands and mutations should not read UI state. <a class="source" href="https://github.com/dream-num/univer/blob/dev/docs/ISOMORPHIC.md" target="_blank" rel="noreferrer">Open source</a></div></div>
+            <div class="source-note"><b>04</b><div><b>Core package README</b> — the foundation provides runtime, dependency injection, command and mutation services, data models, configuration, localisation and Facade entry points. <a class="source" href="https://github.com/dream-num/univer/blob/dev/packages/core/README.md" target="_blank" rel="noreferrer">Open source</a></div></div>
+            <div class="source-note"><b>05</b><div><b>Docs</b> — Preset mode provides a shorter curated setup; plugin mode gives lower-level control; headless Univer supports Node.js processing. <a class="source" href="https://docs.univer.ai/guides/sheets/getting-started/installation" target="_blank" rel="noreferrer">Documentation</a></div></div>
+            <div class="source-note"><b>06</b><div><b>Scope note:</b> implementation snippets labelled “conceptual” are design patterns, not claims that those exact helper names are part of the public API. Verify against the current docs before shipping.</div></div>
+          </div>
+          <div class="callout" style="margin-top:26px"><strong>Licence:</strong> the repository is Apache-2.0. Product-specific Pro capabilities are documented separately and may have different commercial terms.</div>
+          <div class="source-row"><a class="source" href="https://github.com/dream-num/univer/blob/dev/LICENSE" target="_blank" rel="noreferrer">Apache-2.0 licence</a><a class="source" href="https://docs.univer.ai/guides/pro" target="_blank" rel="noreferrer">Univer Pro guide</a></div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="bottom-bar">
+      <div class="slide-count" id="slideCount">01 / 18</div>
+      <div class="hint">← → navigate · O overview · F fullscreen</div>
+      <div class="nav"><button id="prevBtn" aria-label="Previous slide" title="Previous slide"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"></path></svg></button><button id="nextBtn" aria-label="Next slide" title="Next slide"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"></path></svg></button></div>
+    </footer>
+  </main>
+
+  <div class="modal-backdrop" id="indexModal" role="dialog" aria-modal="true" aria-labelledby="indexTitle">
+    <div class="index-modal"><div class="index-header"><h2 id="indexTitle">Slide overview</h2><button class="icon-btn" id="closeIndex" aria-label="Close slide overview"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div><div class="index-list" id="indexList"></div></div>
+  </div>
+
+  <script>
+    (() => {
+      const slides = [...document.querySelectorAll('.slide')];
+      const progress = document.getElementById('progress');
+      const count = document.getElementById('slideCount');
+      const prev = document.getElementById('prevBtn');
+      const next = document.getElementById('nextBtn');
+      const modal = document.getElementById('indexModal');
+      const indexList = document.getElementById('indexList');
+      let current = 0;
+      let touchStartX = 0;
+
+      const icon = (type) => type === 'section' ? '◆' : '→';
+      slides.forEach((slide, i) => {
+        const item = document.createElement('button');
+        item.className = 'index-item';
+        item.innerHTML = `<span class="ix">${String(i + 1).padStart(2, '0')}</span><span>${slide.dataset.title}</span>`;
+        item.addEventListener('click', () => { go(i); closeIndex(); });
+        indexList.appendChild(item);
+      });
+      const items = [...indexList.children];
+
+      function go(index) {
+        current = Math.max(0, Math.min(index, slides.length - 1));
+        slides.forEach((slide, i) => slide.classList.toggle('is-active', i === current));
+        items.forEach((item, i) => item.classList.toggle('active', i === current));
+        count.textContent = `${String(current + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        prev.disabled = current === 0;
+        next.disabled = current === slides.length - 1;
+        history.replaceState(null, '', `#${current + 1}`);
+      }
+      function nextSlide() { go(current + 1); }
+      function prevSlide() { go(current - 1); }
+      function openIndex() { modal.classList.add('open'); document.getElementById('closeIndex').focus(); }
+      function closeIndex() { modal.classList.remove('open'); }
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+        else document.exitFullscreen?.();
+      }
+      prev.addEventListener('click', prevSlide); next.addEventListener('click', nextSlide);
+      document.getElementById('indexBtn').addEventListener('click', openIndex);
+      document.getElementById('closeIndex').addEventListener('click', closeIndex);
+      document.getElementById('fullBtn').addEventListener('click', toggleFullscreen);
+      modal.addEventListener('click', e => { if (e.target === modal) closeIndex(); });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && modal.classList.contains('open')) { closeIndex(); return; }
+        if (e.key.toLowerCase() === 'o') { openIndex(); return; }
+        if (e.key.toLowerCase() === 'f') { toggleFullscreen(); return; }
+        if (modal.classList.contains('open')) return;
+        if (['ArrowRight','PageDown',' '].includes(e.key)) { e.preventDefault(); nextSlide(); }
+        if (['ArrowLeft','PageUp'].includes(e.key)) { e.preventDefault(); prevSlide(); }
+        if (e.key === 'Home') go(0);
+        if (e.key === 'End') go(slides.length - 1);
+      });
+      document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
+      document.addEventListener('touchend', e => { const delta = e.changedTouches[0].clientX - touchStartX; if (Math.abs(delta) > 55) delta < 0 ? nextSlide() : prevSlide(); }, { passive: true });
+      const hash = Number(location.hash.slice(1));
+      go(Number.isInteger(hash) && hash > 0 ? hash - 1 : 0);
+    })();
+  </script>
+</body>
+</html>
