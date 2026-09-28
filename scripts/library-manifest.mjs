@@ -6,6 +6,7 @@ export const SOURCE_DIR = "/Users/vividm4/Documents/CoworkOS/00_Outputs";
 
 export const DECKS = [
   // --- Slide decks ---
+  { file: "Deerflow Slide Deck.html", title: "DeerFlow Deep Dive", category: "agents", date: "2026-09-28" },
   { file: "Harness Zero Deep Dive.html", title: "Harness-Zero: Agent-as-Harness", category: "agents", date: "2026-09-27" },
   { file: "Jev Deep Dive Slide Deck.html", title: "Jev: The Decision Model After the Chatbot Era", category: "models", date: "2026-09-27" },
   { file: "Laya Deep Dive Slide Deck.html", title: "Laya: Decisions Without the Text Generator", category: "models", date: "2026-09-27" },
