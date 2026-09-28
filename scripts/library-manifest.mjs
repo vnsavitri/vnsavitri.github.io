@@ -12,7 +12,7 @@ export const DECKS = [
   { file: "Univer Deep Dive Slide Deck.html", title: "Univer: Office Harness for AI Agents", category: "agents", date: "2026-09-27" },
   { file: "Agent-me Deep Dive.html", title: "Agent-Me: Your AI Agent Twin", category: "agents", date: "2026-09-23" },
   { file: "claude-financial-services-deck-prettified-20260924.html", title: "Claude for Financial Services", category: "building", date: "2026-09-24" },
-  { file: "Code as Agent Harness Deck.html", title: "Code as Agent Harness", category: "agents", date: "2026-09-23" },
+  { file: "Code as Agent Harness Deck Sept 28 2026.html", title: "Code as Agent Harness", category: "agents", date: "2026-09-28" },
   { file: "Last AI Built By Human Deck.html", title: "The Last AI Built by Humans", category: "models", date: "2026-09-23" },
   { file: "LinkedIn Skills Deep Dive.html", title: "LinkedIn Skills Deep Dive", category: "agents", date: "2026-09-23" },
   { file: "Minimind Deep Dive.html", title: "MiniMind Deep Dive", category: "models", date: "2026-09-23" },

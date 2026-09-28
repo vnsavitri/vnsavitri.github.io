@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0b0f17" />
   <title>Code as Agent Harness — Deep Dive</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
       --ink: #f4f7fb;
@@ -14,12 +17,12 @@
       --panel: #111827;
       --panel-2: #151e2d;
       --line: rgba(255,255,255,.12);
-      --cyan: #68e5d1;
-      --cyan-2: #b7fff2;
-      --amber: #ffc86b;
-      --violet: #aa9bff;
-      --rose: #ff8e9e;
-      --green: #8ee7a6;
+      --cyan: #c8a5cc;
+      --cyan-2: #c8a5cc;
+      --amber: #a279a7;
+      --violet: #a279a7;
+      --rose: #f4f7fb;
+      --green: #c8a5cc;
       --shadow: 0 30px 80px rgba(0,0,0,.32);
     }
     * { box-sizing: border-box; }
@@ -31,9 +34,10 @@
     .deck { position: relative; min-height: 100vh; overflow: hidden; }
     .slide {
       position: absolute; inset: 0; min-height: 100vh; padding: 6.8vh 7vw 10vh;
-      display: none; overflow: auto; background:
-        radial-gradient(circle at 92% 4%, rgba(104,229,209,.12), transparent 30%),
-        radial-gradient(circle at 6% 90%, rgba(170,155,255,.09), transparent 28%), var(--bg);
+      display: none; overflow: auto; overflow-x: hidden; scrollbar-gutter: stable;
+      background:
+        radial-gradient(circle at 92% 4%, rgba(90,45,95,.3), transparent 40%),
+        radial-gradient(circle at 6% 90%, rgba(56,24,60,.35), transparent 38%), var(--bg);
     }
     .slide.active { display: block; animation: in .42s ease both; }
     @keyframes in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -66,16 +70,17 @@
     .metric { font-size: 2.6rem; line-height: 1; letter-spacing: -.06em; color: var(--cyan); margin-bottom: .35rem; }
     .hero { display: grid; grid-template-columns: 1.08fr .92fr; gap: 4vw; align-items: center; min-height: 72vh; }
     .hero-mark { min-height: 480px; position: relative; display: grid; place-items: center; }
-    .orb { width: min(34vw, 420px); aspect-ratio: 1; border: 1px solid rgba(104,229,209,.5); border-radius: 50%; position: relative; box-shadow: 0 0 0 30px rgba(104,229,209,.035), 0 0 0 70px rgba(104,229,209,.025), inset 0 0 80px rgba(104,229,209,.12); }
-    .orb:before, .orb:after { content:""; position:absolute; inset: 12%; border: 1px dashed rgba(170,155,255,.5); border-radius: 50%; transform: rotate(32deg) scaleX(.36); }
-    .orb:after { transform: rotate(-32deg) scaleX(.36); border-color: rgba(255,200,107,.5); }
-    .orb-core { position:absolute; inset: 38%; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 60px rgba(104,229,209,.7); }
+    .orb { width: min(34vw, 420px); aspect-ratio: 1; border: 1px solid rgba(200,165,204,.5); border-radius: 50%; position: relative; box-shadow: 0 0 0 30px rgba(200,165,204,.035), 0 0 0 70px rgba(200,165,204,.025), inset 0 0 80px rgba(200,165,204,.12); }
+    .orb:before, .orb:after { content:""; position:absolute; inset: 12%; border: 1px dashed rgba(162,121,167,.55); border-radius: 50%; transform: rotate(32deg) scaleX(.36); }
+    .orb:after { transform: rotate(-32deg) scaleX(.36); border-color: rgba(90,45,95,.6); }
+    .orb-core { position:absolute; inset: 38%; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 60px rgba(200,165,204,.7); }
     .orbit { position:absolute; inset: 0; animation: spin 12s linear infinite; }
     .orbit i { position:absolute; width: 11px; height: 11px; border-radius: 50%; background: var(--amber); top: 1%; left: 50%; box-shadow: 0 0 20px var(--amber); }
     @keyframes spin { to { transform: rotate(360deg); } }
     .hero-note { position: absolute; bottom: 1.5rem; right: 2rem; max-width: 260px; color: var(--muted); font-size: .78rem; line-height: 1.4; }
-    .section-break { display: grid; place-items: center; text-align: center; background: linear-gradient(140deg, #121b2b, #0b0f17 58%); }
-    .section-break .section-number { font-size: clamp(5rem, 16vw, 13rem); line-height: .8; font-weight: 900; letter-spacing: -.12em; color: transparent; -webkit-text-stroke: 1px rgba(104,229,209,.35); margin-bottom: 1.2rem; }
+    .section-break { place-items: center; text-align: center; background: linear-gradient(140deg, #1f1522, #0b0f17 58%); }
+    .slide.section-break.active { display: grid; }
+    .section-break .section-number { font-size: clamp(5rem, 16vw, 13rem); line-height: .8; font-weight: 900; letter-spacing: -.12em; color: transparent; -webkit-text-stroke: 1px rgba(200,165,204,.4); margin-bottom: 1.2rem; }
     .section-break h2 { margin-left: auto; margin-right: auto; }
     .section-break .lead { margin-left: auto; margin-right: auto; }
     .timeline { display: grid; grid-template-columns: repeat(3,1fr); gap: 0; margin: 2rem 0; }
@@ -90,7 +95,7 @@
     .diagram svg { width: 100%; height: auto; display: block; }
     .tabbar { display:flex; gap:.5rem; flex-wrap:wrap; margin: 1.2rem 0; }
     .tab { background: transparent; border: 1px solid var(--line); border-radius:999px; padding:.55rem .85rem; cursor:pointer; color:var(--muted); }
-    .tab.active, .tab:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(104,229,209,.08); }
+    .tab.active, .tab:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(200,165,204,.12); }
     .tabpanel { display:none; }
     .tabpanel.active { display:block; animation: in .25s ease both; }
     .steps { counter-reset: step; display:grid; gap:.75rem; }
@@ -104,7 +109,7 @@
     .matrix { display:grid; grid-template-columns: 1.15fr repeat(3,1fr); border:1px solid var(--line); border-radius:18px; overflow:hidden; }
     .matrix > div { padding:.82rem; border-right:1px solid var(--line); border-bottom:1px solid var(--line); font-size:.82rem; color:var(--muted); }
     .matrix > div:nth-child(4n) { border-right:0; }
-    .matrix .head { background:rgba(104,229,209,.1); color:var(--ink); font-weight:800; }
+    .matrix .head { background:rgba(200,165,204,.14); color:var(--ink); font-weight:800; }
     .matrix .rowhead { color:var(--ink); font-weight:700; }
     .checklist { display:grid; gap:.6rem; }
     .check { display:flex; align-items:flex-start; gap:.7rem; color:var(--muted); }
@@ -112,14 +117,16 @@
     .risk { display:flex; gap: 1rem; align-items:flex-start; padding: .9rem 0; border-bottom:1px solid var(--line); }
     .risk:last-child { border-bottom:0; }
     .risk-icon { width:2rem; height:2rem; flex:none; display:grid; place-items:center; border:1px solid currentColor; border-radius:10px; }
-    .footerline { position: fixed; left: 7vw; right: 7vw; bottom: 2.2rem; display:flex; justify-content:space-between; align-items:center; pointer-events:none; z-index:20; }
-    .progress { height: 2px; background: rgba(255,255,255,.12); flex:1; max-width: 260px; }
-    .progress span { display:block; height:100%; background:var(--cyan); transition:width .3s ease; }
-    .slide-count { color: var(--muted-2); font-size:.72rem; letter-spacing:.12em; }
-    .controls { display:flex; align-items:center; gap:.42rem; pointer-events:auto; }
+    .footerline { position: fixed; left: 7vw; right: 7vw; bottom: 2.2rem; display:flex; justify-content:space-between; align-items:center; gap:.75rem; pointer-events:none; z-index:20; }
+    .footerline-meta { display:flex; align-items:center; gap:1rem; min-width:0; overflow:hidden; }
+    .progress { height: 2px; background: rgba(255,255,255,.12); flex:1; max-width: 260px; min-width:24px; }
+    .progress span { display:block; height:100%; background:linear-gradient(90deg,var(--cyan),#5a2d5f); transition:width .3s ease; }
+    .slide-count { color: var(--muted-2); font-size:.72rem; letter-spacing:.12em; white-space:nowrap; }
+    .controls { display:flex; align-items:center; gap:.42rem; pointer-events:auto; flex:none; position:relative; z-index:21; }
     .icon-btn { width: 2.25rem; height:2.25rem; display:grid; place-items:center; border-radius: 11px; border:1px solid var(--line); background: rgba(15,22,35,.86); cursor:pointer; color:var(--muted); }
     .icon-btn:hover { border-color:var(--cyan); color:var(--cyan); }
-    .icon-btn svg { width:1rem; height:1rem; }
+    .icon-btn svg { width:1rem; height:1rem; flex:none; }
+    .icon-btn.labeled { width:auto; display:inline-flex; align-items:center; gap:.4rem; padding:0 .8rem; font-size:.78rem; white-space:nowrap; }
     .overview { position: fixed; inset: 0; z-index:50; display:none; background: rgba(6,9,14,.94); backdrop-filter: blur(14px); padding: 7vh 7vw; overflow:auto; }
     .overview.open { display:block; animation: in .22s ease both; }
     .overview-head { display:flex; align-items:baseline; justify-content:space-between; gap:1rem; margin-bottom:2rem; }
@@ -151,6 +158,9 @@
       h1 { font-size: clamp(3.1rem, 15vw, 6rem); }
       h2 { font-size: clamp(2.5rem, 12vw, 5rem); }
       .footerline { left:1.15rem; right:1.15rem; bottom:1.2rem; }
+      .footerline-meta { display:none; }
+      .icon-btn.labeled { width:2.25rem; padding:0; }
+      .icon-btn.labeled span { display:none; }
       .progress { max-width:100px; }
       .source { position:relative; bottom:auto; margin-top:2rem; }
     }
@@ -231,13 +241,13 @@
         <h2>Code sits in the loop between <span class="accent">intent</span> and <span class="accent">evidence</span>.</h2>
         <div class="diagram" style="margin-top:2rem">
           <svg viewBox="0 0 1100 350" role="img" aria-label="Agent produces code, harness executes it, environment returns feedback, and the loop repeats">
-            <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#68e5d1"/></marker></defs>
-            <rect x="35" y="120" width="170" height="90" rx="18" fill="#151e2d" stroke="#68e5d1"/><text x="120" y="158" fill="#f4f7fb" text-anchor="middle" font-size="18" font-weight="700">Agent</text><text x="120" y="184" fill="#aab5c7" text-anchor="middle" font-size="13">intent · judgement</text>
-            <rect x="275" y="80" width="230" height="170" rx="22" fill="#151e2d" stroke="#aa9bff"/><text x="390" y="120" fill="#f4f7fb" text-anchor="middle" font-size="18" font-weight="700">Harness</text><text x="390" y="150" fill="#aa9bff" text-anchor="middle" font-size="13">plan · tools · memory</text><text x="390" y="176" fill="#aa9bff" text-anchor="middle" font-size="13">permissions · validators</text><text x="390" y="202" fill="#aa9bff" text-anchor="middle" font-size="13">traces · state</text>
-            <rect x="575" y="120" width="210" height="90" rx="18" fill="#151e2d" stroke="#ffc86b"/><text x="680" y="158" fill="#f4f7fb" text-anchor="middle" font-size="18" font-weight="700">Code / tools</text><text x="680" y="184" fill="#aab5c7" text-anchor="middle" font-size="13">execute · change · inspect</text>
-            <rect x="855" y="120" width="210" height="90" rx="18" fill="#151e2d" stroke="#8ee7a6"/><text x="960" y="158" fill="#f4f7fb" text-anchor="middle" font-size="18" font-weight="700">Environment</text><text x="960" y="184" fill="#aab5c7" text-anchor="middle" font-size="13">tests · logs · outcomes</text>
-            <path d="M205 165 H268" stroke="#68e5d1" stroke-width="2" marker-end="url(#arrow)"/><path d="M505 165 H568" stroke="#68e5d1" stroke-width="2" marker-end="url(#arrow)"/><path d="M785 165 H848" stroke="#68e5d1" stroke-width="2" marker-end="url(#arrow)"/>
-            <path d="M960 220 C960 305 120 305 120 220" fill="none" stroke="#68e5d1" stroke-width="2" stroke-dasharray="7 7" marker-end="url(#arrow)"/><text x="540" y="326" fill="#68e5d1" text-anchor="middle" font-size="14" font-weight="700">feedback becomes the next decision</text>
+            <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#c8a5cc"/></marker></defs>
+            <rect x="35" y="120" width="170" height="90" rx="18" fill="#151e2d" stroke="#c8a5cc"/><text x="120" y="158" fill="#f4f7fb" text-anchor="middle" font-size="18" font-weight="700">Agent</text><text x="120" y="184" fill="#aab5c7" text-anchor="middle" font-size="13">intent · judgement</text>
+            <rect x="275" y="80" width="230" height="170" rx="22" fill="#151e2d" stroke="#a279a7"/><text x="390" y="120" fill="#f4f7fb" text-anchor="middle" font-size="18" font-weight="700">Harness</text><text x="390" y="150" fill="#c8a5cc" text-anchor="middle" font-size="13">plan · tools · memory</text><text x="390" y="176" fill="#c8a5cc" text-anchor="middle" font-size="13">permissions · validators</text><text x="390" y="202" fill="#c8a5cc" text-anchor="middle" font-size="13">traces · state</text>
+            <rect x="575" y="120" width="210" height="90" rx="18" fill="#151e2d" stroke="#a279a7"/><text x="680" y="158" fill="#f4f7fb" text-anchor="middle" font-size="18" font-weight="700">Code / tools</text><text x="680" y="184" fill="#aab5c7" text-anchor="middle" font-size="13">execute · change · inspect</text>
+            <rect x="855" y="120" width="210" height="90" rx="18" fill="#151e2d" stroke="#c8a5cc"/><text x="960" y="158" fill="#f4f7fb" text-anchor="middle" font-size="18" font-weight="700">Environment</text><text x="960" y="184" fill="#aab5c7" text-anchor="middle" font-size="13">tests · logs · outcomes</text>
+            <path d="M205 165 H268" stroke="#c8a5cc" stroke-width="2" marker-end="url(#arrow)"/><path d="M505 165 H568" stroke="#c8a5cc" stroke-width="2" marker-end="url(#arrow)"/><path d="M785 165 H848" stroke="#c8a5cc" stroke-width="2" marker-end="url(#arrow)"/>
+            <path d="M960 220 C960 305 120 305 120 220" fill="none" stroke="#c8a5cc" stroke-width="2" stroke-dasharray="7 7" marker-end="url(#arrow)"/><text x="540" y="326" fill="#c8a5cc" text-anchor="middle" font-size="14" font-weight="700">feedback becomes the next decision</text>
           </svg>
         </div>
         <div class="grid grid-3" style="margin-top:1rem"><div class="pill">reasoning → executable</div><div class="pill">action → bounded</div><div class="pill">state → inspectable</div></div>
@@ -332,14 +342,14 @@
         <h2>Once you can observe the harness, you can <span class="green">improve the harness</span>.</h2>
         <div class="diagram" style="margin-top:2rem">
           <svg viewBox="0 0 1000 270" role="img" aria-label="Telemetry feeds diagnosis, candidate revision, replay evaluation and governed promotion">
-            <defs><marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#8ee7a6"/></marker></defs>
+            <defs><marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#c8a5cc"/></marker></defs>
             <g font-family="system-ui">
-              <rect x="30" y="70" width="175" height="105" rx="18" fill="#151e2d" stroke="#8ee7a6"/><text x="117" y="106" fill="#f4f7fb" text-anchor="middle" font-size="17" font-weight="700">Deep telemetry</text><text x="117" y="133" fill="#aab5c7" text-anchor="middle" font-size="12">traces · costs · tools</text><text x="117" y="153" fill="#aab5c7" text-anchor="middle" font-size="12">tests · permissions</text>
-              <rect x="270" y="70" width="175" height="105" rx="18" fill="#151e2d" stroke="#aa9bff"/><text x="357" y="106" fill="#f4f7fb" text-anchor="middle" font-size="17" font-weight="700">Diagnose</text><text x="357" y="133" fill="#aab5c7" text-anchor="middle" font-size="12">find recurring waste</text><text x="357" y="153" fill="#aab5c7" text-anchor="middle" font-size="12">attribute failure</text>
-              <rect x="510" y="70" width="175" height="105" rx="18" fill="#151e2d" stroke="#ffc86b"/><text x="597" y="106" fill="#f4f7fb" text-anchor="middle" font-size="17" font-weight="700">Revise</text><text x="597" y="133" fill="#aab5c7" text-anchor="middle" font-size="12">tools · prompts · gates</text><text x="597" y="153" fill="#aab5c7" text-anchor="middle" font-size="12">memory · topology</text>
-              <rect x="750" y="70" width="205" height="105" rx="18" fill="#151e2d" stroke="#68e5d1"/><text x="852" y="106" fill="#f4f7fb" text-anchor="middle" font-size="17" font-weight="700">Replay + promote</text><text x="852" y="133" fill="#aab5c7" text-anchor="middle" font-size="12">held-out tasks · regressions</text><text x="852" y="153" fill="#aab5c7" text-anchor="middle" font-size="12">human approval when needed</text>
-              <path d="M207 122 H262 M447 122 H502 M687 122 H742" stroke="#8ee7a6" stroke-width="2" marker-end="url(#arrow2)"/>
-              <path d="M852 181 C852 240 117 240 117 181" fill="none" stroke="#8ee7a6" stroke-width="2" stroke-dasharray="7 7" marker-end="url(#arrow2)"/>
+              <rect x="30" y="70" width="175" height="105" rx="18" fill="#151e2d" stroke="#c8a5cc"/><text x="117" y="106" fill="#f4f7fb" text-anchor="middle" font-size="17" font-weight="700">Deep telemetry</text><text x="117" y="133" fill="#aab5c7" text-anchor="middle" font-size="12">traces · costs · tools</text><text x="117" y="153" fill="#aab5c7" text-anchor="middle" font-size="12">tests · permissions</text>
+              <rect x="270" y="70" width="175" height="105" rx="18" fill="#151e2d" stroke="#a279a7"/><text x="357" y="106" fill="#f4f7fb" text-anchor="middle" font-size="17" font-weight="700">Diagnose</text><text x="357" y="133" fill="#aab5c7" text-anchor="middle" font-size="12">find recurring waste</text><text x="357" y="153" fill="#aab5c7" text-anchor="middle" font-size="12">attribute failure</text>
+              <rect x="510" y="70" width="175" height="105" rx="18" fill="#151e2d" stroke="#a279a7"/><text x="597" y="106" fill="#f4f7fb" text-anchor="middle" font-size="17" font-weight="700">Revise</text><text x="597" y="133" fill="#aab5c7" text-anchor="middle" font-size="12">tools · prompts · gates</text><text x="597" y="153" fill="#aab5c7" text-anchor="middle" font-size="12">memory · topology</text>
+              <rect x="750" y="70" width="205" height="105" rx="18" fill="#151e2d" stroke="#c8a5cc"/><text x="852" y="106" fill="#f4f7fb" text-anchor="middle" font-size="17" font-weight="700">Replay + promote</text><text x="852" y="133" fill="#aab5c7" text-anchor="middle" font-size="12">held-out tasks · regressions</text><text x="852" y="153" fill="#aab5c7" text-anchor="middle" font-size="12">human approval when needed</text>
+              <path d="M207 122 H262 M447 122 H502 M687 122 H742" stroke="#c8a5cc" stroke-width="2" marker-end="url(#arrow2)"/>
+              <path d="M852 181 C852 240 117 240 117 181" fill="none" stroke="#c8a5cc" stroke-width="2" stroke-dasharray="7 7" marker-end="url(#arrow2)"/>
             </g>
           </svg>
         </div>
@@ -393,7 +403,7 @@
     </section>
 
     <section class="slide section-break" data-title="Section break: implementation">
-      <div class="slide-inner"><div class="section-number">01</div><div class="kicker">Deep Dive</div><h2>Code as Agent Harness</h2><p class="lead">A practical, governed path from one reliable loop to a reusable harness.</p></div>
+      <div class="slide-inner"><div class="section-number">04</div><div class="kicker">Section four</div><h2>Build it</h2><p class="lead">A practical, governed path from one reliable loop to a reusable harness.</p></div>
     </section>
 
     <section class="slide" data-title="Implementation guide">
@@ -531,12 +541,12 @@ else:
   </main>
 
   <div class="footerline" aria-label="Deck controls">
-    <div style="display:flex;align-items:center;gap:1rem"><div class="progress"><span id="progressBar"></span></div><div class="slide-count" id="slideCount">01 / 24</div></div>
+    <div class="footerline-meta"><div class="progress"><span id="progressBar"></span></div><div class="slide-count" id="slideCount">01 / 24</div></div>
     <div class="controls">
       <button class="icon-btn" id="prevBtn" title="Previous slide" aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button>
       <button class="icon-btn" id="nextBtn" title="Next slide" aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button>
-      <button class="icon-btn" id="overviewBtn" title="Slide overview" aria-label="Slide overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
-      <button class="icon-btn" id="fullBtn" title="Full screen" aria-label="Full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5"/></svg></button>
+      <button class="icon-btn labeled" id="overviewBtn" title="Slide overview" aria-label="Slide overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Index</span></button>
+      <button class="icon-btn labeled" id="fullBtn" title="Full screen" aria-label="Full screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5"/></svg><span>Full screen</span></button>
     </div>
   </div>
 
@@ -569,8 +579,8 @@ else:
         document.querySelectorAll('.thumb').forEach((b, i) => b.classList.toggle('current', i === index));
         count.textContent = `${String(index+1).padStart(2,'0')} / ${String(slides.length).padStart(2,'0')}`;
         bar.style.width = `${((index+1)/slides.length)*100}%`;
-        history.replaceState(null, '', `#${index+1}`);
-        window.scrollTo({top:0, behavior:'instant'});
+        try { history.replaceState(null, '', `#${index+1}`); } catch (err) { /* file:// and sandboxed-iframe origins throw here; navigation should still proceed */ }
+        try { window.scrollTo({top:0, behavior:'instant'}); } catch (err) {}
       }
       function next() { go(index + 1); }
       function prev() { go(index - 1); }
@@ -608,8 +618,11 @@ else:
         }));
       });
 
-      const hash = Number(location.hash.slice(1));
-      go(Number.isFinite(hash) && hash > 0 && hash <= slides.length ? hash - 1 : 0);
+      // Always open on the cover. (Previously this read location.hash and resumed on
+      // whatever slide the address bar's #fragment pointed to, so reopening or
+      // reloading the file after navigating away from the cover would land you back
+      // on that same slide instead of slide one.)
+      go(0);
     })();
   </script>
 </body>
