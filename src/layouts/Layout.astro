@@ -16,6 +16,16 @@ const {
 const canonicalURL = new URL(pathname, Astro.site).toString();
 const ogImage = new URL("/og.png", Astro.site).toString();
 
+// Which nav item the current page lives under. Project pages sit under
+// Applied AI, since that's where they're listed.
+const path = Astro.url.pathname;
+const section =
+  path === "/" || path.startsWith("/projects") ? "home"
+  : path.startsWith("/about") ? "about"
+  : path.startsWith("/library") ? "library"
+  : "";
+const current = (name: string) => (section === name ? "page" : undefined);
+
 // Person schema. Lets AI search engines answer "who is this / where are they
 // based" from structured data instead of inferring it from the prose.
 const personSchema = {
@@ -124,9 +134,9 @@ const personSchema = {
     <header class="site-header container-wide">
       <a href="/" class="site-logo">Vivid Savitri-Hampton</a>
       <nav class="site-nav" id="site-nav">
-        <a href="/">Applied AI</a>
-        <a href="/about">About</a>
-        <a href="/library">Library</a>
+        <a href="/" aria-current={current("home")}>Applied AI</a>
+        <a href="/about" aria-current={current("about")}>About</a>
+        <a href="/library" aria-current={current("library")}>Library</a>
         <a href="https://www.vnsavitri.com/" target="_blank" rel="noopener">Site</a>
         <a href="https://github.com/vnsavitri" target="_blank" rel="noopener">GitHub</a>
       </nav>
@@ -224,6 +234,23 @@ const personSchema = {
 
   .site-nav a:hover {
     color: var(--color-accent);
+  }
+
+  /* Where you are: ink text and a short coral rule under the link. */
+  .site-nav a[aria-current="page"] {
+    position: relative;
+    color: var(--color-ink);
+  }
+
+  .site-nav a[aria-current="page"]::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.45rem;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--color-accent);
   }
 
   /* Footer */
@@ -338,6 +365,21 @@ const personSchema = {
 
     .site-nav a:last-child {
       border-bottom: none;
+    }
+
+    /* Stacked menu: a coral tick on the left instead of the underline. */
+    .site-nav a[aria-current="page"] {
+      font-weight: 500;
+      padding-left: 0.85rem;
+    }
+
+    .site-nav a[aria-current="page"]::after {
+      top: 50%;
+      bottom: auto;
+      right: auto;
+      width: 3px;
+      height: 1rem;
+      transform: translateY(-50%);
     }
   }
 </style>
