@@ -6,6 +6,7 @@ export const SOURCE_DIR = "/Users/vividm4/Documents/CoworkOS/00_Outputs";
 
 export const DECKS = [
   // --- Slide decks ---
+  { file: "Kronos Slide Deck.html", title: "Kronos: A Field Guide to Market Sequences", category: "models", date: "2026-09-29" },
   { file: "Deerflow Slide Deck.html", title: "DeerFlow Deep Dive", category: "agents", date: "2026-09-28" },
   { file: "Harness Zero Deep Dive.html", title: "Harness-Zero: Agent-as-Harness", category: "agents", date: "2026-09-27" },
   { file: "Jev Deep Dive Slide Deck.html", title: "Jev: The Decision Model After the Chatbot Era", category: "models", date: "2026-09-27" },
@@ -107,4 +108,5 @@ export const DECKS = [
   { file: "How-Countries-Go-Broke.html", title: "How Countries Go Broke: The Big Cycle", category: "books", date: "2026-07-03" },
   { file: "Why Countries Go Broke - Ray D.html", title: "Why Countries Go Broke: Ray Dalio", category: "books", date: "2026-07-03" },
   { file: "Thinking Fast and Slow Deep Dive.html", title: "Thinking, Fast and Slow: A Practical Field Guide", category: "books", date: "2026-09-23" },
+  { file: "Being and Time Deep Dive.html", title: "Being and Time: A Field Guide to Being Human", category: "books", date: "2026-09-29" },
 ];
